@@ -44,7 +44,7 @@
             this.storedProcedureButton.TabIndex = 0;
             this.storedProcedureButton.Text = "SPs";
             this.storedProcedureButton.UseVisualStyleBackColor = true;
-            this.storedProcedureButton.Click += new System.EventHandler(this.storedProcedureButton_Click);
+            this.storedProcedureButton.Click += new System.EventHandler(this.StoredProcedureButton_Click);
             // 
             // ViewButton
             // 
@@ -64,7 +64,7 @@
             this.functionButton.TabIndex = 0;
             this.functionButton.Text = "Functions";
             this.functionButton.UseVisualStyleBackColor = true;
-            this.functionButton.Click += new System.EventHandler(this.functionButton_Click);
+            this.functionButton.Click += new System.EventHandler(this.FunctionButton_Click);
             // 
             // tableButton
             // 
@@ -74,7 +74,7 @@
             this.tableButton.TabIndex = 0;
             this.tableButton.Text = "Tables";
             this.tableButton.UseVisualStyleBackColor = true;
-            this.tableButton.Click += new System.EventHandler(this.tableButton_Click);
+            this.tableButton.Click += new System.EventHandler(this.TableButton_Click);
             // 
             // tableWikiButton
             // 
@@ -84,7 +84,7 @@
             this.tableWikiButton.TabIndex = 0;
             this.tableWikiButton.Text = "Table wiki";
             this.tableWikiButton.UseVisualStyleBackColor = true;
-            this.tableWikiButton.Click += new System.EventHandler(this.tableWikiButton_Click);
+            this.tableWikiButton.Click += new System.EventHandler(this.TableWikiButton_Click);
             // 
             // valueWikiButton
             // 
@@ -94,7 +94,7 @@
             this.valueWikiButton.TabIndex = 0;
             this.valueWikiButton.Text = "Value wiki";
             this.valueWikiButton.UseVisualStyleBackColor = true;
-            this.valueWikiButton.Click += new System.EventHandler(this.valueWikiButton_Click);
+            this.valueWikiButton.Click += new System.EventHandler(this.ValueWikiButton_Click);
             // 
             // Form1
             // 
