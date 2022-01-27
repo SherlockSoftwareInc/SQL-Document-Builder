@@ -20,30 +20,6 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Show input box
-        /// </summary>
-        /// <param name="prompt">Prompt text</param>
-        /// <param name="title">Title of the input box</param>
-        /// <param name="defaultValue">default value</param>
-        /// <returns></returns>
-        private static string InputBox(string prompt, string title, string defaultValue)
-        {
-            using (var dlg = new InputBox()
-            {
-                Title = title,
-                Prompt = prompt,
-                Default = defaultValue
-            })
-            {
-                if (dlg.ShowDialog() == DialogResult.OK)
-                {
-                    return dlg.InputText;
-                }
-            }
-            return "";
-        }
-
-        /// <summary>
         /// Open add connection dialog and start to add a new database connection
         /// </summary>
         /// <returns></returns>
@@ -142,7 +118,7 @@ namespace SQL_Document_Builder
             }
             catch (Exception ex)
             {
-                MsgBox(ex.Message, MessageBoxIcon.Error);
+                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
             }
             finally
             {
@@ -249,6 +225,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Generate creation script for tables
         /// https://chanmingman.wordpress.com/2021/03/26/sql-server-generate-create-table-script-using-c/
+        /// https://www.mssqltips.com/sqlservertip/1833/generate-scripts-for-database-objects-with-smo-for-sql-server/
         /// https://csharp.hotexamples.com/examples/Microsoft.SqlServer.Management.Smo/Database/-/php-database-class-examples.html
         /// </summary>
         /// <param name="myServer"></param>
@@ -290,42 +267,6 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Get description of a column
-        /// </summary>
-        /// <param name="schema">object schema</param>
-        /// <param name="table">object name</param>
-        /// <param name="column">column name</param>
-        /// <returns></returns>
-        private string GetColumnDesc(string schema, string table, string column)
-        {
-            string result = string.Empty;
-            string sql = string.Format("SELECT E.value Description FROM sys.schemas S INNER JOIN sys.tables T ON S.schema_id = T.schema_id INNER JOIN sys.columns C ON T.object_id = C.object_id INNER JOIN sys.extended_properties E ON T.object_id = E.major_id AND C.column_id = E.minor_id AND E.name = 'MS_Description' AND S.name = '{0}' AND T.name = '{1}' AND C.name = '{2}'", schema, table, column);
-            var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
-            try
-            {
-                var cmd = new SqlCommand(sql, conn) { CommandType = CommandType.Text };
-                conn.Open();
-                var dr = cmd.ExecuteReader();
-                if (dr.Read())
-                {
-                    result = dr[0].ToString();
-                }
-
-                dr.Close();
-            }
-            catch (Exception ex)
-            {
-                MsgBox(ex.Message, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                conn.Close();
-            }
-
-            return result;
-        }
-
-        /// <summary>
         /// Get script of a stored procedure
         /// </summary>
         /// <param name="schema">schema name</param>
@@ -349,7 +290,7 @@ namespace SQL_Document_Builder
             }
             catch (Exception ex)
             {
-                MsgBox(ex.Message, MessageBoxIcon.Error);
+                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
             }
             finally
             {
@@ -357,138 +298,138 @@ namespace SQL_Document_Builder
             }
         }
 
-        /// <summary>
-        /// Get table structure for wiki
-        /// </summary>
-        /// <param name="TableSchema">Schame name</param>
-        /// <param name="TableName">Table name</param>
-        /// <returns></returns>
-        private void GetTableDefinition(string TableSchema, string TableName)
-        {
-            string sql = string.Format("SELECT ORDINAL_POSITION, COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = N'{0}' AND TABLE_NAME = N'{1}' ORDER BY ORDINAL_POSITION", TableSchema, TableName);
-            var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
-            try
-            {
-                var cmd = new SqlCommand(sql, conn) { CommandType = CommandType.Text };
-                conn.Open();
-                var dr = cmd.ExecuteReader();
-                while (dr.Read())
-                {
-                    AppendLine("|-");
-                    string colID = dr["ORDINAL_POSITION"].ToString();
-                    string colName = dr["COLUMN_NAME"].ToString();
-                    string dataType = dr["DATA_TYPE"].ToString();
-                    if (dr["CHARACTER_MAXIMUM_LENGTH"] != DBNull.Value)
-                    {
-                        dataType = string.Format("{0}({1})", dataType, dr["CHARACTER_MAXIMUM_LENGTH"].ToString());
-                    }
+        ///// <summary>
+        ///// Get table structure for wiki
+        ///// </summary>
+        ///// <param name="TableSchema">Schame name</param>
+        ///// <param name="TableName">Table name</param>
+        ///// <returns></returns>
+        //private void GetTableDefinition(string TableSchema, string TableName)
+        //{
+        //    string sql = string.Format("SELECT ORDINAL_POSITION, COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = N'{0}' AND TABLE_NAME = N'{1}' ORDER BY ORDINAL_POSITION", TableSchema, TableName);
+        //    var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+        //    try
+        //    {
+        //        var cmd = new SqlCommand(sql, conn) { CommandType = CommandType.Text };
+        //        conn.Open();
+        //        var dr = cmd.ExecuteReader();
+        //        while (dr.Read())
+        //        {
+        //            AppendLine("|-");
+        //            string colID = dr["ORDINAL_POSITION"].ToString();
+        //            string colName = dr["COLUMN_NAME"].ToString();
+        //            string dataType = dr["DATA_TYPE"].ToString();
+        //            if (dr["CHARACTER_MAXIMUM_LENGTH"] != DBNull.Value)
+        //            {
+        //                dataType = string.Format("{0}({1})", dataType, dr["CHARACTER_MAXIMUM_LENGTH"].ToString());
+        //            }
 
-                    AppendLine(string.Format("| {0} || {1} || {2} || {3}", colID, colName, dataType, GetColumnDesc(TableSchema, TableName, colName)));
-                }
+        //            AppendLine(string.Format("| {0} || {1} || {2} || {3}", colID, colName, dataType, GetColumnDesc(TableSchema, TableName, colName)));
+        //        }
 
-                dr.Close();
-            }
-            catch (Exception ex)
-            {
-                MsgBox(ex.Message, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                conn.Close();
-            }
-        }
+        //        dr.Close();
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        MsgBox(ex.Message, MessageBoxIcon.Error);
+        //    }
+        //    finally
+        //    {
+        //        conn.Close();
+        //    }
+        //}
 
-        /// <summary>
-        /// Generate contect for wiki of the give table
-        /// </summary>
-        /// <param name="tableSchema"></param>
-        /// <param name="tableName"></param>
-        private void GetTableDefWiki(string tableSchema, string tableName)
-        {
-            AppendLine(string.Format("===TABLE NAME: {0}.{1}===", tableSchema, tableName));
-            AppendLine("{| class=\"wikitable\"");
-            AppendLine("|-");
-            AppendLine("! Col ID !! Name !! Data Type !! Description");
-            GetTableDefinition(tableSchema, tableName);
-            AppendLine("|}");
-            AppendLine("</br>");
-            AppendLine("----");
-            AppendLine("Back to [[DW: Database tables|Database tables]]");
-            AppendLine("[[Category: CSBC data warehouse]]");
-        }
+        ///// <summary>
+        ///// Generate contect for wiki of the give table
+        ///// </summary>
+        ///// <param name="tableSchema"></param>
+        ///// <param name="tableName"></param>
+        //private void GetTableDefWiki(string tableSchema, string tableName)
+        //{
+        //    AppendLine(string.Format("===TABLE NAME: {0}.{1}===", tableSchema, tableName));
+        //    AppendLine("{| class=\"wikitable\"");
+        //    AppendLine("|-");
+        //    AppendLine("! Col ID !! Name !! Data Type !! Description");
+        //    GetTableDefinition(tableSchema, tableName);
+        //    AppendLine("|}");
+        //    AppendLine("</br>");
+        //    AppendLine("----");
+        //    AppendLine("Back to [[DW: Database tables|Database tables]]");
+        //    AppendLine("[[Category: CSBC data warehouse]]");
+        //}
 
-        /// <summary>
-        /// Build value list of the given table for wiki
-        /// </summary>
-        /// <param name="tableName"></param>
-        private void GetTableValues(string tableName)
-        {
-            AppendLine("Table Values:");
-            AppendLine("{| class=\"wikitable\"");
-            string sql = string.Format("SELECT * FROM {0}", tableName);
-            var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
-            try
-            {
-                var cmd = new SqlCommand(sql, conn) { CommandType = CommandType.Text };
-                conn.Open();
-                var ds = new DataSet();
-                var dat = new SqlDataAdapter(cmd);
-                dat.Fill(ds);
-                if (ds.Tables.Count == 1)
-                {
-                    // output table columns
-                    var dt = ds.Tables[0];
-                    string strColumns = "! ";
-                    for (int i = 0, loopTo = dt.Columns.Count - 1; i <= loopTo; i++)
-                    {
-                        if (i == 0)
-                        {
-                            strColumns += dt.Columns[i].ColumnName;
-                        }
-                        else
-                        {
-                            strColumns += " !! " + dt.Columns[i].ColumnName;
-                        }
-                    }
+        ///// <summary>
+        ///// Build value list of the given table for wiki
+        ///// </summary>
+        ///// <param name="tableName"></param>
+        //private void GetTableValues(string tableName)
+        //{
+        //    AppendLine("Table Values:");
+        //    AppendLine("{| class=\"wikitable\"");
+        //    string sql = string.Format("SELECT * FROM {0}", tableName);
+        //    var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+        //    try
+        //    {
+        //        var cmd = new SqlCommand(sql, conn) { CommandType = CommandType.Text };
+        //        conn.Open();
+        //        var ds = new DataSet();
+        //        var dat = new SqlDataAdapter(cmd);
+        //        dat.Fill(ds);
+        //        if (ds.Tables.Count == 1)
+        //        {
+        //            // output table columns
+        //            var dt = ds.Tables[0];
+        //            string strColumns = "! ";
+        //            for (int i = 0, loopTo = dt.Columns.Count - 1; i <= loopTo; i++)
+        //            {
+        //                if (i == 0)
+        //                {
+        //                    strColumns += dt.Columns[i].ColumnName;
+        //                }
+        //                else
+        //                {
+        //                    strColumns += " !! " + dt.Columns[i].ColumnName;
+        //                }
+        //            }
 
-                    AppendLine("|-");
-                    AppendLine(strColumns);
+        //            AppendLine("|-");
+        //            AppendLine(strColumns);
 
-                    // output values
-                    foreach (DataRow r in dt.Rows)
-                    {
-                        AppendLine("|-");
-                        string strValues = "| ";
-                        for (int i = 0, loopTo1 = dt.Columns.Count - 1; i <= loopTo1; i++)
-                        {
-                            if (i == 0)
-                            {
-                                strValues += r[i].ToString();
-                            }
-                            else
-                            {
-                                strValues += " || " + r[i].ToString();
-                            }
-                        }
+        //            // output values
+        //            foreach (DataRow r in dt.Rows)
+        //            {
+        //                AppendLine("|-");
+        //                string strValues = "| ";
+        //                for (int i = 0, loopTo1 = dt.Columns.Count - 1; i <= loopTo1; i++)
+        //                {
+        //                    if (i == 0)
+        //                    {
+        //                        strValues += r[i].ToString();
+        //                    }
+        //                    else
+        //                    {
+        //                        strValues += " || " + r[i].ToString();
+        //                    }
+        //                }
 
-                        AppendLine(strValues);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MsgBox(ex.Message, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                conn.Close();
-            }
+        //                AppendLine(strValues);
+        //            }
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        MsgBox(ex.Message, MessageBoxIcon.Error);
+        //    }
+        //    finally
+        //    {
+        //        conn.Close();
+        //    }
 
-            AppendLine("|}");
-            AppendLine("</br>");
+        //    AppendLine("|}");
+        //    AppendLine("</br>");
 
-            statusToolStripStatusLabe.Text = "Complete";
-        }
+        //    statusToolStripStatusLabe.Text = "Complete";
+        //}
 
         /// <summary>
         /// Get the creation script for a view
@@ -514,7 +455,7 @@ namespace SQL_Document_Builder
             }
             catch (Exception ex)
             {
-                MsgBox(ex.Message, MessageBoxIcon.Error);
+                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
             }
             finally
             {
@@ -573,15 +514,15 @@ namespace SQL_Document_Builder
             }
         }
 
-        /// <summary>
-        /// Show a message box
-        /// </summary>
-        /// <param name="message"></param>
-        /// <param name="icon"></param>
-        private void MsgBox(string message, MessageBoxIcon icon)
-        {
-            MessageBox.Show(message, "Message", MessageBoxButtons.OK, icon);
-        }
+        ///// <summary>
+        ///// Show a message box
+        ///// </summary>
+        ///// <param name="message"></param>
+        ///// <param name="icon"></param>
+        //private void MsgBox(string message, MessageBoxIcon icon)
+        //{
+        //    MessageBox.Show(message, "Message", MessageBoxButtons.OK, icon);
+        //}
 
         /// <summary>
         /// Handle connection menu item click event:
@@ -672,23 +613,6 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Remove quota from the object name
-        /// </summary>
-        /// <param name="text"></param>
-        /// <returns></returns>
-        private string RemoveQuota(string text)
-        {
-            if (text.StartsWith("[") && text.EndsWith("]"))
-            {
-                return text.Substring(1, text.Length - 2);
-            }
-            else
-            {
-                return text;
-            }
-        }
-
-        /// <summary>
         /// Handles "Save" menu item click event: Save the current content in the text box into a file
         /// </summary>
         /// <param name="sender"></param>
@@ -736,7 +660,7 @@ namespace SQL_Document_Builder
             }
             catch (Exception ex)
             {
-                MsgBox(ex.Message, MessageBoxIcon.Error);
+                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
             }
             finally
             {
@@ -775,7 +699,7 @@ namespace SQL_Document_Builder
             }
             catch (Exception ex)
             {
-                MsgBox(ex.Message, MessageBoxIcon.Error);
+                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
             }
             finally
             {
@@ -813,7 +737,7 @@ namespace SQL_Document_Builder
             }
             catch (Exception ex)
             {
-                MsgBox(ex.Message, MessageBoxIcon.Error);
+                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
             }
             finally
             {
@@ -830,6 +754,139 @@ namespace SQL_Document_Builder
         {
             sqlTextBox.SelectionStart = 0;
             sqlTextBox.SelectionLength = sqlTextBox.TextLength;
+        }
+
+        private void SingalTableToolStripButton_Click(object sender, EventArgs e)
+        {
+            if (_selectedConnection != null)
+            {
+                using var frm = new TableBuilderForm()
+                { Connection = _selectedConnection };
+                frm.ShowDialog();
+            }
+
+            //if (_selectedConnection != null)
+            //{
+            //    string tableName = InputBox("Table name:", "Input table name", _lastTable);
+            //    if (tableName.IndexOf(".") > 0)
+            //    {
+            //        _lastTable = tableName;
+            //        sqlTextBox.Text = string.Empty;
+            //        var tableElement = tableName.Split('.');
+            //        if (tableElement.Length == 2)
+            //        {
+            //            //https://docs.microsoft.com/en-us/dotnet/api/microsoft.sqlserver.management.smo.scriptingoptions?view=sql-smo-160
+            //            ScriptingOptions scriptOptions = new ScriptingOptions()
+            //            {
+            //                ContinueScriptingOnError= true,
+            //                ScriptDrops = scriptDropsCheckBox.Checked,
+            //                ScriptForCreateDrop = scriptForCreateDropCheckBox.Checked,
+            //                IncludeIfNotExists = includeIfNotExistsCheckBox.Checked,
+            //                ExtendedProperties = extendedPropertiesCheckBox.Checked,
+            //                AnsiPadding= ansiPaddingCheckBox.Checked,
+            //                NoCollation = noCollationCheckBox.Checked,
+            //                ScriptData = scriptDataCheckBox.Checked,
+            //                IncludeHeaders = includeHeadersCheckBox.Checked
+            //            };
+
+            //            //GetTableDefWiki(RemoveQuota(tableElement[0]), RemoveQuota(tableElement[1]));
+            //            Server server = new Server(_selectedConnection.ServerName);
+            //            Database database = new Database();
+            //            database = server.Databases[_selectedConnection.Database];
+            //            Table table = database.Tables[RemoveQuota(tableElement[1]), RemoveQuota(tableElement[0])];
+            //            //Table table = database.Tables["pt_case"];
+            //            if (table != null)
+            //            {
+            //                StringCollection result = table.Script(scriptOptions);
+            //                foreach (var line in result)
+            //                {
+            //                    AppendLine(line);
+            //                }
+            //                AppendLine("GO" + Environment.NewLine);
+
+            //                IndexCollection indexCol = table.Indexes;
+            //                foreach (Microsoft.SqlServer.Management.Smo.Index myIndex in table.Indexes)
+            //                {
+            //                    /* Generating IF EXISTS and DROP command for table indexes */
+            //                    StringCollection indexScripts = myIndex.Script(scriptOptions);
+            //                    foreach (string script in indexScripts)
+            //                    {
+            //                        AppendLine(script);
+            //                    }
+
+            //                    /* Generating CREATE INDEX command for table indexes */
+            //                    indexScripts = myIndex.Script();
+            //                    foreach (string script in indexScripts)
+            //                    {
+            //                        AppendLine(script);
+            //                    }
+            //                }
+
+            //                //Scripter scripter = new Scripter(server);
+            //                ///* With ScriptingOptions you can specify different scripting
+            //                //* options, for example to include IF NOT EXISTS, DROP
+            //                //* statements, output location etc*/
+
+            //                //foreach (Table myTable in database.Tables)
+            //                //{
+            //                //    /* Generating IF EXISTS and DROP command for tables */
+            //                //    StringCollection tableScripts = myTable.Script(scriptOptions);
+            //                //    foreach (string script in tableScripts)
+            //                //    {
+            //                //        AppendLine(script);
+            //                //    }
+
+            //                //    tableScripts = myTable.Script();
+            //                //    foreach (string script in tableScripts)
+            //                //    {
+            //                //        AppendLine(script);
+            //                //    }
+
+            //                //    IndexCollection indexCol = myTable.Indexes;
+            //                //    foreach (Microsoft.SqlServer.Management.Smo.Index myIndex in myTable.Indexes)
+            //                //    {
+            //                //        /* Generating IF EXISTS and DROP command for table indexes */
+            //                //        StringCollection indexScripts = myIndex.Script(scriptOptions);
+            //                //        foreach (string script in indexScripts)
+            //                //        {
+            //                //            AppendLine(script);
+            //                //        }
+
+            //                //        /* Generating CREATE INDEX command for table indexes */
+            //                //        indexScripts = myIndex.Script();
+            //                //        foreach (string script in indexScripts)
+            //                //        {
+            //                //            AppendLine(script);
+            //                //        }
+            //                //    }
+            //                //}
+
+            //                //foreach (var index in table.Indexes)
+            //                //{
+            //                //    //AppendLine(index.ToString());
+            //                //    /* Generating IF EXISTS and DROP command for table indexes */
+            //                //    StringCollection indexScripts = index.Script(scriptOptions);
+            //                //    foreach (string script in indexScripts)
+            //                //        Console.WriteLine(script);
+            //                //    /* Generating CREATE INDEX command for table indexes */
+            //                //    indexScripts = index.Script();
+            //                //    foreach (string script in indexScripts)
+            //                //        Console.WriteLine(script);
+            //                //}
+
+            //                statusToolStripStatusLabe.Text = "Complete";
+            //            }
+            //            else
+            //            {
+            //                statusToolStripStatusLabe.Text = String.Format("{0} does not exist", tableName);
+            //            }
+            //        }
+            //        else
+            //        {
+            //            statusToolStripStatusLabe.Text = "Failed";
+            //        }
+            //    }
+            //}
         }
 
         /// <summary>
@@ -867,44 +924,6 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Handles "Table wiki" button click event: Generate wiki content of table structure
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void TableWikiButton_Click(object sender, EventArgs e)
-        {
-            string tableName = InputBox("Table name:", "Input table name", "dbo.");
-            if (tableName.IndexOf(".") > 0)
-            {
-                sqlTextBox.Text = string.Empty;
-                var tableElement = tableName.Split('.');
-                if (tableElement.Length == 2)
-                {
-                    GetTableDefWiki(RemoveQuota(tableElement[0]), RemoveQuota(tableElement[1]));
-                    statusToolStripStatusLabe.Text = "Complete";
-                }
-                else
-                {
-                    statusToolStripStatusLabe.Text = "Failed";
-                }
-            }
-        }
-
-        /// <summary>
-        /// Handles "Value wiki" button click event: generate wiki content of a table value
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void ValueWikiButton_Click(object sender, EventArgs e)
-        {
-            string tableName = InputBox("Table name:", "Input table name", "dbo.");
-            if (tableName.IndexOf(".") > 0)
-            {
-                GetTableValues(tableName);
-            }
-        }
-
-        /// <summary>
         /// Hanels "Views" button click event: Generate script for all views
         /// </summary>
         /// <param name="sender"></param>
@@ -915,5 +934,7 @@ namespace SQL_Document_Builder
             ScanAllViews();
             //messageLabel.Text = "Complete";
         }
+
+        //private string _lastTable = "dbo.";
     }
 }

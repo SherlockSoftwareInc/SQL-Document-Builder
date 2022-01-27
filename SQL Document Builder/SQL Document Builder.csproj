@@ -6,6 +6,10 @@
     <RootNamespace>SQL_Document_Builder</RootNamespace>
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
+    <NeutralLanguage>en</NeutralLanguage>
+    <Copyright>Copyright ©2022 Sherlock Software Inc.</Copyright>
+    <Company>Sherlock Software Inc.</Company>
+    <Product>SQL Server Script and Document Builder</Product>
   </PropertyGroup>
 
   <ItemGroup>
