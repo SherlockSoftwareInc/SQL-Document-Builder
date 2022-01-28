@@ -58,12 +58,14 @@
             // 
             // tableLabel
             // 
+            this.tableLabel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
             this.tableLabel.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
             this.tableLabel.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.tableLabel.Location = new System.Drawing.Point(0, 590);
             this.tableLabel.Name = "tableLabel";
             this.tableLabel.Size = new System.Drawing.Size(529, 36);
             this.tableLabel.TabIndex = 1;
+            this.tableLabel.Click += new System.EventHandler(this.TableLabel_Click);
             // 
             // columnDefDataGridView
             // 

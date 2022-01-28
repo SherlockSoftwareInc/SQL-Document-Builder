@@ -33,124 +33,109 @@ namespace SQL_Document_Builder
             {
                 if (Connection != null)
                 {
-                    string tableName = objectsListBox.SelectedItem.ToString();
-                    if (tableName.IndexOf(".") > 0)
+                    var objectName = (ObjectName)objectsListBox.SelectedItem;
+                    sqlTextBox.Text = string.Empty;
+
+                    //https://docs.microsoft.com/en-us/dotnet/api/microsoft.sqlserver.management.smo.scriptingoptions?view=sql-smo-160
+                    ScriptingOptions scriptOptions = new ScriptingOptions()
                     {
-                        //_lastTable = tableName;
-                        sqlTextBox.Text = string.Empty;
-                        var tableElement = tableName.Split('.');
-                        if (tableElement.Length == 2)
+                        ContinueScriptingOnError = true,
+                        ScriptDrops = scriptDropsCheckBox.Checked,
+                        ScriptForCreateDrop = scriptForCreateDropCheckBox.Checked,
+                        IncludeIfNotExists = includeIfNotExistsCheckBox.Checked,
+                        ExtendedProperties = extendedPropertiesCheckBox.Checked,
+                        AnsiPadding = ansiPaddingCheckBox.Checked,
+                        NoCollation = noCollationCheckBox.Checked,
+                        ScriptData = scriptDataCheckBox.Checked,
+                        IncludeHeaders = includeHeadersCheckBox.Checked
+                    };
+
+                    //GetTableDefWiki(RemoveQuota(tableElement[0]), RemoveQuota(tableElement[1]));
+                    Server server = new Server(Connection.ServerName);
+                    Database database = new Database();
+                    database = server.Databases[Connection.Database];
+                    Table table = database.Tables[objectName.Name, objectName.Schema];
+                    //Table table = database.Tables["pt_case"];
+                    if (table != null)
+                    {
+                        StringCollection result = table.Script(scriptOptions);
+                        foreach (var line in result)
                         {
-                            //https://docs.microsoft.com/en-us/dotnet/api/microsoft.sqlserver.management.smo.scriptingoptions?view=sql-smo-160
-                            ScriptingOptions scriptOptions = new ScriptingOptions()
-                            {
-                                ContinueScriptingOnError = true,
-                                ScriptDrops = scriptDropsCheckBox.Checked,
-                                ScriptForCreateDrop = scriptForCreateDropCheckBox.Checked,
-                                IncludeIfNotExists = includeIfNotExistsCheckBox.Checked,
-                                ExtendedProperties = extendedPropertiesCheckBox.Checked,
-                                AnsiPadding = ansiPaddingCheckBox.Checked,
-                                NoCollation = noCollationCheckBox.Checked,
-                                ScriptData = scriptDataCheckBox.Checked,
-                                IncludeHeaders = includeHeadersCheckBox.Checked
-                            };
-
-                            //GetTableDefWiki(RemoveQuota(tableElement[0]), RemoveQuota(tableElement[1]));
-                            Server server = new Server(Connection.ServerName);
-                            Database database = new Database();
-                            database = server.Databases[Connection.Database];
-                            Table table = database.Tables[RemoveQuota(tableElement[1]), RemoveQuota(tableElement[0])];
-                            //Table table = database.Tables["pt_case"];
-                            if (table != null)
-                            {
-                                StringCollection result = table.Script(scriptOptions);
-                                foreach (var line in result)
-                                {
-                                    AppendLine(line);
-                                }
-                                AppendLine("GO" + Environment.NewLine);
-
-                                IndexCollection indexCol = table.Indexes;
-                                foreach (Microsoft.SqlServer.Management.Smo.Index myIndex in table.Indexes)
-                                {
-                                    /* Generating IF EXISTS and DROP command for table indexes */
-                                    StringCollection indexScripts = myIndex.Script(scriptOptions);
-                                    foreach (string script in indexScripts)
-                                    {
-                                        AppendLine(script);
-                                    }
-
-                                    /* Generating CREATE INDEX command for table indexes */
-                                    indexScripts = myIndex.Script();
-                                    foreach (string script in indexScripts)
-                                    {
-                                        AppendLine(script);
-                                    }
-                                }
-
-                                //Scripter scripter = new Scripter(server);
-                                ///* With ScriptingOptions you can specify different scripting
-                                //* options, for example to include IF NOT EXISTS, DROP
-                                //* statements, output location etc*/
-
-                                //foreach (Table myTable in database.Tables)
-                                //{
-                                //    /* Generating IF EXISTS and DROP command for tables */
-                                //    StringCollection tableScripts = myTable.Script(scriptOptions);
-                                //    foreach (string script in tableScripts)
-                                //    {
-                                //        AppendLine(script);
-                                //    }
-
-                                //    tableScripts = myTable.Script();
-                                //    foreach (string script in tableScripts)
-                                //    {
-                                //        AppendLine(script);
-                                //    }
-
-                                //    IndexCollection indexCol = myTable.Indexes;
-                                //    foreach (Microsoft.SqlServer.Management.Smo.Index myIndex in myTable.Indexes)
-                                //    {
-                                //        /* Generating IF EXISTS and DROP command for table indexes */
-                                //        StringCollection indexScripts = myIndex.Script(scriptOptions);
-                                //        foreach (string script in indexScripts)
-                                //        {
-                                //            AppendLine(script);
-                                //        }
-
-                                //        /* Generating CREATE INDEX command for table indexes */
-                                //        indexScripts = myIndex.Script();
-                                //        foreach (string script in indexScripts)
-                                //        {
-                                //            AppendLine(script);
-                                //        }
-                                //    }
-                                //}
-
-                                //foreach (var index in table.Indexes)
-                                //{
-                                //    //AppendLine(index.ToString());
-                                //    /* Generating IF EXISTS and DROP command for table indexes */
-                                //    StringCollection indexScripts = index.Script(scriptOptions);
-                                //    foreach (string script in indexScripts)
-                                //        Console.WriteLine(script);
-                                //    /* Generating CREATE INDEX command for table indexes */
-                                //    indexScripts = index.Script();
-                                //    foreach (string script in indexScripts)
-                                //        Console.WriteLine(script);
-                                //}
-
-                                //statusToolStripStatusLabe.Text = "Complete";
-                            }
-                            //else
-                            //{
-                            //    statusToolStripStatusLabe.Text = String.Format("{0} does not exist", tableName);
-                            //}
+                            AppendLine(line);
                         }
-                        //else
+                        AppendLine("GO" + Environment.NewLine);
+
+                        IndexCollection indexCol = table.Indexes;
+                        foreach (Microsoft.SqlServer.Management.Smo.Index myIndex in table.Indexes)
+                        {
+                            /* Generating IF EXISTS and DROP command for table indexes */
+                            StringCollection indexScripts = myIndex.Script(scriptOptions);
+                            foreach (string script in indexScripts)
+                            {
+                                AppendLine(script);
+                            }
+
+                            /* Generating CREATE INDEX command for table indexes */
+                            indexScripts = myIndex.Script();
+                            foreach (string script in indexScripts)
+                            {
+                                AppendLine(script);
+                            }
+                        }
+
+                        //Scripter scripter = new Scripter(server);
+                        ///* With ScriptingOptions you can specify different scripting
+                        //* options, for example to include IF NOT EXISTS, DROP
+                        //* statements, output location etc*/
+
+                        //foreach (Table myTable in database.Tables)
                         //{
-                        //    statusToolStripStatusLabe.Text = "Failed";
+                        //    /* Generating IF EXISTS and DROP command for tables */
+                        //    StringCollection tableScripts = myTable.Script(scriptOptions);
+                        //    foreach (string script in tableScripts)
+                        //    {
+                        //        AppendLine(script);
+                        //    }
+
+                        //    tableScripts = myTable.Script();
+                        //    foreach (string script in tableScripts)
+                        //    {
+                        //        AppendLine(script);
+                        //    }
+
+                        //    IndexCollection indexCol = myTable.Indexes;
+                        //    foreach (Microsoft.SqlServer.Management.Smo.Index myIndex in myTable.Indexes)
+                        //    {
+                        //        /* Generating IF EXISTS and DROP command for table indexes */
+                        //        StringCollection indexScripts = myIndex.Script(scriptOptions);
+                        //        foreach (string script in indexScripts)
+                        //        {
+                        //            AppendLine(script);
+                        //        }
+
+                        //        /* Generating CREATE INDEX command for table indexes */
+                        //        indexScripts = myIndex.Script();
+                        //        foreach (string script in indexScripts)
+                        //        {
+                        //            AppendLine(script);
+                        //        }
+                        //    }
                         //}
+
+                        //foreach (var index in table.Indexes)
+                        //{
+                        //    //AppendLine(index.ToString());
+                        //    /* Generating IF EXISTS and DROP command for table indexes */
+                        //    StringCollection indexScripts = index.Script(scriptOptions);
+                        //    foreach (string script in indexScripts)
+                        //        Console.WriteLine(script);
+                        //    /* Generating CREATE INDEX command for table indexes */
+                        //    indexScripts = index.Script();
+                        //    foreach (string script in indexScripts)
+                        //        Console.WriteLine(script);
+                        //}
+
+                        //statusToolStripStatusLabe.Text = "Complete";
                     }
                 }
             }
@@ -208,9 +193,9 @@ namespace SQL_Document_Builder
         /// <param name="TableSchema">Schame name</param>
         /// <param name="TableName">Table name</param>
         /// <returns></returns>
-        private void GetTableDefinition(string TableSchema, string TableName)
+        private void GetTableDefinition(ObjectName objectName)
         {
-            string sql = string.Format("SELECT ORDINAL_POSITION, COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = N'{0}' AND TABLE_NAME = N'{1}' ORDER BY ORDINAL_POSITION", TableSchema, TableName);
+            string sql = string.Format("SELECT ORDINAL_POSITION, COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = N'{0}' AND TABLE_NAME = N'{1}' ORDER BY ORDINAL_POSITION", objectName.Schema, objectName.Name);
             var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
             try
             {
@@ -228,7 +213,7 @@ namespace SQL_Document_Builder
                         dataType = string.Format("{0}({1})", dataType, dr["CHARACTER_MAXIMUM_LENGTH"].ToString());
                     }
 
-                    AppendLine(string.Format("| {0} || {1} || {2} || {3}", colID, colName, dataType, GetColumnDesc(TableSchema, TableName, colName)));
+                    AppendLine(string.Format("| {0} || {1} || {2} || {3}", colID, colName, dataType,Common.GetColumnDescription(objectName, colName)));
                 }
 
                 dr.Close();
@@ -248,17 +233,36 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="tableSchema"></param>
         /// <param name="tableName"></param>
-        private void GetTableDefWiki(string tableSchema, string tableName)
+        private void GetTableDefWiki(ObjectName objectName)
         {
-            AppendLine(string.Format("===TABLE NAME: {0}.{1}===", tableSchema, tableName));
+            if (objectName.ObjectType == ObjectName.ObjectTypeEnums.Table)
+            {
+                AppendLine(string.Format("===TABLE NAME: {0}.{1}===", objectName.Schema, objectName.Name));
+            }
+            else
+            {
+                AppendLine(string.Format("===VIEW NAME: {0}.{1}===", objectName.Schema, objectName.Name));
+            }
+            var objectDesc = Common.GetTableDescription(objectName);
+            if (objectDesc.Length > 0)
+            {
+                AppendLine(":" + objectDesc);
+            }
             AppendLine("{| class=\"wikitable\"");
             AppendLine("|-");
             AppendLine("! Col ID !! Name !! Data Type !! Description");
-            GetTableDefinition(tableSchema, tableName);
+            GetTableDefinition(objectName);
             AppendLine("|}");
             AppendLine("</br>");
             AppendLine("----");
-            AppendLine("Back to [[DW: Database tables|Database tables]]");
+            if (objectName.ObjectType == ObjectName.ObjectTypeEnums.Table)
+            {
+                AppendLine("Back to [[DW: Database tables|Database tables]]");
+            }
+            else
+            {
+                AppendLine("Back to [[DW: Database views|Database views]]");
+            }
             AppendLine("[[Category: CSBC data warehouse]]");
         }
 
@@ -368,6 +372,9 @@ namespace SQL_Document_Builder
             BuildScript();
         }
 
+        /// <summary>
+        /// Populate the object list box
+        /// </summary>
         private void Populate()
         {
             if (_tables != null)
@@ -378,7 +385,7 @@ namespace SQL_Document_Builder
                 {
                     foreach (DataRow row in _tables.Rows)
                     {
-                        objectsListBox.Items.Add(string.Format("{0}.{1}", row["TABLE_SCHEMA"].ToString(), row["TABLE_NAME"].ToString()));
+                        AddListItem(row["TABLE_TYPE"].ToString(), row["TABLE_SCHEMA"].ToString(), row["TABLE_NAME"].ToString());
                     }
                 }
                 else
@@ -386,27 +393,21 @@ namespace SQL_Document_Builder
                     var matches = _tables.Select(string.Format("TABLE_NAME LIKE '%{0}%'", searchFor));
                     foreach (DataRow row in matches)
                     {
-                        objectsListBox.Items.Add(string.Format("{0}.{1}", row["TABLE_SCHEMA"].ToString(), row["TABLE_NAME"].ToString()));
+                        AddListItem(row["TABLE_TYPE"].ToString(), row["TABLE_SCHEMA"].ToString(), row["TABLE_NAME"].ToString());
                     }
                 }
             }
         }
 
-        /// <summary>
-        /// Remove quota from the object name
-        /// </summary>
-        /// <param name="text"></param>
-        /// <returns></returns>
-        private string RemoveQuota(string text)
+        private void AddListItem(string tableType, string schema, string tableName)
         {
-            if (text.StartsWith("[") && text.EndsWith("]"))
+            ObjectName.ObjectTypeEnums objectType = (tableType == "VIEW") ? ObjectName.ObjectTypeEnums.View : ObjectName.ObjectTypeEnums.Table;
+            objectsListBox.Items.Add(new ObjectName()
             {
-                return text.Substring(1, text.Length - 2);
-            }
-            else
-            {
-                return text;
-            }
+                ObjectType = objectType,
+                Schema = schema,
+                Name = tableName
+            });
         }
 
         private void searchTextBox_TextChanged(object sender, EventArgs e)
@@ -430,16 +431,9 @@ namespace SQL_Document_Builder
         {
             if (objectsListBox.SelectedItem != null)
             {
-                string tableName = objectsListBox.SelectedItem.ToString();
-                if (tableName.IndexOf(".") > 0)
-                {
-                    sqlTextBox.Text = string.Empty;
-                    var tableElement = tableName.Split('.');
-                    if (tableElement.Length == 2)
-                    {
-                        GetTableDefWiki(RemoveQuota(tableElement[0]), RemoveQuota(tableElement[1]));
-                    }
-                }
+                var objectName = (ObjectName)objectsListBox.SelectedItem;
+                sqlTextBox.Text = string.Empty;
+                GetTableDefWiki(objectName);
             }
         }
 
@@ -452,12 +446,9 @@ namespace SQL_Document_Builder
         {
             if (objectsListBox.SelectedItem != null)
             {
-                string tableName = objectsListBox.SelectedItem.ToString();
-                if (tableName.IndexOf(".") > 0)
-                {
-                    sqlTextBox.Text = string.Empty;
-                    GetTableValues(tableName);
-                }
+                var objectName = (ObjectName)objectsListBox.SelectedItem;
+                sqlTextBox.Text = string.Empty;
+                GetTableValues(objectName.FullName);
             }
         }
 
@@ -465,15 +456,12 @@ namespace SQL_Document_Builder
         {
             if (objectsListBox.SelectedItem != null)
             {
-                string tableName = objectsListBox.SelectedItem.ToString();
-                if (tableName.IndexOf(".") > 0)
+                var objectName = (ObjectName)objectsListBox.SelectedItem;
+                using var dlg = new DescEditForm()
                 {
-                    using var dlg = new DescEditForm()
-                    {
-                        ObjectName = tableName
-                    };
-                    dlg.ShowDialog();
-                }
+                    TableName = objectName
+                };
+                dlg.ShowDialog();
             }
         }
     }
