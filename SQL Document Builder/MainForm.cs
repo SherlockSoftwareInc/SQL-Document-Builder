@@ -484,6 +484,7 @@ namespace SQL_Document_Builder
         private void MainForm_Load(object sender, EventArgs e)
         {
             WindowState = FormWindowState.Maximized;
+
             _connections.Load();
             PopulateConnections();
 

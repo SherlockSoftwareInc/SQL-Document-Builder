@@ -18,6 +18,17 @@ namespace SQL_Document_Builder
 
         public SQLDatabaseConnectionItem Connection { get; set; }
 
+        private void AddListItem(string tableType, string schema, string tableName)
+        {
+            ObjectName.ObjectTypeEnums objectType = (tableType == "VIEW") ? ObjectName.ObjectTypeEnums.View : ObjectName.ObjectTypeEnums.Table;
+            objectsListBox.Items.Add(new ObjectName()
+            {
+                ObjectType = objectType,
+                Schema = schema,
+                Name = tableName
+            });
+        }
+
         /// <summary>
         /// Append text to the bottom of the text box
         /// </summary>
@@ -25,6 +36,12 @@ namespace SQL_Document_Builder
         private void AppendLine(string text)
         {
             sqlTextBox.AppendText(text + Environment.NewLine);
+        }
+
+        private void BatchToolStripButton_Click(object sender, EventArgs e)
+        {
+            using var frm = new BatchColumnDesc();
+            frm.ShowDialog();
         }
 
         private void BuildScript()
@@ -141,14 +158,27 @@ namespace SQL_Document_Builder
             }
         }
 
-        private void buildToolStripButton_Click(object sender, EventArgs e)
+        private void BuildToolStripButton_Click(object sender, EventArgs e)
         {
             BuildScript();
         }
 
-        private void closeToolStripButton_Click(object sender, EventArgs e)
+        private void CloseToolStripButton_Click(object sender, EventArgs e)
         {
             Close();
+        }
+
+        private void DescEditToolStripButton_Click(object sender, EventArgs e)
+        {
+            if (objectsListBox.SelectedItem != null)
+            {
+                var objectName = (ObjectName)objectsListBox.SelectedItem;
+                using var dlg = new DescEditForm()
+                {
+                    TableName = objectName
+                };
+                dlg.ShowDialog();
+            }
         }
 
         /// <summary>
@@ -213,7 +243,7 @@ namespace SQL_Document_Builder
                         dataType = string.Format("{0}({1})", dataType, dr["CHARACTER_MAXIMUM_LENGTH"].ToString());
                     }
 
-                    AppendLine(string.Format("| {0} || {1} || {2} || {3}", colID, colName, dataType,Common.GetColumnDescription(objectName, colName)));
+                    AppendLine(string.Format("| {0} || {1} || {2} || {3}", colID, colName, dataType, Common.GetColumnDescription(objectName, colName)));
                 }
 
                 dr.Close();
@@ -253,17 +283,17 @@ namespace SQL_Document_Builder
             AppendLine("! Col ID !! Name !! Data Type !! Description");
             GetTableDefinition(objectName);
             AppendLine("|}");
-            AppendLine("</br>");
-            AppendLine("----");
-            if (objectName.ObjectType == ObjectName.ObjectTypeEnums.Table)
-            {
-                AppendLine("Back to [[DW: Database tables|Database tables]]");
-            }
-            else
-            {
-                AppendLine("Back to [[DW: Database views|Database views]]");
-            }
-            AppendLine("[[Category: CSBC data warehouse]]");
+            //AppendLine("</br>");
+            //AppendLine("----");
+            //if (objectName.ObjectType == ObjectName.ObjectTypeEnums.Table)
+            //{
+            //    AppendLine("Back to [[DW: Database tables|Database tables]]");
+            //}
+            //else
+            //{
+            //    AppendLine("Back to [[DW: Database views|Database views]]");
+            //}
+            //AppendLine("[[Category: CSBC data warehouse]]");
         }
 
         /// <summary>
@@ -367,7 +397,7 @@ namespace SQL_Document_Builder
             //statusToolStripStatusLabe.Text = "Complete";
         }
 
-        private void objectsListBox_DoubleClick(object sender, EventArgs e)
+        private void ObjectsListBox_DoubleClick(object sender, EventArgs e)
         {
             BuildScript();
         }
@@ -398,25 +428,22 @@ namespace SQL_Document_Builder
                 }
             }
         }
-
-        private void AddListItem(string tableType, string schema, string tableName)
-        {
-            ObjectName.ObjectTypeEnums objectType = (tableType == "VIEW") ? ObjectName.ObjectTypeEnums.View : ObjectName.ObjectTypeEnums.Table;
-            objectsListBox.Items.Add(new ObjectName()
-            {
-                ObjectType = objectType,
-                Schema = schema,
-                Name = tableName
-            });
-        }
-
-        private void searchTextBox_TextChanged(object sender, EventArgs e)
+        private void SearchTextBox_TextChanged(object sender, EventArgs e)
         {
             Populate();
         }
 
+        private void TableBuilderForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            Properties.Settings.Default.HeaderText = headerTextBox.Text;
+            Properties.Settings.Default.FooterText = footerTextBox.Text;
+            Properties.Settings.Default.Save();
+        }
+
         private void TableBuilderForm_Load(object sender, EventArgs e)
         {
+            headerTextBox.Text = Properties.Settings.Default.HeaderText;
+            footerTextBox.Text = Properties.Settings.Default.FooterText;
             GetTableList();
             Populate();
             WindowState = FormWindowState.Maximized;
@@ -427,13 +454,21 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void tableWikiToolStripButton_Click(object sender, EventArgs e)
+        private void TableWikiToolStripButton_Click(object sender, EventArgs e)
         {
             if (objectsListBox.SelectedItem != null)
             {
                 var objectName = (ObjectName)objectsListBox.SelectedItem;
-                sqlTextBox.Text = string.Empty;
+                if (headerTextBox.Text.Length > 0)
+                {
+                    sqlTextBox.Text = headerTextBox.Text + "\r\n";
+                }
+                else
+                {
+                    sqlTextBox.Text = String.Empty;
+                }
                 GetTableDefWiki(objectName);
+                AppendLine(footerTextBox.Text);
             }
         }
 
@@ -442,26 +477,13 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void valuesWikiToolStripButton_Click(object sender, EventArgs e)
+        private void ValuesWikiToolStripButton_Click(object sender, EventArgs e)
         {
             if (objectsListBox.SelectedItem != null)
             {
                 var objectName = (ObjectName)objectsListBox.SelectedItem;
                 sqlTextBox.Text = string.Empty;
                 GetTableValues(objectName.FullName);
-            }
-        }
-
-        private void descEditToolStripButton_Click(object sender, EventArgs e)
-        {
-            if (objectsListBox.SelectedItem != null)
-            {
-                var objectName = (ObjectName)objectsListBox.SelectedItem;
-                using var dlg = new DescEditForm()
-                {
-                    TableName = objectName
-                };
-                dlg.ShowDialog();
             }
         }
     }

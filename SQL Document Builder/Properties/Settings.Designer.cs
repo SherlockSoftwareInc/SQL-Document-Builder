@@ -46,5 +46,31 @@ namespace SQL_Document_Builder.Properties {
                 this["LastAccessConnection"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string HeaderText {
+            get {
+                return ((string)(this["HeaderText"]));
+            }
+            set {
+                this["HeaderText"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("</br>\r\n----\r\nBack to [[BCCR: Database tables|BCCR database tables]]</br>\r\nBack to" +
+            " [[DW: Database tables|Data warehouse tables]]\r\n[[Category: CSBC data warehouse]" +
+            "]\r\n")]
+        public string FooterText {
+            get {
+                return ((string)(this["FooterText"]));
+            }
+            set {
+                this["FooterText"] = value;
+            }
+        }
     }
 }

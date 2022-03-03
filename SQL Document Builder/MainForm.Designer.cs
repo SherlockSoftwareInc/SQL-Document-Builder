@@ -121,7 +121,7 @@
             this.saveToolStripMenuItem.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.saveToolStripMenuItem.Name = "saveToolStripMenuItem";
             this.saveToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.S)));
-            this.saveToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.saveToolStripMenuItem.Size = new System.Drawing.Size(142, 22);
             this.saveToolStripMenuItem.Text = "&Save";
             this.saveToolStripMenuItem.Click += new System.EventHandler(this.SaveToolStripMenuItem_Click);
             // 
@@ -187,7 +187,7 @@
             // tableListToolStripMenuItem
             // 
             this.tableListToolStripMenuItem.Name = "tableListToolStripMenuItem";
-            this.tableListToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.tableListToolStripMenuItem.Size = new System.Drawing.Size(119, 22);
             this.tableListToolStripMenuItem.Text = "Table list";
             this.tableListToolStripMenuItem.Click += new System.EventHandler(this.TableButton_Click);
             // 

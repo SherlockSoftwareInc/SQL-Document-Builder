@@ -8,5 +8,16 @@
     <Setting Name="LastAccessConnection" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
     </Setting>
+    <Setting Name="HeaderText" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="FooterText" Type="System.String" Scope="User">
+      <Value Profile="(Default)">&lt;/br&gt;
+----
+Back to [[BCCR: Database tables|BCCR database tables]]&lt;/br&gt;
+Back to [[DW: Database tables|Data warehouse tables]]
+[[Category: CSBC data warehouse]]
+</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

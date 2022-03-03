@@ -37,6 +37,8 @@
             this.valuesWikiToolStripButton = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this.descEditToolStripButton = new System.Windows.Forms.ToolStripButton();
+            this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
+            this.batchToolStripButton = new System.Windows.Forms.ToolStripButton();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.objectsListBox = new System.Windows.Forms.ListBox();
@@ -55,6 +57,10 @@
             this.scriptDropsCheckBox = new System.Windows.Forms.CheckBox();
             this.collapsibleSplitter1 = new SQL_Document_Builder.CollapsibleSplitter();
             this.sqlTextBox = new System.Windows.Forms.TextBox();
+            this.label2 = new System.Windows.Forms.Label();
+            this.headerTextBox = new System.Windows.Forms.TextBox();
+            this.label1 = new System.Windows.Forms.Label();
+            this.footerTextBox = new System.Windows.Forms.TextBox();
             this.toolStrip1.SuspendLayout();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
@@ -70,7 +76,9 @@
             this.tableWikiToolStripButton,
             this.valuesWikiToolStripButton,
             this.toolStripSeparator2,
-            this.descEditToolStripButton});
+            this.descEditToolStripButton,
+            this.toolStripSeparator3,
+            this.batchToolStripButton});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
             this.toolStrip1.Size = new System.Drawing.Size(927, 25);
@@ -84,7 +92,7 @@
             this.closeToolStripButton.Name = "closeToolStripButton";
             this.closeToolStripButton.Size = new System.Drawing.Size(56, 22);
             this.closeToolStripButton.Text = "Close";
-            this.closeToolStripButton.Click += new System.EventHandler(this.closeToolStripButton_Click);
+            this.closeToolStripButton.Click += new System.EventHandler(this.CloseToolStripButton_Click);
             // 
             // toolStripSeparator1
             // 
@@ -98,7 +106,7 @@
             this.buildToolStripButton.Name = "buildToolStripButton";
             this.buildToolStripButton.Size = new System.Drawing.Size(102, 22);
             this.buildToolStripButton.Text = "CREATE TABLE";
-            this.buildToolStripButton.Click += new System.EventHandler(this.buildToolStripButton_Click);
+            this.buildToolStripButton.Click += new System.EventHandler(this.BuildToolStripButton_Click);
             // 
             // tableWikiToolStripButton
             // 
@@ -107,7 +115,7 @@
             this.tableWikiToolStripButton.Name = "tableWikiToolStripButton";
             this.tableWikiToolStripButton.Size = new System.Drawing.Size(78, 22);
             this.tableWikiToolStripButton.Text = "Table wiki";
-            this.tableWikiToolStripButton.Click += new System.EventHandler(this.tableWikiToolStripButton_Click);
+            this.tableWikiToolStripButton.Click += new System.EventHandler(this.TableWikiToolStripButton_Click);
             // 
             // valuesWikiToolStripButton
             // 
@@ -116,7 +124,7 @@
             this.valuesWikiToolStripButton.Name = "valuesWikiToolStripButton";
             this.valuesWikiToolStripButton.Size = new System.Drawing.Size(84, 22);
             this.valuesWikiToolStripButton.Text = "Values wiki";
-            this.valuesWikiToolStripButton.Click += new System.EventHandler(this.valuesWikiToolStripButton_Click);
+            this.valuesWikiToolStripButton.Click += new System.EventHandler(this.ValuesWikiToolStripButton_Click);
             // 
             // toolStripSeparator2
             // 
@@ -130,7 +138,21 @@
             this.descEditToolStripButton.Name = "descEditToolStripButton";
             this.descEditToolStripButton.Size = new System.Drawing.Size(92, 22);
             this.descEditToolStripButton.Text = "Descriptions";
-            this.descEditToolStripButton.Click += new System.EventHandler(this.descEditToolStripButton_Click);
+            this.descEditToolStripButton.Click += new System.EventHandler(this.DescEditToolStripButton_Click);
+            // 
+            // toolStripSeparator3
+            // 
+            this.toolStripSeparator3.Name = "toolStripSeparator3";
+            this.toolStripSeparator3.Size = new System.Drawing.Size(6, 25);
+            // 
+            // batchToolStripButton
+            // 
+            this.batchToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("batchToolStripButton.Image")));
+            this.batchToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.batchToolStripButton.Name = "batchToolStripButton";
+            this.batchToolStripButton.Size = new System.Drawing.Size(131, 22);
+            this.batchToolStripButton.Text = "Batch Column Desc";
+            this.batchToolStripButton.Click += new System.EventHandler(this.BatchToolStripButton_Click);
             // 
             // tabControl1
             // 
@@ -165,7 +187,7 @@
             this.objectsListBox.Name = "objectsListBox";
             this.objectsListBox.Size = new System.Drawing.Size(263, 536);
             this.objectsListBox.TabIndex = 3;
-            this.objectsListBox.DoubleClick += new System.EventHandler(this.objectsListBox_DoubleClick);
+            this.objectsListBox.DoubleClick += new System.EventHandler(this.ObjectsListBox_DoubleClick);
             // 
             // searchTextBox
             // 
@@ -174,7 +196,7 @@
             this.searchTextBox.Name = "searchTextBox";
             this.searchTextBox.Size = new System.Drawing.Size(263, 23);
             this.searchTextBox.TabIndex = 1;
-            this.searchTextBox.TextChanged += new System.EventHandler(this.searchTextBox_TextChanged);
+            this.searchTextBox.TextChanged += new System.EventHandler(this.SearchTextBox_TextChanged);
             // 
             // searchLabel
             // 
@@ -334,8 +356,53 @@
             this.sqlTextBox.Multiline = true;
             this.sqlTextBox.Name = "sqlTextBox";
             this.sqlTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.sqlTextBox.Size = new System.Drawing.Size(642, 608);
+            this.sqlTextBox.Size = new System.Drawing.Size(642, 482);
             this.sqlTextBox.TabIndex = 7;
+            // 
+            // label2
+            // 
+            this.label2.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.label2.Location = new System.Drawing.Point(285, 507);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(642, 15);
+            this.label2.TabIndex = 11;
+            this.label2.Text = "Header";
+            this.label2.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // headerTextBox
+            // 
+            this.headerTextBox.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.headerTextBox.Font = new System.Drawing.Font("Consolas", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.headerTextBox.Location = new System.Drawing.Point(285, 522);
+            this.headerTextBox.Multiline = true;
+            this.headerTextBox.Name = "headerTextBox";
+            this.headerTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+            this.headerTextBox.Size = new System.Drawing.Size(642, 48);
+            this.headerTextBox.TabIndex = 9;
+            // 
+            // label1
+            // 
+            this.label1.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.label1.Location = new System.Drawing.Point(285, 570);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(642, 15);
+            this.label1.TabIndex = 10;
+            this.label1.Text = "Footer";
+            this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // footerTextBox
+            // 
+            this.footerTextBox.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.footerTextBox.Font = new System.Drawing.Font("Consolas", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.footerTextBox.Location = new System.Drawing.Point(285, 585);
+            this.footerTextBox.Multiline = true;
+            this.footerTextBox.Name = "footerTextBox";
+            this.footerTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+            this.footerTextBox.Size = new System.Drawing.Size(642, 48);
+            this.footerTextBox.TabIndex = 8;
+            this.footerTextBox.Text = "</br>\r\n----\r\nBack to [[BCCR: Database tables|BCCR database tables]]</br>\r\nBack to" +
+    " [[DW: Database tables|Data warehouse tables]]\r\n[[Category: CSBC data warehouse]" +
+    "]\r\n";
             // 
             // TableBuilderForm
             // 
@@ -343,11 +410,16 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(927, 633);
             this.Controls.Add(this.sqlTextBox);
+            this.Controls.Add(this.label2);
+            this.Controls.Add(this.headerTextBox);
+            this.Controls.Add(this.label1);
+            this.Controls.Add(this.footerTextBox);
             this.Controls.Add(this.collapsibleSplitter1);
             this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.toolStrip1);
             this.Name = "TableBuilderForm";
             this.Text = "Table script builder";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.TableBuilderForm_FormClosing);
             this.Load += new System.EventHandler(this.TableBuilderForm_Load);
             this.toolStrip1.ResumeLayout(false);
             this.toolStrip1.PerformLayout();
@@ -389,5 +461,11 @@
         private System.Windows.Forms.ToolStripButton valuesWikiToolStripButton;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
         private System.Windows.Forms.ToolStripButton descEditToolStripButton;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator3;
+        private System.Windows.Forms.ToolStripButton batchToolStripButton;
+        private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.TextBox headerTextBox;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.TextBox footerTextBox;
     }
 }
