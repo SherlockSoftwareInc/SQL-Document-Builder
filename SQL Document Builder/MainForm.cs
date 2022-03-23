@@ -936,6 +936,14 @@ namespace SQL_Document_Builder
             //messageLabel.Text = "Complete";
         }
 
+        private void tasksToolStripButton_Click(object sender, EventArgs e)
+        {
+            using (var frm = new MigrateForm())
+            {
+                frm.ShowDialog();
+            }
+        }
+
         //private string _lastTable = "dbo.";
     }
 }

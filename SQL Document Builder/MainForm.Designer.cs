@@ -72,6 +72,8 @@
             this.serverToolStripStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this.databaseToolStripStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this.sqlTextBox = new System.Windows.Forms.TextBox();
+            this.toolStripSeparator7 = new System.Windows.Forms.ToolStripSeparator();
+            this.tasksToolStripButton = new System.Windows.Forms.ToolStripButton();
             this.menuStrip1.SuspendLayout();
             this.toolStrip1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
@@ -319,7 +321,9 @@
             this.toolStripSeparator3,
             this.singalTableToolStripButton,
             this.toolStripSeparator6,
-            this.tablesWikiToolStripButton});
+            this.tablesWikiToolStripButton,
+            this.toolStripSeparator7,
+            this.tasksToolStripButton});
             this.toolStrip1.Location = new System.Drawing.Point(0, 24);
             this.toolStrip1.Name = "toolStrip1";
             this.toolStrip1.Size = new System.Drawing.Size(897, 25);
@@ -435,6 +439,20 @@
             this.sqlTextBox.Size = new System.Drawing.Size(897, 538);
             this.sqlTextBox.TabIndex = 3;
             // 
+            // toolStripSeparator7
+            // 
+            this.toolStripSeparator7.Name = "toolStripSeparator7";
+            this.toolStripSeparator7.Size = new System.Drawing.Size(6, 25);
+            // 
+            // tasksToolStripButton
+            // 
+            this.tasksToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("tasksToolStripButton.Image")));
+            this.tasksToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.tasksToolStripButton.Name = "tasksToolStripButton";
+            this.tasksToolStripButton.Size = new System.Drawing.Size(54, 22);
+            this.tasksToolStripButton.Text = "Tasks";
+            this.tasksToolStripButton.Click += new System.EventHandler(this.tasksToolStripButton_Click);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -505,5 +523,7 @@
         private System.Windows.Forms.ToolStripMenuItem tableListToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator3;
         private System.Windows.Forms.TextBox sqlTextBox;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator7;
+        private System.Windows.Forms.ToolStripButton tasksToolStripButton;
     }
 }
