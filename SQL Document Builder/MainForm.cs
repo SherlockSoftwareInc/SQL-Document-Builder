@@ -944,6 +944,51 @@ namespace SQL_Document_Builder
             }
         }
 
+        private void ClipboardToolStripButton_Click(object sender, EventArgs e)
+        {
+            sqlTextBox.Clear();
+            if (Clipboard.ContainsText())
+            {
+                var metaData = Clipboard.GetText();
+                metaData = metaData.Replace("\r\n", "\r");
+                metaData = metaData.Replace("\n\r", "\r");
+                var lines = metaData.Split('\r');
+                if (lines.Length > 1)
+                {
+                    var sb = new System.Text.StringBuilder();
+                    sb.AppendLine("{| class=\"wikitable\"");
+                    sb.AppendLine("|-");
+                    sb.AppendLine(TabToRow(lines[0], "!!"));
+                    for (int i = 1; i < lines.Length; i++)
+                    {
+                        sb.AppendLine("|-");
+                        sb.AppendLine(TabToRow(lines[i]));
+                    }
+                    sb.AppendLine("|}");
+
+                    sqlTextBox.Text = sb.ToString();    
+                }
+            }
+        }
+
+        private string TabToRow(string values, string delimiter = "||")
+        {
+            var columns = values.Split('\t');
+            string results = delimiter.Substring(0, 1) + " ";
+            for (int i = 0; i < columns.Length; i++)
+            {
+                if (i == 0)
+                {
+                    results += columns[i];
+                }
+                else
+                {
+                    results += " " + delimiter + " " + columns[i];
+                }
+            }
+            return results;
+        }
+
         //private string _lastTable = "dbo.";
     }
 }
