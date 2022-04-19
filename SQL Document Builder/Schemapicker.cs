@@ -1,0 +1,63 @@
+﻿using System;
+using System.Data;
+using System.Data.SqlClient;
+using System.Windows.Forms;
+
+namespace SQL_Document_Builder
+{
+    public partial class Schemapicker : Form
+    {
+        public Schemapicker()
+        {
+            InitializeComponent();
+        }
+
+        public string Schema { get; set; }
+
+        private void Schemapicker_Load(object sender, EventArgs e)
+        {
+            PopulateSchemas();
+            if (schemaListBox.Items.Count > 0) schemaListBox.SelectedIndex = 0;
+        }
+
+        private void PopulateSchemas()
+        {
+            try
+            {
+                using var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+                conn.Open();
+                DataTable schemaTable = conn.GetSchema(System.Data.OleDb.OleDbMetaDataCollectionNames.Tables);
+                if (schemaTable.Rows.Count > 0)
+                {
+                    var dtSchemas = schemaTable.DefaultView.ToTable(true, "TABLE_SCHEMA");
+                    foreach (DataRow dr in dtSchemas.Rows)
+                    {
+                        schemaListBox.Items.Add(dr[0].ToString());
+                    }
+                }
+
+                conn.Close();
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        private void okButton_Click(object sender, EventArgs e)
+        {
+            if (schemaListBox.SelectedIndex >= 0)
+            {
+                Schema = schemaListBox.Items[schemaListBox.SelectedIndex].ToString();
+                DialogResult = DialogResult.OK;
+                Close();
+            }
+        }
+
+        private void cancelButton_Click(object sender, EventArgs e)
+        {
+            DialogResult = DialogResult.Cancel;
+            Close();
+        }
+    }
+}

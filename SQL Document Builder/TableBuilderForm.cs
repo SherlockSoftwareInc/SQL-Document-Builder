@@ -1,5 +1,6 @@
 ﻿using Microsoft.SqlServer.Management.Smo;
 using System;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Data;
 using System.Data.SqlClient;
@@ -402,32 +403,76 @@ namespace SQL_Document_Builder
             BuildScript();
         }
 
+        private void PopulateSchema()
+        {
+            schemaComboBox.Items.Clear();
+            schemaComboBox.Items.Add("(All)");
+
+            var dtSchemas = _tables.DefaultView.ToTable(true, "TABLE_SCHEMA");
+            var schemas = new List<string>();
+            foreach (DataRow dr in dtSchemas.Rows)
+            {
+                schemas.Add(dr[0].ToString());
+            }
+            schemas.Sort();
+            foreach (var item in schemas)
+            {
+                schemaComboBox.Items.Add(item);
+            }
+        }
+
         /// <summary>
         /// Populate the object list box
         /// </summary>
         private void Populate()
         {
+            string schemaName = string.Empty;
+            if (schemaComboBox.SelectedIndex > 0) schemaName = schemaComboBox.Items[schemaComboBox.SelectedIndex].ToString();
+
             if (_tables != null)
             {
                 objectsListBox.Items.Clear();
                 string searchFor = searchTextBox.Text.Trim();
                 if (searchFor.Length == 0)
                 {
-                    foreach (DataRow row in _tables.Rows)
+                    if (schemaName.Length == 0)
                     {
-                        AddListItem(row["TABLE_TYPE"].ToString(), row["TABLE_SCHEMA"].ToString(), row["TABLE_NAME"].ToString());
+                        foreach (DataRow row in _tables.Rows)
+                        {
+                            AddListItem(row["TABLE_TYPE"].ToString(), row["TABLE_SCHEMA"].ToString(), row["TABLE_NAME"].ToString());
+                        }
+                    }
+                    else
+                    {
+                        foreach (DataRow row in _tables.Rows)
+                        {
+                            if (schemaName.Equals(row["TABLE_SCHEMA"].ToString(), StringComparison.CurrentCultureIgnoreCase))
+                                AddListItem(row["TABLE_TYPE"].ToString(), row["TABLE_SCHEMA"].ToString(), row["TABLE_NAME"].ToString());
+                        }
                     }
                 }
                 else
                 {
                     var matches = _tables.Select(string.Format("TABLE_NAME LIKE '%{0}%'", searchFor));
-                    foreach (DataRow row in matches)
+                    if (schemaName.Length == 0)
                     {
-                        AddListItem(row["TABLE_TYPE"].ToString(), row["TABLE_SCHEMA"].ToString(), row["TABLE_NAME"].ToString());
+                        foreach (DataRow row in matches)
+                        {
+                            AddListItem(row["TABLE_TYPE"].ToString(), row["TABLE_SCHEMA"].ToString(), row["TABLE_NAME"].ToString());
+                        }
+                    }
+                    else
+                    {
+                        foreach (DataRow row in matches)
+                        {
+                            if (schemaName.Equals(row["TABLE_SCHEMA"].ToString(), StringComparison.CurrentCultureIgnoreCase))
+                                AddListItem(row["TABLE_TYPE"].ToString(), row["TABLE_SCHEMA"].ToString(), row["TABLE_NAME"].ToString());
+                        }
                     }
                 }
             }
         }
+
         private void SearchTextBox_TextChanged(object sender, EventArgs e)
         {
             Populate();
@@ -445,7 +490,8 @@ namespace SQL_Document_Builder
             headerTextBox.Text = Properties.Settings.Default.HeaderText;
             footerTextBox.Text = Properties.Settings.Default.FooterText;
             GetTableList();
-            Populate();
+            PopulateSchema();
+            if (schemaComboBox.Items.Count > 0) schemaComboBox.SelectedIndex = 0;
             WindowState = FormWindowState.Maximized;
         }
 
@@ -485,6 +531,11 @@ namespace SQL_Document_Builder
                 sqlTextBox.Text = string.Empty;
                 GetTableValues(objectName.FullName);
             }
+        }
+
+        private void schemaComboBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            Populate();
         }
     }
 }

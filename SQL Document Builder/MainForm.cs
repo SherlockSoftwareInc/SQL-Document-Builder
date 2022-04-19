@@ -75,7 +75,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Scan user tables in the database and generate the creation script for them
         /// </summary>
-        private void BuildTableListWiki()
+        private void BuildTableListWiki(string schemaName)
         {
             var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
             try
@@ -83,7 +83,7 @@ namespace SQL_Document_Builder
                 AppendLine("{| class=\"wikitable\"");
                 AppendLine("|-");
                 AppendLine("! Schema !! Table Name !! Description");
-                var cmd = new SqlCommand("SELECT SCHEMA_NAME(schema_id) AS table_schema, name AS table_name FROM sys.tables order by table_schema, table_name", conn) { CommandType = CommandType.Text };
+                var cmd = new SqlCommand(string.Format("SELECT SCHEMA_NAME(schema_id) AS table_schema, name AS table_name FROM sys.tables WHERE SCHEMA_NAME(schema_id) = N'{0}' order by table_schema, table_name", schemaName), conn) { CommandType = CommandType.Text };
                 conn.Open();
                 var dr = cmd.ExecuteReader();
                 while (dr.Read())
@@ -91,26 +91,7 @@ namespace SQL_Document_Builder
                     string tableSchema = dr[0].ToString();
                     string tableName = dr[1].ToString();
                     AppendLine("|-");
-                    AppendLine(string.Format("| {0} || [[DW Table: {0}.{1}|{1}]] || ", tableSchema, tableName));
-                    //if (tableSchema == "dbo")
-                    //{
-                    //AppendLine("/*====================================================");
-                    //AppendLine("\t" + string.Format("DW Table: {0}.{1}", tableSchema, tableName));
-                    //AppendLine("======================================================*/");
-                    //AppendLine(string.Format("===TABLE NAME: {0}.{1}===", tableSchema, tableName));
-                    //AppendLine("{| class=\"wikitable\"");
-                    //AppendLine("|-");
-                    //AppendLine("! Col ID !! Name !! Data Type !! Description");
-                    //GetTableDefinition(tableSchema, tableName);
-                    //AppendLine("|}");
-                    //AppendLine("</br>");
-                    //AppendLine("----");
-                    //AppendLine("Back to [[DW: Database tables|Database tables]]");
-                    //AppendLine("[[Category: CSBC data warehouse]]");
-                    //// AppendLine("")
-                    //// AppendLine("")
-                    //AppendLine("");
-                    //}
+                    AppendLine(string.Format("| {0} || [[DW Table: {0}.{1}|{1}]] || {2}", tableSchema, tableName, Common.GetTableDescription(new ObjectName() { Schema = tableSchema, Name= tableName})));
                 }
 
                 dr.Close();
@@ -910,7 +891,11 @@ namespace SQL_Document_Builder
         private void TableButton_Click(object sender, EventArgs e)
         {
             sqlTextBox.Text = string.Empty;
-            BuildTableListWiki();
+            using var dlg = new Schemapicker();
+            if (dlg.ShowDialog() == DialogResult.OK)
+            {
+                BuildTableListWiki(dlg.Schema);
+            }            
         }
 
         /// <summary>
