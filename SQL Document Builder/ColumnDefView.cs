@@ -190,49 +190,49 @@ namespace SQL_Document_Builder
             ChangeRowSelection();
         }
 
-        /// <summary>
-        /// Get column description
-        /// </summary>
-        /// <param name="schema"></param>
-        /// <param name="table"></param>
-        /// <param name="column"></param>
-        /// <returns></returns>
-        private string GetColumnDescription(string column)
-        {
-            string result = string.Empty;
-            string sql;
-            if (_objectName.ObjectType == ObjectName.ObjectTypeEnums.View)
-            {
-                sql = string.Format("SELECT E.value Description FROM sys.schemas S INNER JOIN sys.views T ON S.schema_id = T.schema_id INNER JOIN sys.columns C ON T.object_id = C.object_id INNER JOIN sys.extended_properties E ON T.object_id = E.major_id AND C.column_id = E.minor_id AND E.name = 'MS_Description' AND S.name = '{0}' AND T.name = '{1}' AND C.name = '{2}'", _objectName.Schema, _objectName.Name, column);
-            }
-            else
-            {
-                sql = string.Format("SELECT E.value Description FROM sys.schemas S INNER JOIN sys.tables T ON S.schema_id = T.schema_id INNER JOIN sys.columns C ON T.object_id = C.object_id INNER JOIN sys.extended_properties E ON T.object_id = E.major_id AND C.column_id = E.minor_id AND E.name = 'MS_Description' AND S.name = '{0}' AND T.name = '{1}' AND C.name = '{2}'", _objectName.Schema, _objectName.Name, column);
-            }
-            var conn = new SqlConnection(ConnectionString);
-            try
-            {
-                var cmd = new SqlCommand(sql, conn) { CommandType = CommandType.Text };
-                conn.Open();
-                var dr = cmd.ExecuteReader();
-                if (dr.Read())
-                {
-                    result = dr[0].ToString();
-                }
+        ///// <summary>
+        ///// Get column description
+        ///// </summary>
+        ///// <param name="schema"></param>
+        ///// <param name="table"></param>
+        ///// <param name="column"></param>
+        ///// <returns></returns>
+        //private string GetColumnDescription(string column)
+        //{
+        //    string result = string.Empty;
+        //    string sql;
+        //    if (_objectName?.ObjectType == ObjectName.ObjectTypeEnums.View)
+        //    {
+        //        sql = string.Format("SELECT E.value Description FROM sys.schemas S INNER JOIN sys.views T ON S.schema_id = T.schema_id INNER JOIN sys.columns C ON T.object_id = C.object_id INNER JOIN sys.extended_properties E ON T.object_id = E.major_id AND C.column_id = E.minor_id AND E.name = 'MS_Description' AND S.name = '{0}' AND T.name = '{1}' AND C.name = '{2}'", _objectName.Schema, _objectName.Name, column);
+        //    }
+        //    else
+        //    {
+        //        sql = string.Format("SELECT E.value Description FROM sys.schemas S INNER JOIN sys.tables T ON S.schema_id = T.schema_id INNER JOIN sys.columns C ON T.object_id = C.object_id INNER JOIN sys.extended_properties E ON T.object_id = E.major_id AND C.column_id = E.minor_id AND E.name = 'MS_Description' AND S.name = '{0}' AND T.name = '{1}' AND C.name = '{2}'", _objectName.Schema, _objectName.Name, column);
+        //    }
+        //    var conn = new SqlConnection(ConnectionString);
+        //    try
+        //    {
+        //        var cmd = new SqlCommand(sql, conn) { CommandType = CommandType.Text };
+        //        conn.Open();
+        //        var dr = cmd.ExecuteReader();
+        //        if (dr.Read())
+        //        {
+        //            result = dr[0].ToString();
+        //        }
 
-                dr.Close();
-            }
-            catch (Exception ex)
-            {
-                //MsgBox(ex.Message, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                conn.Close();
-            }
+        //        dr.Close();
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        //MsgBox(ex.Message, MessageBoxIcon.Error);
+        //    }
+        //    finally
+        //    {
+        //        conn.Close();
+        //    }
 
-            return result;
-        }
+        //    return result;
+        //}
 
         /// <summary>
         /// Get description of table/view from the database
@@ -253,7 +253,7 @@ namespace SQL_Document_Builder
                 var dr = cmd.ExecuteReader();
                 if (dr.Read())
                 {
-                    result = dr[0].ToString();
+                    result = dr.GetString(0);   // dr[0].ToString();
                 }
 
                 dr.Close();

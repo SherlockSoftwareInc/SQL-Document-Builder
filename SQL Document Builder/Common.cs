@@ -10,7 +10,7 @@ namespace SQL_Document_Builder
         public static string GetTableDescription(ObjectName objectName)
         {
             string result = string.Empty;
-            string sql = string.Format(String.Format("SELECT value FROM fn_listextendedproperty (NULL, 'schema', '{0}', '{2}', '{1}', default, default) WHERE name = N'MS_Description'", objectName.Schema, objectName.Name, (objectName.ObjectType == ObjectName.ObjectTypeEnums.View ? "view" : "table")));
+            string sql = string.Format(String.Format("SELECT value FROM fn_listextendedproperty (NULL, 'schema', N'{0}', '{2}', N'{1}', default, default) WHERE name = N'MS_Description'", objectName.Schema, objectName.Name, (objectName.ObjectType == ObjectName.ObjectTypeEnums.View ? "view" : "table")));
 
             var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
             try
@@ -20,7 +20,7 @@ namespace SQL_Document_Builder
                 var dr = cmd.ExecuteReader();
                 if (dr.Read())
                 {
-                    result = dr[0].ToString();
+                    result = dr.GetString(0);   // dr[0].ToString();
                 }
 
                 dr.Close();
@@ -57,7 +57,7 @@ namespace SQL_Document_Builder
                 var dr = cmd.ExecuteReader();
                 if (dr.Read())
                 {
-                    result = dr[0].ToString();
+                    result = dr.GetString(0);   // dr[0].ToString();
                 }
 
                 dr.Close();
@@ -93,7 +93,7 @@ namespace SQL_Document_Builder
                 var dr = cmd.ExecuteReader();
                 if (dr.Read())
                 {
-                    result = dr[0].ToString();
+                    result = dr.GetString(0);   // dr[0].ToString();
                 }
 
                 dr.Close();

@@ -14,14 +14,30 @@ namespace SQL_Document_Builder
 
         public string Schema { get; set; }
 
-        private void Schemapicker_Load(object sender, EventArgs e)
+        private void CancelButton_Click(object sender, EventArgs e)
         {
-            PopulateSchemas();
-            if (schemaListBox.Items.Count > 0) schemaListBox.SelectedIndex = 0;
+            DialogResult = DialogResult.Cancel;
+            Close();
+        }
+
+        private void OkButton_Click(object sender, EventArgs e)
+        {
+            if (schemaListBox.SelectedIndex >= 0)
+            {
+                if (schemaListBox.SelectedIndex == 0)
+                    Schema = string.Empty;
+                else
+                    Schema = schemaListBox.Items[schemaListBox.SelectedIndex].ToString();
+                DialogResult = DialogResult.OK;
+                Close();
+            }
         }
 
         private void PopulateSchemas()
         {
+            schemaListBox.Items.Clear();
+            schemaListBox.Items.Add("(All)");
+
             try
             {
                 using var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
@@ -44,20 +60,10 @@ namespace SQL_Document_Builder
             }
         }
 
-        private void okButton_Click(object sender, EventArgs e)
+        private void Schemapicker_Load(object sender, EventArgs e)
         {
-            if (schemaListBox.SelectedIndex >= 0)
-            {
-                Schema = schemaListBox.Items[schemaListBox.SelectedIndex].ToString();
-                DialogResult = DialogResult.OK;
-                Close();
-            }
-        }
-
-        private void cancelButton_Click(object sender, EventArgs e)
-        {
-            DialogResult = DialogResult.Cancel;
-            Close();
+            PopulateSchemas();
+            if (schemaListBox.Items.Count > 0) schemaListBox.SelectedIndex = 0;
         }
     }
 }

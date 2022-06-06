@@ -164,7 +164,7 @@ namespace SQL_Document_Builder
         /// <param name="table"></param>
         /// <param name="column"></param>
         /// <returns></returns>
-        private bool IsColumnDescExists(string schema, string table, string column)
+        private static bool IsColumnDescExists(string schema, string table, string column)
         {
             bool result = false;
             string sql = string.Format("SELECT E.value Description FROM sys.schemas S INNER JOIN sys.{3}s T ON S.schema_id = T.schema_id INNER JOIN sys.columns C ON T.object_id = C.object_id INNER JOIN sys.extended_properties E ON T.object_id = E.major_id AND C.column_id = E.minor_id AND E.name = 'MS_Description' AND S.name = '{0}' AND T.name = '{1}' AND C.name = '{2}'", schema, table, column, GetTableTyp(schema, table));

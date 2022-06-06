@@ -83,10 +83,14 @@
             {
                 return text.Substring(1, text.Length - 2);
             }
-            else
+
+            if (text.StartsWith("'") && text.EndsWith("'"))
             {
-                return text;
+                return text.Substring(1, text.Length - 2);
             }
+
+            return text;
+
         }
     }
 }

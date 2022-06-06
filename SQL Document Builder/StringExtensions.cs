@@ -113,7 +113,7 @@ namespace SQL_Document_Builder
         {
             if (value.StartsWith("[") && value.EndsWith("]"))
             {
-                return value.Substring(1, value.Length - 2);
+                return value[1..^1];
             }
             else
             {

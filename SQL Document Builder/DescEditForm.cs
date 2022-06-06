@@ -30,8 +30,8 @@ namespace SQL_Document_Builder
         {
             SaveChange();
 
-            string selectedColumn = columnView.SelectedColumn;
-            if (selectedColumn.Length == 0)
+            string? selectedColumn = columnView.SelectedColumn;
+            if (selectedColumn?.Length == 0)
             {
                 descTextBox.Text = string.Empty;
             }

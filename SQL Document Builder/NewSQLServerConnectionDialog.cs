@@ -190,17 +190,17 @@ namespace SQL_Document_Builder
         /// <returns></returns>
         private List<string> GetDatabases(string serverName)
         {
-            List<String> databases = new List<String>();
+            List<String> databases = new();
             try
             {
-                SqlConnectionStringBuilder connection = new SqlConnectionStringBuilder
+                SqlConnectionStringBuilder connection = new()
                 {
                     DataSource = serverName,
                     IntegratedSecurity = true
                 };
 
                 String strConn = connection.ToString();
-                SqlConnection sqlConn = new SqlConnection(strConn);
+                SqlConnection sqlConn = new(strConn);
                 sqlConn.Open();
 
                 //get databases
@@ -210,9 +210,8 @@ namespace SQL_Document_Builder
 
                 foreach (DataRow row in tblDatabases.Rows)
                 {
-                    String strDatabaseName = row["database_name"].ToString();
-
-                    databases.Add(strDatabaseName);
+                    String? strDatabaseName = row["database_name"].ToString();
+                    if (strDatabaseName != null) databases.Add(strDatabaseName);
                 }
             }
             catch (SqlException)

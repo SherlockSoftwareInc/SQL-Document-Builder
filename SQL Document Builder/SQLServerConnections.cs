@@ -70,9 +70,12 @@ namespace SQL_Document_Builder
             {
                 using var fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
                 using var streamReader = new StreamReader(fileStream);
-                string strFirstLine = streamReader.ReadLine();
-                string strXML = streamReader.ReadToEnd();
-                ParseXML(strFirstLine + "\r\n" + strXML);
+                if (streamReader != null)
+                {
+                    string strFirstLine = streamReader.ReadLine();
+                    string strXML = streamReader.ReadToEnd();
+                    ParseXML(strFirstLine + "\r\n" + strXML);
+                }
             }
             _tmpFile = Path.GetTempFileName();
         }

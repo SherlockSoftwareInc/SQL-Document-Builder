@@ -144,23 +144,19 @@ namespace SQL_Document_Builder
 
         public static string Decrypt(byte[] cipherText, byte[] Key, byte[] IV)
         {
-            string plaintext = null;
+            string plaintext;
             // Create TripleDESCryptoServiceProvider  
             using (TripleDESCryptoServiceProvider tdes = new TripleDESCryptoServiceProvider())
             {
                 // Create a decryptor  
                 ICryptoTransform decryptor = tdes.CreateDecryptor(Key, IV);
                 // Create the streams used for decryption.  
-                using (MemoryStream ms = new MemoryStream(cipherText))
-                {
-                    // Create crypto stream  
-                    using (CryptoStream cs = new CryptoStream(ms, decryptor, CryptoStreamMode.Read))
-                    {
-                        // Read crypto stream  
-                        using (StreamReader reader = new StreamReader(cs))
-                            plaintext = reader.ReadToEnd();
-                    }
-                }
+                using MemoryStream ms = new(cipherText);
+                // Create crypto stream  
+                using CryptoStream cs = new(ms, decryptor, CryptoStreamMode.Read);
+                // Read crypto stream  
+                using StreamReader reader = new(cs);
+                plaintext = reader.ReadToEnd();
             }
             return plaintext;
         }

@@ -201,7 +201,7 @@ namespace SQL_Document_Builder
                 var dr = cmd.ExecuteReader();
                 if (dr.Read())
                 {
-                    result = dr[0].ToString();
+                    result = dr.GetString(0);  //dr[0].ToString();
                 }
 
                 dr.Close();
@@ -236,9 +236,9 @@ namespace SQL_Document_Builder
                 while (dr.Read())
                 {
                     AppendLine("|-");
-                    string colID = dr["ORDINAL_POSITION"].ToString();
-                    string colName = dr["COLUMN_NAME"].ToString();
-                    string dataType = dr["DATA_TYPE"].ToString();
+                    string colID = dr.GetString("ORDINAL_POSITION");
+                    string colName = dr.GetString("COLUMN_NAME"); 
+                    string dataType = dr.GetString("DATA_TYPE"); 
                     if (dr["CHARACTER_MAXIMUM_LENGTH"] != DBNull.Value)
                     {
                         dataType = string.Format("{0}({1})", dataType, dr["CHARACTER_MAXIMUM_LENGTH"].ToString());
@@ -433,9 +433,9 @@ namespace SQL_Document_Builder
             {
                 objectsListBox.Items.Clear();
                 string searchFor = searchTextBox.Text.Trim();
-                if (searchFor.Length == 0)
+                if (searchFor?.Length == 0)
                 {
-                    if (schemaName.Length == 0)
+                    if (schemaName?.Length == 0)
                     {
                         foreach (DataRow row in _tables.Rows)
                         {
@@ -454,7 +454,7 @@ namespace SQL_Document_Builder
                 else
                 {
                     var matches = _tables.Select(string.Format("TABLE_NAME LIKE '%{0}%'", searchFor));
-                    if (schemaName.Length == 0)
+                    if (schemaName?.Length == 0)
                     {
                         foreach (DataRow row in matches)
                         {
