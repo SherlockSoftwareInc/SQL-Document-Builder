@@ -9,7 +9,7 @@
   <Identity
     Name="65a904a2-7e63-4587-acae-82f37365175a"
     Publisher="CN=Sherlock Software Inc., O=Sherlock Software Inc., STREET=1001-5051 Lougheed Hwy., L=Burnaby, S=British Columbia, PostalCode=V5B4T5, C=CA"
-    Version="1.0.1.0" />
+    Version="1.1.0.0" />
 
   <Properties>
     <DisplayName>SQLDocBuilderSetup</DisplayName>
