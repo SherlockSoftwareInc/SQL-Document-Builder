@@ -236,7 +236,7 @@ namespace SQL_Document_Builder
                 while (dr.Read())
                 {
                     AppendLine("|-");
-                    string colID = dr.GetString("ORDINAL_POSITION");
+                    int colID = dr.GetInt32("ORDINAL_POSITION");
                     string colName = dr.GetString("COLUMN_NAME"); 
                     string dataType = dr.GetString("DATA_TYPE"); 
                     if (dr["CHARACTER_MAXIMUM_LENGTH"] != DBNull.Value)

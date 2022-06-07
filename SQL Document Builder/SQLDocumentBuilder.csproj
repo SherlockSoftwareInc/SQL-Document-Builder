@@ -11,10 +11,11 @@
     <Company>Sherlock Software Inc.</Company>
     <Product>SQL Server Script and Document Builder</Product>
     <StartupObject>SQL_Document_Builder.Program</StartupObject>
-    <ApplicationIcon>SQLBuilder.ico</ApplicationIcon>
-    <PackageIcon>Docs.png</PackageIcon>
+    <ApplicationIcon>sql_script.ico</ApplicationIcon>
+    <PackageIcon>SQL128.png</PackageIcon>
     <AssemblyVersion>1.0.1</AssemblyVersion>
     <FileVersion>1.0.1</FileVersion>
+    <RepositoryUrl>https://github.com/SherlockSoftwareInc/SQL-Document-Builder</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>
@@ -27,7 +28,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="SQLBuilder.ico" />
+    <Content Include="sql_script.ico" />
   </ItemGroup>
 
   <ItemGroup>
@@ -63,6 +64,10 @@
     <None Update="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <None Update="SQL128.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
     </None>
   </ItemGroup>
 
