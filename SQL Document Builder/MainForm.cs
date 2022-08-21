@@ -454,6 +454,8 @@ namespace SQL_Document_Builder
                         IncludeHeaders = false,
                         ExtendedProperties = true,
                         SchemaQualify = false,
+                        AllowSystemObjects = false,
+                        ContinueScriptingOnError = true,
                     };
 
                     tableScripts = myTable.Script(options);
@@ -461,7 +463,12 @@ namespace SQL_Document_Builder
                     {
                         if (script != null)
                         {
-                            AppendLine(script);
+                            string tableScript = script;
+                            if (schemaName.Length > 0)
+                            {
+                                tableScript = script.Replace("CREATE TABLE [", String.Format("CREATE TABLE [{0}].[", schemaName));
+                            }
+                            AppendLine(tableScript);
                             AppendLine("GO");
                             AppendLine("");
                         }
@@ -730,7 +737,11 @@ namespace SQL_Document_Builder
             var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
             try
             {
-                var cmd = new SqlCommand("SELECT ROUTINE_SCHEMA, ROUTINE_NAME FROM information_schema.routines WHERE routine_type = 'PROCEDURE' AND LEFT(Routine_Name, 3) NOT IN ('sp_', 'xp_', 'ms_') ORDER BY ROUTINE_NAME", conn) { CommandType = CommandType.Text };
+                var cmd = new SqlCommand("SELECT ROUTINE_SCHEMA, ROUTINE_NAME FROM information_schema.routines WHERE routine_type = 'PROCEDURE' AND LEFT(Routine_Name, 3) NOT IN ('sp_', 'xp_', 'ms_') ORDER BY ROUTINE_NAME", conn)
+                {
+                    CommandType = CommandType.Text,
+                    CommandTimeout = 120000
+                };
                 conn.Open();
                 var dr = cmd.ExecuteReader();
                 while (dr.Read())
@@ -749,7 +760,7 @@ namespace SQL_Document_Builder
                         AppendLine("======================================================*/");
                         AppendLine(string.Format("DROP PROCEDURE IF EXISTS [{0}].[{1}]", schema, spName));
                         AppendLine("GO");
-                        GetSPDefinition(schemaName, spName);
+                        GetSPDefinition(schema, spName);
                         AppendLine("GO");
                         AppendLine(string.Format("GRANT EXEC ON [{0}].[{1}] TO [db_execproc]", schema, spName));
                         AppendLine("GO");
