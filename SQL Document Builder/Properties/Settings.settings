@@ -27,5 +27,11 @@ Back to [[DW: Database tables|Data warehouse tables]]
 &lt;/SerializableConnectionString&gt;</DesignTimeValue>
       <Value Profile="(Default)">Data Source=svmsq06;Initial Catalog=AFDataMart_DEV;Integrated Security=True</Value>
     </Setting>
+    <Setting Name="GrantSPPermission" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="UseIfExist" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

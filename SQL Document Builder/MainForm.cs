@@ -4,7 +4,9 @@ using System.Collections.Specialized;
 using System.Data;
 using System.Data.SqlClient;
 using System.Drawing;
+using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Xml.Linq;
 
 namespace SQL_Document_Builder
 {
@@ -15,6 +17,7 @@ namespace SQL_Document_Builder
         private string _database = string.Empty;
         private SQLDatabaseConnectionItem? _selectedConnection;
         private string _server = string.Empty;
+        private readonly System.Text.StringBuilder _script = new();
 
         public MainForm()
         {
@@ -71,7 +74,8 @@ namespace SQL_Document_Builder
         /// <param name="text"></param>
         private void AppendLine(string text)
         {
-            sqlTextBox.AppendText(text + Environment.NewLine);
+            //sqlTextBox.AppendText(text + Environment.NewLine);
+            _script.AppendLine(text);
         }
 
         /// <summary>
@@ -79,6 +83,8 @@ namespace SQL_Document_Builder
         /// </summary>
         private void BuildFunctionListWiki(string schemaName)
         {
+            _script.Clear();
+            sqlTextBox.Text = "Please wait...";
             var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
             try
             {
@@ -106,6 +112,7 @@ namespace SQL_Document_Builder
 
                 dr.Close();
                 AppendLine("|}");
+                sqlTextBox.Text = _script.ToString();
             }
             catch (Exception ex)
             {
@@ -122,6 +129,9 @@ namespace SQL_Document_Builder
         /// </summary>
         private void BuildSPListWiki(string schemaName)
         {
+            _script.Clear();
+            sqlTextBox.Text = "Please wait...";
+
             var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
             try
             {
@@ -149,6 +159,7 @@ namespace SQL_Document_Builder
 
                 dr.Close();
                 AppendLine("|}");
+                sqlTextBox.Text = _script.ToString();
             }
             catch (Exception ex)
             {
@@ -165,13 +176,22 @@ namespace SQL_Document_Builder
         /// </summary>
         private void BuildTableListWiki(string schemaName)
         {
+            _script.Clear();
+            sqlTextBox.Text = "Please wait...";
             var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
             try
             {
                 AppendLine("{| class=\"wikitable\"");
                 AppendLine("|-");
                 AppendLine("! Schema !! Table Name !! Description");
-                var cmd = new SqlCommand(string.Format("SELECT SCHEMA_NAME(schema_id) AS table_schema, name AS table_name FROM sys.tables WHERE SCHEMA_NAME(schema_id) = N'{0}' order by table_schema, table_name", schemaName), conn) { CommandType = CommandType.Text };
+                string sql;
+                if (schemaName.Length == 0)
+                    sql = "SELECT SCHEMA_NAME(schema_id) AS table_schema, name AS table_name FROM sys.tables order by table_schema, table_name";
+                else
+                    sql = string.Format("SELECT SCHEMA_NAME(schema_id) AS table_schema, name AS table_name FROM sys.tables WHERE SCHEMA_NAME(schema_id) = N'{0}' order by table_schema, table_name", schemaName);
+
+                var cmd = new SqlCommand(sql, conn)
+                { CommandType = CommandType.Text };
                 conn.Open();
                 var dr = cmd.ExecuteReader();
                 while (dr.Read())
@@ -184,6 +204,7 @@ namespace SQL_Document_Builder
 
                 dr.Close();
                 AppendLine("|}");
+                sqlTextBox.Text = _script.ToString();
             }
             catch (Exception ex)
             {
@@ -200,13 +221,21 @@ namespace SQL_Document_Builder
         /// </summary>
         private void BuildViewListWiki(string schemaName)
         {
+            _script.Clear();
+            sqlTextBox.Text = "Please wait...";
             var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
             try
             {
                 AppendLine("{| class=\"wikitable\"");
                 AppendLine("|-");
                 AppendLine("! Schema !! View Name !! Description");
-                var cmd = new SqlCommand(string.Format("SELECT SCHEMA_NAME(schema_id) AS table_schema, name AS table_name FROM sys.views WHERE SCHEMA_NAME(schema_id) = N'{0}' order by table_schema, table_name", schemaName), conn) { CommandType = CommandType.Text };
+                string sql;
+                if (schemaName.Length == 0)
+                    sql = "SELECT SCHEMA_NAME(schema_id) AS table_schema, name AS table_name FROM sys.views ORDER BY table_schema, table_name";
+                else
+                    sql = string.Format("SELECT SCHEMA_NAME(schema_id) AS table_schema, name AS table_name FROM sys.views WHERE SCHEMA_NAME(schema_id) = N'{0}' order by table_schema, table_name", schemaName);
+                var cmd = new SqlCommand(sql, conn)
+                { CommandType = CommandType.Text };
                 conn.Open();
                 var dr = cmd.ExecuteReader();
                 while (dr.Read())
@@ -219,6 +248,7 @@ namespace SQL_Document_Builder
 
                 dr.Close();
                 AppendLine("|}");
+                sqlTextBox.Text = _script.ToString();
             }
             catch (Exception ex)
             {
@@ -294,7 +324,9 @@ namespace SQL_Document_Builder
         /// <param name="e"></param>
         private void ClipboardToolStripButton_Click(object sender, EventArgs e)
         {
-            sqlTextBox.Clear();
+            _script.Clear();
+            sqlTextBox.Text = "Please wait...";
+            
             if (Clipboard.ContainsText())
             {
                 var metaData = Clipboard.GetText();
@@ -303,18 +335,17 @@ namespace SQL_Document_Builder
                 var lines = metaData.Split('\r');
                 if (lines.Length > 1)
                 {
-                    var sb = new System.Text.StringBuilder();
-                    sb.AppendLine("{| class=\"wikitable\"");
-                    sb.AppendLine("|-");
-                    sb.AppendLine(TabToRow(lines[0], "!!"));
+                    AppendLine("{| class=\"wikitable\"");
+                    AppendLine("|-");
+                    AppendLine(TabToRow(lines[0], "!!"));
                     for (int i = 1; i < lines.Length; i++)
                     {
-                        sb.AppendLine("|-");
-                        sb.AppendLine(TabToRow(lines[i]));
+                        AppendLine("|-");
+                        AppendLine(TabToRow(lines[i]));
                     }
-                    sb.AppendLine("|}");
+                    AppendLine("|}");
 
-                    sqlTextBox.Text = sb.ToString();
+                    sqlTextBox.Text = _script.ToString();
                 }
             }
         }
@@ -354,9 +385,11 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void FunctionButton_Click(object sender, EventArgs e)
+        private async void FunctionButton_Click(object sender, EventArgs e)
         {
-            sqlTextBox.Text = string.Empty;
+            _script.Clear();
+            sqlTextBox.Text = "Please wait...";
+
             using var dlg = new Schemapicker();
             if (dlg.ShowDialog() == DialogResult.OK)
             {
@@ -367,11 +400,19 @@ namespace SQL_Document_Builder
                     if (database != null)
                     {
                         statusToolStripStatusLabe.Text = "Please wait while generate the scripts...";
+                        progressBar.Value = 0;
+                        progressBar.Visible = true;
+                        Application.DoEvents();
 
-                        ScanAllFunctions(dlg.Schema);
+                        var progress = new Progress<int>(value =>
+                        {
+                            progressBar.Value = value;
+                        });
+                        await Task.Run(() => ScanAllFunctions(dlg.Schema, progress));
+                        progressBar.Visible = false;
+                        sqlTextBox.Text = _script.ToString();
                     }
                 }
-                //statusToolStripStatusLabe.Text = "Complete!";
             }
             else
             {
@@ -403,7 +444,7 @@ namespace SQL_Document_Builder
         /// https://csharp.hotexamples.com/examples/Microsoft.SqlServer.Management.Smo/Database/-/php-database-class-examples.html
         /// </summary>
         /// <param name="myServer"></param>
-        private void GenerateTableScript(Database database, string schemaName)
+        private void GenerateTableScript(Database database, string schemaName, IProgress<int> progress)
         {
             //Scripter scripter = new(myServer);
 
@@ -419,8 +460,13 @@ namespace SQL_Document_Builder
                 IncludeIfNotExists = true
             };
 
-            foreach (Table myTable in database.Tables)
+            for (int i = 0; i < database.Tables.Count; i++)
             {
+                var percentComplete = (i * 100) / database.Tables.Count;
+                progress.Report(percentComplete);
+
+                var myTable = database.Tables[i];
+
                 bool generate = true;
                 if (schemaName.Length > 0)
                 {
@@ -456,6 +502,7 @@ namespace SQL_Document_Builder
                         SchemaQualify = false,
                         AllowSystemObjects = false,
                         ContinueScriptingOnError = true,
+                        NoCollation = true,
                     };
 
                     tableScripts = myTable.Script(options);
@@ -464,9 +511,9 @@ namespace SQL_Document_Builder
                         if (script != null)
                         {
                             string tableScript = script;
-                            if (schemaName.Length > 0)
+                            if (myTable.Schema.Length > 0)
                             {
-                                tableScript = script.Replace("CREATE TABLE [", String.Format("CREATE TABLE [{0}].[", schemaName));
+                                tableScript = script.Replace("CREATE TABLE ", String.Format("CREATE TABLE {0}.", myTable.Schema));
                             }
                             AppendLine(tableScript);
                             AppendLine("GO");
@@ -485,7 +532,7 @@ namespace SQL_Document_Builder
         /// <returns></returns>
         private void GetSPDefinition(string schema, string spName)
         {
-            string sql = string.Format("SELECT definition FROM sys.sql_modules WHERE object_id = (OBJECT_ID(N'[{0}].[{1}]'))", schema, spName);
+            string sql = string.Format("SELECT definition FROM sys.sql_modules WHERE object_id = (OBJECT_ID(N'{0}.{1}'))", schema, spName);
             var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
             try
             {
@@ -495,8 +542,8 @@ namespace SQL_Document_Builder
                 if (dr.Read())
                 {
                     AppendLine(dr.GetString(0));
+                    AppendLine("GO");
                 }
-
                 dr.Close();
             }
             catch (Exception ex)
@@ -651,7 +698,7 @@ namespace SQL_Document_Builder
                 for (int i = 0; i < connections.Count; i++)
                 {
                     var item = connections[i];
-                    if (item.ConnectionString.Length > 1)
+                    if (item.ConnectionString?.Length > 1)
                     {
                         var submenuitem = new ConnectionMenuItem(item)
                         {
@@ -685,38 +732,20 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Scan functions in the database and generate the creation script for them
         /// </summary>
-        private void ScanAllFunctions(string schemaName)
+        private void ScanAllFunctions(string schemaName, IProgress<int> progress)
         {
+            DataTable dt = new();
             var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
             try
             {
-                var cmd = new SqlCommand("SELECT ROUTINE_SCHEMA, ROUTINE_NAME FROM information_schema.routines WHERE routine_type = 'FUNCTION' ORDER BY ROUTINE_NAME", conn) { CommandType = CommandType.Text };
+                var cmd = new SqlCommand("SELECT ROUTINE_SCHEMA, ROUTINE_NAME FROM information_schema.routines WHERE routine_type = 'FUNCTION' ORDER BY ROUTINE_NAME", conn)
+                {
+                    CommandType = CommandType.Text,
+                    CommandTimeout = 120000
+                };
                 conn.Open();
                 var dr = cmd.ExecuteReader();
-                while (dr.Read())
-                {
-                    string schema = dr.GetString("ROUTINE_SCHEMA");
-                    bool generate = true;
-                    if (schemaName.Length > 0 && !schemaName.Equals(schema, StringComparison.CurrentCultureIgnoreCase))
-                    {
-                        generate = false;
-                    }
-                    if (generate)
-                    {
-                        string spName = dr.GetString(1);
-                        AppendLine("/*====================================================");
-                        AppendLine("\t" + spName);
-                        AppendLine("======================================================*/");
-                        AppendLine(string.Format("DROP FUNCTION IF EXISTS [{0}].[{1}]", schema, spName));
-                        AppendLine("GO");
-                        GetSPDefinition(schema, spName);
-                        AppendLine("GO");
-                        AppendLine(string.Format("--GRANT EXEC ON [{0}].[{1}] TO [db_execproc]", schema, spName));
-                        AppendLine("--GO");
-                        AppendLine("");
-                    }
-                }
-
+                dt.Load(dr);
                 dr.Close();
             }
             catch (Exception ex)
@@ -727,13 +756,57 @@ namespace SQL_Document_Builder
             {
                 conn.Close();
             }
+
+            if (dt.Rows.Count > 0)
+            {
+                for (int i = 0; i < dt.Rows.Count; i++)
+                {
+                    var percentComplete = (i * 100) / dt.Rows.Count;
+                    progress.Report(percentComplete);
+
+                    DataRow dr = dt.Rows[i];
+                    string? schema = Convert.ToString(dr["ROUTINE_SCHEMA"]);
+                    bool generate = true;
+                    if (schemaName.Length > 0 && !schemaName.Equals(schema, StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        generate = false;
+                    }
+                    if (generate)
+                    {
+                        string? fnName = Convert.ToString(dr[1]);
+                        if (schema != null && fnName != null)
+                        {
+                            AppendLine("/*====================================================");
+                            AppendLine("\t" + fnName);
+                            AppendLine("======================================================*/");
+                            if (Properties.Settings.Default.UseIfExist)
+                                AppendLine(string.Format("DROP FUNCTION IF EXISTS {0}.{1}", schema, fnName));
+                            else
+                            {
+                                AppendLine(string.Format("IF OBJECT_ID('{0}.{1}', 'FN') IS NOT NULL", schema, fnName));
+                                AppendLine(string.Format("\tDROP FUNCTION {0}.{1}", schema, fnName));
+                            }
+                            AppendLine("GO");
+                            GetSPDefinition(schema, fnName);
+                            AppendLine("GO");
+                            if (Properties.Settings.Default.GrantSPPermission)
+                            {
+                                AppendLine(string.Format("GRANT EXEC ON {0}.{1} TO db_execproc", schema, fnName));
+                                AppendLine("GO");
+                            }
+                            AppendLine("");
+                        }
+                    }
+                }
+            }
         }
 
         /// <summary>
         /// Scan stored procedures in the database and generate the creation script for them
         /// </summary>
-        private void ScanAllSPs(string schemaName)
+        private void ScanAllSPs(string schemaName, IProgress<int> progress)
         {
+            DataTable dt = new();
             var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
             try
             {
@@ -744,9 +817,27 @@ namespace SQL_Document_Builder
                 };
                 conn.Open();
                 var dr = cmd.ExecuteReader();
-                while (dr.Read())
+                dt.Load(dr);
+                dr.Close();
+            }
+            catch (Exception ex)
+            {
+                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                conn.Close();
+            }
+
+            if (dt.Rows.Count > 0)
+            {
+                for (int i = 0; i < dt.Rows.Count; i++)
                 {
-                    string schema = dr.GetString(0);
+                    var percentComplete = (i * 100) / dt.Rows.Count;
+                    progress.Report(percentComplete);
+
+                    DataRow dr = dt.Rows[i];
+                    string? schema = Convert.ToString(dr[0]);
                     bool generate = true;
                     if (schemaName.Length > 0 && !schemaName.Equals(schema, StringComparison.CurrentCultureIgnoreCase))
                     {
@@ -754,66 +845,52 @@ namespace SQL_Document_Builder
                     }
                     if (generate)
                     {
-                        string spName = dr.GetString(1);    // dr[1].ToString();
-                        AppendLine("/*====================================================");
-                        AppendLine("\t" + spName);
-                        AppendLine("======================================================*/");
-                        AppendLine(string.Format("DROP PROCEDURE IF EXISTS [{0}].[{1}]", schema, spName));
-                        AppendLine("GO");
-                        GetSPDefinition(schema, spName);
-                        AppendLine("GO");
-                        AppendLine(string.Format("GRANT EXEC ON [{0}].[{1}] TO [db_execproc]", schema, spName));
-                        AppendLine("GO");
-                        AppendLine("");
+                        string? spName = Convert.ToString(dr[1]);
+                        if (schema != null && spName != null)
+                        {
+                            AppendLine("/*====================================================");
+                            AppendLine("\t" + spName);
+                            AppendLine("======================================================*/");
+                            if (Properties.Settings.Default.UseIfExist)
+                                AppendLine(string.Format("DROP PROCEDURE IF EXISTS {0}.{1}", schema, spName));
+                            else
+                            {
+                                AppendLine(string.Format("IF OBJECT_ID('{0}.{1}', 'P') IS NOT NULL", schema, spName));
+                                AppendLine(string.Format("\tDROP PROCEDURE {0}.{1}", schema, spName));
+                            }
+                            AppendLine("GO");
+                            GetSPDefinition(schema, spName);
+                            //AppendLine("GO");
+                            if (Properties.Settings.Default.GrantSPPermission)
+                            {
+                                AppendLine(string.Format("GRANT EXEC ON {0}.{1} TO db_execproc", schema, spName));
+                                AppendLine("GO");
+                            }
+                            AppendLine("");
+                        }
                     }
                 }
-
-                dr.Close();
-            }
-            catch (Exception ex)
-            {
-                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                conn.Close();
             }
         }
 
         /// <summary>
         /// Scan views in the database and generate the creation script for them
         /// </summary>
-        private void ScanAllViews(string schemaName)
+        private void ScanAllViews(string schemaName, IProgress<int> progress)
         {
+            DataTable dt = new();
             var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
             try
             {
                 // Dim cmd As New SqlCommand("SELECT name AS view_name FROM sys.views where SCHEMA_NAME(schema_id) = 'dbo' order by view_name", conn) With {
-                var cmd = new SqlCommand("SELECT SCHEMA_NAME(schema_id) AS view_schema, name AS view_name FROM sys.views", conn) { CommandType = CommandType.Text };
+                var cmd = new SqlCommand("SELECT SCHEMA_NAME(schema_id) AS view_schema, name AS view_name FROM sys.views", conn)
+                {
+                    CommandType = CommandType.Text,
+                    CommandTimeout = 120000
+                };
                 conn.Open();
                 var dr = cmd.ExecuteReader();
-                while (dr.Read())
-                {
-                    string viewSchema = dr.GetString(0);
-                    bool generate = true;
-                    if (schemaName.Length > 0 && !schemaName.Equals(viewSchema, StringComparison.CurrentCultureIgnoreCase))
-                    {
-                        generate = false;
-                    }
-                    if (generate)
-                    {
-                        string viewName = dr.GetString(1);
-                        AppendLine("/*====================================================");
-                        AppendLine("\t" + viewName);
-                        AppendLine("======================================================*/");
-                        AppendLine(string.Format("DROP VIEW IF EXISTS [{0}].[{1}]", viewSchema, viewName));
-                        AppendLine("GO");
-                        GetViewDefinition(viewSchema, viewName);
-                        AppendLine("GO");
-                        AppendLine("");
-                    }
-                }
-
+                dt.Load(dr);
                 dr.Close();
             }
             catch (Exception ex)
@@ -823,6 +900,44 @@ namespace SQL_Document_Builder
             finally
             {
                 conn.Close();
+            }
+
+            if (dt.Rows.Count > 0)
+            {
+                for (int i = 0; i < dt.Rows.Count; i++)
+                {
+                    var percentComplete = (i * 100) / dt.Rows.Count;
+                    progress.Report(percentComplete);
+
+                    DataRow dr = dt.Rows[i];
+                    string? schema = Convert.ToString(dr[0]);
+                    bool generate = true;
+                    if (schemaName.Length > 0 && !schemaName.Equals(schema, StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        generate = false;
+                    }
+                    if (generate)
+                    {
+                        string? viewName = Convert.ToString(dr[1]);
+                        if (schema != null && viewName != null)
+                        {
+                            AppendLine("/*====================================================");
+                            AppendLine("\t" + viewName);
+                            AppendLine("======================================================*/");
+                            if (Properties.Settings.Default.UseIfExist)
+                                AppendLine(string.Format("DROP VIEW IF EXISTS {0}.{1}", schema, viewName));
+                            else
+                            {
+                                AppendLine(string.Format("IF OBJECT_ID('{0}.{1}', 'V') IS NOT NULL", schema, viewName));
+                                AppendLine(string.Format("\tDROP VIEW {0}.{1}", schema, viewName));
+                            }
+                            AppendLine("GO");
+                            GetViewDefinition(schema, viewName);
+                            AppendLine("GO");
+                            AppendLine("");
+                        }
+                    }
+                }
             }
         }
 
@@ -845,129 +960,6 @@ namespace SQL_Document_Builder
                 { Connection = _selectedConnection };
                 frm.ShowDialog();
             }
-
-            //if (_selectedConnection != null)
-            //{
-            //    string tableName = InputBox("Table name:", "Input table name", _lastTable);
-            //    if (tableName.IndexOf(".") > 0)
-            //    {
-            //        _lastTable = tableName;
-            //        sqlTextBox.Text = string.Empty;
-            //        var tableElement = tableName.Split('.');
-            //        if (tableElement.Length == 2)
-            //        {
-            //            //https://docs.microsoft.com/en-us/dotnet/api/microsoft.sqlserver.management.smo.scriptingoptions?view=sql-smo-160
-            //            ScriptingOptions scriptOptions = new ScriptingOptions()
-            //            {
-            //                ContinueScriptingOnError= true,
-            //                ScriptDrops = scriptDropsCheckBox.Checked,
-            //                ScriptForCreateDrop = scriptForCreateDropCheckBox.Checked,
-            //                IncludeIfNotExists = includeIfNotExistsCheckBox.Checked,
-            //                ExtendedProperties = extendedPropertiesCheckBox.Checked,
-            //                AnsiPadding= ansiPaddingCheckBox.Checked,
-            //                NoCollation = noCollationCheckBox.Checked,
-            //                ScriptData = scriptDataCheckBox.Checked,
-            //                IncludeHeaders = includeHeadersCheckBox.Checked
-            //            };
-
-            //            //GetTableDefWiki(RemoveQuota(tableElement[0]), RemoveQuota(tableElement[1]));
-            //            Server server = new Server(_selectedConnection.ServerName);
-            //            Database database = new Database();
-            //            database = server.Databases[_selectedConnection.Database];
-            //            Table table = database.Tables[RemoveQuota(tableElement[1]), RemoveQuota(tableElement[0])];
-            //            //Table table = database.Tables["pt_case"];
-            //            if (table != null)
-            //            {
-            //                StringCollection result = table.Script(scriptOptions);
-            //                foreach (var line in result)
-            //                {
-            //                    AppendLine(line);
-            //                }
-            //                AppendLine("GO" + Environment.NewLine);
-
-            //                IndexCollection indexCol = table.Indexes;
-            //                foreach (Microsoft.SqlServer.Management.Smo.Index myIndex in table.Indexes)
-            //                {
-            //                    /* Generating IF EXISTS and DROP command for table indexes */
-            //                    StringCollection indexScripts = myIndex.Script(scriptOptions);
-            //                    foreach (string script in indexScripts)
-            //                    {
-            //                        AppendLine(script);
-            //                    }
-
-            //                    /* Generating CREATE INDEX command for table indexes */
-            //                    indexScripts = myIndex.Script();
-            //                    foreach (string script in indexScripts)
-            //                    {
-            //                        AppendLine(script);
-            //                    }
-            //                }
-
-            //                //Scripter scripter = new Scripter(server);
-            //                ///* With ScriptingOptions you can specify different scripting
-            //                //* options, for example to include IF NOT EXISTS, DROP
-            //                //* statements, output location etc*/
-
-            //                //foreach (Table myTable in database.Tables)
-            //                //{
-            //                //    /* Generating IF EXISTS and DROP command for tables */
-            //                //    StringCollection tableScripts = myTable.Script(scriptOptions);
-            //                //    foreach (string script in tableScripts)
-            //                //    {
-            //                //        AppendLine(script);
-            //                //    }
-
-            //                //    tableScripts = myTable.Script();
-            //                //    foreach (string script in tableScripts)
-            //                //    {
-            //                //        AppendLine(script);
-            //                //    }
-
-            //                //    IndexCollection indexCol = myTable.Indexes;
-            //                //    foreach (Microsoft.SqlServer.Management.Smo.Index myIndex in myTable.Indexes)
-            //                //    {
-            //                //        /* Generating IF EXISTS and DROP command for table indexes */
-            //                //        StringCollection indexScripts = myIndex.Script(scriptOptions);
-            //                //        foreach (string script in indexScripts)
-            //                //        {
-            //                //            AppendLine(script);
-            //                //        }
-
-            //                //        /* Generating CREATE INDEX command for table indexes */
-            //                //        indexScripts = myIndex.Script();
-            //                //        foreach (string script in indexScripts)
-            //                //        {
-            //                //            AppendLine(script);
-            //                //        }
-            //                //    }
-            //                //}
-
-            //                //foreach (var index in table.Indexes)
-            //                //{
-            //                //    //AppendLine(index.ToString());
-            //                //    /* Generating IF EXISTS and DROP command for table indexes */
-            //                //    StringCollection indexScripts = index.Script(scriptOptions);
-            //                //    foreach (string script in indexScripts)
-            //                //        Console.WriteLine(script);
-            //                //    /* Generating CREATE INDEX command for table indexes */
-            //                //    indexScripts = index.Script();
-            //                //    foreach (string script in indexScripts)
-            //                //        Console.WriteLine(script);
-            //                //}
-
-            //                statusToolStripStatusLabe.Text = "Complete";
-            //            }
-            //            else
-            //            {
-            //                statusToolStripStatusLabe.Text = String.Format("{0} does not exist", tableName);
-            //            }
-            //        }
-            //        else
-            //        {
-            //            statusToolStripStatusLabe.Text = "Failed";
-            //        }
-            //    }
-            //}
         }
 
         /// <summary>
@@ -975,9 +967,11 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void StoredProcedureButton_Click(object sender, EventArgs e)
+        private async void StoredProcedureButton_Click(object sender, EventArgs e)
         {
-            sqlTextBox.Text = string.Empty;
+            _script.Clear();
+            sqlTextBox.Text = "Please wait...";
+
             using var dlg = new Schemapicker();
             if (dlg.ShowDialog() == DialogResult.OK)
             {
@@ -988,8 +982,18 @@ namespace SQL_Document_Builder
                     if (database != null)
                     {
                         statusToolStripStatusLabe.Text = "Please wait while generate the scripts...";
+                        progressBar.Value = 0;
+                        progressBar.Visible = true;
+                        Application.DoEvents();
 
-                        ScanAllSPs(dlg.Schema);
+                        var progress = new Progress<int>(value =>
+                        {
+                            progressBar.Value = value;
+                        });
+                        await Task.Run(() => ScanAllSPs(dlg.Schema, progress));
+                        progressBar.Visible = false;
+
+                        sqlTextBox.Text = _script.ToString();
                     }
                 }
                 //statusToolStripStatusLabe.Text = "Complete!";
@@ -1038,9 +1042,11 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void TablesToolStripButton_Click(object sender, EventArgs e)
+        private async void TablesToolStripButton_Click(object sender, EventArgs e)
         {
-            sqlTextBox.Text = string.Empty;
+            _script.Clear();
+            sqlTextBox.Text = "Please wait...";
+
             if (_server.Length == 0 || _database.Length == 0)
             {
                 statusToolStripStatusLabe.Text = "No database selected.";
@@ -1057,8 +1063,18 @@ namespace SQL_Document_Builder
                         if (database != null)
                         {
                             statusToolStripStatusLabe.Text = "Please wait while generate the scripts...";
+                            progressBar.Value = 0;
+                            progressBar.Visible = true;
+                            Application.DoEvents();
 
-                            GenerateTableScript(database, dlg.Schema);
+                            var progress = new Progress<int>(value =>
+                            {
+                                progressBar.Value = value;
+                            });
+                            await Task.Run(() => GenerateTableScript(database, dlg.Schema, progress));
+                            //GenerateTableScript(database, dlg.Schema);
+                            progressBar.Visible = false;
+                            sqlTextBox.Text = _script.ToString();
                         }
                     }
 
@@ -1077,10 +1093,10 @@ namespace SQL_Document_Builder
         /// <param name="values"></param>
         /// <param name="delimiter"></param>
         /// <returns></returns>
-        private string TabToRow(string values, string delimiter = "||")
+        private static string TabToRow(string values, string delimiter = "||")
         {
             var columns = values.Split('\t');
-            string results = delimiter.Substring(0, 1) + " ";
+            string results = delimiter[..1] + " ";
             for (int i = 0; i < columns.Length; i++)
             {
                 if (i == 0)
@@ -1111,9 +1127,11 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void ViewButton_Click(object sender, EventArgs e)
+        private async void ViewButton_Click(object sender, EventArgs e)
         {
-            sqlTextBox.Text = string.Empty;
+            _script.Clear();
+            sqlTextBox.Text = "Please wait...";
+
             using var dlg = new Schemapicker();
             if (dlg.ShowDialog() == DialogResult.OK)
             {
@@ -1124,8 +1142,18 @@ namespace SQL_Document_Builder
                     if (database != null)
                     {
                         statusToolStripStatusLabe.Text = "Please wait while generate the scripts...";
+                        progressBar.Value = 0;
+                        progressBar.Visible = true;
+                        Application.DoEvents();
 
-                        ScanAllViews(dlg.Schema);
+                        var progress = new Progress<int>(value =>
+                        {
+                            progressBar.Value = value;
+                        });
+                        await Task.Run(() => ScanAllViews(dlg.Schema, progress));
+                        progressBar.Visible = false;
+
+                        sqlTextBox.Text = _script.ToString();
                     }
                 }
                 //statusToolStripStatusLabe.Text = "Complete!";
@@ -1151,6 +1179,11 @@ namespace SQL_Document_Builder
                 BuildViewListWiki(dlg.Schema);
             }
             statusToolStripStatusLabe.Text = "Complete!";
+        }
+
+        private void OptionsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }

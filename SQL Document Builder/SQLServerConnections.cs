@@ -36,28 +36,31 @@ namespace SQL_Document_Builder
         /// <param name="password">password</param>
         /// <param name="connectionString">connection string</param>
         /// <param name="rememberPassword">remember password indicator</param>
-        public void Add(string name,
-            string server,
-            string database,
+        public void Add(string? name,
+            string? server,
+            string? database,
             short authenticationType,
-            string userName,
-            string password,
-            string connectionString,
+            string? userName,
+            string? password,
+            string? connectionString,
             bool rememberPassword)
         {
-            var connItem = new SQLDatabaseConnectionItem()
+            if (server != null && database != null)
             {
-                Name = name,
-                ServerName = server,
-                Database = database,
-                AuthenticationType = authenticationType,
-                UserName = userName,
-                Password = password,
-                ConnectionString = connectionString,
-                RememberPassword = rememberPassword
-            };
-            connItem.BuildConnectionString();
-            _connections.Add(connItem);
+                var connItem = new SQLDatabaseConnectionItem()
+                {
+                    Name = name,
+                    ServerName = server,
+                    Database = database,
+                    AuthenticationType = authenticationType,
+                    UserName = userName,
+                    Password = password,
+                    ConnectionString = connectionString,
+                    RememberPassword = rememberPassword
+                };
+                connItem.BuildConnectionString();
+                _connections.Add(connItem);
+            }
         }
 
         /// <summary>

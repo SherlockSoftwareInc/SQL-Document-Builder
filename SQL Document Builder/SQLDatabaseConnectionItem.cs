@@ -90,8 +90,10 @@ namespace SQL_Document_Builder
         }
 
         public short AuthenticationType { get; set; }
-        public string ConnectionString { get; set; }
-        public string Database { get; set; }
+
+        public string? ConnectionString { get; set; }
+
+        public string? Database { get; set; }
 
         /// <summary>
         /// DBMS type for future use.
@@ -99,15 +101,19 @@ namespace SQL_Document_Builder
         /// </summary>
         public int DBMSType { get; set; } = 0;
 
-        public string GUID { get; private set; }
+        public string? GUID { get; private set; }
+
         public bool IsCustom { get; set; }
-        public string Name { get; set; }
-        public string Password { get; set; }
+
+        public string? Name { get; set; }
+
+        public string? Password { get; set; }
+
         public bool RememberPassword { get; set; }
         /// <summary>
         /// Returns server and database name
         /// </summary>
-        public string ServerDatabaseName
+        public string? ServerDatabaseName
         {
             get
             {
@@ -120,8 +126,10 @@ namespace SQL_Document_Builder
             }
         }
 
-        public string ServerName { get; set; }
-        public string UserName { get; set; }
+        public string? ServerName { get; set; }
+
+        public string? UserName { get; set; }
+
         public void BuildConnectionString()
         {
             bool integratedSecurity = (AuthenticationType == 0);
@@ -155,11 +163,15 @@ namespace SQL_Document_Builder
 
         public override int GetHashCode()
         {
-            return GUID.GetHashCode();
+            if(GUID!=null)
+                return GUID.GetHashCode();
+            else
+                return 0;
         }
 
         public string Login()
         {
+
             using (var dlg = new SQLServerLoginDialog()
             {
                 ServerName = ServerName,

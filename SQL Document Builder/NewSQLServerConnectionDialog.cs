@@ -23,22 +23,22 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Connection name
         /// </summary>
-        public string ConnectionName { get; set; }
+        public string? ConnectionName { get; set; }
 
         /// <summary>
         /// Database connection string
         /// </summary>
-        public string ConnectionString { get; set; }
+        public string? ConnectionString { get; set; }
 
         /// <summary>
         /// Database name
         /// </summary>
-        public string DatabaseName { get; set; }
+        public string? DatabaseName { get; set; }
 
         /// <summary>
         ///
         /// </summary>
-        public string Password { get; set; }
+        public string? Password { get; set; }
 
         /// <summary>
         ///
@@ -48,12 +48,12 @@ namespace SQL_Document_Builder
         /// <summary>
         ///
         /// </summary>
-        public string ServerName { get; set; }
+        public string? ServerName { get; set; }
 
         /// <summary>
         ///
         /// </summary>
-        public string UserName { get; set; }
+        public string? UserName { get; set; }
 
         /// <summary>
         ///
