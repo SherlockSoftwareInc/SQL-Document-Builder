@@ -10,10 +10,10 @@ namespace SQL_Document_Builder
             InitializeComponent();
         }
 
-        public string Default { get; set; }
-        public string InputText { get; set; } = "";
-        public string Prompt { get; set; }
-        public string Title { get; set; }
+        public string? Default { get; set; }
+        public string? InputText { get; set; } = "";
+        public string? Prompt { get; set; }
+        public string? Title { get; set; }
 
         private void CancelButton_Click(object sender, EventArgs e)
         {

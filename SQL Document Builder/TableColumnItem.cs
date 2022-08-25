@@ -9,10 +9,10 @@ namespace SQL_Document_Builder
         {
             this.ColID = (int)dr["ORDINAL_POSITION"];
             this.ColumnName = dr["COLUMN_NAME"].ToString();
-            string dtType = dr["DATA_TYPE"].ToString();
+            string? dtType = dr["DATA_TYPE"].ToString();
             this.DataType = dtType;
-            string strMaxLength = dr["CHARACTER_MAXIMUM_LENGTH"].ToString();
-            if (strMaxLength.Length > 0)
+            string? strMaxLength = dr["CHARACTER_MAXIMUM_LENGTH"].ToString();
+            if (strMaxLength?.Length > 0)
             {
                 if (string.Compare(dtType, "text", true) == 0 ||
                     string.Compare(dtType, "ntext", true) == 0 ||
@@ -46,9 +46,9 @@ namespace SQL_Document_Builder
         }
 
         public int ColID { get; set; }
-        public string ColumnName { get; set; }
-        public string DataType { get; set; }
+        public string? ColumnName { get; set; }
+        public string? DataType { get; set; }
         public bool Nullable { get; set; }
-        public string Description { get; set; }
+        public string? Description { get; set; }
     }
 }

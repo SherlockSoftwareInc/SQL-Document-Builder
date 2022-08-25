@@ -337,7 +337,7 @@
             this.objectGroupBox.TabIndex = 4;
             this.objectGroupBox.TabStop = false;
             this.objectGroupBox.Text = "object name";
-            this.objectGroupBox.Resize += new System.EventHandler(this.groupBox1_Resize);
+            this.objectGroupBox.Resize += new System.EventHandler(this.GroupBox1_Resize);
             // 
             // dataGridView1
             // 

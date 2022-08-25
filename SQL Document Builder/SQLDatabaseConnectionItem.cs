@@ -82,7 +82,7 @@ namespace SQL_Document_Builder
                     }
                 }
 
-                if (this.ConnectionString.Length == 0 && this.AuthenticationType == 0)
+                if (this.ConnectionString?.Length == 0 && this.AuthenticationType == 0)
                 {
                     BuildConnectionString();
                 }
@@ -148,7 +148,7 @@ namespace SQL_Document_Builder
             ConnectionString = builder.ConnectionString;
         }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             if ((obj == null) || !this.GetType().Equals(obj.GetType()))
             {
@@ -169,7 +169,7 @@ namespace SQL_Document_Builder
                 return 0;
         }
 
-        public string Login()
+        public string? Login()
         {
 
             using (var dlg = new SQLServerLoginDialog()
@@ -211,13 +211,13 @@ namespace SQL_Document_Builder
             }
             else
             {
-                result = (ConnectionString.Length == 0);
+                result = (ConnectionString?.Length == 0);
             }
 
             return result;
         }
 
-        public override string ToString()
+        public override string? ToString()
         {
             return Name;
         }
@@ -236,13 +236,16 @@ namespace SQL_Document_Builder
 
             if (IsCustom)
             {
-                writer.WriteStartElement("CustomConnection");
-                writer.WriteValue("True");
-                writer.WriteEndElement();
+                if (ConnectionString != null)
+                {
+                    writer.WriteStartElement("CustomConnection");
+                    writer.WriteValue("True");
+                    writer.WriteEndElement();
 
-                writer.WriteStartElement("ConnectionString");
-                writer.WriteValue(BuildSecureConnectionString(ConnectionString));
-                writer.WriteEndElement();
+                    writer.WriteStartElement("ConnectionString");
+                    writer.WriteValue(BuildSecureConnectionString(ConnectionString));
+                    writer.WriteEndElement();
+                }
             }
             else
             {
@@ -268,7 +271,7 @@ namespace SQL_Document_Builder
                     writer.WriteValue(RememberPassword.ToString());
                     writer.WriteEndElement();
 
-                    if (RememberPassword)
+                    if (RememberPassword && Password != null && ConnectionString != null)
                     {
                         writer.WriteStartElement("Pwd");
                         writer.WriteValue(EncryptPwd(Password));
@@ -282,9 +285,12 @@ namespace SQL_Document_Builder
                 }
                 else
                 {
-                    writer.WriteStartElement("ConnectionString");
-                    writer.WriteValue(BuildSecureConnectionString(ConnectionString));
-                    writer.WriteEndElement();
+                    if (ConnectionString != null)
+                    {
+                        writer.WriteStartElement("ConnectionString");
+                        writer.WriteValue(BuildSecureConnectionString(ConnectionString));
+                        writer.WriteEndElement();
+                    }
                 }
             }
 

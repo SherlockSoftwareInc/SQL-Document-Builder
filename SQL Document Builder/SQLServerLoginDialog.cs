@@ -1,11 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace SQL_Document_Builder
@@ -16,12 +9,14 @@ namespace SQL_Document_Builder
         {
             InitializeComponent();
         }
+
         public short Authentication { get; set; }
-        public string ConnectionString { get; set; }
-        public string DatabaseName { get; set; }
-        public string Password { get; set; }
-        public string ServerName { get; set; }
-        public string UserName { get; set; }
+        public string? ConnectionString { get; set; }
+        public string? DatabaseName { get; set; }
+        public string? Password { get; set; }
+        public string? ServerName { get; set; }
+        public string? UserName { get; set; }
+
         private void AuthenticationComboBox_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (authenticationComboBox.SelectedIndex == 0)
@@ -115,6 +110,7 @@ namespace SQL_Document_Builder
                 Console.Beep();
             }
         }
+
         private void ServerNameTextBox_TextChanged(object sender, EventArgs e)
         {
             BuildConnectionString();

@@ -17,7 +17,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Object name to open
         /// </summary>
-        public ObjectName TableName { get; set; }
+        public ObjectName? TableName { get; set; }
 
         /// <summary>
         /// Handles column view selected column change event:
@@ -31,16 +31,19 @@ namespace SQL_Document_Builder
             SaveChange();
 
             string? selectedColumn = columnView.SelectedColumn;
-            if (selectedColumn?.Length == 0)
+            if (selectedColumn != null && TableName != null)
             {
-                descTextBox.Text = string.Empty;
-            }
-            else
-            {
-                titleLabel.Text = "Column:";
-                columnNameLabel.Text = selectedColumn;
-                descTextBox.Text = Common.GetColumnDescription(TableName, selectedColumn);
-                _descChanged = false;
+                if (selectedColumn.Length == 0)
+                {
+                    descTextBox.Text = string.Empty;
+                }
+                else
+                {
+                    titleLabel.Text = "Column:";
+                    columnNameLabel.Text = selectedColumn;
+                    descTextBox.Text = Common.GetColumnDescription(TableName, selectedColumn);
+                    _descChanged = false;
+                }
             }
         }
 
@@ -92,10 +95,10 @@ namespace SQL_Document_Builder
         /// <param name="table"></param>
         /// <param name="column"></param>
         /// <returns></returns>
-        private bool IsColumnDescExists(string schema, string table, string column)
+        private bool IsColumnDescExists(string? schema, string? table, string? column)
         {
             bool result = false;
-            string sql = string.Format("SELECT E.value Description FROM sys.schemas S INNER JOIN sys.{3} T ON S.schema_id = T.schema_id INNER JOIN sys.columns C ON T.object_id = C.object_id INNER JOIN sys.extended_properties E ON T.object_id = E.major_id AND C.column_id = E.minor_id AND E.name = 'MS_Description' AND S.name = '{0}' AND T.name = '{1}' AND C.name = '{2}'", schema, table, column, TableName.ObjectType == ObjectName.ObjectTypeEnums.View ? "views" : "tables");
+            string sql = string.Format("SELECT E.value Description FROM sys.schemas S INNER JOIN sys.{3} T ON S.schema_id = T.schema_id INNER JOIN sys.columns C ON T.object_id = C.object_id INNER JOIN sys.extended_properties E ON T.object_id = E.major_id AND C.column_id = E.minor_id AND E.name = 'MS_Description' AND S.name = '{0}' AND T.name = '{1}' AND C.name = '{2}'", schema, table, column, TableName?.ObjectType == ObjectName.ObjectTypeEnums.View ? "views" : "tables");
             var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
             try
             {
@@ -130,7 +133,7 @@ namespace SQL_Document_Builder
         private bool IsTableDescExists(string schema, string table)
         {
             bool result = false;
-            string sql = string.Format(String.Format("SELECT value FROM fn_listextendedproperty (NULL, 'schema', '{0}', '{2}', '{1}', default, default) WHERE name = N'MS_Description'", schema, table, (TableName.ObjectType == ObjectName.ObjectTypeEnums.View ? "view" : "table")));
+            string sql = string.Format(String.Format("SELECT value FROM fn_listextendedproperty (NULL, 'schema', '{0}', '{2}', '{1}', default, default) WHERE name = N'MS_Description'", schema, table, (TableName?.ObjectType == ObjectName.ObjectTypeEnums.View ? "view" : "table")));
 
             var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
             try
@@ -162,7 +165,7 @@ namespace SQL_Document_Builder
         /// </summary>
         private void SaveChange()
         {
-            if (_descChanged && columnView.TableName.Length > 0)
+            if (_descChanged && columnView?.TableName?.Length > 0)
             {
                 if (columnNameLabel.Text.Length > 0)
                 {
@@ -199,7 +202,7 @@ namespace SQL_Document_Builder
                 cmd.Parameters.Add(new SqlParameter("@value", descTextBox.Text));
                 cmd.Parameters.Add(new SqlParameter("@level0type ", "Schema"));
                 cmd.Parameters.Add(new SqlParameter("@level0name", columnView.Schema));
-                cmd.Parameters.Add(new SqlParameter("@level1type", TableName.ObjectType == ObjectName.ObjectTypeEnums.Table ? "Table" : "View"));
+                cmd.Parameters.Add(new SqlParameter("@level1type", TableName?.ObjectType == ObjectName.ObjectTypeEnums.Table ? "Table" : "View"));
                 cmd.Parameters.Add(new SqlParameter("@level1name", columnView.TableName));
                 cmd.Parameters.Add(new SqlParameter("@level2type", "Column"));
                 cmd.Parameters.Add(new SqlParameter("@level2name", columnNameLabel.Text));
@@ -224,47 +227,50 @@ namespace SQL_Document_Builder
         /// </summary>
         private void SaveTableDesc()
         {
-            var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
-            try
+            if (TableName != null)
             {
-                string spName;
-                if (IsTableDescExists(TableName.Schema, TableName.Name))
+                var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+                try
                 {
-                    spName = "sp_updateextendedproperty";
+                    string spName;
+                    if (IsTableDescExists(TableName.Schema, TableName.Name))
+                    {
+                        spName = "sp_updateextendedproperty";
+                    }
+                    else
+                    {
+                        spName = "sp_addextendedproperty";
+                    }
+                    var cmd = new SqlCommand(spName, conn) { CommandType = CommandType.StoredProcedure };
+
+                    cmd.Parameters.Add(new SqlParameter("@name", "MS_Description"));
+                    cmd.Parameters.Add(new SqlParameter("@value", descTextBox.Text));
+                    cmd.Parameters.Add(new SqlParameter("@level0type ", "Schema"));
+                    cmd.Parameters.Add(new SqlParameter("@level0name", columnView.Schema));
+                    cmd.Parameters.Add(new SqlParameter("@level1type", TableName.ObjectType == ObjectName.ObjectTypeEnums.Table ? "Table" : "View"));
+                    cmd.Parameters.Add(new SqlParameter("@level1name", columnView.TableName));
+                    //cmd.Parameters.Add(new SqlParameter("@level2type", DBNull.Value));
+                    //cmd.Parameters.Add(new SqlParameter("@level2name", DBNull.Value));
+
+                    conn.Open();
+                    cmd.ExecuteNonQuery();
                 }
-                else
+                catch (Exception ex)
                 {
-                    spName = "sp_addextendedproperty";
+                    Common.MsgBox(ex.Message, MessageBoxIcon.Error);
                 }
-                var cmd = new SqlCommand(spName, conn) { CommandType = CommandType.StoredProcedure };
+                finally
+                {
+                    conn.Close();
+                }
 
-                cmd.Parameters.Add(new SqlParameter("@name", "MS_Description"));
-                cmd.Parameters.Add(new SqlParameter("@value", descTextBox.Text));
-                cmd.Parameters.Add(new SqlParameter("@level0type ", "Schema"));
-                cmd.Parameters.Add(new SqlParameter("@level0name", columnView.Schema));
-                cmd.Parameters.Add(new SqlParameter("@level1type", TableName.ObjectType == ObjectName.ObjectTypeEnums.Table ? "Table" : "View"));
-                cmd.Parameters.Add(new SqlParameter("@level1name", columnView.TableName));
-                //cmd.Parameters.Add(new SqlParameter("@level2type", DBNull.Value));
-                //cmd.Parameters.Add(new SqlParameter("@level2name", DBNull.Value));
-
-                conn.Open();
-                cmd.ExecuteNonQuery();
+                columnView.TableDescription = descTextBox.Text;
             }
-            catch (Exception ex)
-            {
-                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                conn.Close();
-            }
-
-            columnView.TableDescription = descTextBox.Text;
         }
 
         private void ColumnView_TableDescSelected(object sender, EventArgs e)
         {
-            titleLabel.Text = (TableName.ObjectType == ObjectName.ObjectTypeEnums.View ? "View: " : "Table: ") + TableName.FullName;
+            titleLabel.Text = (TableName?.ObjectType == ObjectName.ObjectTypeEnums.View ? "View: " : "Table: ") + TableName?.FullName;
             columnNameLabel.Text = string.Empty;
             descTextBox.Text = columnView.TableDescription;
             _descChanged = false;

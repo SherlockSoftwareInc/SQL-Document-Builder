@@ -2,7 +2,7 @@
 {
     public class DBTableName
     {
-        private string _alias;
+        private string _alias = string.Empty;
 
         public DBTableName()
         {
@@ -12,26 +12,26 @@
             Alias = string.Empty;
         }
 
-        public DBTableName(string fullName)
-        {
-            FullName = fullName;
-        }
+        //public DBTableName(string fullName)
+        //{
+        //    FullName = fullName;
+        //}
 
-        public DBTableName(string schema, string tableName)
-        {
-            Catelog = string.Empty;
-            Schema = schema;
-            Name = tableName;
-            Alias = string.Empty;
-        }
+        //public DBTableName(string schema, string tableName)
+        //{
+        //    Catelog = string.Empty;
+        //    Schema = schema;
+        //    Name = tableName;
+        //    Alias = string.Empty;
+        //}
 
-        public DBTableName(string catelog, string schema, string tableName)
-        {
-            Catelog = catelog;
-            Schema = schema;
-            Name = tableName;
-            Alias = string.Empty;
-        }
+        //public DBTableName(string catelog, string schema, string tableName)
+        //{
+        //    Catelog = catelog;
+        //    Schema = schema;
+        //    Name = tableName;
+        //    Alias = string.Empty;
+        //}
 
         /// <summary>
         /// Gets or sets object alias
@@ -54,7 +54,7 @@
                 if (value.IndexOf(".") > 0)
                 {
                     string[] tableElements = value.Split('.');
-                    _alias = tableElements[tableElements.Length - 1];
+                    _alias = tableElements[^1];
                 }
                 else
                 {
@@ -77,15 +77,15 @@
             {
                 if (Catelog?.Length > 0)
                 {
-                    return string.Format("{0}.{1}.{2}", QuotedName(Catelog), QuotedName(Schema), QuotedName(Name));
+                    return string.Format("{0}.{1}.{2}", Catelog.QuotedName(), Schema.QuotedName(), Name.QuotedName());
                 }
                 else if (Schema?.Length > 0)
                 {
-                    return string.Format("{0}.{1}", QuotedName(Schema), QuotedName(Name));
+                    return string.Format("{0}.{1}", Schema.QuotedName(), Name.QuotedName());
                 }
                 else
                 {
-                    return QuotedName(Name);
+                    return Name.QuotedName();
                 }
             }
             set
@@ -168,7 +168,7 @@
         /// </summary>
         /// <param name="obj"></param>
         /// <returns></returns>
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             bool result = false;
 
@@ -202,30 +202,6 @@
         public bool IsEmpty()
         {
             return Name?.Length == 0;
-        }
-
-        /// <summary>
-        /// Return a name with quotation
-        /// </summary>
-        /// <param name="value"></param>
-        /// <returns></returns>
-        private string QuotedName(string value)
-        {
-            if (value.Length > 0)
-            {
-                if (value.StartsWith("[") || value.EndsWith("]"))
-                {
-                    return value;
-                }
-                else
-                {
-                    return string.Format("[{0}]", value);
-                }
-            }
-            else
-            {
-                return string.Empty;
-            }
         }
     }
 }

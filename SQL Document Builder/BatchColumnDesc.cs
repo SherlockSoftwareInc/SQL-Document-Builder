@@ -81,7 +81,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Save the description of the selected column
         /// </summary>
-        private void SaveColumnDesc(string objectName, string columnName, string desc)
+        private static void SaveColumnDesc(string objectName, string columnName, string desc)
         {
             var names = objectName.Split('.');
             var schema = names[0];
@@ -124,22 +124,20 @@ namespace SQL_Document_Builder
             {
                 try
                 {
-                    using (SqlCommand cmd = new() { Connection = conn })
+                    using SqlCommand cmd = new() { Connection = conn };
+                    cmd.Parameters.Add(new SqlParameter("@schema", schema));
+                    cmd.Parameters.Add(new SqlParameter("@tableName", tableName));
+                    cmd.CommandText = "SELECT TABLE_TYPE FROM information_schema.TABLES WHERE TABLE_SCHEMA = @schema AND TABLE_NAME = @tableName";
+                    conn.Open();
+                    var dr = cmd.ExecuteReader();
+                    if (dr.Read())
                     {
-                        cmd.Parameters.Add(new SqlParameter("@schema", schema));
-                        cmd.Parameters.Add(new SqlParameter("@tableName", tableName));
-                        cmd.CommandText = "SELECT TABLE_TYPE FROM information_schema.TABLES WHERE TABLE_SCHEMA = @schema AND TABLE_NAME = @tableName";
-                        conn.Open();
-                        var dr = cmd.ExecuteReader();
-                        if (dr.Read())
+                        if (string.Compare(dr["TABLE_TYPE"].ToString(), "View", true) == 0)
                         {
-                            if (string.Compare(dr["TABLE_TYPE"].ToString(), "View", true) == 0)
-                            {
-                                result = "view";
-                            }
+                            result = "view";
                         }
-                        dr.Close();
                     }
+                    dr.Close();
                 }
                 catch (SqlException)
                 {

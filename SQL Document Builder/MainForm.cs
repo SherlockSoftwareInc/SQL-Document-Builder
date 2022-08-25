@@ -14,9 +14,9 @@ namespace SQL_Document_Builder
     {
         private readonly SQLServerConnections _connections = new();
         private int _connectionCount = 0;
-        private string _database = string.Empty;
+        private string? _database = string.Empty;
         private SQLDatabaseConnectionItem? _selectedConnection;
-        private string _server = string.Empty;
+        private string? _server = string.Empty;
         private readonly System.Text.StringBuilder _script = new();
 
         public MainForm()
@@ -52,14 +52,12 @@ namespace SQL_Document_Builder
 
                     _connections.Save();
 
-                    //dataSourcesToolStripComboBox.Items.Add(connection);
-
                     var submenuitem = new ConnectionMenuItem(connection)
                     {
                         Name = string.Format("ConnectionMenuItem{0}", _connectionCount++),
                         Size = new Size(300, 26),
                     };
-                    submenuitem.Click += new System.EventHandler(OnConnectionToolStripMenuItem_Click);
+                    submenuitem.Click += new System.EventHandler(this.OnConnectionToolStripMenuItem_Click);
                     connectToToolStripMenuItem.DropDown.Items.Add(submenuitem);
 
                     return true;
@@ -84,7 +82,7 @@ namespace SQL_Document_Builder
         private void BuildFunctionListWiki(string schemaName)
         {
             _script.Clear();
-            sqlTextBox.Text = "Please wait...";
+            sqlTextBox.Text = string.Empty;
             var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
             try
             {
@@ -130,7 +128,7 @@ namespace SQL_Document_Builder
         private void BuildSPListWiki(string schemaName)
         {
             _script.Clear();
-            sqlTextBox.Text = "Please wait...";
+            sqlTextBox.Text = string.Empty;
 
             var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
             try
@@ -177,7 +175,8 @@ namespace SQL_Document_Builder
         private void BuildTableListWiki(string schemaName)
         {
             _script.Clear();
-            sqlTextBox.Text = "Please wait...";
+            sqlTextBox.Text = string.Empty;
+
             var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
             try
             {
@@ -222,7 +221,8 @@ namespace SQL_Document_Builder
         private void BuildViewListWiki(string schemaName)
         {
             _script.Clear();
-            sqlTextBox.Text = "Please wait...";
+            sqlTextBox.Text = string.Empty;
+
             var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
             try
             {
@@ -289,10 +289,10 @@ namespace SQL_Document_Builder
                     _server = connection.ServerName;
                     _database = connection.Database;
 
-                    string connectionString = connection.ConnectionString.Length == 0 ? connection.Login() : connection.ConnectionString;
+                    string? connectionString = connection?.ConnectionString?.Length == 0 ? connection.Login() : connection?.ConnectionString;
 
                     //string errMessage;
-                    if (connectionString.Length > 0)
+                    if (connectionString?.Length > 0)
                     {
                         //errMessage = dbObjects.Open(connection);
 
@@ -303,8 +303,8 @@ namespace SQL_Document_Builder
                         //}
                         //else
                         //{
-                        serverToolStripStatusLabel.Text = connection.ServerName;
-                        databaseToolStripStatusLabel.Text = connection.Database;
+                        serverToolStripStatusLabel.Text = connection?.ServerName;
+                        databaseToolStripStatusLabel.Text = connection?.Database;
                         Properties.Settings.Default.dbConnectionString = connectionString;
                         //}
                     }
@@ -325,7 +325,7 @@ namespace SQL_Document_Builder
         private void ClipboardToolStripButton_Click(object sender, EventArgs e)
         {
             _script.Clear();
-            sqlTextBox.Text = "Please wait...";
+            sqlTextBox.Text = String.Empty;
             
             if (Clipboard.ContainsText())
             {
@@ -391,7 +391,7 @@ namespace SQL_Document_Builder
             sqlTextBox.Text = "Please wait...";
 
             using var dlg = new Schemapicker();
-            if (dlg.ShowDialog() == DialogResult.OK)
+            if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
             {
                 Server server = new(_server);
                 if (server != null)
@@ -430,7 +430,7 @@ namespace SQL_Document_Builder
         {
             sqlTextBox.Text = string.Empty;
             using var dlg = new Schemapicker();
-            if (dlg.ShowDialog() == DialogResult.OK)
+            if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
             {
                 BuildFunctionListWiki(dlg.Schema);
             }
@@ -513,7 +513,7 @@ namespace SQL_Document_Builder
                             string tableScript = script;
                             if (myTable.Schema.Length > 0)
                             {
-                                tableScript = script.Replace("CREATE TABLE ", String.Format("CREATE TABLE {0}.", myTable.Schema));
+                                tableScript = script.Replace("CREATE TABLE ", String.Format("CREATE TABLE {0}.", myTable.Schema.QuotedName()));
                             }
                             AppendLine(tableScript);
                             AppendLine("GO");
@@ -532,7 +532,7 @@ namespace SQL_Document_Builder
         /// <returns></returns>
         private void GetSPDefinition(string schema, string spName)
         {
-            string sql = string.Format("SELECT definition FROM sys.sql_modules WHERE object_id = (OBJECT_ID(N'{0}.{1}'))", schema, spName);
+            string sql = string.Format("SELECT definition FROM sys.sql_modules WHERE object_id = (OBJECT_ID(N'{0}.{1}'))", schema.QuotedName(), spName.QuotedName());
             var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
             try
             {
@@ -564,7 +564,7 @@ namespace SQL_Document_Builder
         /// <returns></returns>
         private void GetViewDefinition(string viewSchema, string viewName)
         {
-            string sql = string.Format("select definition from sys.objects o join sys.sql_modules m on m.object_id = o.object_id where o.object_id = OBJECT_ID(N'[{0}].[{1}]') and o.type = 'V'", viewSchema, viewName);
+            string sql = string.Format("select definition from sys.objects o join sys.sql_modules m on m.object_id = o.object_id where o.object_id = OBJECT_ID(N'{0}.{1}') and o.type = 'V'", viewSchema.QuotedName(), viewName.QuotedName());
             var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
             try
             {
@@ -646,9 +646,9 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void OnConnectionToolStripMenuItem_Click(object sender, EventArgs e)
+        private void OnConnectionToolStripMenuItem_Click(object? sender, EventArgs e)
         {
-            if (sender.GetType() == typeof(ConnectionMenuItem))
+            if (sender?.GetType() == typeof(ConnectionMenuItem))
             {
                 ConnectionMenuItem menuItem = (ConnectionMenuItem)sender;
 
@@ -732,7 +732,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Scan functions in the database and generate the creation script for them
         /// </summary>
-        private void ScanAllFunctions(string schemaName, IProgress<int> progress)
+        private void ScanAllFunctions(string? schemaName, IProgress<int> progress)
         {
             DataTable dt = new();
             var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
@@ -767,7 +767,7 @@ namespace SQL_Document_Builder
                     DataRow dr = dt.Rows[i];
                     string? schema = Convert.ToString(dr["ROUTINE_SCHEMA"]);
                     bool generate = true;
-                    if (schemaName.Length > 0 && !schemaName.Equals(schema, StringComparison.CurrentCultureIgnoreCase))
+                    if (schemaName?.Length > 0 && !schemaName.Equals(schema, StringComparison.CurrentCultureIgnoreCase))
                     {
                         generate = false;
                     }
@@ -780,18 +780,18 @@ namespace SQL_Document_Builder
                             AppendLine("\t" + fnName);
                             AppendLine("======================================================*/");
                             if (Properties.Settings.Default.UseIfExist)
-                                AppendLine(string.Format("DROP FUNCTION IF EXISTS {0}.{1}", schema, fnName));
+                                AppendLine(string.Format("DROP FUNCTION IF EXISTS {0}.{1}", schema.QuotedName(), fnName.QuotedName()));
                             else
                             {
-                                AppendLine(string.Format("IF OBJECT_ID('{0}.{1}', 'FN') IS NOT NULL", schema, fnName));
-                                AppendLine(string.Format("\tDROP FUNCTION {0}.{1}", schema, fnName));
+                                AppendLine(string.Format("IF OBJECT_ID('{0}.{1}', 'FN') IS NOT NULL", schema.QuotedName(), fnName.QuotedName()));
+                                AppendLine(string.Format("\tDROP FUNCTION {0}.{1}", schema.QuotedName(), fnName.QuotedName()));
                             }
                             AppendLine("GO");
                             GetSPDefinition(schema, fnName);
                             AppendLine("GO");
                             if (Properties.Settings.Default.GrantSPPermission)
                             {
-                                AppendLine(string.Format("GRANT EXEC ON {0}.{1} TO db_execproc", schema, fnName));
+                                AppendLine(string.Format("GRANT EXEC ON {0}.{1} TO db_execproc", schema.QuotedName(), fnName.QuotedName()));
                                 AppendLine("GO");
                             }
                             AppendLine("");
@@ -852,18 +852,18 @@ namespace SQL_Document_Builder
                             AppendLine("\t" + spName);
                             AppendLine("======================================================*/");
                             if (Properties.Settings.Default.UseIfExist)
-                                AppendLine(string.Format("DROP PROCEDURE IF EXISTS {0}.{1}", schema, spName));
+                                AppendLine(string.Format("DROP PROCEDURE IF EXISTS {0}.{1}", schema.QuotedName(), spName.QuotedName()));
                             else
                             {
-                                AppendLine(string.Format("IF OBJECT_ID('{0}.{1}', 'P') IS NOT NULL", schema, spName));
-                                AppendLine(string.Format("\tDROP PROCEDURE {0}.{1}", schema, spName));
+                                AppendLine(string.Format("IF OBJECT_ID('{0}.{1}', 'P') IS NOT NULL", schema.QuotedName(), spName.QuotedName()));
+                                AppendLine(string.Format("\tDROP PROCEDURE {0}.{1}", schema.QuotedName(), spName.QuotedName()));
                             }
                             AppendLine("GO");
                             GetSPDefinition(schema, spName);
                             //AppendLine("GO");
                             if (Properties.Settings.Default.GrantSPPermission)
                             {
-                                AppendLine(string.Format("GRANT EXEC ON {0}.{1} TO db_execproc", schema, spName));
+                                AppendLine(string.Format("GRANT EXEC ON {0}.{1} TO db_execproc", schema.QuotedName(), spName.QuotedName()));
                                 AppendLine("GO");
                             }
                             AppendLine("");
@@ -925,11 +925,11 @@ namespace SQL_Document_Builder
                             AppendLine("\t" + viewName);
                             AppendLine("======================================================*/");
                             if (Properties.Settings.Default.UseIfExist)
-                                AppendLine(string.Format("DROP VIEW IF EXISTS {0}.{1}", schema, viewName));
+                                AppendLine(string.Format("DROP VIEW IF EXISTS {0}.{1}", schema.QuotedName(), viewName.QuotedName()));
                             else
                             {
-                                AppendLine(string.Format("IF OBJECT_ID('{0}.{1}', 'V') IS NOT NULL", schema, viewName));
-                                AppendLine(string.Format("\tDROP VIEW {0}.{1}", schema, viewName));
+                                AppendLine(string.Format("IF OBJECT_ID('{0}.{1}', 'V') IS NOT NULL", schema.QuotedName(), viewName.QuotedName()));
+                                AppendLine(string.Format("\tDROP VIEW {0}.{1}", schema.QuotedName(), viewName.QuotedName()));
                             }
                             AppendLine("GO");
                             GetViewDefinition(schema, viewName);
@@ -973,7 +973,7 @@ namespace SQL_Document_Builder
             sqlTextBox.Text = "Please wait...";
 
             using var dlg = new Schemapicker();
-            if (dlg.ShowDialog() == DialogResult.OK)
+            if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
             {
                 Server server = new(_server);
                 if (server != null)
@@ -1014,7 +1014,7 @@ namespace SQL_Document_Builder
         {
             sqlTextBox.Text = string.Empty;
             using var dlg = new Schemapicker();
-            if (dlg.ShowDialog() == DialogResult.OK)
+            if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
             {
                 BuildSPListWiki(dlg.Schema);
             }
@@ -1030,7 +1030,7 @@ namespace SQL_Document_Builder
         {
             sqlTextBox.Text = string.Empty;
             using var dlg = new Schemapicker();
-            if (dlg.ShowDialog() == DialogResult.OK)
+            if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null )
             {
                 BuildTableListWiki(dlg.Schema);
             }
@@ -1047,14 +1047,14 @@ namespace SQL_Document_Builder
             _script.Clear();
             sqlTextBox.Text = "Please wait...";
 
-            if (_server.Length == 0 || _database.Length == 0)
+            if (_server?.Length == 0 || _database?.Length == 0)
             {
                 statusToolStripStatusLabe.Text = "No database selected.";
             }
             else
             {
                 using var dlg = new Schemapicker();
-                if (dlg.ShowDialog() == DialogResult.OK)
+                if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
                 {
                     Server server = new(_server);
                     if (server != null)
@@ -1133,7 +1133,7 @@ namespace SQL_Document_Builder
             sqlTextBox.Text = "Please wait...";
 
             using var dlg = new Schemapicker();
-            if (dlg.ShowDialog() == DialogResult.OK)
+            if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
             {
                 Server server = new(_server);
                 if (server != null)
@@ -1174,7 +1174,7 @@ namespace SQL_Document_Builder
         {
             sqlTextBox.Text = string.Empty;
             using var dlg = new Schemapicker();
-            if (dlg.ShowDialog() == DialogResult.OK)
+            if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
             {
                 BuildViewListWiki(dlg.Schema);
             }

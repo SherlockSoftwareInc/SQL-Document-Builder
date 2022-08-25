@@ -12,7 +12,7 @@ namespace SQL_Document_Builder
             InitializeComponent();
         }
 
-        public string Schema { get; set; }
+        public string? Schema { get; set; }
 
         private void CancelButton_Click(object sender, EventArgs e)
         {
@@ -48,7 +48,7 @@ namespace SQL_Document_Builder
                     var dtSchemas = schemaTable.DefaultView.ToTable(true, "TABLE_SCHEMA");
                     foreach (DataRow dr in dtSchemas.Rows)
                     {
-                        schemaListBox.Items.Add(dr[0].ToString());
+                        schemaListBox.Items.Add((string)dr[0]);
                     }
                 }
 

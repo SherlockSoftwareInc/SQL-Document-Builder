@@ -11,7 +11,7 @@ namespace SQL_Document_Builder
      /// </summary>
     public class SQLServerConnections
     {
-        readonly private List<SQLDatabaseConnectionItem> _connections = new List<SQLDatabaseConnectionItem>();
+        readonly private List<SQLDatabaseConnectionItem> _connections = new();
         private string _tmpFile = "";   // a temporary file to save the changes during the editing
 
         /// <summary>
@@ -75,8 +75,8 @@ namespace SQL_Document_Builder
                 using var streamReader = new StreamReader(fileStream);
                 if (streamReader != null)
                 {
-                    string strFirstLine = streamReader.ReadLine();
-                    string strXML = streamReader.ReadToEnd();
+                    string? strFirstLine = streamReader.ReadLine();
+                    string? strXML = streamReader.ReadToEnd();
                     ParseXML(strFirstLine + "\r\n" + strXML);
                 }
             }
@@ -112,7 +112,7 @@ namespace SQL_Document_Builder
         /// Returns the local where to store the connections data
         /// </summary>
         /// <returns></returns>
-        private string FilePath()
+        private static string FilePath()
         {
             string dataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Sherlock Software Inc");
             dataPath = Path.Combine(dataPath, "Octofy");
@@ -135,10 +135,9 @@ namespace SQL_Document_Builder
                 _connections.Clear();
 
                 var oDoc = new XmlDocument();
-                oDoc.LoadXml(values);
-
                 if (oDoc != null)
                 {
+                    oDoc.LoadXml(values);
                     if (oDoc.DocumentElement.HasChildNodes)
                     {
                         foreach (XmlNode node in oDoc.DocumentElement.ChildNodes)
@@ -149,7 +148,7 @@ namespace SQL_Document_Builder
                                 if (string.Compare(sNodeName, "ConnectionItem", true) == 0)
                                 {
                                     var connectionItem = new SQLDatabaseConnectionItem(node);
-                                    if (connectionItem.Name.Length > 0)
+                                    if (connectionItem?.Name?.Length > 0)
                                         _connections.Add(connectionItem);
                                 }
                             }

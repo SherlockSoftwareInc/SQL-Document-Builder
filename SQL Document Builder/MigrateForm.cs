@@ -7,14 +7,14 @@ namespace SQL_Document_Builder
 {
     public partial class MigrateForm : Form
     {
-        private DataTable _table;
+        private DataTable? _table;
 
         public MigrateForm()
         {
             InitializeComponent();
         }
 
-        private void groupBox1_Resize(object sender, EventArgs e)
+        private void GroupBox1_Resize(object sender, EventArgs e)
         {
             if (objectGroupBox.Width > 100)
                 commentsTextBox.Width = objectGroupBox.Width - 100;
@@ -160,14 +160,14 @@ namespace SQL_Document_Builder
                 if (rowIndex >= 0 && rowIndex < dataGridView1.Rows.Count)
                 {
                     _currentIndex = rowIndex;
-                    _currentSchema = dataGridView1.Rows[rowIndex].Cells["TABLE_SCHEMA"].Value.ToString();
-                    _currentTableName = dataGridView1.Rows[rowIndex].Cells["TABLE_NAME"].Value.ToString();
+                    _currentSchema = (string)dataGridView1.Rows[rowIndex].Cells["TABLE_SCHEMA"].Value;
+                    _currentTableName = (string)dataGridView1.Rows[rowIndex].Cells["TABLE_NAME"].Value;
                     objectGroupBox.Text = String.Format("{0}.{1}", _currentSchema, _currentTableName);
                     editMigrateCheckBox.Checked = (bool)dataGridView1.Rows[rowIndex].Cells["NeedToMigrate"].Value;
                     editImportedCheckBox.Checked = (bool)dataGridView1.Rows[rowIndex].Cells["Imported"].Value;
                     editPostMigrateCheckBox.Checked = (bool)dataGridView1.Rows[rowIndex].Cells["PostImportProcess"].Value;
                     editWikiCheckBox.Checked = (bool)dataGridView1.Rows[rowIndex].Cells["WikiDone"].Value;
-                    commentsTextBox.Text = dataGridView1.Rows[rowIndex].Cells["Comments"].Value.ToString();
+                    commentsTextBox.Text = (string)dataGridView1.Rows[rowIndex].Cells["Comments"].Value;
                 }
 
                 _ignoreChange = false;

@@ -10,14 +10,14 @@ namespace SQL_Document_Builder
 {
     public partial class TableBuilderForm : Form
     {
-        private DataTable _tables;
+        private DataTable _tables = new();
 
         public TableBuilderForm()
         {
             InitializeComponent();
         }
 
-        public SQLDatabaseConnectionItem Connection { get; set; }
+        public SQLDatabaseConnectionItem? Connection { get; set; }
 
         private void AddListItem(string tableType, string schema, string tableName)
         {
@@ -55,7 +55,7 @@ namespace SQL_Document_Builder
                     sqlTextBox.Text = string.Empty;
 
                     //https://docs.microsoft.com/en-us/dotnet/api/microsoft.sqlserver.management.smo.scriptingoptions?view=sql-smo-160
-                    ScriptingOptions scriptOptions = new ScriptingOptions()
+                    ScriptingOptions scriptOptions = new()
                     {
                         ContinueScriptingOnError = true,
                         ScriptDrops = scriptDropsCheckBox.Checked,
@@ -69,9 +69,8 @@ namespace SQL_Document_Builder
                     };
 
                     //GetTableDefWiki(RemoveQuota(tableElement[0]), RemoveQuota(tableElement[1]));
-                    Server server = new Server(Connection.ServerName);
-                    Database database = new Database();
-                    database = server.Databases[Connection.Database];
+                    Server server = new(Connection.ServerName);
+                    Database database = server.Databases[Connection.Database];
                     Table table = database.Tables[objectName.Name, objectName.Schema];
                     //Table table = database.Tables["pt_case"];
                     if (table != null)
@@ -79,25 +78,28 @@ namespace SQL_Document_Builder
                         StringCollection result = table.Script(scriptOptions);
                         foreach (var line in result)
                         {
-                            AppendLine(line);
+                            if(line!=null)
+                                AppendLine(line);
                         }
                         AppendLine("GO" + Environment.NewLine);
 
-                        IndexCollection indexCol = table.Indexes;
+                        //IndexCollection indexCol = table.Indexes;
                         foreach (Microsoft.SqlServer.Management.Smo.Index myIndex in table.Indexes)
                         {
                             /* Generating IF EXISTS and DROP command for table indexes */
                             StringCollection indexScripts = myIndex.Script(scriptOptions);
-                            foreach (string script in indexScripts)
+                            foreach (string? script in indexScripts)
                             {
-                                AppendLine(script);
+                                if(script!=null)
+                                    AppendLine(script);
                             }
 
                             /* Generating CREATE INDEX command for table indexes */
                             indexScripts = myIndex.Script();
-                            foreach (string script in indexScripts)
+                            foreach (string? script in indexScripts)
                             {
-                                AppendLine(script);
+                                if(script!= null)
+                                    AppendLine(script);
                             }
                         }
 
@@ -182,41 +184,41 @@ namespace SQL_Document_Builder
             }
         }
 
-        /// <summary>
-        /// Get description of a column
-        /// </summary>
-        /// <param name="schema">object schema</param>
-        /// <param name="table">object name</param>
-        /// <param name="column">column name</param>
-        /// <returns></returns>
-        private string GetColumnDesc(string schema, string table, string column)
-        {
-            string result = string.Empty;
-            string sql = string.Format("SELECT E.value Description FROM sys.schemas S INNER JOIN sys.tables T ON S.schema_id = T.schema_id INNER JOIN sys.columns C ON T.object_id = C.object_id INNER JOIN sys.extended_properties E ON T.object_id = E.major_id AND C.column_id = E.minor_id AND E.name = 'MS_Description' AND S.name = '{0}' AND T.name = '{1}' AND C.name = '{2}'", schema, table, column);
-            var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
-            try
-            {
-                var cmd = new SqlCommand(sql, conn) { CommandType = CommandType.Text };
-                conn.Open();
-                var dr = cmd.ExecuteReader();
-                if (dr.Read())
-                {
-                    result = dr.GetString(0);  //dr[0].ToString();
-                }
+        ///// <summary>
+        ///// Get description of a column
+        ///// </summary>
+        ///// <param name="schema">object schema</param>
+        ///// <param name="table">object name</param>
+        ///// <param name="column">column name</param>
+        ///// <returns></returns>
+        //private string GetColumnDesc(string schema, string table, string column)
+        //{
+        //    string result = string.Empty;
+        //    string sql = string.Format("SELECT E.value Description FROM sys.schemas S INNER JOIN sys.tables T ON S.schema_id = T.schema_id INNER JOIN sys.columns C ON T.object_id = C.object_id INNER JOIN sys.extended_properties E ON T.object_id = E.major_id AND C.column_id = E.minor_id AND E.name = 'MS_Description' AND S.name = '{0}' AND T.name = '{1}' AND C.name = '{2}'", schema, table, column);
+        //    var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+        //    try
+        //    {
+        //        var cmd = new SqlCommand(sql, conn) { CommandType = CommandType.Text };
+        //        conn.Open();
+        //        var dr = cmd.ExecuteReader();
+        //        if (dr.Read())
+        //        {
+        //            result = dr.GetString(0);  //dr[0].ToString();
+        //        }
 
-                dr.Close();
-            }
-            catch (Exception ex)
-            {
-                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                conn.Close();
-            }
+        //        dr.Close();
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Common.MsgBox(ex.Message, MessageBoxIcon.Error);
+        //    }
+        //    finally
+        //    {
+        //        conn.Close();
+        //    }
 
-            return result;
-        }
+        //    return result;
+        //}
 
         /// <summary>
         /// Get table structure for wiki
@@ -237,8 +239,8 @@ namespace SQL_Document_Builder
                 {
                     AppendLine("|-");
                     int colID = dr.GetInt32("ORDINAL_POSITION");
-                    string colName = dr.GetString("COLUMN_NAME"); 
-                    string dataType = dr.GetString("DATA_TYPE"); 
+                    string colName = dr.GetString("COLUMN_NAME");
+                    string dataType = dr.GetString("DATA_TYPE");
                     if (dr["CHARACTER_MAXIMUM_LENGTH"] != DBNull.Value)
                     {
                         dataType = string.Format("{0}({1})", dataType, dr["CHARACTER_MAXIMUM_LENGTH"].ToString());
@@ -439,7 +441,7 @@ namespace SQL_Document_Builder
                     {
                         foreach (DataRow row in _tables.Rows)
                         {
-                            AddListItem(row["TABLE_TYPE"].ToString(), row["TABLE_SCHEMA"].ToString(), row["TABLE_NAME"].ToString());
+                            AddListItem((string)row["TABLE_TYPE"], (string)row["TABLE_SCHEMA"], (string)row["TABLE_NAME"]);
                         }
                     }
                     else
@@ -447,7 +449,7 @@ namespace SQL_Document_Builder
                         foreach (DataRow row in _tables.Rows)
                         {
                             if (schemaName.Equals(row["TABLE_SCHEMA"].ToString(), StringComparison.CurrentCultureIgnoreCase))
-                                AddListItem(row["TABLE_TYPE"].ToString(), row["TABLE_SCHEMA"].ToString(), row["TABLE_NAME"].ToString());
+                                AddListItem((string)row["TABLE_TYPE"], (string)row["TABLE_SCHEMA"], (string)row["TABLE_NAME"]);
                         }
                     }
                 }
@@ -458,7 +460,7 @@ namespace SQL_Document_Builder
                     {
                         foreach (DataRow row in matches)
                         {
-                            AddListItem(row["TABLE_TYPE"].ToString(), row["TABLE_SCHEMA"].ToString(), row["TABLE_NAME"].ToString());
+                            AddListItem((string)row["TABLE_TYPE"], (string)row["TABLE_SCHEMA"], (string)row["TABLE_NAME"]);
                         }
                     }
                     else
@@ -466,7 +468,7 @@ namespace SQL_Document_Builder
                         foreach (DataRow row in matches)
                         {
                             if (schemaName.Equals(row["TABLE_SCHEMA"].ToString(), StringComparison.CurrentCultureIgnoreCase))
-                                AddListItem(row["TABLE_TYPE"].ToString(), row["TABLE_SCHEMA"].ToString(), row["TABLE_NAME"].ToString());
+                                AddListItem((string)row["TABLE_TYPE"], (string)row["TABLE_SCHEMA"], (string)row["TABLE_NAME"]);
                         }
                     }
                 }
@@ -533,7 +535,7 @@ namespace SQL_Document_Builder
             }
         }
 
-        private void schemaComboBox_SelectedIndexChanged(object sender, EventArgs e)
+        private void SchemaComboBox_SelectedIndexChanged(object sender, EventArgs e)
         {
             Populate();
         }

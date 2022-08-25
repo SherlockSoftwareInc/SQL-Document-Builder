@@ -15,12 +15,12 @@ namespace SQL_Document_Builder
 
         public SQLDatabaseConnectionItem Connection { get; set; }
 
-        public string ConnectionName
+        public string? ConnectionName
         {
             get { return Connection.Name; }
         }
 
-        public override string ToString()
+        public override string? ToString()
         {
             return Connection != null ? Connection.Name : string.Empty;
         }

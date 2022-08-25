@@ -110,29 +110,29 @@ namespace SQL_Document_Builder
             return result;
         }
 
-        /// <summary>
-        /// Show input box
-        /// </summary>
-        /// <param name="prompt">Prompt text</param>
-        /// <param name="title">Title of the input box</param>
-        /// <param name="defaultValue">default value</param>
-        /// <returns></returns>
-        public static string InputBox(string prompt, string title, string defaultValue)
-        {
-            using (var dlg = new InputBox()
-            {
-                Title = title,
-                Prompt = prompt,
-                Default = defaultValue
-            })
-            {
-                if (dlg.ShowDialog() == DialogResult.OK)
-                {
-                    return dlg.InputText;
-                }
-            }
-            return "";
-        }
+        ///// <summary>
+        ///// Show input box
+        ///// </summary>
+        ///// <param name="prompt">Prompt text</param>
+        ///// <param name="title">Title of the input box</param>
+        ///// <param name="defaultValue">default value</param>
+        ///// <returns></returns>
+        //public static string InputBox(string prompt, string title, string defaultValue)
+        //{
+        //    using (var dlg = new InputBox()
+        //    {
+        //        Title = title,
+        //        Prompt = prompt,
+        //        Default = defaultValue
+        //    })
+        //    {
+        //        if (dlg.ShowDialog() == DialogResult.OK)
+        //        {
+        //            return dlg.InputText;
+        //        }
+        //    }
+        //    return "";
+        //}
 
         /// <summary>
         /// Show a message box
@@ -153,7 +153,7 @@ namespace SQL_Document_Builder
         {
             if (text.StartsWith("[") && text.EndsWith("]"))
             {
-                return text.Substring(1, text.Length - 2);
+                return text[1..^1];
             }
             else
             {

@@ -8,7 +8,7 @@ namespace SQL_Document_Builder
 {
     public partial class ColumnDefView : UserControl
     {
-        private readonly List<TableColumnItem> _columns = new List<TableColumnItem>();
+        private readonly List<TableColumnItem> _columns = new();
         private ObjectName? _objectName;
 
         public ColumnDefView()
@@ -16,9 +16,9 @@ namespace SQL_Document_Builder
             InitializeComponent();
         }
 
-        public event EventHandler SelectedColumnChanged;
+        public event EventHandler? SelectedColumnChanged;
 
-        public event EventHandler TableDescSelected;
+        public event EventHandler? TableDescSelected;
 
         /// <summary>
         /// Gets or sets database connection
@@ -112,7 +112,8 @@ namespace SQL_Document_Builder
 
                     foreach (var column in _columns)
                     {
-                        column.Description = Common.GetColumnDescription(_objectName, column.ColumnName);
+                        if (column.ColumnName != null)
+                            column.Description = Common.GetColumnDescription(_objectName, column.ColumnName);
                     }
 
                     columnDefDataGridView.DataSource = _columns;
@@ -170,7 +171,7 @@ namespace SQL_Document_Builder
             if (columnDefDataGridView.SelectedRows != null)
             {
                 int rowIndex = columnDefDataGridView.CurrentCell.RowIndex;
-                string columnName = columnDefDataGridView.Rows[rowIndex].Cells["ColumnName"].Value.ToString();
+                string columnName = (string)columnDefDataGridView.Rows[rowIndex].Cells["ColumnName"].Value;
                 if (columnName != SelectedColumn)
                 {
                     SelectedColumn = columnName;
@@ -243,28 +244,31 @@ namespace SQL_Document_Builder
         private string GetTableDesc()
         {
             string result = string.Empty;
-            string sql = string.Format(String.Format("SELECT value FROM fn_listextendedproperty (NULL, 'schema', '{0}', '{2}', '{1}', default, default) WHERE name = N'MS_Description'", _objectName.Schema, _objectName.Name, (_objectName.ObjectType == ObjectName.ObjectTypeEnums.View ? "view" : "table")));
-
-            var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
-            try
+            if (_objectName != null)
             {
-                var cmd = new SqlCommand(sql, conn) { CommandType = CommandType.Text };
-                conn.Open();
-                var dr = cmd.ExecuteReader();
-                if (dr.Read())
+                string sql = string.Format(String.Format("SELECT value FROM fn_listextendedproperty (NULL, 'schema', '{0}', '{2}', '{1}', default, default) WHERE name = N'MS_Description'", _objectName.Schema, _objectName.Name, (_objectName.ObjectType == ObjectName.ObjectTypeEnums.View ? "view" : "table")));
+
+                var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+                try
                 {
-                    result = dr.GetString(0);   // dr[0].ToString();
-                }
+                    var cmd = new SqlCommand(sql, conn) { CommandType = CommandType.Text };
+                    conn.Open();
+                    var dr = cmd.ExecuteReader();
+                    if (dr.Read())
+                    {
+                        result = dr.GetString(0);   // dr[0].ToString();
+                    }
 
-                dr.Close();
-            }
-            catch (Exception ex)
-            {
-                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                conn.Close();
+                    dr.Close();
+                }
+                catch (Exception ex)
+                {
+                    Common.MsgBox(ex.Message, MessageBoxIcon.Error);
+                }
+                finally
+                {
+                    conn.Close();
+                }
             }
 
             return result;
