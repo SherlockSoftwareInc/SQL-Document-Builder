@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Data;
-using System.Data.SqlClient;
+using System.Data.Odbc;
 using System.Windows.Forms;
 
 namespace SQL_Document_Builder
@@ -30,11 +30,11 @@ namespace SQL_Document_Builder
                 return;
             }
 
-            using SqlConnection conn = new(Properties.Settings.Default.dbConnectionString);
+            using OdbcConnection conn = new(Properties.Settings.Default.dbConnectionString);
             try
             {
-                using SqlCommand cmd = new() { Connection = conn };
-                cmd.Parameters.Add(new SqlParameter("@searchFor", searchFor));
+                using OdbcCommand cmd = new() { Connection = conn };
+                cmd.Parameters.Add(new OdbcParameter("@searchFor", searchFor));
                 cmd.CommandText = "SELECT DISTINCT TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, 'BASE TABLE' TABLE_TYPE, COLUMN_NAME FROM information_schema.columns WHERE column_name = @SearchFor ORDER BY TABLE_NAME";
 
                 conn.Open();
@@ -45,7 +45,7 @@ namespace SQL_Document_Builder
                 }
                 dr.Close();
             }
-            catch (SqlException)
+            catch (OdbcException)
             {
                 throw;
             }
@@ -89,19 +89,19 @@ namespace SQL_Document_Builder
 
             if (!IsColumnDescExists(schema, tableName, columnName))
             {
-                SqlConnection? conn = new(Properties.Settings.Default.dbConnectionString);
+                OdbcConnection? conn = new(Properties.Settings.Default.dbConnectionString);
                 try
                 {
-                    var cmd = new SqlCommand("sp_addextendedproperty", conn) { CommandType = CommandType.StoredProcedure };
+                    var cmd = new OdbcCommand("sp_addextendedproperty", conn) { CommandType = CommandType.StoredProcedure };
 
-                    cmd.Parameters.Add(new SqlParameter("@name", "MS_Description"));
-                    cmd.Parameters.Add(new SqlParameter("@value", desc));
-                    cmd.Parameters.Add(new SqlParameter("@level0type ", "Schema"));
-                    cmd.Parameters.Add(new SqlParameter("@level0name", schema));
-                    cmd.Parameters.Add(new SqlParameter("@level1type", GetTableTyp(schema, tableName)));
-                    cmd.Parameters.Add(new SqlParameter("@level1name", tableName));
-                    cmd.Parameters.Add(new SqlParameter("@level2type", "Column"));
-                    cmd.Parameters.Add(new SqlParameter("@level2name", columnName));
+                    cmd.Parameters.Add(new OdbcParameter("@name", "MS_Description"));
+                    cmd.Parameters.Add(new OdbcParameter("@value", desc));
+                    cmd.Parameters.Add(new OdbcParameter("@level0type ", "Schema"));
+                    cmd.Parameters.Add(new OdbcParameter("@level0name", schema));
+                    cmd.Parameters.Add(new OdbcParameter("@level1type", GetTableTyp(schema, tableName)));
+                    cmd.Parameters.Add(new OdbcParameter("@level1name", tableName));
+                    cmd.Parameters.Add(new OdbcParameter("@level2type", "Column"));
+                    cmd.Parameters.Add(new OdbcParameter("@level2name", columnName));
 
                     conn.Open();
                     cmd.ExecuteNonQuery();
@@ -120,13 +120,13 @@ namespace SQL_Document_Builder
         private static string GetTableTyp(string schema, string tableName)
         {
             string result = "table";
-            using (SqlConnection conn = new(Properties.Settings.Default.dbConnectionString))
+            using (OdbcConnection conn = new(Properties.Settings.Default.dbConnectionString))
             {
                 try
                 {
-                    using SqlCommand cmd = new() { Connection = conn };
-                    cmd.Parameters.Add(new SqlParameter("@schema", schema));
-                    cmd.Parameters.Add(new SqlParameter("@tableName", tableName));
+                    using OdbcCommand cmd = new() { Connection = conn };
+                    cmd.Parameters.Add(new OdbcParameter("@schema", schema));
+                    cmd.Parameters.Add(new OdbcParameter("@tableName", tableName));
                     cmd.CommandText = "SELECT TABLE_TYPE FROM information_schema.TABLES WHERE TABLE_SCHEMA = @schema AND TABLE_NAME = @tableName";
                     conn.Open();
                     var dr = cmd.ExecuteReader();
@@ -139,7 +139,7 @@ namespace SQL_Document_Builder
                     }
                     dr.Close();
                 }
-                catch (SqlException)
+                catch (OdbcException)
                 {
                     throw;
                 }
@@ -166,10 +166,10 @@ namespace SQL_Document_Builder
         {
             bool result = false;
             string sql = string.Format("SELECT E.value Description FROM sys.schemas S INNER JOIN sys.{3}s T ON S.schema_id = T.schema_id INNER JOIN sys.columns C ON T.object_id = C.object_id INNER JOIN sys.extended_properties E ON T.object_id = E.major_id AND C.column_id = E.minor_id AND E.name = 'MS_Description' AND S.name = '{0}' AND T.name = '{1}' AND C.name = '{2}'", schema, table, column, GetTableTyp(schema, table));
-            var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+            var conn = new OdbcConnection(Properties.Settings.Default.dbConnectionString);
             try
             {
-                var cmd = new SqlCommand(sql, conn) { CommandType = CommandType.Text };
+                var cmd = new OdbcCommand(sql, conn) { CommandType = CommandType.Text };
                 conn.Open();
                 var dr = cmd.ExecuteReader();
                 if (dr.Read())

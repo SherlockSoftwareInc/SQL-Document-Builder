@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Data;
-using System.Data.SqlClient;
+using System.Data.Odbc;
 using System.Windows.Forms;
 
 namespace SQL_Document_Builder
@@ -99,10 +99,10 @@ namespace SQL_Document_Builder
         {
             bool result = false;
             string sql = string.Format("SELECT E.value Description FROM sys.schemas S INNER JOIN sys.{3} T ON S.schema_id = T.schema_id INNER JOIN sys.columns C ON T.object_id = C.object_id INNER JOIN sys.extended_properties E ON T.object_id = E.major_id AND C.column_id = E.minor_id AND E.name = 'MS_Description' AND S.name = '{0}' AND T.name = '{1}' AND C.name = '{2}'", schema, table, column, TableName?.ObjectType == ObjectName.ObjectTypeEnums.View ? "views" : "tables");
-            var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+            var conn = new OdbcConnection(Properties.Settings.Default.dbConnectionString);
             try
             {
-                var cmd = new SqlCommand(sql, conn) { CommandType = CommandType.Text };
+                var cmd = new OdbcCommand(sql, conn) { CommandType = CommandType.Text };
                 conn.Open();
                 var dr = cmd.ExecuteReader();
                 if (dr.Read())
@@ -135,10 +135,10 @@ namespace SQL_Document_Builder
             bool result = false;
             string sql = string.Format(String.Format("SELECT value FROM fn_listextendedproperty (NULL, 'schema', '{0}', '{2}', '{1}', default, default) WHERE name = N'MS_Description'", schema, table, (TableName?.ObjectType == ObjectName.ObjectTypeEnums.View ? "view" : "table")));
 
-            var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+            var conn = new OdbcConnection(Properties.Settings.Default.dbConnectionString);
             try
             {
-                var cmd = new SqlCommand(sql, conn) { CommandType = CommandType.Text };
+                var cmd = new OdbcCommand(sql, conn) { CommandType = CommandType.Text };
                 conn.Open();
                 var dr = cmd.ExecuteReader();
                 if (dr.Read())
@@ -184,7 +184,7 @@ namespace SQL_Document_Builder
         /// </summary>
         private void SaveColumnDesc()
         {
-            var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+            var conn = new OdbcConnection(Properties.Settings.Default.dbConnectionString);
             try
             {
                 string spName;
@@ -196,16 +196,16 @@ namespace SQL_Document_Builder
                 {
                     spName = "sp_addextendedproperty";
                 }
-                var cmd = new SqlCommand(spName, conn) { CommandType = CommandType.StoredProcedure };
+                var cmd = new OdbcCommand(spName, conn) { CommandType = CommandType.StoredProcedure };
 
-                cmd.Parameters.Add(new SqlParameter("@name", "MS_Description"));
-                cmd.Parameters.Add(new SqlParameter("@value", descTextBox.Text));
-                cmd.Parameters.Add(new SqlParameter("@level0type ", "Schema"));
-                cmd.Parameters.Add(new SqlParameter("@level0name", columnView.Schema));
-                cmd.Parameters.Add(new SqlParameter("@level1type", TableName?.ObjectType == ObjectName.ObjectTypeEnums.Table ? "Table" : "View"));
-                cmd.Parameters.Add(new SqlParameter("@level1name", columnView.TableName));
-                cmd.Parameters.Add(new SqlParameter("@level2type", "Column"));
-                cmd.Parameters.Add(new SqlParameter("@level2name", columnNameLabel.Text));
+                cmd.Parameters.Add(new OdbcParameter("@name", "MS_Description"));
+                cmd.Parameters.Add(new OdbcParameter("@value", descTextBox.Text));
+                cmd.Parameters.Add(new OdbcParameter("@level0type ", "Schema"));
+                cmd.Parameters.Add(new OdbcParameter("@level0name", columnView.Schema));
+                cmd.Parameters.Add(new OdbcParameter("@level1type", TableName?.ObjectType == ObjectName.ObjectTypeEnums.Table ? "Table" : "View"));
+                cmd.Parameters.Add(new OdbcParameter("@level1name", columnView.TableName));
+                cmd.Parameters.Add(new OdbcParameter("@level2type", "Column"));
+                cmd.Parameters.Add(new OdbcParameter("@level2name", columnNameLabel.Text));
 
                 conn.Open();
                 cmd.ExecuteNonQuery();
@@ -229,7 +229,7 @@ namespace SQL_Document_Builder
         {
             if (TableName != null)
             {
-                var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+                var conn = new OdbcConnection(Properties.Settings.Default.dbConnectionString);
                 try
                 {
                     string spName;
@@ -241,16 +241,16 @@ namespace SQL_Document_Builder
                     {
                         spName = "sp_addextendedproperty";
                     }
-                    var cmd = new SqlCommand(spName, conn) { CommandType = CommandType.StoredProcedure };
+                    var cmd = new OdbcCommand(spName, conn) { CommandType = CommandType.StoredProcedure };
 
-                    cmd.Parameters.Add(new SqlParameter("@name", "MS_Description"));
-                    cmd.Parameters.Add(new SqlParameter("@value", descTextBox.Text));
-                    cmd.Parameters.Add(new SqlParameter("@level0type ", "Schema"));
-                    cmd.Parameters.Add(new SqlParameter("@level0name", columnView.Schema));
-                    cmd.Parameters.Add(new SqlParameter("@level1type", TableName.ObjectType == ObjectName.ObjectTypeEnums.Table ? "Table" : "View"));
-                    cmd.Parameters.Add(new SqlParameter("@level1name", columnView.TableName));
-                    //cmd.Parameters.Add(new SqlParameter("@level2type", DBNull.Value));
-                    //cmd.Parameters.Add(new SqlParameter("@level2name", DBNull.Value));
+                    cmd.Parameters.Add(new OdbcParameter("@name", "MS_Description"));
+                    cmd.Parameters.Add(new OdbcParameter("@value", descTextBox.Text));
+                    cmd.Parameters.Add(new OdbcParameter("@level0type ", "Schema"));
+                    cmd.Parameters.Add(new OdbcParameter("@level0name", columnView.Schema));
+                    cmd.Parameters.Add(new OdbcParameter("@level1type", TableName.ObjectType == ObjectName.ObjectTypeEnums.Table ? "Table" : "View"));
+                    cmd.Parameters.Add(new OdbcParameter("@level1name", columnView.TableName));
+                    //cmd.Parameters.Add(new OdbcParameter("@level2type", DBNull.Value));
+                    //cmd.Parameters.Add(new OdbcParameter("@level2name", DBNull.Value));
 
                     conn.Open();
                     cmd.ExecuteNonQuery();

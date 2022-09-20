@@ -32,6 +32,8 @@
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.connectToToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.localToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.azureToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this.saveToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
@@ -103,7 +105,7 @@
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
             this.menuStrip1.Padding = new System.Windows.Forms.Padding(11, 5, 0, 5);
-            this.menuStrip1.Size = new System.Drawing.Size(1666, 46);
+            this.menuStrip1.Size = new System.Drawing.Size(1666, 48);
             this.menuStrip1.TabIndex = 0;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -121,14 +123,31 @@
             // 
             // connectToToolStripMenuItem
             // 
+            this.connectToToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.localToolStripMenuItem,
+            this.azureToolStripMenuItem});
             this.connectToToolStripMenuItem.Name = "connectToToolStripMenuItem";
-            this.connectToToolStripMenuItem.Size = new System.Drawing.Size(280, 44);
+            this.connectToToolStripMenuItem.Size = new System.Drawing.Size(359, 44);
             this.connectToToolStripMenuItem.Text = "Connect to...";
+            // 
+            // localToolStripMenuItem
+            // 
+            this.localToolStripMenuItem.Name = "localToolStripMenuItem";
+            this.localToolStripMenuItem.Size = new System.Drawing.Size(359, 44);
+            this.localToolStripMenuItem.Text = "Local";
+            this.localToolStripMenuItem.Click += new System.EventHandler(this.localToolStripMenuItem_Click);
+            // 
+            // azureToolStripMenuItem
+            // 
+            this.azureToolStripMenuItem.Name = "azureToolStripMenuItem";
+            this.azureToolStripMenuItem.Size = new System.Drawing.Size(359, 44);
+            this.azureToolStripMenuItem.Text = "Azure";
+            this.azureToolStripMenuItem.Click += new System.EventHandler(this.azureToolStripMenuItem_Click);
             // 
             // toolStripSeparator2
             // 
             this.toolStripSeparator2.Name = "toolStripSeparator2";
-            this.toolStripSeparator2.Size = new System.Drawing.Size(277, 6);
+            this.toolStripSeparator2.Size = new System.Drawing.Size(356, 6);
             // 
             // saveToolStripMenuItem
             // 
@@ -136,19 +155,19 @@
             this.saveToolStripMenuItem.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.saveToolStripMenuItem.Name = "saveToolStripMenuItem";
             this.saveToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.S)));
-            this.saveToolStripMenuItem.Size = new System.Drawing.Size(280, 44);
+            this.saveToolStripMenuItem.Size = new System.Drawing.Size(359, 44);
             this.saveToolStripMenuItem.Text = "&Save";
             this.saveToolStripMenuItem.Click += new System.EventHandler(this.SaveToolStripMenuItem_Click);
             // 
             // toolStripSeparator1
             // 
             this.toolStripSeparator1.Name = "toolStripSeparator1";
-            this.toolStripSeparator1.Size = new System.Drawing.Size(277, 6);
+            this.toolStripSeparator1.Size = new System.Drawing.Size(356, 6);
             // 
             // exitToolStripMenuItem
             // 
             this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            this.exitToolStripMenuItem.Size = new System.Drawing.Size(280, 44);
+            this.exitToolStripMenuItem.Size = new System.Drawing.Size(359, 44);
             this.exitToolStripMenuItem.Text = "E&xit";
             this.exitToolStripMenuItem.Click += new System.EventHandler(this.ExitToolStripMenuItem_Click);
             // 
@@ -314,14 +333,14 @@
             // customizeToolStripMenuItem
             // 
             this.customizeToolStripMenuItem.Name = "customizeToolStripMenuItem";
-            this.customizeToolStripMenuItem.Size = new System.Drawing.Size(359, 44);
+            this.customizeToolStripMenuItem.Size = new System.Drawing.Size(259, 44);
             this.customizeToolStripMenuItem.Text = "&Customize";
             this.customizeToolStripMenuItem.Visible = false;
             // 
             // optionsToolStripMenuItem
             // 
             this.optionsToolStripMenuItem.Name = "optionsToolStripMenuItem";
-            this.optionsToolStripMenuItem.Size = new System.Drawing.Size(359, 44);
+            this.optionsToolStripMenuItem.Size = new System.Drawing.Size(259, 44);
             this.optionsToolStripMenuItem.Text = "&Options";
             this.optionsToolStripMenuItem.Click += new System.EventHandler(this.OptionsToolStripMenuItem_Click);
             // 
@@ -382,7 +401,7 @@
             this.toolStripSeparator7,
             this.tasksToolStripButton,
             this.clipboardToolStripButton});
-            this.toolStrip1.Location = new System.Drawing.Point(0, 46);
+            this.toolStrip1.Location = new System.Drawing.Point(0, 48);
             this.toolStrip1.Name = "toolStrip1";
             this.toolStrip1.Padding = new System.Windows.Forms.Padding(0, 0, 3, 0);
             this.toolStrip1.Size = new System.Drawing.Size(1666, 42);
@@ -555,12 +574,12 @@
             // 
             this.sqlTextBox.Dock = System.Windows.Forms.DockStyle.Fill;
             this.sqlTextBox.Font = new System.Drawing.Font("Consolas", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.sqlTextBox.Location = new System.Drawing.Point(0, 88);
+            this.sqlTextBox.Location = new System.Drawing.Point(0, 90);
             this.sqlTextBox.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
             this.sqlTextBox.Multiline = true;
             this.sqlTextBox.Name = "sqlTextBox";
             this.sqlTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.sqlTextBox.Size = new System.Drawing.Size(1666, 1169);
+            this.sqlTextBox.Size = new System.Drawing.Size(1666, 1167);
             this.sqlTextBox.TabIndex = 3;
             // 
             // MainForm
@@ -648,5 +667,7 @@
         private System.Windows.Forms.ToolStripMenuItem storedProceduresToolStripMenuItem1;
         private System.Windows.Forms.ToolStripMenuItem functionsToolStripMenuItem1;
         private System.Windows.Forms.ToolStripProgressBar progressBar;
+        private System.Windows.Forms.ToolStripMenuItem localToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem azureToolStripMenuItem;
     }
 }

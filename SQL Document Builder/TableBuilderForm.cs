@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Data;
-using System.Data.SqlClient;
+using System.Data.Odbc;
 using System.Windows.Forms;
 
 namespace SQL_Document_Builder
@@ -195,10 +195,10 @@ namespace SQL_Document_Builder
         //{
         //    string result = string.Empty;
         //    string sql = string.Format("SELECT E.value Description FROM sys.schemas S INNER JOIN sys.tables T ON S.schema_id = T.schema_id INNER JOIN sys.columns C ON T.object_id = C.object_id INNER JOIN sys.extended_properties E ON T.object_id = E.major_id AND C.column_id = E.minor_id AND E.name = 'MS_Description' AND S.name = '{0}' AND T.name = '{1}' AND C.name = '{2}'", schema, table, column);
-        //    var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+        //    var conn = new OdbcConnection(Properties.Settings.Default.dbConnectionString);
         //    try
         //    {
-        //        var cmd = new SqlCommand(sql, conn) { CommandType = CommandType.Text };
+        //        var cmd = new OdbcCommand(sql, conn) { CommandType = CommandType.Text };
         //        conn.Open();
         //        var dr = cmd.ExecuteReader();
         //        if (dr.Read())
@@ -229,10 +229,10 @@ namespace SQL_Document_Builder
         private void GetTableDefinition(ObjectName objectName)
         {
             string sql = string.Format("SELECT ORDINAL_POSITION, COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = N'{0}' AND TABLE_NAME = N'{1}' ORDER BY ORDINAL_POSITION", objectName.Schema, objectName.Name);
-            var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+            var conn = new OdbcConnection(Properties.Settings.Default.dbConnectionString);
             try
             {
-                var cmd = new SqlCommand(sql, conn) { CommandType = CommandType.Text };
+                var cmd = new OdbcCommand(sql, conn) { CommandType = CommandType.Text };
                 conn.Open();
                 var dr = cmd.ExecuteReader();
                 while (dr.Read())
@@ -304,13 +304,13 @@ namespace SQL_Document_Builder
         /// </summary>
         private void GetTableList()
         {
-            var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+            var conn = new OdbcConnection(Properties.Settings.Default.dbConnectionString);
             try
             {
-                var cmd = new SqlCommand("SELECT * FROM INFORMATION_SCHEMA.TABLES ORDER BY TABLE_SCHEMA, TABLE_NAME", conn) { CommandType = CommandType.Text };
+                var cmd = new OdbcCommand("SELECT * FROM INFORMATION_SCHEMA.TABLES ORDER BY TABLE_SCHEMA, TABLE_NAME", conn) { CommandType = CommandType.Text };
                 conn.Open();
                 var ds = new DataSet();
-                var dat = new SqlDataAdapter(cmd);
+                var dat = new OdbcDataAdapter(cmd);
                 dat.Fill(ds);
                 if (ds.Tables.Count > 0)
                 { _tables = ds.Tables[0]; }
@@ -336,13 +336,13 @@ namespace SQL_Document_Builder
             AppendLine("Table Values:");
             AppendLine("{| class=\"wikitable\"");
             string sql = string.Format("SELECT * FROM {0}", tableName);
-            var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+            var conn = new OdbcConnection(Properties.Settings.Default.dbConnectionString);
             try
             {
-                var cmd = new SqlCommand(sql, conn) { CommandType = CommandType.Text };
+                var cmd = new OdbcCommand(sql, conn) { CommandType = CommandType.Text };
                 conn.Open();
                 var ds = new DataSet();
-                var dat = new SqlDataAdapter(cmd);
+                var dat = new OdbcDataAdapter(cmd);
                 dat.Fill(ds);
                 if (ds.Tables.Count == 1)
                 {

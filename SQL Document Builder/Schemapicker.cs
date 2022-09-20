@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Data;
-using System.Data.SqlClient;
+using System.Data.Odbc;
 using System.Windows.Forms;
 
 namespace SQL_Document_Builder
@@ -40,12 +40,12 @@ namespace SQL_Document_Builder
 
             try
             {
-                using var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+                using var conn = new OdbcConnection(Properties.Settings.Default.dbConnectionString);
                 conn.Open();
                 DataTable schemaTable = conn.GetSchema(System.Data.OleDb.OleDbMetaDataCollectionNames.Tables);
                 if (schemaTable.Rows.Count > 0)
                 {
-                    var dtSchemas = schemaTable.DefaultView.ToTable(true, "TABLE_SCHEMA");
+                    var dtSchemas = schemaTable.DefaultView.ToTable(true, "TABLE_SCHEM");
                     foreach (DataRow dr in dtSchemas.Rows)
                     {
                         schemaListBox.Items.Add((string)dr[0]);

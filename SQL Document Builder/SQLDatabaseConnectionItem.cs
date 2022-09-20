@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Data.Odbc;
 using System.Windows.Forms;
 using System.Xml;
+using System.Xml.Linq;
 
 namespace SQL_Document_Builder
 {
@@ -132,18 +134,56 @@ namespace SQL_Document_Builder
 
         public void BuildConnectionString()
         {
-            bool integratedSecurity = (AuthenticationType == 0);
-            var builder = new System.Data.SqlClient.SqlConnectionStringBuilder()
+            //bool integratedSecurity = (AuthenticationType == 0);
+            //var builder = new System.Data.Odbc.OdbcConnectionStringBuilder()
+            //{
+            //    DataSource = ServerName,
+            //    InitialCatalog = Database,
+            //    IntegratedSecurity = integratedSecurity
+            //};
+            //if (!integratedSecurity)
+            //{
+            //    builder.UserID = UserName;
+            //    builder.Password = Password;
+            //}
+            OdbcConnectionStringBuilder builder = new()
             {
-                DataSource = ServerName,
-                InitialCatalog = Database,
-                IntegratedSecurity = integratedSecurity
+                Driver = "ODBC Driver 17 for SQL Server"
             };
-            if (!integratedSecurity)
+            //builder.Add("Server", "phsa-csbc-pcr-prod-sql-server.database.windows.net");
+            //builder.Add("Database", "pcr_analytic");
+            //builder.Add("Authentication", "ActiveDirectoryInteractive");
+            //builder.Add("UID", UserName);
+            //builder.Add("PWD", Password);
+            builder.Add("Server", ServerName);
+            builder.Add("Database", Database);
+            switch (AuthenticationType)
             {
-                builder.UserID = UserName;
-                builder.Password = Password;
+                case 0:     //Windows Authentication
+                    builder.Add("Trusted_Connection", "yes");
+                    break;
+                case 1:     //SQL Server Authentication
+                    break;
+                case 2:     //Active Directory - Interactive
+                    builder.Add("Authentication", "ActiveDirectoryInteractive");
+                    break;
+                case 3:     //Active Directory - Integrated
+                    builder.Add("Authentication", "ActiveDirectoryIntegrated");
+                    break;
+                case 4:     //Active Directory - Password
+                    builder.Add("Authentication", "ActiveDirectoryPassword");
+                    break;
+                case 5:     //Active Directory -Service Principal
+                    builder.Add("Authentication", "ActiveDirectoryServicePrincipal");
+                    break;
+                default:
+                    break;
             }
+
+            if (UserName?.Trim().Length > 0)
+                builder.Add("UID", UserName);
+            if (Password?.Trim().Length > 0)
+                builder.Add("PWD", Password);
 
             ConnectionString = builder.ConnectionString;
         }
@@ -182,18 +222,56 @@ namespace SQL_Document_Builder
             {
                 if (dlg.ShowDialog() == DialogResult.OK)
                 {
-                    bool integratedSecurity = (dlg.Authentication == 0);
-                    var builder = new System.Data.SqlClient.SqlConnectionStringBuilder()
+                    //bool integratedSecurity = (dlg.Authentication == 0);
+                    //var builder = new System.Data.Odbc.OdbcConnectionStringBuilder()
+                    //{
+                    //    DataSource = dlg.ServerName,
+                    //    InitialCatalog = dlg.DatabaseName,
+                    //    IntegratedSecurity = integratedSecurity
+                    //};
+                    //if (!integratedSecurity)
+                    //{
+                    //    builder.UserID = dlg.UserName;
+                    //    builder.Password = dlg.Password;
+                    //}
+                    OdbcConnectionStringBuilder builder = new()
                     {
-                        DataSource = dlg.ServerName,
-                        InitialCatalog = dlg.DatabaseName,
-                        IntegratedSecurity = integratedSecurity
+                        Driver = "ODBC Driver 17 for SQL Server"
                     };
-                    if (!integratedSecurity)
+                    //builder.Add("Server", "phsa-csbc-pcr-prod-sql-server.database.windows.net");
+                    //builder.Add("Database", "pcr_analytic");
+                    //builder.Add("Authentication", "ActiveDirectoryInteractive");
+                    //builder.Add("UID", dlg.UserName);
+                    //builder.Add("PWD", dlg.Password);
+                    builder.Add("Server", dlg.ServerName);
+                    builder.Add("Database", dlg.DatabaseName);
+                    switch (dlg.Authentication)
                     {
-                        builder.UserID = dlg.UserName;
-                        builder.Password = dlg.Password;
+                        case 0:     //Windows Authentication
+                            builder.Add("Trusted_Connection", "yes");
+                            break;
+                        case 1:     //SQL Server Authentication
+                            break;
+                        case 2:     //Active Directory - Interactive
+                            builder.Add("Authentication", "ActiveDirectoryInteractive");
+                            break;
+                        case 3:     //Active Directory - Integrated
+                            builder.Add("Authentication", "ActiveDirectoryIntegrated");
+                            break;
+                        case 4:     //Active Directory - Password
+                            builder.Add("Authentication", "ActiveDirectoryPassword");
+                            break;
+                        case 5:     //Active Directory -Service Principal
+                            builder.Add("Authentication", "ActiveDirectoryServicePrincipal");
+                            break;
+                        default:
+                            break;
                     }
+
+                    if (dlg.UserName?.Trim().Length > 0)
+                        builder.Add("UID", dlg.UserName);
+                    if (dlg.Password?.Trim().Length > 0)
+                        builder.Add("PWD", dlg.Password);
 
                     ConnectionString = builder.ConnectionString;
                 }
