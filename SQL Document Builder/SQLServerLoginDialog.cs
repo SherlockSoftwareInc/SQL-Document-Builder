@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Data.Odbc;
+using Microsoft.Data.SqlClient;
 using System.Windows.Forms;
 
 namespace SQL_Document_Builder
@@ -43,7 +43,7 @@ namespace SQL_Document_Builder
             if (serverName.Length > 0 && dbName.Length > 0)
             {
                 //bool integratedSecurity = authenticationComboBox.SelectedIndex == 0;
-                //var builder = new System.Data.Odbc.OdbcConnectionStringBuilder()
+                //var builder = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder()
                 //{
                 //DataSource = serverName,
                 //InitialCatalog = dbName,
@@ -55,9 +55,9 @@ namespace SQL_Document_Builder
                 //builder.Password = passwordTextBox.Text;
                 //}
 
-                OdbcConnectionStringBuilder builder = new()
+                SqlConnectionStringBuilder builder = new()
                 {
-                    Driver = "ODBC Driver 17 for SQL Server"
+                    //Driver = "Sql Driver 17 for SQL Server"
                 };
                 //builder.Add("Server", "phsa-csbc-pcr-prod-sql-server.database.windows.net");
                 //builder.Add("Database", "pcr_analytic");

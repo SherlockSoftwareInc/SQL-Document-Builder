@@ -127,27 +127,27 @@
             this.localToolStripMenuItem,
             this.azureToolStripMenuItem});
             this.connectToToolStripMenuItem.Name = "connectToToolStripMenuItem";
-            this.connectToToolStripMenuItem.Size = new System.Drawing.Size(359, 44);
+            this.connectToToolStripMenuItem.Size = new System.Drawing.Size(280, 44);
             this.connectToToolStripMenuItem.Text = "Connect to...";
             // 
             // localToolStripMenuItem
             // 
             this.localToolStripMenuItem.Name = "localToolStripMenuItem";
-            this.localToolStripMenuItem.Size = new System.Drawing.Size(359, 44);
+            this.localToolStripMenuItem.Size = new System.Drawing.Size(208, 44);
             this.localToolStripMenuItem.Text = "Local";
-            this.localToolStripMenuItem.Click += new System.EventHandler(this.localToolStripMenuItem_Click);
+            this.localToolStripMenuItem.Click += new System.EventHandler(this.LocalToolStripMenuItem_Click);
             // 
             // azureToolStripMenuItem
             // 
             this.azureToolStripMenuItem.Name = "azureToolStripMenuItem";
-            this.azureToolStripMenuItem.Size = new System.Drawing.Size(359, 44);
+            this.azureToolStripMenuItem.Size = new System.Drawing.Size(208, 44);
             this.azureToolStripMenuItem.Text = "Azure";
-            this.azureToolStripMenuItem.Click += new System.EventHandler(this.azureToolStripMenuItem_Click);
+            this.azureToolStripMenuItem.Click += new System.EventHandler(this.AzureToolStripMenuItem_Click);
             // 
             // toolStripSeparator2
             // 
             this.toolStripSeparator2.Name = "toolStripSeparator2";
-            this.toolStripSeparator2.Size = new System.Drawing.Size(356, 6);
+            this.toolStripSeparator2.Size = new System.Drawing.Size(277, 6);
             // 
             // saveToolStripMenuItem
             // 
@@ -155,19 +155,19 @@
             this.saveToolStripMenuItem.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.saveToolStripMenuItem.Name = "saveToolStripMenuItem";
             this.saveToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.S)));
-            this.saveToolStripMenuItem.Size = new System.Drawing.Size(359, 44);
+            this.saveToolStripMenuItem.Size = new System.Drawing.Size(280, 44);
             this.saveToolStripMenuItem.Text = "&Save";
             this.saveToolStripMenuItem.Click += new System.EventHandler(this.SaveToolStripMenuItem_Click);
             // 
             // toolStripSeparator1
             // 
             this.toolStripSeparator1.Name = "toolStripSeparator1";
-            this.toolStripSeparator1.Size = new System.Drawing.Size(356, 6);
+            this.toolStripSeparator1.Size = new System.Drawing.Size(277, 6);
             // 
             // exitToolStripMenuItem
             // 
             this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            this.exitToolStripMenuItem.Size = new System.Drawing.Size(359, 44);
+            this.exitToolStripMenuItem.Size = new System.Drawing.Size(280, 44);
             this.exitToolStripMenuItem.Text = "E&xit";
             this.exitToolStripMenuItem.Click += new System.EventHandler(this.ExitToolStripMenuItem_Click);
             // 
@@ -333,14 +333,14 @@
             // customizeToolStripMenuItem
             // 
             this.customizeToolStripMenuItem.Name = "customizeToolStripMenuItem";
-            this.customizeToolStripMenuItem.Size = new System.Drawing.Size(259, 44);
+            this.customizeToolStripMenuItem.Size = new System.Drawing.Size(359, 44);
             this.customizeToolStripMenuItem.Text = "&Customize";
             this.customizeToolStripMenuItem.Visible = false;
             // 
             // optionsToolStripMenuItem
             // 
             this.optionsToolStripMenuItem.Name = "optionsToolStripMenuItem";
-            this.optionsToolStripMenuItem.Size = new System.Drawing.Size(259, 44);
+            this.optionsToolStripMenuItem.Size = new System.Drawing.Size(359, 44);
             this.optionsToolStripMenuItem.Text = "&Options";
             this.optionsToolStripMenuItem.Click += new System.EventHandler(this.OptionsToolStripMenuItem_Click);
             // 

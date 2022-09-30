@@ -1,9 +1,10 @@
 ﻿using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
-using System.Data.Odbc;
+using Microsoft.Data.SqlClient;
 using System.Linq;
 using System.Windows.Forms;
+using Microsoft.SqlServer.Management.Smo;
 
 namespace SQL_Document_Builder
 {
@@ -93,7 +94,7 @@ namespace SQL_Document_Builder
             {
                 //https://docs.microsoft.com/en-us/dotnet/framework/data/adonet/connection-string-syntax
                 //bool integratedSecurity = (authenticationComboBox.SelectedIndex == 0);
-                //var builder = new System.Data.Odbc.OdbcConnectionStringBuilder()
+                //var builder = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder()
                 //{
                 //    DataSource = serverName,
                 //    InitialCatalog = dbName,
@@ -104,47 +105,89 @@ namespace SQL_Document_Builder
                 //    builder.UserID = userNameTextBox.Text;
                 //    builder.Password = passwordTextBox.Text;
                 //}
-                OdbcConnectionStringBuilder builder = new()
+                //SqlConnectionStringBuilder builder = new()
+                //{
+                //    //Driver = "Sql Driver 17 for SQL Server"
+                //};
+                //builder.Add("Server", serverName);
+                //builder.Add("Database", dbName);
+                //switch (authenticationComboBox.SelectedIndex)
+                //{
+                //    case 0:     //Windows Authentication
+                //        builder.Add("Trusted_Connection", "yes");
+                //        break;
+
+                //    case 1:     //SQL Server Authentication
+                //        break;
+
+                //    case 2:     //Active Directory - Interactive
+                //        builder.Add("Authentication", "ActiveDirectoryInteractive");
+                //        break;
+
+                //    case 3:     //Active Directory - Integrated
+                //        builder.Add("Authentication", "ActiveDirectoryIntegrated");
+                //        break;
+
+                //    case 4:     //Active Directory - Password
+                //        builder.Add("Authentication", "ActiveDirectoryPassword");
+                //        break;
+
+                //    case 5:     //Active Directory -Service Principal
+                //        builder.Add("Authentication", "ActiveDirectoryServicePrincipal");
+                //        break;
+
+                //    default:
+                //        break;
+                //}
+
+                //if (userNameTextBox.Enabled && userNameTextBox.Text.Trim().Length > 0)
+                //    builder.Add("UID", userNameTextBox.Text);
+                //if (passwordTextBox.Enabled && passwordTextBox.Text.Trim().Length > 0)
+                //    builder.Add("PWD", passwordTextBox.Text);
+
+                //Driver={Sql Driver 17 for SQL Server};Server=svmsq06;Database=AFDataMart_DEV;Trusted_Connection=Yes;
+
+                var builder = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder()
                 {
-                    Driver = "ODBC Driver 17 for SQL Server"
+                    DataSource = serverName,
+                    InitialCatalog = dbName,
+                    Encrypt = encrptyCheckBox.Checked,
+                    TrustServerCertificate = trustCertificateCheckBox.Checked,
                 };
-                builder.Add("Server", serverName);
-                builder.Add("Database", dbName);
+
                 switch (authenticationComboBox.SelectedIndex)
                 {
                     case 0:     //Windows Authentication
-                        builder.Add("Trusted_Connection", "yes");
+                        builder.IntegratedSecurity = true;
                         break;
 
                     case 1:     //SQL Server Authentication
                         break;
 
                     case 2:     //Active Directory - Interactive
-                        builder.Add("Authentication", "ActiveDirectoryInteractive");
+                        builder.Authentication = SqlAuthenticationMethod.ActiveDirectoryInteractive;
                         break;
 
                     case 3:     //Active Directory - Integrated
-                        builder.Add("Authentication", "ActiveDirectoryIntegrated");
+                        builder.Authentication = SqlAuthenticationMethod.ActiveDirectoryIntegrated;
                         break;
 
                     case 4:     //Active Directory - Password
-                        builder.Add("Authentication", "ActiveDirectoryPassword");
+                        builder.Authentication = SqlAuthenticationMethod.ActiveDirectoryPassword;
                         break;
 
                     case 5:     //Active Directory -Service Principal
-                        builder.Add("Authentication", "ActiveDirectoryServicePrincipal");
+                        builder.Authentication = SqlAuthenticationMethod.ActiveDirectoryServicePrincipal;
                         break;
 
                     default:
                         break;
                 }
 
-                if (userNameTextBox.Enabled && userNameTextBox.Text.Trim().Length > 0)
-                    builder.Add("UID", userNameTextBox.Text);
-                if (passwordTextBox.Enabled && passwordTextBox.Text.Trim().Length > 0)
-                    builder.Add("PWD", passwordTextBox.Text);
-
-                //Driver={ODBC Driver 17 for SQL Server};Server=svmsq06;Database=AFDataMart_DEV;Trusted_Connection=Yes;
+                if (userNameTextBox.Text.Trim().Length > 0)
+                    builder.UserID = userNameTextBox.Text;
+                if (passwordTextBox.Text.Trim().Length > 0)
+                    builder.Password = passwordTextBox.Text;
 
                 ConnectionString = builder.ConnectionString;
                 result = true;
@@ -236,14 +279,14 @@ namespace SQL_Document_Builder
             List<String> databases = new();
             //try
             //{
-            //    OdbcConnectionStringBuilder connection = new()
+            //    SqlConnectionStringBuilder connection = new()
             //    {
             //        //DataSource = serverName,
             //        //IntegratedSecurity = true
             //    };
 
             //    String strConn = connection.ToString();
-            //    OdbcConnection sqlConn = new(strConn);
+            //    SqlConnection sqlConn = new(strConn);
             //    sqlConn.Open();
 
             //    //get databases
@@ -257,7 +300,7 @@ namespace SQL_Document_Builder
             //        if (strDatabaseName != null) databases.Add(strDatabaseName);
             //    }
             //}
-            //catch (OdbcException)
+            //catch (SqlException)
             //{
             //    //Ignore the error
             //}
@@ -346,51 +389,5 @@ namespace SQL_Document_Builder
             }
         }
 
-        /// <summary>
-        /// Gets the ODBC driver names from the registry.
-        /// </summary>
-        /// <returns>a string array containing the ODBC driver names, if the registry key is present; null, otherwise.</returns>
-        public static string[] GetOdbcDriverNames()
-        {
-            string[] odbcDriverNames = null;
-            using (RegistryKey localMachineHive = Registry.LocalMachine)
-            using (RegistryKey odbcDriversKey = localMachineHive.OpenSubKey(@"SOFTWARE\ODBC\ODBCINST.INI\ODBC Drivers"))
-            {
-                if (odbcDriversKey != null)
-                {
-                    odbcDriverNames = odbcDriversKey.GetValueNames();
-                }
-            }
-
-            return odbcDriverNames;
-        }
-
-        /// <summary>
-        /// Gets the name of an ODBC driver for Microsoft SQL Server giving preference to the most recent one.
-        /// </summary>
-        /// <returns>the name of an ODBC driver for Microsoft SQL Server, if one is present; null, otherwise.</returns>
-        public static string GetOdbcSqlDriverName()
-        {
-            List<string> driverPrecedence = new() { "SQL Server Native Client 11.0", "SQL Server Native Client 10.0", "SQL Server Native Client 9.0", "SQL Server" };
-            string[] availableOdbcDrivers = GetOdbcDriverNames();
-            string? driverName = null;
-
-            if (availableOdbcDrivers != null)
-            {
-                driverName = driverPrecedence.Intersect(availableOdbcDrivers).FirstOrDefault();
-            }
-
-            return driverName;
-        }
-
-        private void NewSQLServerConnectionDialog_Load(object sender, EventArgs e)
-        {
-            foreach (var driver in GetOdbcDriverNames())
-            {
-                odbcDriverComboBox.Items.Add(driver);
-            }
-            if (odbcDriverComboBox.Items.Count > 0)
-                odbcDriverComboBox.SelectedIndex = 0;
-        }
     }
 }

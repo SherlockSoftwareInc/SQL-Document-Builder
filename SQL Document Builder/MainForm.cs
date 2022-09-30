@@ -1,8 +1,8 @@
-﻿using Microsoft.SqlServer.Management.Smo;
+﻿using Microsoft.Data.SqlClient;
+using Microsoft.SqlServer.Management.Smo;
 using System;
 using System.Collections.Specialized;
 using System.Data;
-using System.Data.Odbc;
 using System.Drawing;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -82,13 +82,13 @@ namespace SQL_Document_Builder
         {
             _script.Clear();
             sqlTextBox.Text = string.Empty;
-            var conn = new OdbcConnection(Properties.Settings.Default.dbConnectionString);
+            var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
             try
             {
                 AppendLine("{| class=\"wikitable\"");
                 AppendLine("|-");
                 AppendLine("! Schema !! Function !! Description");
-                var cmd = new OdbcCommand("SELECT ROUTINE_SCHEMA, ROUTINE_NAME FROM information_schema.routines WHERE routine_type = 'FUNCTION' ORDER BY ROUTINE_NAME", conn) { CommandType = CommandType.Text };
+                var cmd = new SqlCommand("SELECT ROUTINE_SCHEMA, ROUTINE_NAME FROM information_schema.routines WHERE routine_type = 'FUNCTION' ORDER BY ROUTINE_NAME", conn) { CommandType = CommandType.Text };
                 conn.Open();
                 var dr = cmd.ExecuteReader();
                 while (dr.Read())
@@ -129,13 +129,13 @@ namespace SQL_Document_Builder
             _script.Clear();
             sqlTextBox.Text = string.Empty;
 
-            var conn = new OdbcConnection(Properties.Settings.Default.dbConnectionString);
+            var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
             try
             {
                 AppendLine("{| class=\"wikitable\"");
                 AppendLine("|-");
                 AppendLine("! Schema !! Stored Procedure !! Description");
-                var cmd = new OdbcCommand("SELECT ROUTINE_SCHEMA, ROUTINE_NAME FROM information_schema.routines WHERE routine_type = 'PROCEDURE' AND LEFT(Routine_Name, 3) NOT IN ('sp_', 'xp_', 'ms_') ORDER BY ROUTINE_NAME", conn) { CommandType = CommandType.Text };
+                var cmd = new SqlCommand("SELECT ROUTINE_SCHEMA, ROUTINE_NAME FROM information_schema.routines WHERE routine_type = 'PROCEDURE' AND LEFT(Routine_Name, 3) NOT IN ('sp_', 'xp_', 'ms_') ORDER BY ROUTINE_NAME", conn) { CommandType = CommandType.Text };
                 conn.Open();
                 var dr = cmd.ExecuteReader();
                 while (dr.Read())
@@ -176,7 +176,7 @@ namespace SQL_Document_Builder
             _script.Clear();
             sqlTextBox.Text = string.Empty;
 
-            var conn = new OdbcConnection(Properties.Settings.Default.dbConnectionString);
+            var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
             try
             {
                 AppendLine("{| class=\"wikitable\"");
@@ -188,7 +188,7 @@ namespace SQL_Document_Builder
                 else
                     sql = string.Format("SELECT SCHEMA_NAME(schema_id) AS table_schema, name AS table_name FROM sys.tables WHERE SCHEMA_NAME(schema_id) = N'{0}' order by table_schema, table_name", schemaName);
 
-                var cmd = new OdbcCommand(sql, conn)
+                var cmd = new SqlCommand(sql, conn)
                 { CommandType = CommandType.Text };
                 conn.Open();
                 var dr = cmd.ExecuteReader();
@@ -222,7 +222,7 @@ namespace SQL_Document_Builder
             _script.Clear();
             sqlTextBox.Text = string.Empty;
 
-            var conn = new OdbcConnection(Properties.Settings.Default.dbConnectionString);
+            var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
             try
             {
                 AppendLine("{| class=\"wikitable\"");
@@ -233,7 +233,7 @@ namespace SQL_Document_Builder
                     sql = "SELECT SCHEMA_NAME(schema_id) AS table_schema, name AS table_name FROM sys.views ORDER BY table_schema, table_name";
                 else
                     sql = string.Format("SELECT SCHEMA_NAME(schema_id) AS table_schema, name AS table_name FROM sys.views WHERE SCHEMA_NAME(schema_id) = N'{0}' order by table_schema, table_name", schemaName);
-                var cmd = new OdbcCommand(sql, conn)
+                var cmd = new SqlCommand(sql, conn)
                 { CommandType = CommandType.Text };
                 conn.Open();
                 var dr = cmd.ExecuteReader();
@@ -532,10 +532,10 @@ namespace SQL_Document_Builder
         private void GetSPDefinition(string schema, string spName)
         {
             string sql = string.Format("SELECT definition FROM sys.sql_modules WHERE object_id = (OBJECT_ID(N'{0}.{1}'))", schema.QuotedName(), spName.QuotedName());
-            var conn = new OdbcConnection(Properties.Settings.Default.dbConnectionString);
+            var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
             try
             {
-                var cmd = new OdbcCommand(sql, conn) { CommandType = CommandType.Text };
+                var cmd = new SqlCommand(sql, conn) { CommandType = CommandType.Text };
                 conn.Open();
                 var dr = cmd.ExecuteReader();
                 if (dr.Read())
@@ -564,10 +564,10 @@ namespace SQL_Document_Builder
         private void GetViewDefinition(string viewSchema, string viewName)
         {
             string sql = string.Format("select definition from sys.objects o join sys.sql_modules m on m.object_id = o.object_id where o.object_id = OBJECT_ID(N'{0}.{1}') and o.type = 'V'", viewSchema.QuotedName(), viewName.QuotedName());
-            var conn = new OdbcConnection(Properties.Settings.Default.dbConnectionString);
+            var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
             try
             {
-                var cmd = new OdbcCommand(sql, conn) { CommandType = CommandType.Text };
+                var cmd = new SqlCommand(sql, conn) { CommandType = CommandType.Text };
                 conn.Open();
                 var dr = cmd.ExecuteReader();
                 if (dr.Read())
@@ -612,17 +612,6 @@ namespace SQL_Document_Builder
             _connections.Load();
             //PopulateConnections();
 
-            OdbcConnectionStringBuilder builder = new()
-            {
-                Driver = "ODBC Driver 17 for SQL Server"
-            };
-            builder.Add("Server", "(local)");
-            builder.Add("Database", "JCM");
-            builder.Add("Trusted_Connection", "yes");
-            Properties.Settings.Default.dbConnectionString = builder.ConnectionString;
-            _server = "(local)";
-            _database = "JCM";
-
             //var lastConnection = Properties.Settings.Default.LastAccessConnection;
             //ConnectionMenuItem? selectedItem = null;
             //if (lastConnection.Length == 0)
@@ -648,6 +637,8 @@ namespace SQL_Document_Builder
             //{
             //    Close();
             //}
+
+            LocalToolStripMenuItem_Click(this, e);
         }
 
         /// <summary>
@@ -745,10 +736,10 @@ namespace SQL_Document_Builder
         private void ScanAllFunctions(string? schemaName, IProgress<int> progress)
         {
             DataTable dt = new();
-            var conn = new OdbcConnection(Properties.Settings.Default.dbConnectionString);
+            var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
             try
             {
-                var cmd = new OdbcCommand("SELECT ROUTINE_SCHEMA, ROUTINE_NAME FROM information_schema.routines WHERE routine_type = 'FUNCTION' ORDER BY ROUTINE_NAME", conn)
+                var cmd = new SqlCommand("SELECT ROUTINE_SCHEMA, ROUTINE_NAME FROM information_schema.routines WHERE routine_type = 'FUNCTION' ORDER BY ROUTINE_NAME", conn)
                 {
                     CommandType = CommandType.Text,
                     CommandTimeout = 120000
@@ -817,10 +808,10 @@ namespace SQL_Document_Builder
         private void ScanAllSPs(string schemaName, IProgress<int> progress)
         {
             DataTable dt = new();
-            var conn = new OdbcConnection(Properties.Settings.Default.dbConnectionString);
+            var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
             try
             {
-                var cmd = new OdbcCommand("SELECT ROUTINE_SCHEMA, ROUTINE_NAME FROM information_schema.routines WHERE routine_type = 'PROCEDURE' AND LEFT(Routine_Name, 3) NOT IN ('sp_', 'xp_', 'ms_') ORDER BY ROUTINE_NAME", conn)
+                var cmd = new SqlCommand("SELECT ROUTINE_SCHEMA, ROUTINE_NAME FROM information_schema.routines WHERE routine_type = 'PROCEDURE' AND LEFT(Routine_Name, 3) NOT IN ('sp_', 'xp_', 'ms_') ORDER BY ROUTINE_NAME", conn)
                 {
                     CommandType = CommandType.Text,
                     CommandTimeout = 120000
@@ -889,11 +880,11 @@ namespace SQL_Document_Builder
         private void ScanAllViews(string schemaName, IProgress<int> progress)
         {
             DataTable dt = new();
-            var conn = new OdbcConnection(Properties.Settings.Default.dbConnectionString);
+            var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
             try
             {
-                // Dim cmd As New OdbcCommand("SELECT name AS view_name FROM sys.views where SCHEMA_NAME(schema_id) = 'dbo' order by view_name", conn) With {
-                var cmd = new OdbcCommand("SELECT SCHEMA_NAME(schema_id) AS view_schema, name AS view_name FROM sys.views", conn)
+                // Dim cmd As New SqlCommand("SELECT name AS view_name FROM sys.views where SCHEMA_NAME(schema_id) = 'dbo' order by view_name", conn) With {
+                var cmd = new SqlCommand("SELECT SCHEMA_NAME(schema_id) AS view_schema, name AS view_name FROM sys.views", conn)
                 {
                     CommandType = CommandType.Text,
                     CommandTimeout = 120000
@@ -1195,21 +1186,24 @@ namespace SQL_Document_Builder
         {
         }
 
-        private async void azureToolStripMenuItem_Click(object sender, EventArgs e)
+        private async void AzureToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            OdbcConnectionStringBuilder builder = new()
+            const string server = "phsa-csbc-pcr-prod-sql-server.database.windows.net";
+            const string database = "pcr_analytic";
+            var builder = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder()
             {
-                Driver = "ODBC Driver 17 for SQL Server"
+                DataSource = server,
+                InitialCatalog = database,
+                Encrypt = true,
+                TrustServerCertificate = true,
+                Authentication = Microsoft.Data.SqlClient.SqlAuthenticationMethod.ActiveDirectoryInteractive,
+                UserID = "swu2@phsa.ca"
             };
-            builder.Add("Server", "phsa-csbc-pcr-prod-sql-server.database.windows.net");
-            builder.Add("Database", "pcr_analytic");
-            builder.Add("Authentication", "ActiveDirectoryInteractive");
-            builder.Add("UID", "swu2@phsa.ca");
 
             if (await TestConnection(builder.ConnectionString))
             {
-                _server = "phsa-csbc-pcr-prod-sql-server.database.windows.net";
-                _database = "pcr_analytic";
+                _server = server;
+                _database = database;
                 Properties.Settings.Default.dbConnectionString = builder.ConnectionString;
             }
         }
@@ -1219,37 +1213,40 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="connectionString">The connection string</param>
         /// <returns>true if the connection is opened</returns>
-        private async Task<bool> TestConnection(string connectionString)
+        private static async Task<bool> TestConnection(string connectionString)
         {
-            using OdbcConnection connection = new(connectionString);
+            using SqlConnection connection = new(connectionString);
             try
             {
                 await connection.OpenAsync();
                 return true;
             }
-            catch (OdbcException)
+            catch (SqlException)
             {
                 return false;
             }
         }
 
-        private async void localToolStripMenuItem_Click(object sender, EventArgs e)
+        private async void LocalToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            OdbcConnectionStringBuilder builder = new()
+            const string server = "(local)";
+            const string database = "JCM";
+            var builder = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder()
             {
-                Driver = "ODBC Driver 17 for SQL Server"
+                DataSource = server,
+                InitialCatalog = database,
+                Encrypt = true,
+                TrustServerCertificate = true,
+                IntegratedSecurity = true,
+                //Authentication = Microsoft.Data.SqlClient.SqlAuthenticationMethod.ActiveDirectoryIntegrated,
             };
-            builder.Add("Server", "(local)");
-            builder.Add("Database", "JCM");
-            builder.Add("Trusted_Connection", "yes");
+
             if (await TestConnection(builder.ConnectionString))
             {
+                _server = server;
+                _database = database;
                 Properties.Settings.Default.dbConnectionString = builder.ConnectionString;
-                _server = "(local)";
-                _database = "JCM";
             }
-
-
         }
     }
 }

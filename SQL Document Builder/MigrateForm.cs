@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Data;
-using System.Data.Odbc;
+using Microsoft.Data.SqlClient;
 using System.Windows.Forms;
 
 namespace SQL_Document_Builder
@@ -27,11 +27,11 @@ namespace SQL_Document_Builder
 
         private void LoadSourceData()
         {
-            using (var conn = new OdbcConnection(Properties.Settings.Default.edwConnectionString))
+            using (var conn = new SqlConnection(Properties.Settings.Default.edwConnectionString))
             {
                 try
                 {
-                    using (var cmd = new OdbcCommand()
+                    using (var cmd = new SqlCommand()
                     {
                         CommandText = "SELECT * FROM [ADMIN].[TablesToImport]",
                         CommandType = CommandType.Text,
@@ -39,7 +39,7 @@ namespace SQL_Document_Builder
                     })
                     {
                         conn.Open();
-                        var dat = new OdbcDataAdapter(cmd);
+                        var dat = new SqlDataAdapter(cmd);
                         var ds = new DataSet();
                         dat.Fill(ds);
                         if (ds != null)
@@ -183,24 +183,24 @@ namespace SQL_Document_Builder
         {
             if (!_ignoreChange && _currentTableName.Length > 0)
             {
-                using (var conn = new OdbcConnection(Properties.Settings.Default.edwConnectionString))
+                using (var conn = new SqlConnection(Properties.Settings.Default.edwConnectionString))
                 {
                     try
                     {
-                        using (var cmd = new OdbcCommand()
+                        using (var cmd = new SqlCommand()
                         {
                             CommandText = "[ADMIN].[usp_UpdateMigrateTaskItem]",
                             CommandType = CommandType.StoredProcedure,
                             Connection = conn
                         })
                         {
-                            cmd.Parameters.Add(new OdbcParameter("@TABLE_SCHEMA", _currentSchema));
-                            cmd.Parameters.Add(new OdbcParameter("@TABLE_NAME", _currentTableName));
-                            cmd.Parameters.Add(new OdbcParameter("@NeedToMigrate", editMigrateCheckBox.Checked));
-                            cmd.Parameters.Add(new OdbcParameter("@Imported", editImportedCheckBox.Checked));
-                            cmd.Parameters.Add(new OdbcParameter("@PostImportProcess", editPostMigrateCheckBox.Checked));
-                            cmd.Parameters.Add(new OdbcParameter("@WikiDone", editWikiCheckBox.Checked));
-                            cmd.Parameters.Add(new OdbcParameter("@Comments", commentsTextBox.Text));
+                            cmd.Parameters.Add(new SqlParameter("@TABLE_SCHEMA", _currentSchema));
+                            cmd.Parameters.Add(new SqlParameter("@TABLE_NAME", _currentTableName));
+                            cmd.Parameters.Add(new SqlParameter("@NeedToMigrate", editMigrateCheckBox.Checked));
+                            cmd.Parameters.Add(new SqlParameter("@Imported", editImportedCheckBox.Checked));
+                            cmd.Parameters.Add(new SqlParameter("@PostImportProcess", editPostMigrateCheckBox.Checked));
+                            cmd.Parameters.Add(new SqlParameter("@WikiDone", editWikiCheckBox.Checked));
+                            cmd.Parameters.Add(new SqlParameter("@Comments", commentsTextBox.Text));
 
                             conn.Open();
                             cmd.ExecuteNonQuery();

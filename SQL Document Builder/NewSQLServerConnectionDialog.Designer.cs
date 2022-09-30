@@ -42,15 +42,15 @@
             this.cancelButton = new System.Windows.Forms.Button();
             this.okButton = new System.Windows.Forms.Button();
             this.databaseComboBox = new System.Windows.Forms.ComboBox();
-            this.label1 = new System.Windows.Forms.Label();
-            this.odbcDriverComboBox = new System.Windows.Forms.ComboBox();
+            this.encrptyCheckBox = new System.Windows.Forms.CheckBox();
+            this.trustCertificateCheckBox = new System.Windows.Forms.CheckBox();
             this.logonGroupBox.SuspendLayout();
             this.SuspendLayout();
             // 
             // serverNameLabel
             // 
             this.serverNameLabel.AutoSize = true;
-            this.serverNameLabel.Location = new System.Drawing.Point(64, 75);
+            this.serverNameLabel.Location = new System.Drawing.Point(50, 18);
             this.serverNameLabel.Margin = new System.Windows.Forms.Padding(6, 0, 6, 0);
             this.serverNameLabel.Name = "serverNameLabel";
             this.serverNameLabel.Size = new System.Drawing.Size(153, 32);
@@ -59,7 +59,7 @@
             // 
             // serverNameTextBox
             // 
-            this.serverNameTextBox.Location = new System.Drawing.Point(215, 69);
+            this.serverNameTextBox.Location = new System.Drawing.Point(215, 15);
             this.serverNameTextBox.Margin = new System.Windows.Forms.Padding(6);
             this.serverNameTextBox.Name = "serverNameTextBox";
             this.serverNameTextBox.Size = new System.Drawing.Size(370, 39);
@@ -70,7 +70,7 @@
             // databaseNameLabel
             // 
             this.databaseNameLabel.AutoSize = true;
-            this.databaseNameLabel.Location = new System.Drawing.Point(35, 137);
+            this.databaseNameLabel.Location = new System.Drawing.Point(19, 69);
             this.databaseNameLabel.Margin = new System.Windows.Forms.Padding(6, 0, 6, 0);
             this.databaseNameLabel.Name = "databaseNameLabel";
             this.databaseNameLabel.Size = new System.Drawing.Size(184, 32);
@@ -79,6 +79,8 @@
             // 
             // logonGroupBox
             // 
+            this.logonGroupBox.Controls.Add(this.trustCertificateCheckBox);
+            this.logonGroupBox.Controls.Add(this.encrptyCheckBox);
             this.logonGroupBox.Controls.Add(this.rememberPasswordCheckBox);
             this.logonGroupBox.Controls.Add(this.authenticationComboBox);
             this.logonGroupBox.Controls.Add(this.passwordTextBox);
@@ -86,11 +88,11 @@
             this.logonGroupBox.Controls.Add(this.userNameTextBox);
             this.logonGroupBox.Controls.Add(this.userNameLabel);
             this.logonGroupBox.Controls.Add(this.authenticationLabel);
-            this.logonGroupBox.Location = new System.Drawing.Point(14, 193);
+            this.logonGroupBox.Location = new System.Drawing.Point(14, 147);
             this.logonGroupBox.Margin = new System.Windows.Forms.Padding(6);
             this.logonGroupBox.Name = "logonGroupBox";
             this.logonGroupBox.Padding = new System.Windows.Forms.Padding(6);
-            this.logonGroupBox.Size = new System.Drawing.Size(574, 299);
+            this.logonGroupBox.Size = new System.Drawing.Size(574, 362);
             this.logonGroupBox.TabIndex = 2;
             this.logonGroupBox.TabStop = false;
             this.logonGroupBox.Text = "Log on to the server";
@@ -98,7 +100,7 @@
             // rememberPasswordCheckBox
             // 
             this.rememberPasswordCheckBox.AutoSize = true;
-            this.rememberPasswordCheckBox.Location = new System.Drawing.Point(201, 237);
+            this.rememberPasswordCheckBox.Location = new System.Drawing.Point(201, 205);
             this.rememberPasswordCheckBox.Margin = new System.Windows.Forms.Padding(6);
             this.rememberPasswordCheckBox.Name = "rememberPasswordCheckBox";
             this.rememberPasswordCheckBox.Size = new System.Drawing.Size(268, 36);
@@ -126,7 +128,7 @@
             // 
             // passwordTextBox
             // 
-            this.passwordTextBox.Location = new System.Drawing.Point(201, 175);
+            this.passwordTextBox.Location = new System.Drawing.Point(201, 154);
             this.passwordTextBox.Margin = new System.Windows.Forms.Padding(6);
             this.passwordTextBox.Name = "passwordTextBox";
             this.passwordTextBox.PasswordChar = '*';
@@ -137,7 +139,7 @@
             // passwordLabel
             // 
             this.passwordLabel.AutoSize = true;
-            this.passwordLabel.Location = new System.Drawing.Point(78, 181);
+            this.passwordLabel.Location = new System.Drawing.Point(73, 157);
             this.passwordLabel.Margin = new System.Windows.Forms.Padding(6, 0, 6, 0);
             this.passwordLabel.Name = "passwordLabel";
             this.passwordLabel.Size = new System.Drawing.Size(116, 32);
@@ -146,7 +148,7 @@
             // 
             // userNameTextBox
             // 
-            this.userNameTextBox.Location = new System.Drawing.Point(201, 113);
+            this.userNameTextBox.Location = new System.Drawing.Point(201, 103);
             this.userNameTextBox.Margin = new System.Windows.Forms.Padding(6);
             this.userNameTextBox.Name = "userNameTextBox";
             this.userNameTextBox.Size = new System.Drawing.Size(288, 39);
@@ -156,7 +158,7 @@
             // userNameLabel
             // 
             this.userNameLabel.AutoSize = true;
-            this.userNameLabel.Location = new System.Drawing.Point(67, 119);
+            this.userNameLabel.Location = new System.Drawing.Point(56, 106);
             this.userNameLabel.Margin = new System.Windows.Forms.Padding(6, 0, 6, 0);
             this.userNameLabel.Name = "userNameLabel";
             this.userNameLabel.Size = new System.Drawing.Size(133, 32);
@@ -166,7 +168,7 @@
             // authenticationLabel
             // 
             this.authenticationLabel.AutoSize = true;
-            this.authenticationLabel.Location = new System.Drawing.Point(24, 58);
+            this.authenticationLabel.Location = new System.Drawing.Point(13, 54);
             this.authenticationLabel.Margin = new System.Windows.Forms.Padding(6, 0, 6, 0);
             this.authenticationLabel.Name = "authenticationLabel";
             this.authenticationLabel.Size = new System.Drawing.Size(176, 32);
@@ -176,7 +178,7 @@
             // cancelButton
             // 
             this.cancelButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.cancelButton.Location = new System.Drawing.Point(446, 515);
+            this.cancelButton.Location = new System.Drawing.Point(446, 535);
             this.cancelButton.Margin = new System.Windows.Forms.Padding(6);
             this.cancelButton.Name = "cancelButton";
             this.cancelButton.Size = new System.Drawing.Size(139, 49);
@@ -188,7 +190,7 @@
             // okButton
             // 
             this.okButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.okButton.Location = new System.Drawing.Point(295, 515);
+            this.okButton.Location = new System.Drawing.Point(295, 535);
             this.okButton.Margin = new System.Windows.Forms.Padding(6);
             this.okButton.Name = "okButton";
             this.okButton.Size = new System.Drawing.Size(139, 49);
@@ -200,7 +202,7 @@
             // databaseComboBox
             // 
             this.databaseComboBox.FormattingEnabled = true;
-            this.databaseComboBox.Location = new System.Drawing.Point(215, 131);
+            this.databaseComboBox.Location = new System.Drawing.Point(215, 66);
             this.databaseComboBox.Margin = new System.Windows.Forms.Padding(6);
             this.databaseComboBox.Name = "databaseComboBox";
             this.databaseComboBox.Size = new System.Drawing.Size(370, 40);
@@ -208,30 +210,37 @@
             this.databaseComboBox.SelectedIndexChanged += new System.EventHandler(this.DatabaseComboBox_SelectedIndexChanged);
             this.databaseComboBox.TextChanged += new System.EventHandler(this.OnSettingsChanged);
             // 
-            // label1
+            // encrptyCheckBox
             // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(54, 15);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(154, 32);
-            this.label1.TabIndex = 4;
-            this.label1.Text = "ODBC Driver:";
+            this.encrptyCheckBox.AutoSize = true;
+            this.encrptyCheckBox.Checked = true;
+            this.encrptyCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.encrptyCheckBox.Location = new System.Drawing.Point(201, 253);
+            this.encrptyCheckBox.Margin = new System.Windows.Forms.Padding(6);
+            this.encrptyCheckBox.Name = "encrptyCheckBox";
+            this.encrptyCheckBox.Size = new System.Drawing.Size(251, 36);
+            this.encrptyCheckBox.TabIndex = 2;
+            this.encrptyCheckBox.Text = "Encrypt connection";
+            this.encrptyCheckBox.UseVisualStyleBackColor = true;
             // 
-            // odbcDriverComboBox
+            // trustCertificateCheckBox
             // 
-            this.odbcDriverComboBox.FormattingEnabled = true;
-            this.odbcDriverComboBox.Location = new System.Drawing.Point(215, 12);
-            this.odbcDriverComboBox.Name = "odbcDriverComboBox";
-            this.odbcDriverComboBox.Size = new System.Drawing.Size(370, 40);
-            this.odbcDriverComboBox.TabIndex = 5;
+            this.trustCertificateCheckBox.AutoSize = true;
+            this.trustCertificateCheckBox.Checked = true;
+            this.trustCertificateCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.trustCertificateCheckBox.Location = new System.Drawing.Point(201, 301);
+            this.trustCertificateCheckBox.Margin = new System.Windows.Forms.Padding(6);
+            this.trustCertificateCheckBox.Name = "trustCertificateCheckBox";
+            this.trustCertificateCheckBox.Size = new System.Drawing.Size(279, 36);
+            this.trustCertificateCheckBox.TabIndex = 2;
+            this.trustCertificateCheckBox.Text = "Trust server certificate";
+            this.trustCertificateCheckBox.UseVisualStyleBackColor = true;
             // 
             // NewSQLServerConnectionDialog
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(13F, 32F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(618, 590);
-            this.Controls.Add(this.odbcDriverComboBox);
-            this.Controls.Add(this.label1);
+            this.ClientSize = new System.Drawing.Size(618, 610);
             this.Controls.Add(this.okButton);
             this.Controls.Add(this.databaseComboBox);
             this.Controls.Add(this.cancelButton);
@@ -245,7 +254,6 @@
             this.MinimizeBox = false;
             this.Name = "NewSQLServerConnectionDialog";
             this.Text = "New SQL Server Connection Dialog";
-            this.Load += new System.EventHandler(this.NewSQLServerConnectionDialog_Load);
             this.logonGroupBox.ResumeLayout(false);
             this.logonGroupBox.PerformLayout();
             this.ResumeLayout(false);
@@ -269,7 +277,7 @@
         private System.Windows.Forms.Button cancelButton;
         private System.Windows.Forms.Button okButton;
         private System.Windows.Forms.ComboBox databaseComboBox;
-        private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.ComboBox odbcDriverComboBox;
+        private System.Windows.Forms.CheckBox trustCertificateCheckBox;
+        private System.Windows.Forms.CheckBox encrptyCheckBox;
     }
 }

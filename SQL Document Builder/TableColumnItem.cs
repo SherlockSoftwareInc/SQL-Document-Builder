@@ -1,11 +1,11 @@
 ﻿using System;
-using System.Data.Odbc;
+using Microsoft.Data.SqlClient;
 
 namespace SQL_Document_Builder
 {
     internal class TableColumnItem
     {
-        public TableColumnItem(OdbcDataReader dr)
+        public TableColumnItem(SqlDataReader dr)
         {
             this.ColID = (int)dr["ORDINAL_POSITION"];
             this.ColumnName = dr["COLUMN_NAME"].ToString();
