@@ -1,4 +1,4 @@
-﻿using Microsoft.Data.SqlClient;
+﻿using System.Data.SqlClient;
 using Microsoft.SqlServer.Management.Smo;
 using System;
 using System.Collections.Specialized;
@@ -76,190 +76,6 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Scan user view in the database and generate the creation script for them
-        /// </summary>
-        private void BuildFunctionListWiki(string schemaName)
-        {
-            _script.Clear();
-            sqlTextBox.Text = string.Empty;
-            var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
-            try
-            {
-                AppendLine("{| class=\"wikitable\"");
-                AppendLine("|-");
-                AppendLine("! Schema !! Function !! Description");
-                var cmd = new SqlCommand("SELECT ROUTINE_SCHEMA, ROUTINE_NAME FROM information_schema.routines WHERE routine_type = 'FUNCTION' ORDER BY ROUTINE_NAME", conn) { CommandType = CommandType.Text };
-                conn.Open();
-                var dr = cmd.ExecuteReader();
-                while (dr.Read())
-                {
-                    string schema = dr.GetString(0);
-                    bool generate = true;
-                    if (schemaName.Length > 0 && !schemaName.Equals(schema, StringComparison.CurrentCultureIgnoreCase))
-                    {
-                        generate = false;
-                    }
-                    if (generate)
-                    {
-                        string spName = dr.GetString(1);
-                        AppendLine("|-");
-                        AppendLine(string.Format("| {0} || [[Function: {0}.{1}|{1}]] || {2}", schema, spName, ""));
-                    }
-                }
-
-                dr.Close();
-                AppendLine("|}");
-                sqlTextBox.Text = _script.ToString();
-            }
-            catch (Exception ex)
-            {
-                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                conn.Close();
-            }
-        }
-
-        /// <summary>
-        /// Scan user view in the database and generate the creation script for them
-        /// </summary>
-        private void BuildSPListWiki(string schemaName)
-        {
-            _script.Clear();
-            sqlTextBox.Text = string.Empty;
-
-            var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
-            try
-            {
-                AppendLine("{| class=\"wikitable\"");
-                AppendLine("|-");
-                AppendLine("! Schema !! Stored Procedure !! Description");
-                var cmd = new SqlCommand("SELECT ROUTINE_SCHEMA, ROUTINE_NAME FROM information_schema.routines WHERE routine_type = 'PROCEDURE' AND LEFT(Routine_Name, 3) NOT IN ('sp_', 'xp_', 'ms_') ORDER BY ROUTINE_NAME", conn) { CommandType = CommandType.Text };
-                conn.Open();
-                var dr = cmd.ExecuteReader();
-                while (dr.Read())
-                {
-                    string schema = dr.GetString(0);
-                    bool generate = true;
-                    if (schemaName.Length > 0 && !schemaName.Equals(schema, StringComparison.CurrentCultureIgnoreCase))
-                    {
-                        generate = false;
-                    }
-                    if (generate)
-                    {
-                        string spName = dr.GetString(1);
-                        AppendLine("|-");
-                        AppendLine(string.Format("| {0} || [[Stored Procedure: {0}.{1}|{1}]] || {2}", schema, spName, ""));
-                    }
-                }
-
-                dr.Close();
-                AppendLine("|}");
-                sqlTextBox.Text = _script.ToString();
-            }
-            catch (Exception ex)
-            {
-                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                conn.Close();
-            }
-        }
-
-        /// <summary>
-        /// Scan user tables in the database and generate the creation script for them
-        /// </summary>
-        private void BuildTableListWiki(string schemaName)
-        {
-            _script.Clear();
-            sqlTextBox.Text = string.Empty;
-
-            var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
-            try
-            {
-                AppendLine("{| class=\"wikitable\"");
-                AppendLine("|-");
-                AppendLine("! Schema !! Table Name !! Description");
-                string sql;
-                if (schemaName.Length == 0)
-                    sql = "SELECT SCHEMA_NAME(schema_id) AS table_schema, name AS table_name FROM sys.tables order by table_schema, table_name";
-                else
-                    sql = string.Format("SELECT SCHEMA_NAME(schema_id) AS table_schema, name AS table_name FROM sys.tables WHERE SCHEMA_NAME(schema_id) = N'{0}' order by table_schema, table_name", schemaName);
-
-                var cmd = new SqlCommand(sql, conn)
-                { CommandType = CommandType.Text };
-                conn.Open();
-                var dr = cmd.ExecuteReader();
-                while (dr.Read())
-                {
-                    string tableSchema = dr.GetString(0);
-                    string tableName = dr.GetString(1);
-                    AppendLine("|-");
-                    AppendLine(string.Format("| {0} || [[DW Table: {0}.{1}|{1}]] || {2}", tableSchema, tableName, Common.GetTableDescription(new ObjectName() { Schema = tableSchema, Name = tableName })));
-                }
-
-                dr.Close();
-                AppendLine("|}");
-                sqlTextBox.Text = _script.ToString();
-            }
-            catch (Exception ex)
-            {
-                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                conn.Close();
-            }
-        }
-
-        /// <summary>
-        /// Scan user view in the database and generate the creation script for them
-        /// </summary>
-        private void BuildViewListWiki(string schemaName)
-        {
-            _script.Clear();
-            sqlTextBox.Text = string.Empty;
-
-            var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
-            try
-            {
-                AppendLine("{| class=\"wikitable\"");
-                AppendLine("|-");
-                AppendLine("! Schema !! View Name !! Description");
-                string sql;
-                if (schemaName.Length == 0)
-                    sql = "SELECT SCHEMA_NAME(schema_id) AS table_schema, name AS table_name FROM sys.views ORDER BY table_schema, table_name";
-                else
-                    sql = string.Format("SELECT SCHEMA_NAME(schema_id) AS table_schema, name AS table_name FROM sys.views WHERE SCHEMA_NAME(schema_id) = N'{0}' order by table_schema, table_name", schemaName);
-                var cmd = new SqlCommand(sql, conn)
-                { CommandType = CommandType.Text };
-                conn.Open();
-                var dr = cmd.ExecuteReader();
-                while (dr.Read())
-                {
-                    string tableSchema = dr.GetString(0);
-                    string tableName = dr.GetString(1);
-                    AppendLine("|-");
-                    AppendLine(string.Format("| {0} || [[View: {0}.{1}|{1}]] || {2}", tableSchema, tableName, ""));
-                }
-
-                dr.Close();
-                AppendLine("|}");
-                sqlTextBox.Text = _script.ToString();
-            }
-            catch (Exception ex)
-            {
-                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                conn.Close();
-            }
-        }
-
-        /// <summary>
         /// Change current database connection to a new connection
         /// </summary>
         /// <param name="connection">New db connection</param>
@@ -323,29 +139,11 @@ namespace SQL_Document_Builder
         /// <param name="e"></param>
         private void ClipboardToolStripButton_Click(object sender, EventArgs e)
         {
-            _script.Clear();
             sqlTextBox.Text = String.Empty;
-
             if (Clipboard.ContainsText())
             {
-                var metaData = Clipboard.GetText();
-                metaData = metaData.Replace("\r\n", "\r");
-                metaData = metaData.Replace("\n\r", "\r");
-                var lines = metaData.Split('\r');
-                if (lines.Length > 1)
-                {
-                    AppendLine("{| class=\"wikitable\"");
-                    AppendLine("|-");
-                    AppendLine(TabToRow(lines[0], "!!"));
-                    for (int i = 1; i < lines.Length; i++)
-                    {
-                        AppendLine("|-");
-                        AppendLine(TabToRow(lines[i]));
-                    }
-                    AppendLine("|}");
-
-                    sqlTextBox.Text = _script.ToString();
-                }
+                var builder = new Wiki();
+                sqlTextBox.Text = builder.TextToWikiTable(Clipboard.GetText());
             }
         }
 
@@ -431,7 +229,8 @@ namespace SQL_Document_Builder
             using var dlg = new Schemapicker();
             if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
             {
-                BuildFunctionListWiki(dlg.Schema);
+                var builder = new Wiki();
+                sqlTextBox.Text = builder.BuildFunctionList(dlg.Schema);
             }
             statusToolStripStatusLabe.Text = "Complete!";
         }
@@ -1017,7 +816,8 @@ namespace SQL_Document_Builder
             using var dlg = new Schemapicker();
             if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
             {
-                BuildSPListWiki(dlg.Schema);
+                var builder = new Wiki();
+                sqlTextBox.Text = builder.BuildSPList(dlg.Schema);
             }
             statusToolStripStatusLabe.Text = "Complete!";
         }
@@ -1033,7 +833,8 @@ namespace SQL_Document_Builder
             using var dlg = new Schemapicker();
             if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
             {
-                BuildTableListWiki(dlg.Schema);
+                var builder = new Wiki();
+                sqlTextBox.Text = builder.BuildTableList(dlg.Schema);
             }
             statusToolStripStatusLabe.Text = "Complete!";
         }
@@ -1177,7 +978,8 @@ namespace SQL_Document_Builder
             using var dlg = new Schemapicker();
             if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
             {
-                BuildViewListWiki(dlg.Schema);
+                var builder = new Wiki();
+                sqlTextBox.Text = builder.BuildViewList(dlg.Schema);
             }
             statusToolStripStatusLabe.Text = "Complete!";
         }
@@ -1188,24 +990,24 @@ namespace SQL_Document_Builder
 
         private async void AzureToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            const string server = "phsa-csbc-pcr-prod-sql-server.database.windows.net";
-            const string database = "pcr_analytic";
-            var builder = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder()
-            {
-                DataSource = server,
-                InitialCatalog = database,
-                Encrypt = true,
-                TrustServerCertificate = true,
-                Authentication = Microsoft.Data.SqlClient.SqlAuthenticationMethod.ActiveDirectoryInteractive,
-                UserID = "swu2@phsa.ca"
-            };
+            //const string server = "phsa-csbc-pcr-prod-sql-server.database.windows.net";
+            //const string database = "pcr_analytic";
+            //var builder = new System.Data.SqlClient.SqlConnectionStringBuilder()
+            //{
+            //    DataSource = server,
+            //    InitialCatalog = database,
+            //    Encrypt = true,
+            //    TrustServerCertificate = true,
+            //    //Authentication = System.Data.SqlClient.SqlAuthenticationMethod.ActiveDirectoryInteractive,
+            //    UserID = "swu2@phsa.ca"
+            //};
 
-            if (await TestConnection(builder.ConnectionString))
-            {
-                _server = server;
-                _database = database;
-                Properties.Settings.Default.dbConnectionString = builder.ConnectionString;
-            }
+            //if (await TestConnection(builder.ConnectionString))
+            //{
+            //    _server = server;
+            //    _database = database;
+            //    Properties.Settings.Default.dbConnectionString = builder.ConnectionString;
+            //}
         }
 
         /// <summary>
@@ -1229,16 +1031,16 @@ namespace SQL_Document_Builder
 
         private async void LocalToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            const string server = "(local)";
-            const string database = "JCM";
-            var builder = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder()
+            const string server = "svmsq06";
+            const string database = "AFDataMart_DEV";
+            var builder = new System.Data.SqlClient.SqlConnectionStringBuilder()
             {
                 DataSource = server,
                 InitialCatalog = database,
                 Encrypt = true,
                 TrustServerCertificate = true,
                 IntegratedSecurity = true,
-                //Authentication = Microsoft.Data.SqlClient.SqlAuthenticationMethod.ActiveDirectoryIntegrated,
+                //Authentication = System.Data.SqlClient.SqlAuthenticationMethod.ActiveDirectoryIntegrated,
             };
 
             if (await TestConnection(builder.ConnectionString))
@@ -1247,6 +1049,80 @@ namespace SQL_Document_Builder
                 _database = database;
                 Properties.Settings.Default.dbConnectionString = builder.ConnectionString;
             }
+
+            for (int i = 0; i < _connections.Connections.Count; i++)
+            {
+                var item = _connections.Connections[i];
+                if (item.ServerName == server && item.Database == database) {
+                    _selectedConnection = item;
+                }
+
+            }
+        }
+
+        private void TableListToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            sqlTextBox.Text = string.Empty;
+            using var dlg = new Schemapicker();
+            if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
+            {
+                var builder = new SharePoint();
+                sqlTextBox.Text =builder.BuildTableList(dlg.Schema);
+            }
+            statusToolStripStatusLabe.Text = "Complete!";
+        }
+
+        private void ViewListToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            sqlTextBox.Text = string.Empty;
+            using var dlg = new Schemapicker();
+            if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
+            {
+                var builder = new SharePoint();
+                sqlTextBox.Text = builder.BuildViewList(dlg.Schema);
+            }
+            statusToolStripStatusLabe.Text = "Complete!";
+        }
+
+        private void StoredProcedureListToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            sqlTextBox.Text = string.Empty;
+            using var dlg = new Schemapicker();
+            if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
+            {
+                var builder = new SharePoint();
+                sqlTextBox.Text = builder.BuildSPList(dlg.Schema);
+            }
+            statusToolStripStatusLabe.Text = "Complete!";
+        }
+
+        private void FunctionListToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            sqlTextBox.Text = string.Empty;
+            using var dlg = new Schemapicker();
+            if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
+            {
+                var builder = new SharePoint();
+                sqlTextBox.Text = builder.BuildFunctionList(dlg.Schema);
+            }
+            statusToolStripStatusLabe.Text = "Complete!";
+        }
+
+        private void ClipboardToTableToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            sqlTextBox.Text = String.Empty;
+
+            if (Clipboard.ContainsText())
+            {
+                var metaData = Clipboard.GetText();
+
+                if (metaData.Length > 1)
+                {
+                    var builder = new SharePoint();
+                    sqlTextBox.Text = builder.TextToTable(metaData);
+                }
+            }
+            statusToolStripStatusLabe.Text = "Complete!";
         }
     }
 }

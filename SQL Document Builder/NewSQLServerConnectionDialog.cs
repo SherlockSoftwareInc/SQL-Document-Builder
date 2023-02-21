@@ -1,7 +1,7 @@
 ﻿using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
-using Microsoft.Data.SqlClient;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Windows.Forms;
 using Microsoft.SqlServer.Management.Smo;
@@ -94,7 +94,7 @@ namespace SQL_Document_Builder
             {
                 //https://docs.microsoft.com/en-us/dotnet/framework/data/adonet/connection-string-syntax
                 //bool integratedSecurity = (authenticationComboBox.SelectedIndex == 0);
-                //var builder = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder()
+                //var builder = new System.Data.SqlClient.SqlConnectionStringBuilder()
                 //{
                 //    DataSource = serverName,
                 //    InitialCatalog = dbName,
@@ -147,7 +147,7 @@ namespace SQL_Document_Builder
 
                 //Driver={Sql Driver 17 for SQL Server};Server=svmsq06;Database=AFDataMart_DEV;Trusted_Connection=Yes;
 
-                var builder = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder()
+                var builder = new System.Data.SqlClient.SqlConnectionStringBuilder()
                 {
                     DataSource = serverName,
                     InitialCatalog = dbName,
@@ -164,21 +164,21 @@ namespace SQL_Document_Builder
                     case 1:     //SQL Server Authentication
                         break;
 
-                    case 2:     //Active Directory - Interactive
-                        builder.Authentication = SqlAuthenticationMethod.ActiveDirectoryInteractive;
-                        break;
+                    //case 2:     //Active Directory - Interactive
+                    //    builder.Authentication = SqlAuthenticationMethod.ActiveDirectoryInteractive;
+                    //    break;
 
-                    case 3:     //Active Directory - Integrated
-                        builder.Authentication = SqlAuthenticationMethod.ActiveDirectoryIntegrated;
-                        break;
+                    //case 3:     //Active Directory - Integrated
+                    //    builder.Authentication = SqlAuthenticationMethod.ActiveDirectoryIntegrated;
+                    //    break;
 
-                    case 4:     //Active Directory - Password
-                        builder.Authentication = SqlAuthenticationMethod.ActiveDirectoryPassword;
-                        break;
+                    //case 4:     //Active Directory - Password
+                    //    builder.Authentication = SqlAuthenticationMethod.ActiveDirectoryPassword;
+                    //    break;
 
-                    case 5:     //Active Directory -Service Principal
-                        builder.Authentication = SqlAuthenticationMethod.ActiveDirectoryServicePrincipal;
-                        break;
+                    //case 5:     //Active Directory -Service Principal
+                    //    builder.Authentication = SqlAuthenticationMethod.ActiveDirectoryServicePrincipal;
+                    //    break;
 
                     default:
                         break;

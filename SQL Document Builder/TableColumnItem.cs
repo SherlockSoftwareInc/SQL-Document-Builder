@@ -1,5 +1,5 @@
 ﻿using System;
-using Microsoft.Data.SqlClient;
+using System.Data.SqlClient;
 
 namespace SQL_Document_Builder
 {

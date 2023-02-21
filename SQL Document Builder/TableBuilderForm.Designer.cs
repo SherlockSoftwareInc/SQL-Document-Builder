@@ -39,6 +39,12 @@
             this.descEditToolStripButton = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
             this.batchToolStripButton = new System.Windows.Forms.ToolStripButton();
+            this.toolStripDropDownButton1 = new System.Windows.Forms.ToolStripDropDownButton();
+            this.tableToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.valuesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripDropDownButton2 = new System.Windows.Forms.ToolStripDropDownButton();
+            this.tableDefinitionToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.valueListToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.objectsListBox = new System.Windows.Forms.ListBox();
@@ -71,7 +77,7 @@
             // 
             // toolStrip1
             // 
-            this.toolStrip1.ImageScalingSize = new System.Drawing.Size(20, 20);
+            this.toolStrip1.ImageScalingSize = new System.Drawing.Size(32, 32);
             this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.closeToolStripButton,
             this.toolStripSeparator1,
@@ -81,7 +87,9 @@
             this.toolStripSeparator2,
             this.descEditToolStripButton,
             this.toolStripSeparator3,
-            this.batchToolStripButton});
+            this.batchToolStripButton,
+            this.toolStripDropDownButton1,
+            this.toolStripDropDownButton2});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
             this.toolStrip1.Padding = new System.Windows.Forms.Padding(0, 0, 3, 0);
@@ -94,7 +102,7 @@
             this.closeToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("closeToolStripButton.Image")));
             this.closeToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.closeToolStripButton.Name = "closeToolStripButton";
-            this.closeToolStripButton.Size = new System.Drawing.Size(96, 36);
+            this.closeToolStripButton.Size = new System.Drawing.Size(108, 36);
             this.closeToolStripButton.Text = "Close";
             this.closeToolStripButton.Click += new System.EventHandler(this.CloseToolStripButton_Click);
             // 
@@ -108,7 +116,7 @@
             this.buildToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("buildToolStripButton.Image")));
             this.buildToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.buildToolStripButton.Name = "buildToolStripButton";
-            this.buildToolStripButton.Size = new System.Drawing.Size(187, 36);
+            this.buildToolStripButton.Size = new System.Drawing.Size(199, 36);
             this.buildToolStripButton.Text = "CREATE TABLE";
             this.buildToolStripButton.Click += new System.EventHandler(this.BuildToolStripButton_Click);
             // 
@@ -117,18 +125,16 @@
             this.tableWikiToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("tableWikiToolStripButton.Image")));
             this.tableWikiToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.tableWikiToolStripButton.Name = "tableWikiToolStripButton";
-            this.tableWikiToolStripButton.Size = new System.Drawing.Size(141, 36);
+            this.tableWikiToolStripButton.Size = new System.Drawing.Size(153, 36);
             this.tableWikiToolStripButton.Text = "Table wiki";
-            this.tableWikiToolStripButton.Click += new System.EventHandler(this.TableWikiToolStripButton_Click);
             // 
             // valuesWikiToolStripButton
             // 
             this.valuesWikiToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("valuesWikiToolStripButton.Image")));
             this.valuesWikiToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.valuesWikiToolStripButton.Name = "valuesWikiToolStripButton";
-            this.valuesWikiToolStripButton.Size = new System.Drawing.Size(154, 36);
+            this.valuesWikiToolStripButton.Size = new System.Drawing.Size(166, 36);
             this.valuesWikiToolStripButton.Text = "Values wiki";
-            this.valuesWikiToolStripButton.Click += new System.EventHandler(this.ValuesWikiToolStripButton_Click);
             // 
             // toolStripSeparator2
             // 
@@ -140,7 +146,7 @@
             this.descEditToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("descEditToolStripButton.Image")));
             this.descEditToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.descEditToolStripButton.Name = "descEditToolStripButton";
-            this.descEditToolStripButton.Size = new System.Drawing.Size(169, 36);
+            this.descEditToolStripButton.Size = new System.Drawing.Size(181, 36);
             this.descEditToolStripButton.Text = "Descriptions";
             this.descEditToolStripButton.Click += new System.EventHandler(this.DescEditToolStripButton_Click);
             // 
@@ -154,9 +160,59 @@
             this.batchToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("batchToolStripButton.Image")));
             this.batchToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.batchToolStripButton.Name = "batchToolStripButton";
-            this.batchToolStripButton.Size = new System.Drawing.Size(246, 36);
+            this.batchToolStripButton.Size = new System.Drawing.Size(258, 36);
             this.batchToolStripButton.Text = "Batch Column Desc";
             this.batchToolStripButton.Click += new System.EventHandler(this.BatchToolStripButton_Click);
+            // 
+            // toolStripDropDownButton1
+            // 
+            this.toolStripDropDownButton1.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.tableToolStripMenuItem,
+            this.valuesToolStripMenuItem});
+            this.toolStripDropDownButton1.Image = ((System.Drawing.Image)(resources.GetObject("toolStripDropDownButton1.Image")));
+            this.toolStripDropDownButton1.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripDropDownButton1.Name = "toolStripDropDownButton1";
+            this.toolStripDropDownButton1.Size = new System.Drawing.Size(114, 36);
+            this.toolStripDropDownButton1.Text = "Wiki";
+            // 
+            // tableToolStripMenuItem
+            // 
+            this.tableToolStripMenuItem.Name = "tableToolStripMenuItem";
+            this.tableToolStripMenuItem.Size = new System.Drawing.Size(315, 44);
+            this.tableToolStripMenuItem.Text = "Table Definition";
+            this.tableToolStripMenuItem.Click += new System.EventHandler(this.TableWikiToolStripButton_Click);
+            // 
+            // valuesToolStripMenuItem
+            // 
+            this.valuesToolStripMenuItem.Name = "valuesToolStripMenuItem";
+            this.valuesToolStripMenuItem.Size = new System.Drawing.Size(315, 44);
+            this.valuesToolStripMenuItem.Text = "Value List";
+            this.valuesToolStripMenuItem.Click += new System.EventHandler(this.ValuesWikiToolStripButton_Click);
+            // 
+            // toolStripDropDownButton2
+            // 
+            this.toolStripDropDownButton2.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.tableDefinitionToolStripMenuItem,
+            this.valueListToolStripMenuItem});
+            this.toolStripDropDownButton2.Image = ((System.Drawing.Image)(resources.GetObject("toolStripDropDownButton2.Image")));
+            this.toolStripDropDownButton2.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripDropDownButton2.Name = "toolStripDropDownButton2";
+            this.toolStripDropDownButton2.Size = new System.Drawing.Size(182, 36);
+            this.toolStripDropDownButton2.Text = "SharePoint";
+            // 
+            // tableDefinitionToolStripMenuItem
+            // 
+            this.tableDefinitionToolStripMenuItem.Name = "tableDefinitionToolStripMenuItem";
+            this.tableDefinitionToolStripMenuItem.Size = new System.Drawing.Size(359, 44);
+            this.tableDefinitionToolStripMenuItem.Text = "Table Definition";
+            this.tableDefinitionToolStripMenuItem.Click += new System.EventHandler(this.TableDefinitionToolStripMenuItem_Click);
+            // 
+            // valueListToolStripMenuItem
+            // 
+            this.valueListToolStripMenuItem.Name = "valueListToolStripMenuItem";
+            this.valueListToolStripMenuItem.Size = new System.Drawing.Size(359, 44);
+            this.valueListToolStripMenuItem.Text = "Value List";
+            this.valueListToolStripMenuItem.Click += new System.EventHandler(this.ValueListToolStripMenuItem_Click);
             // 
             // tabControl1
             // 
@@ -225,7 +281,7 @@
             this.schemaComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.schemaComboBox.FormattingEnabled = true;
             this.schemaComboBox.Location = new System.Drawing.Point(5, 38);
-            this.schemaComboBox.Margin = new System.Windows.Forms.Padding(5, 5, 5, 5);
+            this.schemaComboBox.Margin = new System.Windows.Forms.Padding(5);
             this.schemaComboBox.Name = "schemaComboBox";
             this.schemaComboBox.Size = new System.Drawing.Size(489, 40);
             this.schemaComboBox.TabIndex = 5;
@@ -258,7 +314,7 @@
             this.tabPage2.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
             this.tabPage2.Name = "tabPage2";
             this.tabPage2.Padding = new System.Windows.Forms.Padding(5, 6, 5, 6);
-            this.tabPage2.Size = new System.Drawing.Size(499, 1253);
+            this.tabPage2.Size = new System.Drawing.Size(499, 1254);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "Output options";
             this.tabPage2.UseVisualStyleBackColor = true;
@@ -521,5 +577,11 @@
         private System.Windows.Forms.TextBox footerTextBox;
         private System.Windows.Forms.ComboBox schemaComboBox;
         private System.Windows.Forms.Label schemaLabel;
+        private System.Windows.Forms.ToolStripDropDownButton toolStripDropDownButton1;
+        private System.Windows.Forms.ToolStripMenuItem tableToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem valuesToolStripMenuItem;
+        private System.Windows.Forms.ToolStripDropDownButton toolStripDropDownButton2;
+        private System.Windows.Forms.ToolStripMenuItem tableDefinitionToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem valueListToolStripMenuItem;
     }
 }

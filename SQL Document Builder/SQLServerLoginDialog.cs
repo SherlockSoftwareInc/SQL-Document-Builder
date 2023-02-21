@@ -1,5 +1,5 @@
 ﻿using System;
-using Microsoft.Data.SqlClient;
+using System.Data.SqlClient;
 using System.Windows.Forms;
 
 namespace SQL_Document_Builder
@@ -43,7 +43,7 @@ namespace SQL_Document_Builder
             if (serverName.Length > 0 && dbName.Length > 0)
             {
                 //bool integratedSecurity = authenticationComboBox.SelectedIndex == 0;
-                //var builder = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder()
+                //var builder = new System.Data.SqlClient.SqlConnectionStringBuilder()
                 //{
                 //DataSource = serverName,
                 //InitialCatalog = dbName,
