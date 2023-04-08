@@ -6,6 +6,7 @@ using System.Data;
 using System.Drawing;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Security.Cryptography;
 
 namespace SQL_Document_Builder
 {
@@ -990,6 +991,36 @@ namespace SQL_Document_Builder
 
         private async void AzureToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            const string server = "(local)";
+            const string database = "CSBC_EDW";
+            var builder = new System.Data.SqlClient.SqlConnectionStringBuilder()
+            {
+                DataSource = server,
+                InitialCatalog = database,
+                Encrypt = true,
+                TrustServerCertificate = true,
+                IntegratedSecurity = true,
+                //Authentication = System.Data.SqlClient.SqlAuthenticationMethod.ActiveDirectoryIntegrated,
+            };
+
+            if (await TestConnection(builder.ConnectionString))
+            {
+                _server = server;
+                _database = database;
+                serverToolStripStatusLabel.Text = server;
+                databaseToolStripStatusLabel.Text = database;
+                Properties.Settings.Default.dbConnectionString = builder.ConnectionString;
+            }
+
+            for (int i = 0; i < _connections.Connections.Count; i++)
+            {
+                var item = _connections.Connections[i];
+                if (item.ServerName == server && item.Database == database)
+                {
+                    _selectedConnection = item;
+                }
+
+            }
             //const string server = "phsa-csbc-pcr-prod-sql-server.database.windows.net";
             //const string database = "pcr_analytic";
             //var builder = new System.Data.SqlClient.SqlConnectionStringBuilder()
@@ -1047,13 +1078,16 @@ namespace SQL_Document_Builder
             {
                 _server = server;
                 _database = database;
+                serverToolStripStatusLabel.Text = server;
+                databaseToolStripStatusLabel.Text = database;
                 Properties.Settings.Default.dbConnectionString = builder.ConnectionString;
             }
 
             for (int i = 0; i < _connections.Connections.Count; i++)
             {
                 var item = _connections.Connections[i];
-                if (item.ServerName == server && item.Database == database) {
+                if (item.ServerName == server && item.Database == database)
+                {
                     _selectedConnection = item;
                 }
 
@@ -1067,7 +1101,7 @@ namespace SQL_Document_Builder
             if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
             {
                 var builder = new SharePoint();
-                sqlTextBox.Text =builder.BuildTableList(dlg.Schema);
+                sqlTextBox.Text = builder.BuildTableList(dlg.Schema);
             }
             statusToolStripStatusLabe.Text = "Complete!";
         }
@@ -1123,6 +1157,40 @@ namespace SQL_Document_Builder
                 }
             }
             statusToolStripStatusLabe.Text = "Complete!";
+        }
+
+        private void QueryDataToTableToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using var form = new QueryDataToTableForm();
+            form.ShowDialog();
+        }
+
+        private void objectDescriptionsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            this.Cursor = Cursors.WaitCursor;
+            sqlTextBox.Text = String.Empty;
+            using var dlg = new Schemapicker();
+            if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
+            {
+                sqlTextBox.Text = ObjectDescription.BuildTableDescriptions(dlg.Schema);
+            }
+            statusToolStripStatusLabe.Text = "Complete!";
+            this.Cursor = Cursors.Default;
+        }
+
+        private void viewsDescriptionsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            this.Cursor = Cursors.WaitCursor;
+            sqlTextBox.Text = String.Empty;
+
+            using var dlg = new Schemapicker();
+            if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
+            {
+                sqlTextBox.Text = ObjectDescription.BuildViewDescriptions(dlg.Schema);
+            }
+
+            statusToolStripStatusLabe.Text = "Complete!";
+            this.Cursor = Cursors.Default;
         }
     }
 }

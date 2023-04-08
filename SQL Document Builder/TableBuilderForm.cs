@@ -364,6 +364,8 @@ namespace SQL_Document_Builder
                 var builder = new Wiki();
                 sqlTextBox.AppendText(builder.GetTableDef(objectName));
                 AppendLine(footerTextBox.Text);
+                Clipboard.SetText(sqlTextBox.Text);
+
             }
         }
 
@@ -379,6 +381,7 @@ namespace SQL_Document_Builder
                 var objectName = (ObjectName)objectsListBox.SelectedItem;
                 var builder = new Wiki();
                 sqlTextBox.Text = builder.GetTableValues(objectName.FullName);
+                Clipboard.SetText(sqlTextBox.Text);
             }
         }
 
@@ -403,6 +406,7 @@ namespace SQL_Document_Builder
                 var builder = new SharePoint();
                 sqlTextBox.AppendText(builder.GetTableDef(objectName));
                 AppendLine(footerTextBox.Text);
+                Clipboard.SetText(sqlTextBox.Text);
             }
         }
 
@@ -413,7 +417,15 @@ namespace SQL_Document_Builder
                 var objectName = (ObjectName)objectsListBox.SelectedItem;
                 var builder = new SharePoint();
                 sqlTextBox.Text = builder.GetTableValues(objectName.FullName);
+                Clipboard.SetText(sqlTextBox.Text);
+
             }
+        }
+
+        private void queryDataToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using var form = new QueryDataToTableForm();
+            form.ShowDialog();
         }
     }
 }

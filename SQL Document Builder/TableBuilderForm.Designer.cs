@@ -29,516 +29,481 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(TableBuilderForm));
-            this.toolStrip1 = new System.Windows.Forms.ToolStrip();
-            this.closeToolStripButton = new System.Windows.Forms.ToolStripButton();
-            this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
-            this.buildToolStripButton = new System.Windows.Forms.ToolStripButton();
-            this.tableWikiToolStripButton = new System.Windows.Forms.ToolStripButton();
-            this.valuesWikiToolStripButton = new System.Windows.Forms.ToolStripButton();
-            this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
-            this.descEditToolStripButton = new System.Windows.Forms.ToolStripButton();
-            this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
-            this.batchToolStripButton = new System.Windows.Forms.ToolStripButton();
-            this.toolStripDropDownButton1 = new System.Windows.Forms.ToolStripDropDownButton();
-            this.tableToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.valuesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripDropDownButton2 = new System.Windows.Forms.ToolStripDropDownButton();
-            this.tableDefinitionToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.valueListToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.tabControl1 = new System.Windows.Forms.TabControl();
-            this.tabPage1 = new System.Windows.Forms.TabPage();
-            this.objectsListBox = new System.Windows.Forms.ListBox();
-            this.searchTextBox = new System.Windows.Forms.TextBox();
-            this.searchLabel = new System.Windows.Forms.Label();
-            this.schemaComboBox = new System.Windows.Forms.ComboBox();
-            this.schemaLabel = new System.Windows.Forms.Label();
-            this.tabPage2 = new System.Windows.Forms.TabPage();
-            this.checkBox10 = new System.Windows.Forms.CheckBox();
-            this.indexesCheckBox = new System.Windows.Forms.CheckBox();
-            this.includeHeadersCheckBox = new System.Windows.Forms.CheckBox();
-            this.scriptDataCheckBox = new System.Windows.Forms.CheckBox();
-            this.noCollationCheckBox = new System.Windows.Forms.CheckBox();
-            this.ansiPaddingCheckBox = new System.Windows.Forms.CheckBox();
-            this.extendedPropertiesCheckBox = new System.Windows.Forms.CheckBox();
-            this.includeIfNotExistsCheckBox = new System.Windows.Forms.CheckBox();
-            this.scriptForCreateDropCheckBox = new System.Windows.Forms.CheckBox();
-            this.scriptDropsCheckBox = new System.Windows.Forms.CheckBox();
-            this.collapsibleSplitter1 = new SQL_Document_Builder.CollapsibleSplitter();
-            this.sqlTextBox = new System.Windows.Forms.TextBox();
-            this.label2 = new System.Windows.Forms.Label();
-            this.headerTextBox = new System.Windows.Forms.TextBox();
-            this.label1 = new System.Windows.Forms.Label();
-            this.footerTextBox = new System.Windows.Forms.TextBox();
-            this.toolStrip1.SuspendLayout();
-            this.tabControl1.SuspendLayout();
-            this.tabPage1.SuspendLayout();
-            this.tabPage2.SuspendLayout();
-            this.SuspendLayout();
+            toolStrip1 = new System.Windows.Forms.ToolStrip();
+            closeToolStripButton = new System.Windows.Forms.ToolStripButton();
+            toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+            buildToolStripButton = new System.Windows.Forms.ToolStripButton();
+            tableWikiToolStripButton = new System.Windows.Forms.ToolStripButton();
+            valuesWikiToolStripButton = new System.Windows.Forms.ToolStripButton();
+            toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
+            descEditToolStripButton = new System.Windows.Forms.ToolStripButton();
+            toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
+            batchToolStripButton = new System.Windows.Forms.ToolStripButton();
+            toolStripDropDownButton1 = new System.Windows.Forms.ToolStripDropDownButton();
+            tableToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            valuesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            toolStripDropDownButton2 = new System.Windows.Forms.ToolStripDropDownButton();
+            tableDefinitionToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            valueListToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            queryDataToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            tabControl1 = new System.Windows.Forms.TabControl();
+            tabPage1 = new System.Windows.Forms.TabPage();
+            objectsListBox = new System.Windows.Forms.ListBox();
+            searchTextBox = new System.Windows.Forms.TextBox();
+            searchLabel = new System.Windows.Forms.Label();
+            schemaComboBox = new System.Windows.Forms.ComboBox();
+            schemaLabel = new System.Windows.Forms.Label();
+            tabPage2 = new System.Windows.Forms.TabPage();
+            checkBox10 = new System.Windows.Forms.CheckBox();
+            indexesCheckBox = new System.Windows.Forms.CheckBox();
+            includeHeadersCheckBox = new System.Windows.Forms.CheckBox();
+            scriptDataCheckBox = new System.Windows.Forms.CheckBox();
+            noCollationCheckBox = new System.Windows.Forms.CheckBox();
+            ansiPaddingCheckBox = new System.Windows.Forms.CheckBox();
+            extendedPropertiesCheckBox = new System.Windows.Forms.CheckBox();
+            includeIfNotExistsCheckBox = new System.Windows.Forms.CheckBox();
+            scriptForCreateDropCheckBox = new System.Windows.Forms.CheckBox();
+            scriptDropsCheckBox = new System.Windows.Forms.CheckBox();
+            collapsibleSplitter1 = new CollapsibleSplitter();
+            sqlTextBox = new System.Windows.Forms.TextBox();
+            label2 = new System.Windows.Forms.Label();
+            headerTextBox = new System.Windows.Forms.TextBox();
+            label1 = new System.Windows.Forms.Label();
+            footerTextBox = new System.Windows.Forms.TextBox();
+            toolStrip1.SuspendLayout();
+            tabControl1.SuspendLayout();
+            tabPage1.SuspendLayout();
+            tabPage2.SuspendLayout();
+            SuspendLayout();
             // 
             // toolStrip1
             // 
-            this.toolStrip1.ImageScalingSize = new System.Drawing.Size(32, 32);
-            this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.closeToolStripButton,
-            this.toolStripSeparator1,
-            this.buildToolStripButton,
-            this.tableWikiToolStripButton,
-            this.valuesWikiToolStripButton,
-            this.toolStripSeparator2,
-            this.descEditToolStripButton,
-            this.toolStripSeparator3,
-            this.batchToolStripButton,
-            this.toolStripDropDownButton1,
-            this.toolStripDropDownButton2});
-            this.toolStrip1.Location = new System.Drawing.Point(0, 0);
-            this.toolStrip1.Name = "toolStrip1";
-            this.toolStrip1.Padding = new System.Windows.Forms.Padding(0, 0, 3, 0);
-            this.toolStrip1.Size = new System.Drawing.Size(1721, 42);
-            this.toolStrip1.TabIndex = 0;
-            this.toolStrip1.Text = "toolStrip1";
+            toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { closeToolStripButton, toolStripSeparator1, buildToolStripButton, tableWikiToolStripButton, valuesWikiToolStripButton, toolStripSeparator2, descEditToolStripButton, toolStripSeparator3, batchToolStripButton, toolStripDropDownButton1, toolStripDropDownButton2 });
+            toolStrip1.Location = new System.Drawing.Point(0, 0);
+            toolStrip1.Name = "toolStrip1";
+            toolStrip1.Padding = new System.Windows.Forms.Padding(0, 0, 2, 0);
+            toolStrip1.Size = new System.Drawing.Size(927, 25);
+            toolStrip1.TabIndex = 0;
+            toolStrip1.Text = "toolStrip1";
             // 
             // closeToolStripButton
             // 
-            this.closeToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("closeToolStripButton.Image")));
-            this.closeToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.closeToolStripButton.Name = "closeToolStripButton";
-            this.closeToolStripButton.Size = new System.Drawing.Size(108, 36);
-            this.closeToolStripButton.Text = "Close";
-            this.closeToolStripButton.Click += new System.EventHandler(this.CloseToolStripButton_Click);
+            closeToolStripButton.Image = (System.Drawing.Image)resources.GetObject("closeToolStripButton.Image");
+            closeToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            closeToolStripButton.Name = "closeToolStripButton";
+            closeToolStripButton.Size = new System.Drawing.Size(56, 22);
+            closeToolStripButton.Text = "Close";
+            closeToolStripButton.Click += CloseToolStripButton_Click;
             // 
             // toolStripSeparator1
             // 
-            this.toolStripSeparator1.Name = "toolStripSeparator1";
-            this.toolStripSeparator1.Size = new System.Drawing.Size(6, 42);
+            toolStripSeparator1.Name = "toolStripSeparator1";
+            toolStripSeparator1.Size = new System.Drawing.Size(6, 25);
             // 
             // buildToolStripButton
             // 
-            this.buildToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("buildToolStripButton.Image")));
-            this.buildToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.buildToolStripButton.Name = "buildToolStripButton";
-            this.buildToolStripButton.Size = new System.Drawing.Size(199, 36);
-            this.buildToolStripButton.Text = "CREATE TABLE";
-            this.buildToolStripButton.Click += new System.EventHandler(this.BuildToolStripButton_Click);
+            buildToolStripButton.Image = (System.Drawing.Image)resources.GetObject("buildToolStripButton.Image");
+            buildToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            buildToolStripButton.Name = "buildToolStripButton";
+            buildToolStripButton.Size = new System.Drawing.Size(102, 22);
+            buildToolStripButton.Text = "CREATE TABLE";
+            buildToolStripButton.Click += BuildToolStripButton_Click;
             // 
             // tableWikiToolStripButton
             // 
-            this.tableWikiToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("tableWikiToolStripButton.Image")));
-            this.tableWikiToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.tableWikiToolStripButton.Name = "tableWikiToolStripButton";
-            this.tableWikiToolStripButton.Size = new System.Drawing.Size(153, 36);
-            this.tableWikiToolStripButton.Text = "Table wiki";
+            tableWikiToolStripButton.Image = (System.Drawing.Image)resources.GetObject("tableWikiToolStripButton.Image");
+            tableWikiToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            tableWikiToolStripButton.Name = "tableWikiToolStripButton";
+            tableWikiToolStripButton.Size = new System.Drawing.Size(78, 22);
+            tableWikiToolStripButton.Text = "Table wiki";
             // 
             // valuesWikiToolStripButton
             // 
-            this.valuesWikiToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("valuesWikiToolStripButton.Image")));
-            this.valuesWikiToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.valuesWikiToolStripButton.Name = "valuesWikiToolStripButton";
-            this.valuesWikiToolStripButton.Size = new System.Drawing.Size(166, 36);
-            this.valuesWikiToolStripButton.Text = "Values wiki";
+            valuesWikiToolStripButton.Image = (System.Drawing.Image)resources.GetObject("valuesWikiToolStripButton.Image");
+            valuesWikiToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            valuesWikiToolStripButton.Name = "valuesWikiToolStripButton";
+            valuesWikiToolStripButton.Size = new System.Drawing.Size(84, 22);
+            valuesWikiToolStripButton.Text = "Values wiki";
             // 
             // toolStripSeparator2
             // 
-            this.toolStripSeparator2.Name = "toolStripSeparator2";
-            this.toolStripSeparator2.Size = new System.Drawing.Size(6, 42);
+            toolStripSeparator2.Name = "toolStripSeparator2";
+            toolStripSeparator2.Size = new System.Drawing.Size(6, 25);
             // 
             // descEditToolStripButton
             // 
-            this.descEditToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("descEditToolStripButton.Image")));
-            this.descEditToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.descEditToolStripButton.Name = "descEditToolStripButton";
-            this.descEditToolStripButton.Size = new System.Drawing.Size(181, 36);
-            this.descEditToolStripButton.Text = "Descriptions";
-            this.descEditToolStripButton.Click += new System.EventHandler(this.DescEditToolStripButton_Click);
+            descEditToolStripButton.Image = (System.Drawing.Image)resources.GetObject("descEditToolStripButton.Image");
+            descEditToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            descEditToolStripButton.Name = "descEditToolStripButton";
+            descEditToolStripButton.Size = new System.Drawing.Size(92, 22);
+            descEditToolStripButton.Text = "Descriptions";
+            descEditToolStripButton.Click += DescEditToolStripButton_Click;
             // 
             // toolStripSeparator3
             // 
-            this.toolStripSeparator3.Name = "toolStripSeparator3";
-            this.toolStripSeparator3.Size = new System.Drawing.Size(6, 42);
+            toolStripSeparator3.Name = "toolStripSeparator3";
+            toolStripSeparator3.Size = new System.Drawing.Size(6, 25);
             // 
             // batchToolStripButton
             // 
-            this.batchToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("batchToolStripButton.Image")));
-            this.batchToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.batchToolStripButton.Name = "batchToolStripButton";
-            this.batchToolStripButton.Size = new System.Drawing.Size(258, 36);
-            this.batchToolStripButton.Text = "Batch Column Desc";
-            this.batchToolStripButton.Click += new System.EventHandler(this.BatchToolStripButton_Click);
+            batchToolStripButton.Image = (System.Drawing.Image)resources.GetObject("batchToolStripButton.Image");
+            batchToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            batchToolStripButton.Name = "batchToolStripButton";
+            batchToolStripButton.Size = new System.Drawing.Size(131, 22);
+            batchToolStripButton.Text = "Batch Column Desc";
+            batchToolStripButton.Click += BatchToolStripButton_Click;
             // 
             // toolStripDropDownButton1
             // 
-            this.toolStripDropDownButton1.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.tableToolStripMenuItem,
-            this.valuesToolStripMenuItem});
-            this.toolStripDropDownButton1.Image = ((System.Drawing.Image)(resources.GetObject("toolStripDropDownButton1.Image")));
-            this.toolStripDropDownButton1.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.toolStripDropDownButton1.Name = "toolStripDropDownButton1";
-            this.toolStripDropDownButton1.Size = new System.Drawing.Size(114, 36);
-            this.toolStripDropDownButton1.Text = "Wiki";
+            toolStripDropDownButton1.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { tableToolStripMenuItem, valuesToolStripMenuItem });
+            toolStripDropDownButton1.Image = (System.Drawing.Image)resources.GetObject("toolStripDropDownButton1.Image");
+            toolStripDropDownButton1.ImageTransparentColor = System.Drawing.Color.Magenta;
+            toolStripDropDownButton1.Name = "toolStripDropDownButton1";
+            toolStripDropDownButton1.Size = new System.Drawing.Size(59, 22);
+            toolStripDropDownButton1.Text = "Wiki";
             // 
             // tableToolStripMenuItem
             // 
-            this.tableToolStripMenuItem.Name = "tableToolStripMenuItem";
-            this.tableToolStripMenuItem.Size = new System.Drawing.Size(315, 44);
-            this.tableToolStripMenuItem.Text = "Table Definition";
-            this.tableToolStripMenuItem.Click += new System.EventHandler(this.TableWikiToolStripButton_Click);
+            tableToolStripMenuItem.Name = "tableToolStripMenuItem";
+            tableToolStripMenuItem.Size = new System.Drawing.Size(156, 22);
+            tableToolStripMenuItem.Text = "Table Definition";
+            tableToolStripMenuItem.Click += TableWikiToolStripButton_Click;
             // 
             // valuesToolStripMenuItem
             // 
-            this.valuesToolStripMenuItem.Name = "valuesToolStripMenuItem";
-            this.valuesToolStripMenuItem.Size = new System.Drawing.Size(315, 44);
-            this.valuesToolStripMenuItem.Text = "Value List";
-            this.valuesToolStripMenuItem.Click += new System.EventHandler(this.ValuesWikiToolStripButton_Click);
+            valuesToolStripMenuItem.Name = "valuesToolStripMenuItem";
+            valuesToolStripMenuItem.Size = new System.Drawing.Size(156, 22);
+            valuesToolStripMenuItem.Text = "Value List";
+            valuesToolStripMenuItem.Click += ValuesWikiToolStripButton_Click;
             // 
             // toolStripDropDownButton2
             // 
-            this.toolStripDropDownButton2.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.tableDefinitionToolStripMenuItem,
-            this.valueListToolStripMenuItem});
-            this.toolStripDropDownButton2.Image = ((System.Drawing.Image)(resources.GetObject("toolStripDropDownButton2.Image")));
-            this.toolStripDropDownButton2.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.toolStripDropDownButton2.Name = "toolStripDropDownButton2";
-            this.toolStripDropDownButton2.Size = new System.Drawing.Size(182, 36);
-            this.toolStripDropDownButton2.Text = "SharePoint";
+            toolStripDropDownButton2.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { tableDefinitionToolStripMenuItem, valueListToolStripMenuItem, queryDataToolStripMenuItem });
+            toolStripDropDownButton2.Image = (System.Drawing.Image)resources.GetObject("toolStripDropDownButton2.Image");
+            toolStripDropDownButton2.ImageTransparentColor = System.Drawing.Color.Magenta;
+            toolStripDropDownButton2.Name = "toolStripDropDownButton2";
+            toolStripDropDownButton2.Size = new System.Drawing.Size(93, 22);
+            toolStripDropDownButton2.Text = "SharePoint";
             // 
             // tableDefinitionToolStripMenuItem
             // 
-            this.tableDefinitionToolStripMenuItem.Name = "tableDefinitionToolStripMenuItem";
-            this.tableDefinitionToolStripMenuItem.Size = new System.Drawing.Size(359, 44);
-            this.tableDefinitionToolStripMenuItem.Text = "Table Definition";
-            this.tableDefinitionToolStripMenuItem.Click += new System.EventHandler(this.TableDefinitionToolStripMenuItem_Click);
+            tableDefinitionToolStripMenuItem.Name = "tableDefinitionToolStripMenuItem";
+            tableDefinitionToolStripMenuItem.Size = new System.Drawing.Size(156, 22);
+            tableDefinitionToolStripMenuItem.Text = "Table Definition";
+            tableDefinitionToolStripMenuItem.Click += TableDefinitionToolStripMenuItem_Click;
             // 
             // valueListToolStripMenuItem
             // 
-            this.valueListToolStripMenuItem.Name = "valueListToolStripMenuItem";
-            this.valueListToolStripMenuItem.Size = new System.Drawing.Size(359, 44);
-            this.valueListToolStripMenuItem.Text = "Value List";
-            this.valueListToolStripMenuItem.Click += new System.EventHandler(this.ValueListToolStripMenuItem_Click);
+            valueListToolStripMenuItem.Name = "valueListToolStripMenuItem";
+            valueListToolStripMenuItem.Size = new System.Drawing.Size(156, 22);
+            valueListToolStripMenuItem.Text = "Value List";
+            valueListToolStripMenuItem.Click += ValueListToolStripMenuItem_Click;
+            // 
+            // queryDataToolStripMenuItem
+            // 
+            queryDataToolStripMenuItem.Name = "queryDataToolStripMenuItem";
+            queryDataToolStripMenuItem.Size = new System.Drawing.Size(156, 22);
+            queryDataToolStripMenuItem.Text = "Query Data";
+            queryDataToolStripMenuItem.Click += queryDataToolStripMenuItem_Click;
             // 
             // tabControl1
             // 
-            this.tabControl1.Controls.Add(this.tabPage1);
-            this.tabControl1.Controls.Add(this.tabPage2);
-            this.tabControl1.Dock = System.Windows.Forms.DockStyle.Left;
-            this.tabControl1.Location = new System.Drawing.Point(0, 42);
-            this.tabControl1.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
-            this.tabControl1.Name = "tabControl1";
-            this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(515, 1308);
-            this.tabControl1.TabIndex = 1;
+            tabControl1.Controls.Add(tabPage1);
+            tabControl1.Controls.Add(tabPage2);
+            tabControl1.Dock = System.Windows.Forms.DockStyle.Left;
+            tabControl1.Location = new System.Drawing.Point(0, 25);
+            tabControl1.Name = "tabControl1";
+            tabControl1.SelectedIndex = 0;
+            tabControl1.Size = new System.Drawing.Size(277, 472);
+            tabControl1.TabIndex = 1;
             // 
             // tabPage1
             // 
-            this.tabPage1.Controls.Add(this.objectsListBox);
-            this.tabPage1.Controls.Add(this.searchTextBox);
-            this.tabPage1.Controls.Add(this.searchLabel);
-            this.tabPage1.Controls.Add(this.schemaComboBox);
-            this.tabPage1.Controls.Add(this.schemaLabel);
-            this.tabPage1.Location = new System.Drawing.Point(8, 46);
-            this.tabPage1.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
-            this.tabPage1.Name = "tabPage1";
-            this.tabPage1.Padding = new System.Windows.Forms.Padding(5, 6, 5, 6);
-            this.tabPage1.Size = new System.Drawing.Size(499, 1254);
-            this.tabPage1.TabIndex = 0;
-            this.tabPage1.Text = "Objects";
-            this.tabPage1.UseVisualStyleBackColor = true;
+            tabPage1.Controls.Add(objectsListBox);
+            tabPage1.Controls.Add(searchTextBox);
+            tabPage1.Controls.Add(searchLabel);
+            tabPage1.Controls.Add(schemaComboBox);
+            tabPage1.Controls.Add(schemaLabel);
+            tabPage1.Location = new System.Drawing.Point(4, 24);
+            tabPage1.Name = "tabPage1";
+            tabPage1.Padding = new System.Windows.Forms.Padding(3);
+            tabPage1.Size = new System.Drawing.Size(269, 444);
+            tabPage1.TabIndex = 0;
+            tabPage1.Text = "Objects";
+            tabPage1.UseVisualStyleBackColor = true;
             // 
             // objectsListBox
             // 
-            this.objectsListBox.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.objectsListBox.FormattingEnabled = true;
-            this.objectsListBox.ItemHeight = 32;
-            this.objectsListBox.Location = new System.Drawing.Point(5, 149);
-            this.objectsListBox.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
-            this.objectsListBox.Name = "objectsListBox";
-            this.objectsListBox.Size = new System.Drawing.Size(489, 1099);
-            this.objectsListBox.TabIndex = 3;
-            this.objectsListBox.DoubleClick += new System.EventHandler(this.ObjectsListBox_DoubleClick);
+            objectsListBox.Dock = System.Windows.Forms.DockStyle.Fill;
+            objectsListBox.FormattingEnabled = true;
+            objectsListBox.ItemHeight = 15;
+            objectsListBox.Location = new System.Drawing.Point(3, 79);
+            objectsListBox.Name = "objectsListBox";
+            objectsListBox.Size = new System.Drawing.Size(263, 362);
+            objectsListBox.TabIndex = 3;
+            objectsListBox.DoubleClick += ObjectsListBox_DoubleClick;
             // 
             // searchTextBox
             // 
-            this.searchTextBox.Dock = System.Windows.Forms.DockStyle.Top;
-            this.searchTextBox.Location = new System.Drawing.Point(5, 110);
-            this.searchTextBox.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
-            this.searchTextBox.Name = "searchTextBox";
-            this.searchTextBox.Size = new System.Drawing.Size(489, 39);
-            this.searchTextBox.TabIndex = 1;
-            this.searchTextBox.TextChanged += new System.EventHandler(this.SearchTextBox_TextChanged);
+            searchTextBox.Dock = System.Windows.Forms.DockStyle.Top;
+            searchTextBox.Location = new System.Drawing.Point(3, 56);
+            searchTextBox.Name = "searchTextBox";
+            searchTextBox.Size = new System.Drawing.Size(263, 23);
+            searchTextBox.TabIndex = 1;
+            searchTextBox.TextChanged += SearchTextBox_TextChanged;
             // 
             // searchLabel
             // 
-            this.searchLabel.AutoSize = true;
-            this.searchLabel.Dock = System.Windows.Forms.DockStyle.Top;
-            this.searchLabel.Location = new System.Drawing.Point(5, 78);
-            this.searchLabel.Margin = new System.Windows.Forms.Padding(5, 0, 5, 0);
-            this.searchLabel.Name = "searchLabel";
-            this.searchLabel.Size = new System.Drawing.Size(122, 32);
-            this.searchLabel.TabIndex = 0;
-            this.searchLabel.Text = "Search for";
+            searchLabel.AutoSize = true;
+            searchLabel.Dock = System.Windows.Forms.DockStyle.Top;
+            searchLabel.Location = new System.Drawing.Point(3, 41);
+            searchLabel.Name = "searchLabel";
+            searchLabel.Size = new System.Drawing.Size(60, 15);
+            searchLabel.TabIndex = 0;
+            searchLabel.Text = "Search for";
             // 
             // schemaComboBox
             // 
-            this.schemaComboBox.Dock = System.Windows.Forms.DockStyle.Top;
-            this.schemaComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.schemaComboBox.FormattingEnabled = true;
-            this.schemaComboBox.Location = new System.Drawing.Point(5, 38);
-            this.schemaComboBox.Margin = new System.Windows.Forms.Padding(5);
-            this.schemaComboBox.Name = "schemaComboBox";
-            this.schemaComboBox.Size = new System.Drawing.Size(489, 40);
-            this.schemaComboBox.TabIndex = 5;
-            this.schemaComboBox.SelectedIndexChanged += new System.EventHandler(this.SchemaComboBox_SelectedIndexChanged);
+            schemaComboBox.Dock = System.Windows.Forms.DockStyle.Top;
+            schemaComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            schemaComboBox.FormattingEnabled = true;
+            schemaComboBox.Location = new System.Drawing.Point(3, 18);
+            schemaComboBox.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            schemaComboBox.Name = "schemaComboBox";
+            schemaComboBox.Size = new System.Drawing.Size(263, 23);
+            schemaComboBox.TabIndex = 5;
+            schemaComboBox.SelectedIndexChanged += SchemaComboBox_SelectedIndexChanged;
             // 
             // schemaLabel
             // 
-            this.schemaLabel.AutoSize = true;
-            this.schemaLabel.Dock = System.Windows.Forms.DockStyle.Top;
-            this.schemaLabel.Location = new System.Drawing.Point(5, 6);
-            this.schemaLabel.Margin = new System.Windows.Forms.Padding(5, 0, 5, 0);
-            this.schemaLabel.Name = "schemaLabel";
-            this.schemaLabel.Size = new System.Drawing.Size(103, 32);
-            this.schemaLabel.TabIndex = 4;
-            this.schemaLabel.Text = "Schema:";
+            schemaLabel.AutoSize = true;
+            schemaLabel.Dock = System.Windows.Forms.DockStyle.Top;
+            schemaLabel.Location = new System.Drawing.Point(3, 3);
+            schemaLabel.Name = "schemaLabel";
+            schemaLabel.Size = new System.Drawing.Size(52, 15);
+            schemaLabel.TabIndex = 4;
+            schemaLabel.Text = "Schema:";
             // 
             // tabPage2
             // 
-            this.tabPage2.Controls.Add(this.checkBox10);
-            this.tabPage2.Controls.Add(this.indexesCheckBox);
-            this.tabPage2.Controls.Add(this.includeHeadersCheckBox);
-            this.tabPage2.Controls.Add(this.scriptDataCheckBox);
-            this.tabPage2.Controls.Add(this.noCollationCheckBox);
-            this.tabPage2.Controls.Add(this.ansiPaddingCheckBox);
-            this.tabPage2.Controls.Add(this.extendedPropertiesCheckBox);
-            this.tabPage2.Controls.Add(this.includeIfNotExistsCheckBox);
-            this.tabPage2.Controls.Add(this.scriptForCreateDropCheckBox);
-            this.tabPage2.Controls.Add(this.scriptDropsCheckBox);
-            this.tabPage2.Location = new System.Drawing.Point(8, 46);
-            this.tabPage2.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
-            this.tabPage2.Name = "tabPage2";
-            this.tabPage2.Padding = new System.Windows.Forms.Padding(5, 6, 5, 6);
-            this.tabPage2.Size = new System.Drawing.Size(499, 1254);
-            this.tabPage2.TabIndex = 1;
-            this.tabPage2.Text = "Output options";
-            this.tabPage2.UseVisualStyleBackColor = true;
+            tabPage2.Controls.Add(checkBox10);
+            tabPage2.Controls.Add(indexesCheckBox);
+            tabPage2.Controls.Add(includeHeadersCheckBox);
+            tabPage2.Controls.Add(scriptDataCheckBox);
+            tabPage2.Controls.Add(noCollationCheckBox);
+            tabPage2.Controls.Add(ansiPaddingCheckBox);
+            tabPage2.Controls.Add(extendedPropertiesCheckBox);
+            tabPage2.Controls.Add(includeIfNotExistsCheckBox);
+            tabPage2.Controls.Add(scriptForCreateDropCheckBox);
+            tabPage2.Controls.Add(scriptDropsCheckBox);
+            tabPage2.Location = new System.Drawing.Point(4, 24);
+            tabPage2.Name = "tabPage2";
+            tabPage2.Padding = new System.Windows.Forms.Padding(3);
+            tabPage2.Size = new System.Drawing.Size(269, 444);
+            tabPage2.TabIndex = 1;
+            tabPage2.Text = "Output options";
+            tabPage2.UseVisualStyleBackColor = true;
             // 
             // checkBox10
             // 
-            this.checkBox10.AutoSize = true;
-            this.checkBox10.Location = new System.Drawing.Point(15, 523);
-            this.checkBox10.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
-            this.checkBox10.Name = "checkBox10";
-            this.checkBox10.Size = new System.Drawing.Size(159, 36);
-            this.checkBox10.TabIndex = 7;
-            this.checkBox10.Text = "checkBox1";
-            this.checkBox10.UseVisualStyleBackColor = true;
+            checkBox10.AutoSize = true;
+            checkBox10.Location = new System.Drawing.Point(8, 245);
+            checkBox10.Name = "checkBox10";
+            checkBox10.Size = new System.Drawing.Size(83, 19);
+            checkBox10.TabIndex = 7;
+            checkBox10.Text = "checkBox1";
+            checkBox10.UseVisualStyleBackColor = true;
             // 
             // indexesCheckBox
             // 
-            this.indexesCheckBox.AutoSize = true;
-            this.indexesCheckBox.Location = new System.Drawing.Point(15, 469);
-            this.indexesCheckBox.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
-            this.indexesCheckBox.Name = "indexesCheckBox";
-            this.indexesCheckBox.Size = new System.Drawing.Size(127, 36);
-            this.indexesCheckBox.TabIndex = 8;
-            this.indexesCheckBox.Text = "Indexes";
-            this.indexesCheckBox.UseVisualStyleBackColor = true;
+            indexesCheckBox.AutoSize = true;
+            indexesCheckBox.Location = new System.Drawing.Point(8, 220);
+            indexesCheckBox.Name = "indexesCheckBox";
+            indexesCheckBox.Size = new System.Drawing.Size(66, 19);
+            indexesCheckBox.TabIndex = 8;
+            indexesCheckBox.Text = "Indexes";
+            indexesCheckBox.UseVisualStyleBackColor = true;
             // 
             // includeHeadersCheckBox
             // 
-            this.includeHeadersCheckBox.AutoSize = true;
-            this.includeHeadersCheckBox.Location = new System.Drawing.Point(15, 386);
-            this.includeHeadersCheckBox.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
-            this.includeHeadersCheckBox.Name = "includeHeadersCheckBox";
-            this.includeHeadersCheckBox.Size = new System.Drawing.Size(211, 36);
-            this.includeHeadersCheckBox.TabIndex = 9;
-            this.includeHeadersCheckBox.Text = "IncludeHeaders";
-            this.includeHeadersCheckBox.UseVisualStyleBackColor = true;
+            includeHeadersCheckBox.AutoSize = true;
+            includeHeadersCheckBox.Location = new System.Drawing.Point(8, 181);
+            includeHeadersCheckBox.Name = "includeHeadersCheckBox";
+            includeHeadersCheckBox.Size = new System.Drawing.Size(108, 19);
+            includeHeadersCheckBox.TabIndex = 9;
+            includeHeadersCheckBox.Text = "IncludeHeaders";
+            includeHeadersCheckBox.UseVisualStyleBackColor = true;
             // 
             // scriptDataCheckBox
             // 
-            this.scriptDataCheckBox.AutoSize = true;
-            this.scriptDataCheckBox.Location = new System.Drawing.Point(15, 333);
-            this.scriptDataCheckBox.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
-            this.scriptDataCheckBox.Name = "scriptDataCheckBox";
-            this.scriptDataCheckBox.Size = new System.Drawing.Size(155, 36);
-            this.scriptDataCheckBox.TabIndex = 10;
-            this.scriptDataCheckBox.Text = "ScriptData";
-            this.scriptDataCheckBox.UseVisualStyleBackColor = true;
+            scriptDataCheckBox.AutoSize = true;
+            scriptDataCheckBox.Location = new System.Drawing.Point(8, 156);
+            scriptDataCheckBox.Name = "scriptDataCheckBox";
+            scriptDataCheckBox.Size = new System.Drawing.Size(80, 19);
+            scriptDataCheckBox.TabIndex = 10;
+            scriptDataCheckBox.Text = "ScriptData";
+            scriptDataCheckBox.UseVisualStyleBackColor = true;
             // 
             // noCollationCheckBox
             // 
-            this.noCollationCheckBox.AutoSize = true;
-            this.noCollationCheckBox.Checked = true;
-            this.noCollationCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.noCollationCheckBox.Location = new System.Drawing.Point(15, 280);
-            this.noCollationCheckBox.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
-            this.noCollationCheckBox.Name = "noCollationCheckBox";
-            this.noCollationCheckBox.Size = new System.Drawing.Size(173, 36);
-            this.noCollationCheckBox.TabIndex = 11;
-            this.noCollationCheckBox.Text = "NoCollation";
-            this.noCollationCheckBox.UseVisualStyleBackColor = true;
+            noCollationCheckBox.AutoSize = true;
+            noCollationCheckBox.Checked = true;
+            noCollationCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
+            noCollationCheckBox.Location = new System.Drawing.Point(8, 131);
+            noCollationCheckBox.Name = "noCollationCheckBox";
+            noCollationCheckBox.Size = new System.Drawing.Size(90, 19);
+            noCollationCheckBox.TabIndex = 11;
+            noCollationCheckBox.Text = "NoCollation";
+            noCollationCheckBox.UseVisualStyleBackColor = true;
             // 
             // ansiPaddingCheckBox
             // 
-            this.ansiPaddingCheckBox.AutoSize = true;
-            this.ansiPaddingCheckBox.Location = new System.Drawing.Point(15, 226);
-            this.ansiPaddingCheckBox.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
-            this.ansiPaddingCheckBox.Name = "ansiPaddingCheckBox";
-            this.ansiPaddingCheckBox.Size = new System.Drawing.Size(177, 36);
-            this.ansiPaddingCheckBox.TabIndex = 12;
-            this.ansiPaddingCheckBox.Text = "AnsiPadding";
-            this.ansiPaddingCheckBox.UseVisualStyleBackColor = true;
+            ansiPaddingCheckBox.AutoSize = true;
+            ansiPaddingCheckBox.Location = new System.Drawing.Point(8, 106);
+            ansiPaddingCheckBox.Name = "ansiPaddingCheckBox";
+            ansiPaddingCheckBox.Size = new System.Drawing.Size(93, 19);
+            ansiPaddingCheckBox.TabIndex = 12;
+            ansiPaddingCheckBox.Text = "AnsiPadding";
+            ansiPaddingCheckBox.UseVisualStyleBackColor = true;
             // 
             // extendedPropertiesCheckBox
             // 
-            this.extendedPropertiesCheckBox.AutoSize = true;
-            this.extendedPropertiesCheckBox.Checked = true;
-            this.extendedPropertiesCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.extendedPropertiesCheckBox.Location = new System.Drawing.Point(15, 173);
-            this.extendedPropertiesCheckBox.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
-            this.extendedPropertiesCheckBox.Name = "extendedPropertiesCheckBox";
-            this.extendedPropertiesCheckBox.Size = new System.Drawing.Size(252, 36);
-            this.extendedPropertiesCheckBox.TabIndex = 13;
-            this.extendedPropertiesCheckBox.Text = "ExtendedProperties";
-            this.extendedPropertiesCheckBox.UseVisualStyleBackColor = true;
+            extendedPropertiesCheckBox.AutoSize = true;
+            extendedPropertiesCheckBox.Checked = true;
+            extendedPropertiesCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
+            extendedPropertiesCheckBox.Location = new System.Drawing.Point(8, 81);
+            extendedPropertiesCheckBox.Name = "extendedPropertiesCheckBox";
+            extendedPropertiesCheckBox.Size = new System.Drawing.Size(128, 19);
+            extendedPropertiesCheckBox.TabIndex = 13;
+            extendedPropertiesCheckBox.Text = "ExtendedProperties";
+            extendedPropertiesCheckBox.UseVisualStyleBackColor = true;
             // 
             // includeIfNotExistsCheckBox
             // 
-            this.includeIfNotExistsCheckBox.AutoSize = true;
-            this.includeIfNotExistsCheckBox.Location = new System.Drawing.Point(15, 120);
-            this.includeIfNotExistsCheckBox.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
-            this.includeIfNotExistsCheckBox.Name = "includeIfNotExistsCheckBox";
-            this.includeIfNotExistsCheckBox.Size = new System.Drawing.Size(235, 36);
-            this.includeIfNotExistsCheckBox.TabIndex = 14;
-            this.includeIfNotExistsCheckBox.Text = "IncludeIfNotExists";
-            this.includeIfNotExistsCheckBox.UseVisualStyleBackColor = true;
+            includeIfNotExistsCheckBox.AutoSize = true;
+            includeIfNotExistsCheckBox.Location = new System.Drawing.Point(8, 56);
+            includeIfNotExistsCheckBox.Name = "includeIfNotExistsCheckBox";
+            includeIfNotExistsCheckBox.Size = new System.Drawing.Size(121, 19);
+            includeIfNotExistsCheckBox.TabIndex = 14;
+            includeIfNotExistsCheckBox.Text = "IncludeIfNotExists";
+            includeIfNotExistsCheckBox.UseVisualStyleBackColor = true;
             // 
             // scriptForCreateDropCheckBox
             // 
-            this.scriptForCreateDropCheckBox.AutoSize = true;
-            this.scriptForCreateDropCheckBox.Location = new System.Drawing.Point(15, 66);
-            this.scriptForCreateDropCheckBox.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
-            this.scriptForCreateDropCheckBox.Name = "scriptForCreateDropCheckBox";
-            this.scriptForCreateDropCheckBox.Size = new System.Drawing.Size(262, 36);
-            this.scriptForCreateDropCheckBox.TabIndex = 15;
-            this.scriptForCreateDropCheckBox.Text = "ScriptForCreateDrop";
-            this.scriptForCreateDropCheckBox.UseVisualStyleBackColor = true;
+            scriptForCreateDropCheckBox.AutoSize = true;
+            scriptForCreateDropCheckBox.Location = new System.Drawing.Point(8, 31);
+            scriptForCreateDropCheckBox.Name = "scriptForCreateDropCheckBox";
+            scriptForCreateDropCheckBox.Size = new System.Drawing.Size(133, 19);
+            scriptForCreateDropCheckBox.TabIndex = 15;
+            scriptForCreateDropCheckBox.Text = "ScriptForCreateDrop";
+            scriptForCreateDropCheckBox.UseVisualStyleBackColor = true;
             // 
             // scriptDropsCheckBox
             // 
-            this.scriptDropsCheckBox.AutoSize = true;
-            this.scriptDropsCheckBox.Location = new System.Drawing.Point(15, 13);
-            this.scriptDropsCheckBox.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
-            this.scriptDropsCheckBox.Name = "scriptDropsCheckBox";
-            this.scriptDropsCheckBox.Size = new System.Drawing.Size(169, 36);
-            this.scriptDropsCheckBox.TabIndex = 16;
-            this.scriptDropsCheckBox.Text = "ScriptDrops";
-            this.scriptDropsCheckBox.UseVisualStyleBackColor = true;
+            scriptDropsCheckBox.AutoSize = true;
+            scriptDropsCheckBox.Location = new System.Drawing.Point(8, 6);
+            scriptDropsCheckBox.Name = "scriptDropsCheckBox";
+            scriptDropsCheckBox.Size = new System.Drawing.Size(87, 19);
+            scriptDropsCheckBox.TabIndex = 16;
+            scriptDropsCheckBox.Text = "ScriptDrops";
+            scriptDropsCheckBox.UseVisualStyleBackColor = true;
             // 
             // collapsibleSplitter1
             // 
-            this.collapsibleSplitter1.AnimationDelay = 20;
-            this.collapsibleSplitter1.AnimationStep = 20;
-            this.collapsibleSplitter1.BorderStyle3D = System.Windows.Forms.Border3DStyle.Flat;
-            this.collapsibleSplitter1.ControlToHide = this.tabControl1;
-            this.collapsibleSplitter1.ExpandParentForm = false;
-            this.collapsibleSplitter1.Location = new System.Drawing.Point(515, 42);
-            this.collapsibleSplitter1.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
-            this.collapsibleSplitter1.Name = "collapsibleSplitter1";
-            this.collapsibleSplitter1.Size = new System.Drawing.Size(8, 1308);
-            this.collapsibleSplitter1.SplitterDistance = 515;
-            this.collapsibleSplitter1.TabIndex = 6;
-            this.collapsibleSplitter1.TabStop = false;
-            this.collapsibleSplitter1.UseAnimations = false;
-            this.collapsibleSplitter1.VisualStyle = SQL_Document_Builder.VisualStyles.Mozilla;
+            collapsibleSplitter1.AnimationDelay = 20;
+            collapsibleSplitter1.AnimationStep = 20;
+            collapsibleSplitter1.BorderStyle3D = System.Windows.Forms.Border3DStyle.Flat;
+            collapsibleSplitter1.ControlToHide = tabControl1;
+            collapsibleSplitter1.ExpandParentForm = false;
+            collapsibleSplitter1.Location = new System.Drawing.Point(277, 25);
+            collapsibleSplitter1.Name = "collapsibleSplitter1";
+            collapsibleSplitter1.Size = new System.Drawing.Size(8, 472);
+            collapsibleSplitter1.SplitterDistance = 277;
+            collapsibleSplitter1.TabIndex = 6;
+            collapsibleSplitter1.TabStop = false;
+            collapsibleSplitter1.UseAnimations = false;
+            collapsibleSplitter1.VisualStyle = VisualStyles.Mozilla;
             // 
             // sqlTextBox
             // 
-            this.sqlTextBox.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.sqlTextBox.Font = new System.Drawing.Font("Consolas", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.sqlTextBox.Location = new System.Drawing.Point(523, 42);
-            this.sqlTextBox.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
-            this.sqlTextBox.Multiline = true;
-            this.sqlTextBox.Name = "sqlTextBox";
-            this.sqlTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.sqlTextBox.Size = new System.Drawing.Size(1198, 1048);
-            this.sqlTextBox.TabIndex = 7;
+            sqlTextBox.Dock = System.Windows.Forms.DockStyle.Fill;
+            sqlTextBox.Font = new System.Drawing.Font("Consolas", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            sqlTextBox.Location = new System.Drawing.Point(285, 25);
+            sqlTextBox.Multiline = true;
+            sqlTextBox.Name = "sqlTextBox";
+            sqlTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+            sqlTextBox.Size = new System.Drawing.Size(642, 346);
+            sqlTextBox.TabIndex = 7;
             // 
             // label2
             // 
-            this.label2.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.label2.Location = new System.Drawing.Point(523, 1090);
-            this.label2.Margin = new System.Windows.Forms.Padding(5, 0, 5, 0);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(1198, 32);
-            this.label2.TabIndex = 11;
-            this.label2.Text = "Header";
-            this.label2.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            label2.Dock = System.Windows.Forms.DockStyle.Bottom;
+            label2.Location = new System.Drawing.Point(285, 371);
+            label2.Name = "label2";
+            label2.Size = new System.Drawing.Size(642, 15);
+            label2.TabIndex = 11;
+            label2.Text = "Header";
+            label2.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // headerTextBox
             // 
-            this.headerTextBox.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.headerTextBox.Font = new System.Drawing.Font("Consolas", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.headerTextBox.Location = new System.Drawing.Point(523, 1122);
-            this.headerTextBox.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
-            this.headerTextBox.Multiline = true;
-            this.headerTextBox.Name = "headerTextBox";
-            this.headerTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.headerTextBox.Size = new System.Drawing.Size(1198, 98);
-            this.headerTextBox.TabIndex = 9;
+            headerTextBox.Dock = System.Windows.Forms.DockStyle.Bottom;
+            headerTextBox.Font = new System.Drawing.Font("Consolas", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            headerTextBox.Location = new System.Drawing.Point(285, 386);
+            headerTextBox.Multiline = true;
+            headerTextBox.Name = "headerTextBox";
+            headerTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+            headerTextBox.Size = new System.Drawing.Size(642, 48);
+            headerTextBox.TabIndex = 9;
             // 
             // label1
             // 
-            this.label1.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.label1.Location = new System.Drawing.Point(523, 1220);
-            this.label1.Margin = new System.Windows.Forms.Padding(5, 0, 5, 0);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(1198, 32);
-            this.label1.TabIndex = 10;
-            this.label1.Text = "Footer";
-            this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            label1.Dock = System.Windows.Forms.DockStyle.Bottom;
+            label1.Location = new System.Drawing.Point(285, 434);
+            label1.Name = "label1";
+            label1.Size = new System.Drawing.Size(642, 15);
+            label1.TabIndex = 10;
+            label1.Text = "Footer";
+            label1.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // footerTextBox
             // 
-            this.footerTextBox.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.footerTextBox.Font = new System.Drawing.Font("Consolas", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.footerTextBox.Location = new System.Drawing.Point(523, 1252);
-            this.footerTextBox.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
-            this.footerTextBox.Multiline = true;
-            this.footerTextBox.Name = "footerTextBox";
-            this.footerTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            this.footerTextBox.Size = new System.Drawing.Size(1198, 98);
-            this.footerTextBox.TabIndex = 8;
-            this.footerTextBox.Text = "</br>\r\n----\r\nBack to [[BCCR: Database tables|BCCR database tables]]</br>\r\nBack to" +
-    " [[DW: Database tables|Data warehouse tables]]\r\n[[Category: CSBC data warehouse]" +
-    "]\r\n";
+            footerTextBox.Dock = System.Windows.Forms.DockStyle.Bottom;
+            footerTextBox.Font = new System.Drawing.Font("Consolas", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            footerTextBox.Location = new System.Drawing.Point(285, 449);
+            footerTextBox.Multiline = true;
+            footerTextBox.Name = "footerTextBox";
+            footerTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+            footerTextBox.Size = new System.Drawing.Size(642, 48);
+            footerTextBox.TabIndex = 8;
+            footerTextBox.Text = "</br>\r\n----\r\nBack to [[BCCR: Database tables|BCCR database tables]]</br>\r\nBack to [[DW: Database tables|Data warehouse tables]]\r\n[[Category: CSBC data warehouse]]\r\n";
             // 
             // TableBuilderForm
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(13F, 32F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1721, 1350);
-            this.Controls.Add(this.sqlTextBox);
-            this.Controls.Add(this.label2);
-            this.Controls.Add(this.headerTextBox);
-            this.Controls.Add(this.label1);
-            this.Controls.Add(this.footerTextBox);
-            this.Controls.Add(this.collapsibleSplitter1);
-            this.Controls.Add(this.tabControl1);
-            this.Controls.Add(this.toolStrip1);
-            this.Margin = new System.Windows.Forms.Padding(5, 6, 5, 6);
-            this.Name = "TableBuilderForm";
-            this.Text = "Table script builder";
-            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.TableBuilderForm_FormClosing);
-            this.Load += new System.EventHandler(this.TableBuilderForm_Load);
-            this.toolStrip1.ResumeLayout(false);
-            this.toolStrip1.PerformLayout();
-            this.tabControl1.ResumeLayout(false);
-            this.tabPage1.ResumeLayout(false);
-            this.tabPage1.PerformLayout();
-            this.tabPage2.ResumeLayout(false);
-            this.tabPage2.PerformLayout();
-            this.ResumeLayout(false);
-            this.PerformLayout();
-
+            AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
+            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            ClientSize = new System.Drawing.Size(927, 497);
+            Controls.Add(sqlTextBox);
+            Controls.Add(label2);
+            Controls.Add(headerTextBox);
+            Controls.Add(label1);
+            Controls.Add(footerTextBox);
+            Controls.Add(collapsibleSplitter1);
+            Controls.Add(tabControl1);
+            Controls.Add(toolStrip1);
+            Name = "TableBuilderForm";
+            Text = "Table script builder";
+            FormClosing += TableBuilderForm_FormClosing;
+            Load += TableBuilderForm_Load;
+            toolStrip1.ResumeLayout(false);
+            toolStrip1.PerformLayout();
+            tabControl1.ResumeLayout(false);
+            tabPage1.ResumeLayout(false);
+            tabPage1.PerformLayout();
+            tabPage2.ResumeLayout(false);
+            tabPage2.PerformLayout();
+            ResumeLayout(false);
+            PerformLayout();
         }
 
         #endregion
@@ -583,5 +548,6 @@
         private System.Windows.Forms.ToolStripDropDownButton toolStripDropDownButton2;
         private System.Windows.Forms.ToolStripMenuItem tableDefinitionToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem valueListToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem queryDataToolStripMenuItem;
     }
 }

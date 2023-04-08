@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Microsoft.SqlServer.Management.Smo;
+using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Windows.Forms;
@@ -159,6 +161,175 @@ namespace SQL_Document_Builder
             {
                 return text;
             }
+        }
+
+        public static string QueryDataToHTMLTable(string sql)
+        {
+            var sb = new System.Text.StringBuilder();
+
+            var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+            try
+            {
+                var cmd = new SqlCommand(sql, conn)
+                { CommandType = CommandType.Text };
+                conn.Open();
+
+                var dat = new SqlDataAdapter(cmd);
+                var ds = new DataSet();
+                dat.Fill(ds);
+
+                if (ds?.Tables.Count > 0)
+                {
+                    sb.AppendLine(DataTableToHTML(ds.Tables[0]));
+                }
+            }
+            catch (Exception ex)
+            {
+                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                conn.Close();
+            }
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// Returns HTML script for the data in the data table
+        /// </summary>
+        /// <param name="dt"></param>
+        /// <returns></returns>
+        public static string DataTableToHTML(DataTable dt, int margin = 1, Single fontSize = 14)
+        {
+            var sb = new System.Text.StringBuilder();
+            if (fontSize > 0)
+            {
+                sb.AppendLine(string.Format("<table class=\"wikitable\" style=\"margin: {0}em 0px; border: 1px solid #a2a9b1; color: #202122; font-family: sans-serif; font-size: {1}px; background-color: #f8f9fa;\">", margin, fontSize));
+            }
+            else
+            {
+                sb.AppendLine(string.Format("<table class=\"wikitable\" style=\"margin: {0}em 0px; border: 1px solid #a2a9b1; color: #202122; font-family: sans-serif; background-color: #f8f9fa;\">", margin));
+            }
+            sb.AppendLine("\t<tbody>");
+            sb.AppendLine("\t\t<tr>");
+            for (int i = 0; i < dt.Columns.Count; i++)
+            {
+                var colName = dt.Columns[i].ColumnName;
+                sb.AppendLine(string.Format("\t\t<th style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\">{0}</th>", colName));
+            }
+            sb.AppendLine("\t\t</tr>");
+
+            foreach (DataRow dataRow in dt.Rows)
+            {
+                sb.AppendLine("\t\t<tr>");
+                for (int i = 0; i < dt.Columns.Count; i++)
+                {
+                    string? value = "&#160;";
+                    if (dataRow[i] != DBNull.Value)
+                        value = Convert.ToString(dataRow[i]);
+
+                    sb.AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + value?.ToString() + "</td>");
+                }
+                sb.AppendLine("\t\t</tr>");
+            }
+
+            sb.AppendLine("\t</tbody>");
+            sb.AppendLine("</table>");
+
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// Get table list from the database
+        /// </summary>
+        public static List<ObjectName> GetTableList()
+        {
+            var tables = new List<ObjectName>();
+            var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+            try
+            {
+                var cmd = new SqlCommand("SELECT TABLE_SCHEMA, TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' ORDER BY TABLE_SCHEMA, TABLE_NAME", conn) { CommandType = CommandType.Text };
+                conn.Open();
+                var reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    tables.Add(new ObjectName() { 
+                        ObjectType = ObjectName.ObjectTypeEnums.Table, 
+                        Schema = reader.GetString(0),
+                        Name = reader.GetString(1)
+                    });
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                conn.Close();
+            }
+            return tables;
+        }
+
+        /// <summary>
+        /// Get table list from the database
+        /// </summary>
+        public static List<ObjectName> GetViewList()
+        {
+            var tables = new List<ObjectName>();
+            var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+            try
+            {
+                var cmd = new SqlCommand("SELECT TABLE_SCHEMA, TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'View' ORDER BY TABLE_SCHEMA, TABLE_NAME", conn) { CommandType = CommandType.Text };
+                conn.Open();
+                var reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    tables.Add(new ObjectName()
+                    {
+                        ObjectType = ObjectName.ObjectTypeEnums.Table,
+                        Schema = reader.GetString(0),
+                        Name = reader.GetString(1)
+                    });
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                conn.Close();
+            }
+            return tables;
+        }
+
+        public static List<string> GetTableColumns(ObjectName tableName) { 
+            var columns = new List<string>();
+
+            var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+            try
+            {
+                var cmd = new SqlCommand(string .Format("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '{0}' AND TABLE_NAME = '{1}'", tableName.Schema, tableName.Name), conn) { CommandType = CommandType.Text };
+                conn.Open();
+                var reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    columns.Add(reader.GetString(0));
+                }
+            }
+            catch (Exception ex)
+            {
+                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                conn.Close();
+            }
+
+            return columns;
         }
     }
 }

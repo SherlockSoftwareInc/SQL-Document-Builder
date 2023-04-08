@@ -29,132 +29,195 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(BatchColumnDesc));
-            this.toolStrip1 = new System.Windows.Forms.ToolStrip();
-            this.toolStripLabel1 = new System.Windows.Forms.ToolStripLabel();
-            this.searchToolStripTextBox = new System.Windows.Forms.ToolStripTextBox();
-            this.searchToolStripButton = new System.Windows.Forms.ToolStripButton();
-            this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
-            this.tablesCheckedListBox = new System.Windows.Forms.CheckedListBox();
-            this.label1 = new System.Windows.Forms.Label();
-            this.descTextBox = new System.Windows.Forms.TextBox();
-            this.applyButton = new System.Windows.Forms.Button();
-            this.selectAllToolStripButton = new System.Windows.Forms.ToolStripButton();
-            this.unselectAllToolStripButton = new System.Windows.Forms.ToolStripButton();
-            this.toolStrip1.SuspendLayout();
-            this.SuspendLayout();
+            toolStrip1 = new System.Windows.Forms.ToolStrip();
+            toolStripLabel1 = new System.Windows.Forms.ToolStripLabel();
+            searchToolStripTextBox = new System.Windows.Forms.ToolStripTextBox();
+            searchToolStripButton = new System.Windows.Forms.ToolStripButton();
+            toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+            selectAllToolStripButton = new System.Windows.Forms.ToolStripButton();
+            unselectAllToolStripButton = new System.Windows.Forms.ToolStripButton();
+            objectsListBox = new System.Windows.Forms.CheckedListBox();
+            label1 = new System.Windows.Forms.Label();
+            descTextBox = new System.Windows.Forms.TextBox();
+            applyButton = new System.Windows.Forms.Button();
+            statusStrip1 = new System.Windows.Forms.StatusStrip();
+            progressBar = new System.Windows.Forms.ToolStripProgressBar();
+            messageToolStripStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
+            panel1 = new System.Windows.Forms.Panel();
+            schemaComboBox = new System.Windows.Forms.ComboBox();
+            schemaLabel = new System.Windows.Forms.Label();
+            toolStrip1.SuspendLayout();
+            statusStrip1.SuspendLayout();
+            panel1.SuspendLayout();
+            SuspendLayout();
             // 
             // toolStrip1
             // 
-            this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.toolStripLabel1,
-            this.searchToolStripTextBox,
-            this.searchToolStripButton,
-            this.toolStripSeparator1,
-            this.selectAllToolStripButton,
-            this.unselectAllToolStripButton});
-            this.toolStrip1.Location = new System.Drawing.Point(0, 0);
-            this.toolStrip1.Name = "toolStrip1";
-            this.toolStrip1.Size = new System.Drawing.Size(800, 25);
-            this.toolStrip1.TabIndex = 0;
-            this.toolStrip1.Text = "toolStrip1";
+            toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { toolStripLabel1, searchToolStripTextBox, searchToolStripButton, toolStripSeparator1, selectAllToolStripButton, unselectAllToolStripButton });
+            toolStrip1.Location = new System.Drawing.Point(0, 0);
+            toolStrip1.Name = "toolStrip1";
+            toolStrip1.Size = new System.Drawing.Size(800, 25);
+            toolStrip1.TabIndex = 0;
+            toolStrip1.Text = "toolStrip1";
             // 
             // toolStripLabel1
             // 
-            this.toolStripLabel1.Name = "toolStripLabel1";
-            this.toolStripLabel1.Size = new System.Drawing.Size(122, 22);
-            this.toolStripLabel1.Text = "Search column name:";
+            toolStripLabel1.Name = "toolStripLabel1";
+            toolStripLabel1.Size = new System.Drawing.Size(122, 22);
+            toolStripLabel1.Text = "Search column name:";
             // 
             // searchToolStripTextBox
             // 
-            this.searchToolStripTextBox.Name = "searchToolStripTextBox";
-            this.searchToolStripTextBox.Size = new System.Drawing.Size(200, 25);
-            this.searchToolStripTextBox.KeyUp += new System.Windows.Forms.KeyEventHandler(this.SearchToolStripTextBox_KeyUp);
+            searchToolStripTextBox.Name = "searchToolStripTextBox";
+            searchToolStripTextBox.Size = new System.Drawing.Size(200, 25);
+            searchToolStripTextBox.TextBoxTextAlignChanged += searchToolStripTextBox_TextBoxTextAlignChanged;
+            searchToolStripTextBox.KeyUp += SearchToolStripTextBox_KeyUp;
             // 
             // searchToolStripButton
             // 
-            this.searchToolStripButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            this.searchToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("searchToolStripButton.Image")));
-            this.searchToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.searchToolStripButton.Name = "searchToolStripButton";
-            this.searchToolStripButton.Size = new System.Drawing.Size(23, 22);
-            this.searchToolStripButton.Text = "toolStripButton1";
-            this.searchToolStripButton.Click += new System.EventHandler(this.SearchToolStripButton_Click);
+            searchToolStripButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            searchToolStripButton.Image = Properties.Resources.search;
+            searchToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            searchToolStripButton.Name = "searchToolStripButton";
+            searchToolStripButton.Size = new System.Drawing.Size(23, 22);
+            searchToolStripButton.Text = "toolStripButton1";
+            searchToolStripButton.Click += SearchToolStripButton_Click;
             // 
             // toolStripSeparator1
             // 
-            this.toolStripSeparator1.Name = "toolStripSeparator1";
-            this.toolStripSeparator1.Size = new System.Drawing.Size(6, 25);
-            // 
-            // tablesCheckedListBox
-            // 
-            this.tablesCheckedListBox.Dock = System.Windows.Forms.DockStyle.Left;
-            this.tablesCheckedListBox.FormattingEnabled = true;
-            this.tablesCheckedListBox.Location = new System.Drawing.Point(0, 25);
-            this.tablesCheckedListBox.Name = "tablesCheckedListBox";
-            this.tablesCheckedListBox.Size = new System.Drawing.Size(217, 425);
-            this.tablesCheckedListBox.TabIndex = 1;
-            // 
-            // label1
-            // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(223, 25);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(115, 15);
-            this.label1.TabIndex = 2;
-            this.label1.Text = "Column description:";
-            // 
-            // descTextBox
-            // 
-            this.descTextBox.Location = new System.Drawing.Point(223, 43);
-            this.descTextBox.Name = "descTextBox";
-            this.descTextBox.Size = new System.Drawing.Size(565, 23);
-            this.descTextBox.TabIndex = 3;
-            // 
-            // applyButton
-            // 
-            this.applyButton.Location = new System.Drawing.Point(223, 72);
-            this.applyButton.Name = "applyButton";
-            this.applyButton.Size = new System.Drawing.Size(75, 23);
-            this.applyButton.TabIndex = 4;
-            this.applyButton.Text = "Apply";
-            this.applyButton.UseVisualStyleBackColor = true;
-            this.applyButton.Click += new System.EventHandler(this.ApplyButton_Click);
+            toolStripSeparator1.Name = "toolStripSeparator1";
+            toolStripSeparator1.Size = new System.Drawing.Size(6, 25);
             // 
             // selectAllToolStripButton
             // 
-            this.selectAllToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("selectAllToolStripButton.Image")));
-            this.selectAllToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.selectAllToolStripButton.Name = "selectAllToolStripButton";
-            this.selectAllToolStripButton.Size = new System.Drawing.Size(73, 22);
-            this.selectAllToolStripButton.Text = "Select all";
-            this.selectAllToolStripButton.Click += new System.EventHandler(this.SelectAllToolStripButton_Click);
+            selectAllToolStripButton.Image = (System.Drawing.Image)resources.GetObject("selectAllToolStripButton.Image");
+            selectAllToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            selectAllToolStripButton.Name = "selectAllToolStripButton";
+            selectAllToolStripButton.Size = new System.Drawing.Size(73, 22);
+            selectAllToolStripButton.Text = "Select all";
+            selectAllToolStripButton.Click += SelectAllToolStripButton_Click;
             // 
             // unselectAllToolStripButton
             // 
-            this.unselectAllToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("unselectAllToolStripButton.Image")));
-            this.unselectAllToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.unselectAllToolStripButton.Name = "unselectAllToolStripButton";
-            this.unselectAllToolStripButton.Size = new System.Drawing.Size(87, 22);
-            this.unselectAllToolStripButton.Text = "Unselect all";
-            this.unselectAllToolStripButton.Click += new System.EventHandler(this.UnselectAllToolStripButton_Click);
+            unselectAllToolStripButton.Image = (System.Drawing.Image)resources.GetObject("unselectAllToolStripButton.Image");
+            unselectAllToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            unselectAllToolStripButton.Name = "unselectAllToolStripButton";
+            unselectAllToolStripButton.Size = new System.Drawing.Size(87, 22);
+            unselectAllToolStripButton.Text = "Unselect all";
+            unselectAllToolStripButton.Click += UnselectAllToolStripButton_Click;
+            // 
+            // objectsListBox
+            // 
+            objectsListBox.Dock = System.Windows.Forms.DockStyle.Fill;
+            objectsListBox.FormattingEnabled = true;
+            objectsListBox.Location = new System.Drawing.Point(0, 38);
+            objectsListBox.Name = "objectsListBox";
+            objectsListBox.Size = new System.Drawing.Size(200, 365);
+            objectsListBox.TabIndex = 1;
+            // 
+            // label1
+            // 
+            label1.AutoSize = true;
+            label1.Location = new System.Drawing.Point(223, 25);
+            label1.Name = "label1";
+            label1.Size = new System.Drawing.Size(115, 15);
+            label1.TabIndex = 2;
+            label1.Text = "Column description:";
+            // 
+            // descTextBox
+            // 
+            descTextBox.Location = new System.Drawing.Point(223, 43);
+            descTextBox.Name = "descTextBox";
+            descTextBox.Size = new System.Drawing.Size(565, 23);
+            descTextBox.TabIndex = 3;
+            // 
+            // applyButton
+            // 
+            applyButton.Location = new System.Drawing.Point(223, 72);
+            applyButton.Name = "applyButton";
+            applyButton.Size = new System.Drawing.Size(75, 23);
+            applyButton.TabIndex = 4;
+            applyButton.Text = "Apply";
+            applyButton.UseVisualStyleBackColor = true;
+            applyButton.Click += ApplyButton_Click;
+            // 
+            // statusStrip1
+            // 
+            statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { progressBar, messageToolStripStatusLabel });
+            statusStrip1.Location = new System.Drawing.Point(0, 428);
+            statusStrip1.Name = "statusStrip1";
+            statusStrip1.Size = new System.Drawing.Size(800, 22);
+            statusStrip1.TabIndex = 5;
+            statusStrip1.Text = "statusStrip1";
+            // 
+            // progressBar
+            // 
+            progressBar.Name = "progressBar";
+            progressBar.Size = new System.Drawing.Size(100, 16);
+            progressBar.Visible = false;
+            // 
+            // messageToolStripStatusLabel
+            // 
+            messageToolStripStatusLabel.Name = "messageToolStripStatusLabel";
+            messageToolStripStatusLabel.Size = new System.Drawing.Size(785, 17);
+            messageToolStripStatusLabel.Spring = true;
+            messageToolStripStatusLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // panel1
+            // 
+            panel1.Controls.Add(objectsListBox);
+            panel1.Controls.Add(schemaComboBox);
+            panel1.Controls.Add(schemaLabel);
+            panel1.Dock = System.Windows.Forms.DockStyle.Left;
+            panel1.Location = new System.Drawing.Point(0, 25);
+            panel1.Name = "panel1";
+            panel1.Size = new System.Drawing.Size(200, 403);
+            panel1.TabIndex = 6;
+            // 
+            // schemaComboBox
+            // 
+            schemaComboBox.Dock = System.Windows.Forms.DockStyle.Top;
+            schemaComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            schemaComboBox.FormattingEnabled = true;
+            schemaComboBox.Location = new System.Drawing.Point(0, 15);
+            schemaComboBox.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            schemaComboBox.Name = "schemaComboBox";
+            schemaComboBox.Size = new System.Drawing.Size(200, 23);
+            schemaComboBox.TabIndex = 9;
+            schemaComboBox.SelectedIndexChanged += SchemaComboBox_SelectedIndexChanged;
+            // 
+            // schemaLabel
+            // 
+            schemaLabel.AutoSize = true;
+            schemaLabel.Dock = System.Windows.Forms.DockStyle.Top;
+            schemaLabel.Location = new System.Drawing.Point(0, 0);
+            schemaLabel.Name = "schemaLabel";
+            schemaLabel.Size = new System.Drawing.Size(52, 15);
+            schemaLabel.TabIndex = 8;
+            schemaLabel.Text = "Schema:";
             // 
             // BatchColumnDesc
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(800, 450);
-            this.Controls.Add(this.applyButton);
-            this.Controls.Add(this.descTextBox);
-            this.Controls.Add(this.label1);
-            this.Controls.Add(this.tablesCheckedListBox);
-            this.Controls.Add(this.toolStrip1);
-            this.Name = "BatchColumnDesc";
-            this.Text = "BatchColumnDesc";
-            this.toolStrip1.ResumeLayout(false);
-            this.toolStrip1.PerformLayout();
-            this.ResumeLayout(false);
-            this.PerformLayout();
-
+            AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
+            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            ClientSize = new System.Drawing.Size(800, 450);
+            Controls.Add(applyButton);
+            Controls.Add(descTextBox);
+            Controls.Add(label1);
+            Controls.Add(panel1);
+            Controls.Add(statusStrip1);
+            Controls.Add(toolStrip1);
+            Name = "BatchColumnDesc";
+            Text = "BatchColumnDesc";
+            Load += BatchColumnDesc_Load;
+            toolStrip1.ResumeLayout(false);
+            toolStrip1.PerformLayout();
+            statusStrip1.ResumeLayout(false);
+            statusStrip1.PerformLayout();
+            panel1.ResumeLayout(false);
+            panel1.PerformLayout();
+            ResumeLayout(false);
+            PerformLayout();
         }
 
         #endregion
@@ -164,11 +227,17 @@
         private System.Windows.Forms.ToolStripTextBox searchToolStripTextBox;
         private System.Windows.Forms.ToolStripButton searchToolStripButton;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
-        private System.Windows.Forms.CheckedListBox tablesCheckedListBox;
+        private System.Windows.Forms.CheckedListBox objectsListBox;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.TextBox descTextBox;
         private System.Windows.Forms.Button applyButton;
         private System.Windows.Forms.ToolStripButton selectAllToolStripButton;
         private System.Windows.Forms.ToolStripButton unselectAllToolStripButton;
+        private System.Windows.Forms.StatusStrip statusStrip1;
+        private System.Windows.Forms.ToolStripProgressBar progressBar;
+        private System.Windows.Forms.ToolStripStatusLabel messageToolStripStatusLabel;
+        private System.Windows.Forms.Panel panel1;
+        private System.Windows.Forms.ComboBox schemaComboBox;
+        private System.Windows.Forms.Label schemaLabel;
     }
 }
