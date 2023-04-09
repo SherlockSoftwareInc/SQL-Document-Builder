@@ -1,12 +1,11 @@
-﻿using System.Data.SqlClient;
-using Microsoft.SqlServer.Management.Smo;
+﻿using Microsoft.SqlServer.Management.Smo;
 using System;
 using System.Collections.Specialized;
 using System.Data;
+using System.Data.SqlClient;
 using System.Drawing;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Security.Cryptography;
 
 namespace SQL_Document_Builder
 {
@@ -15,7 +14,7 @@ namespace SQL_Document_Builder
         private readonly SQLServerConnections _connections = new();
         private int _connectionCount = 0;
         private string? _database = string.Empty;
-        private SQLDatabaseConnectionItem _selectedConnection = new SQLDatabaseConnectionItem();
+        private SQLDatabaseConnectionItem? _selectedConnection = new SQLDatabaseConnectionItem();
         private string? _server = string.Empty;
         private readonly System.Text.StringBuilder _script = new();
 
@@ -410,42 +409,43 @@ namespace SQL_Document_Builder
             WindowState = FormWindowState.Maximized;
 
             _connections.Load();
-            //PopulateConnections();
+            PopulateConnections();
 
-            //var lastConnection = Properties.Settings.Default.LastAccessConnection;
-            //ConnectionMenuItem? selectedItem = null;
-            //if (lastConnection.Length == 0)
-            //{
-            //    selectedItem = (ConnectionMenuItem)connectToToolStripMenuItem.DropDown.Items[0];
-            //}
-            //else
-            //{
-            //    foreach (ConnectionMenuItem submenuitem in connectToToolStripMenuItem.DropDown.Items)
-            //    {
-            //        if (submenuitem.ConnectionName == lastConnection.ToString())
-            //        {
-            //            selectedItem = submenuitem;
-            //            break;
-            //        }
-            //    }
-            //}
-            //if (selectedItem != null)
-            //{
-            //    ChangeDBConnection(selectedItem.Connection);
-            //}
-            //else
-            //{
-            //    Close();
-            //}
-
-            if (Properties.Settings.Default.LastAccessConnectionIndex == 1)
+            var lastConnection = Properties.Settings.Default.LastAccessConnectionIndex;
+            ConnectionMenuItem? selectedItem = null;
+            if (lastConnection <= 0 || lastConnection >= _connections.Connections.Count)
             {
-                LocalToolStripMenuItem_Click(this, e);
+                selectedItem = (ConnectionMenuItem)connectToToolStripMenuItem.DropDown.Items[0];
             }
             else
             {
-                AzureToolStripMenuItem_Click(this, e);
+                selectedItem = (ConnectionMenuItem)connectToToolStripMenuItem.DropDown.Items[lastConnection];
+                //foreach (ConnectionMenuItem submenuitem in connectToToolStripMenuItem.DropDown.Items)
+                //{
+                //    if (submenuitem.ConnectionName == lastConnection.ToString())
+                //    {
+                //        selectedItem = submenuitem;
+                //        break;
+                //    }
+                //}
             }
+            if (selectedItem != null)
+            {
+                ChangeDBConnection(selectedItem.Connection);
+            }
+            else
+            {
+                Close();
+            }
+
+            //if (Properties.Settings.Default.LastAccessConnectionIndex == 1)
+            //{
+            //    LocalToolStripMenuItem_Click(this, e);
+            //}
+            //else
+            //{
+            //    AzureToolStripMenuItem_Click(this, e);
+            //}
         }
 
         /// <summary>
@@ -481,44 +481,46 @@ namespace SQL_Document_Builder
             sqlTextBox.Paste();
         }
 
-        ///// <summary>
-        ///// Populate connections to menu and combobox
-        ///// </summary>
-        //private void PopulateConnections()
-        //{
-        //    _selectedConnection = null;
+        /// <summary>
+        /// Populate connections to menu and combobox
+        /// </summary>
+        private void PopulateConnections()
+        {
+            _selectedConnection = null;
 
-        //    // clear menu items under Connect to... menu
-        //    for (int i = connectToToolStripMenuItem.DropDown.Items.Count - 1; i >= 0; i--)
-        //    {
-        //        ConnectionMenuItem submenuitem = (ConnectionMenuItem)connectToToolStripMenuItem.DropDown.Items[i];
-        //        submenuitem.Click -= OnConnectionToolStripMenuItem_Click;
-        //        connectToToolStripMenuItem.DropDownItems.RemoveAt(i);
-        //    }
+            // clear menu items under Connect to... menu
+            for (int i = connectToToolStripMenuItem.DropDown.Items.Count - 1; i >= 0; i--)
+            {
+                var submenuitem = connectToToolStripMenuItem.DropDown.Items[i];
+                submenuitem.Click -= OnConnectionToolStripMenuItem_Click;
+                connectToToolStripMenuItem.DropDownItems.RemoveAt(i);
+            }
 
-        //    var connections = _connections.Connections;
-        //    if (connections.Count == 0)
-        //    {
-        //        AddConnection();
-        //    }
-        //    else
-        //    {
-        //        for (int i = 0; i < connections.Count; i++)
-        //        {
-        //            var item = connections[i];
-        //            if (item.ConnectionString?.Length > 1)
-        //            {
-        //                var submenuitem = new ConnectionMenuItem(item)
-        //                {
-        //                    Name = string.Format("ConnectionMenuItem{0}", i + 1),
-        //                    Size = new Size(300, 26),
-        //                };
-        //                submenuitem.Click += OnConnectionToolStripMenuItem_Click;
-        //                connectToToolStripMenuItem.DropDown.Items.Add(submenuitem);
-        //            }
-        //        }
-        //    }
-        //}
+            var connections = _connections.Connections;
+            if (connections.Count == 0)
+            {
+                AddConnection();
+            }
+            else
+            {
+                for (int i = 0; i < connections.Count; i++)
+                {
+                    var item = connections[i];
+                    //if(item.DBMSType == 1)
+
+                    if (item.ConnectionString?.Length > 1)
+                    {
+                        var submenuitem = new ConnectionMenuItem(item)
+                        {
+                            Name = string.Format("ConnectionMenuItem{0}", i + 1),
+                            Size = new Size(300, 26),
+                        };
+                        submenuitem.Click += OnConnectionToolStripMenuItem_Click;
+                        connectToToolStripMenuItem.DropDown.Items.Add(submenuitem);
+                    }
+                }
+            }
+        }
 
         /// <summary>
         /// Handles "Save" menu item click event: Save the current content in the text box into a file
@@ -996,61 +998,61 @@ namespace SQL_Document_Builder
         {
         }
 
-        private async void AzureToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            const string server = "(local)";
-            const string database = "CSBC_EDW";
-            var builder = new System.Data.SqlClient.SqlConnectionStringBuilder()
-            {
-                DataSource = server,
-                InitialCatalog = database,
-                Encrypt = true,
-                TrustServerCertificate = true,
-                IntegratedSecurity = true,
-                //Authentication = System.Data.SqlClient.SqlAuthenticationMethod.ActiveDirectoryIntegrated,
-            };
+        //private async void AzureToolStripMenuItem_Click(object sender, EventArgs e)
+        //{
+        //    const string server = "(local)";
+        //    const string database = "CSBC_EDW";
+        //    var builder = new System.Data.SqlClient.SqlConnectionStringBuilder()
+        //    {
+        //        DataSource = server,
+        //        InitialCatalog = database,
+        //        Encrypt = true,
+        //        TrustServerCertificate = true,
+        //        IntegratedSecurity = true,
+        //        //Authentication = System.Data.SqlClient.SqlAuthenticationMethod.ActiveDirectoryIntegrated,
+        //    };
 
-            if (await TestConnection(builder.ConnectionString))
-            {
-                _server = server;
-                _database = database;
-                serverToolStripStatusLabel.Text = server;
-                databaseToolStripStatusLabel.Text = database;
-                Properties.Settings.Default.dbConnectionString = builder.ConnectionString;
-                Properties.Settings.Default.LastAccessConnectionIndex = 0;
+        //    if (await TestConnection(builder.ConnectionString))
+        //    {
+        //        _server = server;
+        //        _database = database;
+        //        serverToolStripStatusLabel.Text = server;
+        //        databaseToolStripStatusLabel.Text = database;
+        //        Properties.Settings.Default.dbConnectionString = builder.ConnectionString;
+        //        Properties.Settings.Default.LastAccessConnectionIndex = 0;
 
-                _selectedConnection.ServerName = server;
-                _selectedConnection.Database = database;
-            }
+        //        _selectedConnection.ServerName = server;
+        //        _selectedConnection.Database = database;
+        //    }
 
-            //for (int i = 0; i < _connections.Connections.Count; i++)
-            //{
-            //    var item = _connections.Connections[i];
-            //    if (item.ServerName == server && item.Database == database)
-            //    {
-            //        _selectedConnection = item;
-            //    }
+        //    //for (int i = 0; i < _connections.Connections.Count; i++)
+        //    //{
+        //    //    var item = _connections.Connections[i];
+        //    //    if (item.ServerName == server && item.Database == database)
+        //    //    {
+        //    //        _selectedConnection = item;
+        //    //    }
 
-            //}
-            //const string server = "phsa-csbc-pcr-prod-sql-server.database.windows.net";
-            //const string database = "pcr_analytic";
-            //var builder = new System.Data.SqlClient.SqlConnectionStringBuilder()
-            //{
-            //    DataSource = server,
-            //    InitialCatalog = database,
-            //    Encrypt = true,
-            //    TrustServerCertificate = true,
-            //    //Authentication = System.Data.SqlClient.SqlAuthenticationMethod.ActiveDirectoryInteractive,
-            //    UserID = "swu2@phsa.ca"
-            //};
+        //    //}
+        //    //const string server = "phsa-csbc-pcr-prod-sql-server.database.windows.net";
+        //    //const string database = "pcr_analytic";
+        //    //var builder = new System.Data.SqlClient.SqlConnectionStringBuilder()
+        //    //{
+        //    //    DataSource = server,
+        //    //    InitialCatalog = database,
+        //    //    Encrypt = true,
+        //    //    TrustServerCertificate = true,
+        //    //    //Authentication = System.Data.SqlClient.SqlAuthenticationMethod.ActiveDirectoryInteractive,
+        //    //    UserID = "swu2@phsa.ca"
+        //    //};
 
-            //if (await TestConnection(builder.ConnectionString))
-            //{
-            //    _server = server;
-            //    _database = database;
-            //    Properties.Settings.Default.dbConnectionString = builder.ConnectionString;
-            //}
-        }
+        //    //if (await TestConnection(builder.ConnectionString))
+        //    //{
+        //    //    _server = server;
+        //    //    _database = database;
+        //    //    Properties.Settings.Default.dbConnectionString = builder.ConnectionString;
+        //    //}
+        //}
 
         /// <summary>
         /// Test that the server is connected
@@ -1071,43 +1073,42 @@ namespace SQL_Document_Builder
             }
         }
 
-        private async void LocalToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            const string server = "svmsq06";
-            const string database = "AFDataMart_DEV";
-            var builder = new System.Data.SqlClient.SqlConnectionStringBuilder()
-            {
-                DataSource = server,
-                InitialCatalog = database,
-                Encrypt = true,
-                TrustServerCertificate = true,
-                IntegratedSecurity = true,
-                //Authentication = System.Data.SqlClient.SqlAuthenticationMethod.ActiveDirectoryIntegrated,
-            };
+        //private async void LocalToolStripMenuItem_Click(object sender, EventArgs e)
+        //{
+        //    const string server = "svmsq06";
+        //    const string database = "AFDataMart_DEV";
+        //    var builder = new System.Data.SqlClient.SqlConnectionStringBuilder()
+        //    {
+        //        DataSource = server,
+        //        InitialCatalog = database,
+        //        Encrypt = true,
+        //        TrustServerCertificate = true,
+        //        IntegratedSecurity = true,
+        //        //Authentication = System.Data.SqlClient.SqlAuthenticationMethod.ActiveDirectoryIntegrated,
+        //    };
 
-            if (await TestConnection(builder.ConnectionString))
-            {
-                _server = server;
-                _database = database;
-                serverToolStripStatusLabel.Text = server;
-                databaseToolStripStatusLabel.Text = database;
-                Properties.Settings.Default.dbConnectionString = builder.ConnectionString;
-                Properties.Settings.Default.LastAccessConnectionIndex = 1;
+        //    if (await TestConnection(builder.ConnectionString))
+        //    {
+        //        _server = server;
+        //        _database = database;
+        //        serverToolStripStatusLabel.Text = server;
+        //        databaseToolStripStatusLabel.Text = database;
+        //        Properties.Settings.Default.dbConnectionString = builder.ConnectionString;
+        //        Properties.Settings.Default.LastAccessConnectionIndex = 1;
 
-                _selectedConnection.ServerName = server;
-                _selectedConnection.Database = database;
+        //        _selectedConnection.ServerName = server;
+        //        _selectedConnection.Database = database;
+        //    }
 
-            }
-
-            //for (int i = 0; i < _connections.Connections.Count; i++)
-            //{
-            //    var item = _connections.Connections[i];
-            //    if (item.ServerName == server && item.Database == database)
-            //    {
-            //        _selectedConnection = item;
-            //    }
-            //}
-        }
+        //    //for (int i = 0; i < _connections.Connections.Count; i++)
+        //    //{
+        //    //    var item = _connections.Connections[i];
+        //    //    if (item.ServerName == server && item.Database == database)
+        //    //    {
+        //    //        _selectedConnection = item;
+        //    //    }
+        //    //}
+        //}
 
         private void TableListToolStripMenuItem1_Click(object sender, EventArgs e)
         {
@@ -1180,26 +1181,57 @@ namespace SQL_Document_Builder
             form.ShowDialog();
         }
 
-        private void objectDescriptionsToolStripMenuItem_Click(object sender, EventArgs e)
+        /// <summary>
+        /// Generate description scripts for tables
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private async void ObjectDescriptionsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            this.Cursor = Cursors.WaitCursor;
-            sqlTextBox.Text = String.Empty;
-            statusToolStripStatusLabe.Text = "Please wait while generate the scripts";
-
             using var dlg = new Schemapicker();
             if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
             {
-                sqlTextBox.Text = ObjectDescription.BuildTableDescriptions(dlg.Schema);
+                this.Cursor = Cursors.WaitCursor;
+                sqlTextBox.Text = String.Empty;
+                statusToolStripStatusLabe.Text = "Please wait while generate the scripts";
+                progressBar.Value = 0;
+                progressBar.Visible = true;
+                Application.DoEvents();
+
+                var progress = new Progress<int>(value =>
+                {
+                    progressBar.Value = value;
+                });
+
+                string scripts = String.Empty;
+                await Task.Run(() =>
+                {
+                    scripts = ObjectDescription.BuildTableDescriptions(dlg.Schema, progress);
+                });
+
+                if (scripts != null)
+                {
+                    sqlTextBox.Text = scripts;
+                    if(scripts.Length > 0)
+                    {
+                        Clipboard.SetText(scripts);
+                    }
+                }
+
+                progressBar.Visible = false;
+                statusToolStripStatusLabe.Text = "Complete!";
+                this.Cursor = Cursors.Default;
             }
-            statusToolStripStatusLabe.Text = "Complete!";
-            this.Cursor = Cursors.Default;
         }
 
-        private async void viewsDescriptionsToolStripMenuItem_Click(object sender, EventArgs e)
+        /// <summary>
+        /// Generate description scripts for views
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private async void ViewsDescriptionsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            this.Cursor = Cursors.WaitCursor;
             sqlTextBox.Text = String.Empty;
-            statusToolStripStatusLabe.Text = "Please wait while generate the scripts";
 
             using var dlg = new Schemapicker();
             if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
@@ -1208,6 +1240,7 @@ namespace SQL_Document_Builder
                 progressBar.Value = 0;
                 progressBar.Visible = true;
                 Application.DoEvents();
+                this.Cursor = Cursors.WaitCursor;
 
                 var progress = new Progress<int>(value =>
                 {
@@ -1224,11 +1257,10 @@ namespace SQL_Document_Builder
                 Clipboard.SetText(scripts);
 
                 progressBar.Visible = false;
-                //sqlTextBox.Text = _script.ToString();
-            }
 
-            statusToolStripStatusLabe.Text = "Complete!";
-            this.Cursor = Cursors.Default;
+                this.Cursor = Cursors.Default;
+                statusToolStripStatusLabe.Text = "Complete!";
+            }
         }
     }
 }

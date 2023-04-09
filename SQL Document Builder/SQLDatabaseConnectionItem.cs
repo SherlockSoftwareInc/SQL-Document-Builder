@@ -1,6 +1,4 @@
-﻿using System.Data.SqlClient;
-using Microsoft.SqlServer.Management.Common;
-using System;
+﻿using System;
 using System.Windows.Forms;
 using System.Xml;
 
@@ -457,7 +455,6 @@ namespace SQL_Document_Builder
 
         //    writer.WriteEndElement();
         //}
-
 
         /// <summary>
         /// Build xml string

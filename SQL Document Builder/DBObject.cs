@@ -95,10 +95,6 @@ namespace SQL_Document_Builder
 
             if (ConnectionString.Length > 0 && TableName.Length > 0)
             {
-            }
-
-            if (ConnectionString.Length > 0)
-            {
                 using SqlConnection conn = new(ConnectionString);
                 try
                 {
@@ -125,6 +121,8 @@ namespace SQL_Document_Builder
                         if (column.ColumnName != null)
                             column.Description = Common.GetColumnDescription(ObjectName, column.ColumnName);
                     }
+
+                    result = true;
                 }
                 catch (SqlException)
                 {

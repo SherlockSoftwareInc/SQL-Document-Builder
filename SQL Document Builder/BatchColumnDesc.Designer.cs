@@ -53,7 +53,7 @@
             // 
             // toolStrip1
             // 
-            toolStrip1.ImageScalingSize = new System.Drawing.Size(32, 32);
+            toolStrip1.ImageScalingSize = new System.Drawing.Size(16, 16);
             toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { toolStripLabel1, searchToolStripTextBox, searchToolStripButton, toolStripSeparator1, selectAllToolStripButton, unselectAllToolStripButton });
             toolStrip1.Location = new System.Drawing.Point(0, 0);
             toolStrip1.Name = "toolStrip1";
@@ -149,7 +149,7 @@
             // 
             // statusStrip1
             // 
-            statusStrip1.ImageScalingSize = new System.Drawing.Size(32, 32);
+            statusStrip1.ImageScalingSize = new System.Drawing.Size(16, 16);
             statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { progressBar, messageToolStripStatusLabel });
             statusStrip1.Location = new System.Drawing.Point(0, 938);
             statusStrip1.Name = "statusStrip1";

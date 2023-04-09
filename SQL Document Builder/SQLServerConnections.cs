@@ -115,7 +115,7 @@ namespace SQL_Document_Builder
         private static string FilePath()
         {
             string dataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Sherlock Software Inc");
-            dataPath = Path.Combine(dataPath, "Octofy");
+            dataPath = Path.Combine(dataPath, "SQLDocBuilder");
             if (!Directory.Exists(dataPath))
             {
                 Directory.CreateDirectory(dataPath);

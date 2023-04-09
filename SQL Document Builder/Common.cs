@@ -253,11 +253,16 @@ namespace SQL_Document_Builder
                 var reader = cmd.ExecuteReader();
                 while (reader.Read())
                 {
-                    tables.Add(new ObjectName() { 
-                        ObjectType = ObjectName.ObjectTypeEnums.Table, 
-                        Schema = reader.GetString(0),
-                        Name = reader.GetString(1)
-                    });
+                    var schemaName = reader.GetString(0);
+                    if (!schemaName.Equals("sys", StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        tables.Add(new ObjectName()
+                        {
+                            ObjectType = ObjectName.ObjectTypeEnums.Table,
+                            Schema = schemaName,
+                            Name = reader.GetString(1)
+                        });
+                    }
                 }
 
             }

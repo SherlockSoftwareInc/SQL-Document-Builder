@@ -77,7 +77,7 @@
             // 
             // toolStrip1
             // 
-            toolStrip1.ImageScalingSize = new System.Drawing.Size(32, 32);
+            toolStrip1.ImageScalingSize = new System.Drawing.Size(16, 16);
             toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { closeToolStripButton, toolStripSeparator1, buildToolStripButton, tableWikiToolStripButton, valuesWikiToolStripButton, toolStripSeparator2, descEditToolStripButton, toolStripSeparator3, batchToolStripButton, toolStripDropDownButton1, toolStripDropDownButton2 });
             toolStrip1.Location = new System.Drawing.Point(0, 0);
             toolStrip1.Name = "toolStrip1";
