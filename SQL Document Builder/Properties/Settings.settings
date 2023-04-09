@@ -5,8 +5,8 @@
     <Setting Name="dbConnectionString" Type="System.String" Scope="User">
       <Value Profile="(Default)">Data Source=svmsq06;Initial Catalog=AFDataMart_DEV;Integrated Security=True</Value>
     </Setting>
-    <Setting Name="LastAccessConnection" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
+    <Setting Name="LastAccessConnectionIndex" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">0</Value>
     </Setting>
     <Setting Name="HeaderText" Type="System.String" Scope="User">
       <Value Profile="(Default)" />

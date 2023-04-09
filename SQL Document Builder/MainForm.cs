@@ -395,7 +395,7 @@ namespace SQL_Document_Builder
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             Properties.Settings.Default.dbConnectionString = String.Empty;
-            Properties.Settings.Default.LastAccessConnection = _selectedConnection?.ToString();
+            //Properties.Settings.Default.LastAccessConnection = _selectedConnection?.ToString();
             Properties.Settings.Default.Save();
         }
 
@@ -438,7 +438,14 @@ namespace SQL_Document_Builder
             //    Close();
             //}
 
-            LocalToolStripMenuItem_Click(this, e);
+            if (Properties.Settings.Default.LastAccessConnectionIndex == 1)
+            {
+                LocalToolStripMenuItem_Click(this, e);
+            }
+            else
+            { 
+                AzureToolStripMenuItem_Click(this, e);
+            }
         }
 
         /// <summary>
@@ -1010,6 +1017,7 @@ namespace SQL_Document_Builder
                 serverToolStripStatusLabel.Text = server;
                 databaseToolStripStatusLabel.Text = database;
                 Properties.Settings.Default.dbConnectionString = builder.ConnectionString;
+                Properties.Settings.Default.LastAccessConnectionIndex = 0;
             }
 
             for (int i = 0; i < _connections.Connections.Count; i++)
@@ -1081,6 +1089,7 @@ namespace SQL_Document_Builder
                 serverToolStripStatusLabel.Text = server;
                 databaseToolStripStatusLabel.Text = database;
                 Properties.Settings.Default.dbConnectionString = builder.ConnectionString;
+                Properties.Settings.Default.LastAccessConnectionIndex = 1;
             }
 
             for (int i = 0; i < _connections.Connections.Count; i++)
@@ -1169,6 +1178,8 @@ namespace SQL_Document_Builder
         {
             this.Cursor = Cursors.WaitCursor;
             sqlTextBox.Text = String.Empty;
+            statusToolStripStatusLabe.Text = "Please wait while generate the scripts";
+
             using var dlg = new Schemapicker();
             if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
             {
@@ -1182,6 +1193,7 @@ namespace SQL_Document_Builder
         {
             this.Cursor = Cursors.WaitCursor;
             sqlTextBox.Text = String.Empty;
+            statusToolStripStatusLabe.Text = "Please wait while generate the scripts";
 
             using var dlg = new Schemapicker();
             if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)

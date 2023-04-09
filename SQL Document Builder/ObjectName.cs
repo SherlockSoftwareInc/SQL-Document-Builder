@@ -29,16 +29,28 @@
             }
         }
 
+        public ObjectName(string objectType, string objectName)
+        {
+            if (objectName.IndexOf('.') >= 0)
+            {
+                var names = objectName.Split('.');
+                Schema = names[0];
+                Name = names[1];
+                ObjectType = objectType.Equals("view", System.StringComparison.CurrentCultureIgnoreCase)? ObjectTypeEnums.View: ObjectTypeEnums.Table;
+            }
+            else
+            {
+                ObjectType = ObjectTypeEnums.None;
+                Schema = string.Empty;
+                Name = string.Empty;
+            }
+        }
+
         public enum ObjectTypeEnums
         {
             None,
             Table,
             View
-        }
-        public string Name
-        {
-            get { return _name; }
-            set { _name = RemoveQuota(value); }
         }
 
         public string FullName
@@ -53,6 +65,11 @@
             }
         }
 
+        public string Name
+        {
+            get { return _name; }
+            set { _name = RemoveQuota(value); }
+        }
         public ObjectTypeEnums ObjectType { get; set; }
 
         public string Schema
@@ -61,7 +78,10 @@
             set { _schema = RemoveQuota(value); }
         }
 
-        
+        public bool IsEmpty()
+        {
+            return _name.Length > 0 && _schema.Length > 0;
+        }
 
         public override string ToString()
         {
@@ -90,7 +110,6 @@
             }
 
             return text;
-
         }
     }
 }

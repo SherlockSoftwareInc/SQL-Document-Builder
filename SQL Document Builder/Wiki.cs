@@ -10,7 +10,7 @@ namespace SQL_Document_Builder
         private readonly SQLServerConnections _connections = new();
         private int _connectionCount = 0;
         private string? _database = string.Empty;
-        private SQLDatabaseConnectionItem? _selectedConnection;
+        //private SQLDatabaseConnectionItem? _selectedConnection;
         private string? _server = string.Empty;
         private readonly System.Text.StringBuilder _script = new();
 

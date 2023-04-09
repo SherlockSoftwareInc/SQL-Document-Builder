@@ -64,7 +64,6 @@
             includeIfNotExistsCheckBox = new System.Windows.Forms.CheckBox();
             scriptForCreateDropCheckBox = new System.Windows.Forms.CheckBox();
             scriptDropsCheckBox = new System.Windows.Forms.CheckBox();
-            collapsibleSplitter1 = new CollapsibleSplitter();
             sqlTextBox = new System.Windows.Forms.TextBox();
             label2 = new System.Windows.Forms.Label();
             headerTextBox = new System.Windows.Forms.TextBox();
@@ -408,39 +407,23 @@
             scriptDropsCheckBox.Text = "ScriptDrops";
             scriptDropsCheckBox.UseVisualStyleBackColor = true;
             // 
-            // collapsibleSplitter1
-            // 
-            collapsibleSplitter1.AnimationDelay = 20;
-            collapsibleSplitter1.AnimationStep = 20;
-            collapsibleSplitter1.BorderStyle3D = System.Windows.Forms.Border3DStyle.Flat;
-            collapsibleSplitter1.ControlToHide = tabControl1;
-            collapsibleSplitter1.ExpandParentForm = false;
-            collapsibleSplitter1.Location = new System.Drawing.Point(277, 25);
-            collapsibleSplitter1.Name = "collapsibleSplitter1";
-            collapsibleSplitter1.Size = new System.Drawing.Size(8, 472);
-            collapsibleSplitter1.SplitterDistance = 277;
-            collapsibleSplitter1.TabIndex = 6;
-            collapsibleSplitter1.TabStop = false;
-            collapsibleSplitter1.UseAnimations = false;
-            collapsibleSplitter1.VisualStyle = VisualStyles.Mozilla;
-            // 
             // sqlTextBox
             // 
             sqlTextBox.Dock = System.Windows.Forms.DockStyle.Fill;
             sqlTextBox.Font = new System.Drawing.Font("Consolas", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            sqlTextBox.Location = new System.Drawing.Point(285, 25);
+            sqlTextBox.Location = new System.Drawing.Point(277, 25);
             sqlTextBox.Multiline = true;
             sqlTextBox.Name = "sqlTextBox";
             sqlTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            sqlTextBox.Size = new System.Drawing.Size(642, 346);
+            sqlTextBox.Size = new System.Drawing.Size(650, 346);
             sqlTextBox.TabIndex = 7;
             // 
             // label2
             // 
             label2.Dock = System.Windows.Forms.DockStyle.Bottom;
-            label2.Location = new System.Drawing.Point(285, 371);
+            label2.Location = new System.Drawing.Point(277, 371);
             label2.Name = "label2";
-            label2.Size = new System.Drawing.Size(642, 15);
+            label2.Size = new System.Drawing.Size(650, 15);
             label2.TabIndex = 11;
             label2.Text = "Header";
             label2.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -449,19 +432,19 @@
             // 
             headerTextBox.Dock = System.Windows.Forms.DockStyle.Bottom;
             headerTextBox.Font = new System.Drawing.Font("Consolas", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            headerTextBox.Location = new System.Drawing.Point(285, 386);
+            headerTextBox.Location = new System.Drawing.Point(277, 386);
             headerTextBox.Multiline = true;
             headerTextBox.Name = "headerTextBox";
             headerTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            headerTextBox.Size = new System.Drawing.Size(642, 48);
+            headerTextBox.Size = new System.Drawing.Size(650, 48);
             headerTextBox.TabIndex = 9;
             // 
             // label1
             // 
             label1.Dock = System.Windows.Forms.DockStyle.Bottom;
-            label1.Location = new System.Drawing.Point(285, 434);
+            label1.Location = new System.Drawing.Point(277, 434);
             label1.Name = "label1";
-            label1.Size = new System.Drawing.Size(642, 15);
+            label1.Size = new System.Drawing.Size(650, 15);
             label1.TabIndex = 10;
             label1.Text = "Footer";
             label1.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -470,11 +453,11 @@
             // 
             footerTextBox.Dock = System.Windows.Forms.DockStyle.Bottom;
             footerTextBox.Font = new System.Drawing.Font("Consolas", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            footerTextBox.Location = new System.Drawing.Point(285, 449);
+            footerTextBox.Location = new System.Drawing.Point(277, 449);
             footerTextBox.Multiline = true;
             footerTextBox.Name = "footerTextBox";
             footerTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            footerTextBox.Size = new System.Drawing.Size(642, 48);
+            footerTextBox.Size = new System.Drawing.Size(650, 48);
             footerTextBox.TabIndex = 8;
             footerTextBox.Text = "</br>\r\n----\r\nBack to [[BCCR: Database tables|BCCR database tables]]</br>\r\nBack to [[DW: Database tables|Data warehouse tables]]\r\n[[Category: CSBC data warehouse]]\r\n";
             // 
@@ -488,7 +471,6 @@
             Controls.Add(headerTextBox);
             Controls.Add(label1);
             Controls.Add(footerTextBox);
-            Controls.Add(collapsibleSplitter1);
             Controls.Add(tabControl1);
             Controls.Add(toolStrip1);
             Name = "TableBuilderForm";

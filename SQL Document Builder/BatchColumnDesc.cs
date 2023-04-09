@@ -341,7 +341,7 @@ namespace SQL_Document_Builder
             var schemas = new List<string>();
             foreach (DataRow dr in dtSchemas.Rows)
             {
-                schemas.Add(dr[0].ToString());
+                schemas.Add((string)dr[0]);
             }
             schemas.Sort();
             foreach (var item in schemas)

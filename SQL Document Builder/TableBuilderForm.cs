@@ -39,6 +39,11 @@ namespace SQL_Document_Builder
             sqlTextBox.AppendText(text + Environment.NewLine);
         }
 
+        /// <summary>
+        /// Show the batch description form
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void BatchToolStripButton_Click(object sender, EventArgs e)
         {
             using var frm = new BatchColumnDesc();
