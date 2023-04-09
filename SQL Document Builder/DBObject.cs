@@ -141,6 +141,80 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Save the description of the selected column
+        /// </summary>
+        public void UpdateColumnDesc(string columnName, string description)
+        {
+            if (ConnectionString.Length == 0) return;
+
+            DBColumn? column = null;
+            foreach (var col in Columns)
+            {
+                if (col.ColumnName == columnName)
+                {
+                    column = col;
+                    break;
+                }
+            }
+            if (column != null)
+            {
+                column.Description = description;
+
+                var conn = new SqlConnection(ConnectionString);
+                try
+                {
+                    var cmd = new SqlCommand("ADMIN.usp_AddColumnDescription", conn) { CommandType = CommandType.StoredProcedure };
+
+                    cmd.Parameters.AddWithValue("@TableName", ObjectName.FullName);
+                    cmd.Parameters.AddWithValue("@ColumnName", columnName);
+                    cmd.Parameters.AddWithValue("@Description", description);
+
+                    conn.Open();
+                    cmd.ExecuteNonQuery();
+                }
+                catch (Exception ex)
+                {
+                    Common.MsgBox(ex.Message, MessageBoxIcon.Error);
+                }
+                finally
+                {
+                    conn.Close();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Save the description of the object
+        /// </summary>
+        public void UpdateTableDesc(string description)
+        {
+            Description = description;
+
+            if (!ObjectName.IsEmpty() && ConnectionString.Length > 0)
+            {
+                var conn = new SqlConnection(ConnectionString);
+                try
+                {
+                    var cmd = new SqlCommand("ADMIN.usp_AddObjectDescription", conn) { CommandType = CommandType.StoredProcedure };
+
+                    cmd.Parameters.AddWithValue("@TableName", ObjectName.FullName);
+                    cmd.Parameters.AddWithValue("@Description", description);
+
+                    conn.Open();
+                    cmd.ExecuteNonQuery();
+                }
+                catch (Exception ex)
+                {
+                    Common.MsgBox(ex.Message, MessageBoxIcon.Error);
+                }
+                finally
+                {
+                    conn.Close();
+                }
+            }
+        }
+
+        /// <summary>
         /// Get description of table/view from the database
         /// </summary>
         /// <param name="schema"></param>

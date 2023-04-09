@@ -28,73 +28,71 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.panel1 = new System.Windows.Forms.Panel();
-            this.tablenameLabel = new System.Windows.Forms.Label();
-            this.tableLabel = new System.Windows.Forms.Label();
-            this.columnDefDataGridView = new System.Windows.Forms.DataGridView();
-            this.panel1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.columnDefDataGridView)).BeginInit();
-            this.SuspendLayout();
+            panel1 = new System.Windows.Forms.Panel();
+            tablenameLabel = new System.Windows.Forms.Label();
+            tableLabel = new System.Windows.Forms.Label();
+            columnDefDataGridView = new System.Windows.Forms.DataGridView();
+            panel1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)columnDefDataGridView).BeginInit();
+            SuspendLayout();
             // 
             // panel1
             // 
-            this.panel1.BackColor = System.Drawing.SystemColors.ControlDarkDark;
-            this.panel1.Controls.Add(this.tablenameLabel);
-            this.panel1.Dock = System.Windows.Forms.DockStyle.Top;
-            this.panel1.Location = new System.Drawing.Point(0, 0);
-            this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(529, 30);
-            this.panel1.TabIndex = 0;
+            panel1.BackColor = System.Drawing.SystemColors.ControlDarkDark;
+            panel1.Controls.Add(tablenameLabel);
+            panel1.Dock = System.Windows.Forms.DockStyle.Top;
+            panel1.Location = new System.Drawing.Point(0, 0);
+            panel1.Name = "panel1";
+            panel1.Size = new System.Drawing.Size(529, 30);
+            panel1.TabIndex = 0;
             // 
             // tablenameLabel
             // 
-            this.tablenameLabel.AutoSize = true;
-            this.tablenameLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.tablenameLabel.ForeColor = System.Drawing.SystemColors.HighlightText;
-            this.tablenameLabel.Location = new System.Drawing.Point(6, 6);
-            this.tablenameLabel.Name = "tablenameLabel";
-            this.tablenameLabel.Size = new System.Drawing.Size(0, 18);
-            this.tablenameLabel.TabIndex = 0;
+            tablenameLabel.AutoSize = true;
+            tablenameLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            tablenameLabel.ForeColor = System.Drawing.SystemColors.HighlightText;
+            tablenameLabel.Location = new System.Drawing.Point(6, 6);
+            tablenameLabel.Name = "tablenameLabel";
+            tablenameLabel.Size = new System.Drawing.Size(0, 18);
+            tablenameLabel.TabIndex = 0;
             // 
             // tableLabel
             // 
-            this.tableLabel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
-            this.tableLabel.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            this.tableLabel.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.tableLabel.Location = new System.Drawing.Point(0, 590);
-            this.tableLabel.Name = "tableLabel";
-            this.tableLabel.Size = new System.Drawing.Size(529, 36);
-            this.tableLabel.TabIndex = 1;
-            this.tableLabel.Click += new System.EventHandler(this.TableLabel_Click);
+            tableLabel.BackColor = System.Drawing.Color.FromArgb(192, 255, 255);
+            tableLabel.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            tableLabel.Dock = System.Windows.Forms.DockStyle.Bottom;
+            tableLabel.Location = new System.Drawing.Point(0, 590);
+            tableLabel.Name = "tableLabel";
+            tableLabel.Size = new System.Drawing.Size(529, 36);
+            tableLabel.TabIndex = 1;
+            tableLabel.Click += TableLabel_Click;
             // 
             // columnDefDataGridView
             // 
-            this.columnDefDataGridView.AllowUserToAddRows = false;
-            this.columnDefDataGridView.AllowUserToDeleteRows = false;
-            this.columnDefDataGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.columnDefDataGridView.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.columnDefDataGridView.Location = new System.Drawing.Point(0, 30);
-            this.columnDefDataGridView.Name = "columnDefDataGridView";
-            this.columnDefDataGridView.ReadOnly = true;
-            this.columnDefDataGridView.RowTemplate.Height = 25;
-            this.columnDefDataGridView.Size = new System.Drawing.Size(529, 560);
-            this.columnDefDataGridView.TabIndex = 2;
-            this.columnDefDataGridView.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.ColumnDefDataGridView_CellClick);
+            columnDefDataGridView.AllowUserToAddRows = false;
+            columnDefDataGridView.AllowUserToDeleteRows = false;
+            columnDefDataGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            columnDefDataGridView.Dock = System.Windows.Forms.DockStyle.Fill;
+            columnDefDataGridView.Location = new System.Drawing.Point(0, 30);
+            columnDefDataGridView.Name = "columnDefDataGridView";
+            columnDefDataGridView.ReadOnly = true;
+            columnDefDataGridView.Size = new System.Drawing.Size(529, 560);
+            columnDefDataGridView.TabIndex = 2;
+            columnDefDataGridView.CellClick += ColumnDefDataGridView_CellClick;
             // 
             // ColumnDefView
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.Controls.Add(this.columnDefDataGridView);
-            this.Controls.Add(this.tableLabel);
-            this.Controls.Add(this.panel1);
-            this.Name = "ColumnDefView";
-            this.Size = new System.Drawing.Size(529, 626);
-            this.panel1.ResumeLayout(false);
-            this.panel1.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.columnDefDataGridView)).EndInit();
-            this.ResumeLayout(false);
-
+            AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
+            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            Controls.Add(columnDefDataGridView);
+            Controls.Add(tableLabel);
+            Controls.Add(panel1);
+            Name = "ColumnDefView";
+            Size = new System.Drawing.Size(529, 626);
+            panel1.ResumeLayout(false);
+            panel1.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)columnDefDataGridView).EndInit();
+            ResumeLayout(false);
         }
 
         #endregion

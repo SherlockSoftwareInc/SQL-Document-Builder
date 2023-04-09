@@ -1,15 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Data.SqlClient;
 using System.Windows.Forms;
 
 namespace SQL_Document_Builder
 {
     public partial class ColumnDefView : UserControl
     {
-        private readonly List<TableColumnItem> _columns = new();
-        private ObjectName? _objectName;
+        private DBObject _dbObject = new();
 
         public ColumnDefView()
         {
@@ -28,7 +24,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Gets object schema
         /// </summary>
-        public string? Schema => _objectName?.Schema;
+        public string? Schema => _dbObject?.TableSchema;
 
         /// <summary>
         /// Get selected column name
@@ -47,12 +43,17 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Gets table name
         /// </summary>
-        public string? TableName => _objectName?.Name;
+        public string? TableName => _dbObject?.TableName;
+
+        /// <summary>
+        /// Gets table name
+        /// </summary>
+        public string? TableFullName => _dbObject?.ObjectName.FullName;
 
         /// <summary>
         /// Gets object type
         /// </summary>
-        public ObjectName.ObjectTypeEnums? TableType => _objectName?.ObjectType;
+        public ObjectName.ObjectTypeEnums? TableType => _dbObject?.TableType;
 
         /// <summary>
         /// Clear the control
@@ -81,63 +82,27 @@ namespace SQL_Document_Builder
 
             if (objectName == null)
             {
-                _objectName = null;
                 return;
             }
             else
             {
-                _objectName = objectName;
+                _dbObject = new DBObject();
+                if (!_dbObject.Open(objectName, Properties.Settings.Default.dbConnectionString))
+                {
+                    if (columnDefDataGridView.DataSource != null)
+                    {
+                        columnDefDataGridView.DataSource = null;
+                    }
+                    return;
+                }
             }
 
             tablenameLabel.Text = objectName.FullName;
+            TableDescription = _dbObject.Description;
+            columnDefDataGridView.DataSource = _dbObject.Columns;
+            columnDefDataGridView.AutoResizeColumns();
 
-            if (ConnectionString.Length > 0)
-            {
-                using SqlConnection conn = new SqlConnection(ConnectionString);
-                try
-                {
-                    using SqlCommand cmd = new SqlCommand() { Connection = conn, CommandType = System.Data.CommandType.Text };
-                    cmd.Parameters.Add(new SqlParameter("@Schema", Schema));
-                    cmd.Parameters.Add(new SqlParameter("@TableName", TableName));
-                    cmd.CommandText = "SELECT ORDINAL_POSITION,COLUMN_NAME,DATA_TYPE,CHARACTER_MAXIMUM_LENGTH,NUMERIC_PRECISION,IS_NULLABLE,COLUMN_DEFAULT FROM information_schema.columns WHERE TABLE_SCHEMA = @Schema AND TABLE_NAME = @TableName ORDER BY ORDINAL_POSITION";
-                    conn.Open();
-
-                    _columns.Clear();
-                    var dr = cmd.ExecuteReader();
-                    while (dr.Read())
-                    {
-                        _columns.Add(new TableColumnItem(dr));
-                    }
-                    dr.Close();
-
-                    foreach (var column in _columns)
-                    {
-                        if (column.ColumnName != null)
-                            column.Description = Common.GetColumnDescription(_objectName, column.ColumnName);
-                    }
-
-                    columnDefDataGridView.DataSource = _columns;
-                    columnDefDataGridView.AutoResizeColumns();
-
-                    columnDefDataGridView.Visible = true;
-                }
-                catch (SqlException)
-                {
-                    return;
-                }
-                finally
-                {
-                    conn.Close();
-                }
-                tableLabel.Text = GetTableDesc();
-            }
-            else
-            {
-                if (columnDefDataGridView.DataSource != null)
-                {
-                    columnDefDataGridView.DataSource = null;
-                }
-            }
+            columnDefDataGridView.Visible = true;
 
             if (columnDefDataGridView.Rows.Count > 0)
             {
@@ -150,17 +115,30 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="columnName"></param>
         /// <param name="description"></param>
-        public void SetColumnDescription(string columnName, string description)
+        public void UpdateColumnDesc(string columnName, string description)
         {
-            foreach (var column in _columns)
+            _dbObject.UpdateColumnDesc(columnName, description);
+        }
+
+        public void UpdateTableDescription(string description)
+        {
+            _dbObject.UpdateTableDesc(description);
+            TableDescription = description;
+        }
+
+        /// <summary>
+        /// Gets description of a specified column
+        /// </summary>
+        /// <param name="columnName"></param>
+        /// <returns></returns>
+        public string ColumnDescription(string columnName)
+        {
+            for (int i = 0; i < _dbObject.Columns.Count; i++)
             {
-                if (column.ColumnName == columnName)
-                {
-                    column.Description = description;
-                    columnDefDataGridView.Refresh();
-                    break;
-                }
+                var column = _dbObject.Columns[i];
+                if(column.ColumnName == columnName) { return column.Description; }
             }
+            return string.Empty;
         }
 
         /// <summary>
@@ -189,89 +167,6 @@ namespace SQL_Document_Builder
         private void ColumnDefDataGridView_CellClick(object sender, DataGridViewCellEventArgs e)
         {
             ChangeRowSelection();
-        }
-
-        ///// <summary>
-        ///// Get column description
-        ///// </summary>
-        ///// <param name="schema"></param>
-        ///// <param name="table"></param>
-        ///// <param name="column"></param>
-        ///// <returns></returns>
-        //private string GetColumnDescription(string column)
-        //{
-        //    string result = string.Empty;
-        //    string sql;
-        //    if (_objectName?.ObjectType == ObjectName.ObjectTypeEnums.View)
-        //    {
-        //        sql = string.Format("SELECT E.value Description FROM sys.schemas S INNER JOIN sys.views T ON S.schema_id = T.schema_id INNER JOIN sys.columns C ON T.object_id = C.object_id INNER JOIN sys.extended_properties E ON T.object_id = E.major_id AND C.column_id = E.minor_id AND E.name = 'MS_Description' AND S.name = '{0}' AND T.name = '{1}' AND C.name = '{2}'", _objectName.Schema, _objectName.Name, column);
-        //    }
-        //    else
-        //    {
-        //        sql = string.Format("SELECT E.value Description FROM sys.schemas S INNER JOIN sys.tables T ON S.schema_id = T.schema_id INNER JOIN sys.columns C ON T.object_id = C.object_id INNER JOIN sys.extended_properties E ON T.object_id = E.major_id AND C.column_id = E.minor_id AND E.name = 'MS_Description' AND S.name = '{0}' AND T.name = '{1}' AND C.name = '{2}'", _objectName.Schema, _objectName.Name, column);
-        //    }
-        //    var conn = new SqlConnection(ConnectionString);
-        //    try
-        //    {
-        //        var cmd = new SqlCommand(sql, conn) { CommandType = CommandType.Text };
-        //        conn.Open();
-        //        var dr = cmd.ExecuteReader();
-        //        if (dr.Read())
-        //        {
-        //            result = dr[0].ToString();
-        //        }
-
-        //        dr.Close();
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        //MsgBox(ex.Message, MessageBoxIcon.Error);
-        //    }
-        //    finally
-        //    {
-        //        conn.Close();
-        //    }
-
-        //    return result;
-        //}
-
-        /// <summary>
-        /// Get description of table/view from the database
-        /// </summary>
-        /// <param name="schema"></param>
-        /// <param name="table"></param>
-        /// <returns></returns>
-        private string GetTableDesc()
-        {
-            string result = string.Empty;
-            if (_objectName != null)
-            {
-                string sql = string.Format(String.Format("SELECT value FROM fn_listextendedproperty (NULL, 'schema', '{0}', '{2}', '{1}', default, default) WHERE name = N'MS_Description'", _objectName.Schema, _objectName.Name, (_objectName.ObjectType == ObjectName.ObjectTypeEnums.View ? "view" : "table")));
-
-                var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
-                try
-                {
-                    var cmd = new SqlCommand(sql, conn) { CommandType = CommandType.Text };
-                    conn.Open();
-                    var dr = cmd.ExecuteReader();
-                    if (dr.Read())
-                    {
-                        result = dr.GetString(0);   // dr[0].ToString();
-                    }
-
-                    dr.Close();
-                }
-                catch (Exception ex)
-                {
-                    Common.MsgBox(ex.Message, MessageBoxIcon.Error);
-                }
-                finally
-                {
-                    conn.Close();
-                }
-            }
-
-            return result;
         }
 
         /// <summary>

@@ -5,6 +5,15 @@ namespace SQL_Document_Builder
 {
     internal class TableColumnItem
     {
+        public TableColumnItem(DBColumn column)
+        {
+            ColID= column.ColID;
+            ColumnName= column.ColumnName;
+            DataType = column.DataType;
+            Nullable = column.Nullable;
+            Description = column.Description;
+        }
+
         public TableColumnItem(SqlDataReader dr)
         {
             this.ColID = (int)dr["ORDINAL_POSITION"];

@@ -43,11 +43,29 @@ namespace SQL_Document_Builder
             Nullable = (dr["IS_NULLABLE"].ToString() == "YES");
         }
 
+        /// <summary>
+        /// Gets or sets column sequence number
+        /// </summary>
         public int ColID { get; set; }
-        public bool Nullable { get; set; }
+
+        /// <summary>
+        /// Gets or sets column name
+        /// </summary>
         public string ColumnName { get; set; } = string.Empty;
-        public string ColumnType { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets column data type
+        /// </summary>
         public string DataType { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets a value indicates whether column nullable or not
+        /// </summary>
+        public bool Nullable { get; set; }
+
+        /// <summary>
+        /// Gets or set column description
+        /// </summary>
         public string Description { get; set; } = string.Empty;
     }
 }
