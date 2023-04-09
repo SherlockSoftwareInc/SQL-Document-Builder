@@ -123,25 +123,25 @@
             // 
             connectToToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { localToolStripMenuItem, azureToolStripMenuItem });
             connectToToolStripMenuItem.Name = "connectToToolStripMenuItem";
-            connectToToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            connectToToolStripMenuItem.Size = new System.Drawing.Size(142, 22);
             connectToToolStripMenuItem.Text = "Connect to...";
             // 
             // localToolStripMenuItem
             // 
             localToolStripMenuItem.Name = "localToolStripMenuItem";
-            localToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            localToolStripMenuItem.Size = new System.Drawing.Size(163, 22);
             localToolStripMenuItem.Text = "AFDataMart_DEV";
             // 
             // azureToolStripMenuItem
             // 
             azureToolStripMenuItem.Name = "azureToolStripMenuItem";
-            azureToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            azureToolStripMenuItem.Size = new System.Drawing.Size(163, 22);
             azureToolStripMenuItem.Text = "(local)";
             // 
             // toolStripSeparator2
             // 
             toolStripSeparator2.Name = "toolStripSeparator2";
-            toolStripSeparator2.Size = new System.Drawing.Size(177, 6);
+            toolStripSeparator2.Size = new System.Drawing.Size(139, 6);
             // 
             // saveToolStripMenuItem
             // 
@@ -149,19 +149,19 @@
             saveToolStripMenuItem.ImageTransparentColor = System.Drawing.Color.Magenta;
             saveToolStripMenuItem.Name = "saveToolStripMenuItem";
             saveToolStripMenuItem.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.S;
-            saveToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            saveToolStripMenuItem.Size = new System.Drawing.Size(142, 22);
             saveToolStripMenuItem.Text = "&Save";
             saveToolStripMenuItem.Click += SaveToolStripMenuItem_Click;
             // 
             // toolStripSeparator1
             // 
             toolStripSeparator1.Name = "toolStripSeparator1";
-            toolStripSeparator1.Size = new System.Drawing.Size(177, 6);
+            toolStripSeparator1.Size = new System.Drawing.Size(139, 6);
             // 
             // exitToolStripMenuItem
             // 
             exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            exitToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            exitToolStripMenuItem.Size = new System.Drawing.Size(142, 22);
             exitToolStripMenuItem.Text = "E&xit";
             exitToolStripMenuItem.Click += ExitToolStripMenuItem_Click;
             // 
@@ -569,13 +569,14 @@
             // progressBar
             // 
             progressBar.Name = "progressBar";
-            progressBar.Size = new System.Drawing.Size(108, 31);
+            progressBar.Size = new System.Drawing.Size(120, 17);
+            progressBar.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
             progressBar.Visible = false;
             // 
             // statusToolStripStatusLabe
             // 
             statusToolStripStatusLabe.Name = "statusToolStripStatusLabe";
-            statusToolStripStatusLabe.Size = new System.Drawing.Size(758, 17);
+            statusToolStripStatusLabe.Size = new System.Drawing.Size(605, 18);
             statusToolStripStatusLabe.Spring = true;
             statusToolStripStatusLabe.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
@@ -583,14 +584,14 @@
             // 
             serverToolStripStatusLabel.Image = Properties.Resources.server;
             serverToolStripStatusLabel.Name = "serverToolStripStatusLabel";
-            serverToolStripStatusLabel.Size = new System.Drawing.Size(54, 17);
+            serverToolStripStatusLabel.Size = new System.Drawing.Size(54, 18);
             serverToolStripStatusLabel.Text = "server";
             // 
             // databaseToolStripStatusLabel
             // 
             databaseToolStripStatusLabel.Image = Properties.Resources.database;
             databaseToolStripStatusLabel.Name = "databaseToolStripStatusLabel";
-            databaseToolStripStatusLabel.Size = new System.Drawing.Size(70, 17);
+            databaseToolStripStatusLabel.Size = new System.Drawing.Size(70, 18);
             databaseToolStripStatusLabel.Text = "database";
             // 
             // sqlTextBox

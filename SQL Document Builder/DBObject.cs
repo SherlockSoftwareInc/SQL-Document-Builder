@@ -119,7 +119,9 @@ namespace SQL_Document_Builder
                     foreach (var column in Columns)
                     {
                         if (column.ColumnName != null)
+                        {
                             column.Description = Common.GetColumnDescription(ObjectName, column.ColumnName);
+                        }
                     }
 
                     result = true;

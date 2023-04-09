@@ -21,7 +21,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Scan user tables in the database and generate the creation script for them
         /// </summary>
-        public string BuildTableList(string schemaName)
+        public string BuildTableList(string schemaName, IProgress<int> progress)
         {
             _script.Clear();
 
@@ -47,20 +47,45 @@ namespace SQL_Document_Builder
                 var cmd = new SqlCommand(sql, conn)
                 { CommandType = CommandType.Text };
                 conn.Open();
-                var dr = cmd.ExecuteReader();
-                while (dr.Read())
+                var ds = new DataSet();
+                var dat = new SqlDataAdapter(cmd);
+                dat.Fill(ds);
+                if (ds.Tables[0].Rows.Count > 0)
                 {
-                    string tableSchema = dr.GetString(0);
-                    string tableName = dr.GetString(1);
-                    AppendLine("\t\t<tr>");
-                    AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + tableSchema + "</td>");
-                    AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + string.Format("[[{0}.{1}|{1}]]", tableSchema, tableName) + "</td>");
-                    AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + Common.GetTableDescription(new ObjectName() { Schema = tableSchema, Name = tableName }) + "</td>");
-                    //AppendLine(string.Format("| {0} || [[DW Table: {0}.{1}|{1}]] || {2}", tableSchema, tableName, Common.GetTableDescription(new ObjectName() { Schema = tableSchema, Name = tableName })));
-                    AppendLine("\t\t</tr>");
+                    for (int i = 0; i < ds.Tables[0].Rows.Count; i++)
+                    {
+                        int percentComplete = (i * 100) / ds.Tables[0].Rows.Count;
+                        if (percentComplete > 0 && percentComplete % 2 == 0)
+                        {
+                            progress.Report(percentComplete + 1);
+                        }
+
+                        DataRow dr = ds.Tables[0].Rows[i];
+                        string tableSchema = (string)dr[0];
+                        string tableName = (string)dr[1];
+                        AppendLine("\t\t<tr>");
+                        AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + tableSchema + "</td>");
+                        AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + string.Format("[[{0}.{1}|{1}]]", tableSchema, tableName) + "</td>");
+                        AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + Common.GetTableDescription(new ObjectName() { Schema = tableSchema, Name = tableName }) + "</td>");
+                        //AppendLine(string.Format("| {0} || [[DW Table: {0}.{1}|{1}]] || {2}", tableSchema, tableName, Common.GetTableDescription(new ObjectName() { Schema = tableSchema, Name = tableName })));
+                        AppendLine("\t\t</tr>");
+                    }
                 }
 
-                dr.Close();
+                //var dr = cmd.ExecuteReader();
+                //while (dr.Read())
+                //{
+                //    string tableSchema = dr.GetString(0);
+                //    string tableName = dr.GetString(1);
+                //    AppendLine("\t\t<tr>");
+                //    AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + tableSchema + "</td>");
+                //    AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + string.Format("[[{0}.{1}|{1}]]", tableSchema, tableName) + "</td>");
+                //    AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + Common.GetTableDescription(new ObjectName() { Schema = tableSchema, Name = tableName }) + "</td>");
+                //    //AppendLine(string.Format("| {0} || [[DW Table: {0}.{1}|{1}]] || {2}", tableSchema, tableName, Common.GetTableDescription(new ObjectName() { Schema = tableSchema, Name = tableName })));
+                //    AppendLine("\t\t</tr>");
+                //}
+                //dr.Close();
+
                 AppendLine("\t</tbody>");
                 AppendLine("\t</table>");
             }
@@ -110,7 +135,7 @@ namespace SQL_Document_Builder
                     AppendLine("\t\t<tr>");
                     AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + tableSchema + "</td>");
                     AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + string.Format("[[{0}.{1}|{1}]]", tableSchema, tableName) + "</td>");
-                    AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + Common.GetTableDescription(new ObjectName() { Schema = tableSchema, Name = tableName, ObjectType= ObjectName.ObjectTypeEnums.View  }) + "</td>");
+                    AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + Common.GetTableDescription(new ObjectName() { Schema = tableSchema, Name = tableName, ObjectType = ObjectName.ObjectTypeEnums.View }) + "</td>");
                     AppendLine("\t\t</tr>");
                 }
 
@@ -650,7 +675,6 @@ namespace SQL_Document_Builder
 
                         //if (reader["MappingCat"] != DBNull.Value)
                         //{
-
                         //}
 
                         //string sourceDataType = reader.GetString("SourceDataType");
@@ -761,7 +785,7 @@ namespace SQL_Document_Builder
             {
                 if (i == 0)
                 {
-                    results= string.Format("​[[PCRL1.{0}]]", tableNames[i]);
+                    results = string.Format("​[[PCRL1.{0}]]", tableNames[i]);
                 }
                 else
                 {
@@ -769,7 +793,6 @@ namespace SQL_Document_Builder
                 }
             }
 
-         
             return results;
         }
 

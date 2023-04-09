@@ -53,25 +53,24 @@
             // 
             // toolStrip1
             // 
-            toolStrip1.ImageScalingSize = new System.Drawing.Size(16, 16);
             toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { toolStripLabel1, searchToolStripTextBox, searchToolStripButton, toolStripSeparator1, selectAllToolStripButton, unselectAllToolStripButton });
             toolStrip1.Location = new System.Drawing.Point(0, 0);
             toolStrip1.Name = "toolStrip1";
-            toolStrip1.Padding = new System.Windows.Forms.Padding(0, 0, 4, 0);
-            toolStrip1.Size = new System.Drawing.Size(1486, 42);
+            toolStrip1.Padding = new System.Windows.Forms.Padding(0, 0, 2, 0);
+            toolStrip1.Size = new System.Drawing.Size(800, 25);
             toolStrip1.TabIndex = 0;
             toolStrip1.Text = "toolStrip1";
             // 
             // toolStripLabel1
             // 
             toolStripLabel1.Name = "toolStripLabel1";
-            toolStripLabel1.Size = new System.Drawing.Size(244, 36);
+            toolStripLabel1.Size = new System.Drawing.Size(122, 22);
             toolStripLabel1.Text = "Search column name:";
             // 
             // searchToolStripTextBox
             // 
             searchToolStripTextBox.Name = "searchToolStripTextBox";
-            searchToolStripTextBox.Size = new System.Drawing.Size(368, 42);
+            searchToolStripTextBox.Size = new System.Drawing.Size(200, 25);
             searchToolStripTextBox.TextBoxTextAlignChanged += searchToolStripTextBox_TextBoxTextAlignChanged;
             searchToolStripTextBox.KeyUp += SearchToolStripTextBox_KeyUp;
             // 
@@ -81,21 +80,21 @@
             searchToolStripButton.Image = Properties.Resources.search;
             searchToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             searchToolStripButton.Name = "searchToolStripButton";
-            searchToolStripButton.Size = new System.Drawing.Size(46, 36);
+            searchToolStripButton.Size = new System.Drawing.Size(23, 22);
             searchToolStripButton.Text = "toolStripButton1";
             searchToolStripButton.Click += SearchToolStripButton_Click;
             // 
             // toolStripSeparator1
             // 
             toolStripSeparator1.Name = "toolStripSeparator1";
-            toolStripSeparator1.Size = new System.Drawing.Size(6, 42);
+            toolStripSeparator1.Size = new System.Drawing.Size(6, 25);
             // 
             // selectAllToolStripButton
             // 
             selectAllToolStripButton.Image = (System.Drawing.Image)resources.GetObject("selectAllToolStripButton.Image");
             selectAllToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             selectAllToolStripButton.Name = "selectAllToolStripButton";
-            selectAllToolStripButton.Size = new System.Drawing.Size(145, 36);
+            selectAllToolStripButton.Size = new System.Drawing.Size(73, 22);
             selectAllToolStripButton.Text = "Select all";
             selectAllToolStripButton.Click += SelectAllToolStripButton_Click;
             // 
@@ -104,7 +103,7 @@
             unselectAllToolStripButton.Image = (System.Drawing.Image)resources.GetObject("unselectAllToolStripButton.Image");
             unselectAllToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             unselectAllToolStripButton.Name = "unselectAllToolStripButton";
-            unselectAllToolStripButton.Size = new System.Drawing.Size(172, 36);
+            unselectAllToolStripButton.Size = new System.Drawing.Size(87, 22);
             unselectAllToolStripButton.Text = "Unselect all";
             unselectAllToolStripButton.Click += UnselectAllToolStripButton_Click;
             // 
@@ -112,36 +111,32 @@
             // 
             objectsListBox.Dock = System.Windows.Forms.DockStyle.Fill;
             objectsListBox.FormattingEnabled = true;
-            objectsListBox.Location = new System.Drawing.Point(0, 72);
-            objectsListBox.Margin = new System.Windows.Forms.Padding(6);
+            objectsListBox.Location = new System.Drawing.Point(0, 38);
             objectsListBox.Name = "objectsListBox";
-            objectsListBox.Size = new System.Drawing.Size(371, 824);
+            objectsListBox.Size = new System.Drawing.Size(200, 365);
             objectsListBox.TabIndex = 1;
             // 
             // label1
             // 
             label1.AutoSize = true;
-            label1.Location = new System.Drawing.Point(414, 53);
-            label1.Margin = new System.Windows.Forms.Padding(6, 0, 6, 0);
+            label1.Location = new System.Drawing.Point(223, 25);
             label1.Name = "label1";
-            label1.Size = new System.Drawing.Size(228, 32);
+            label1.Size = new System.Drawing.Size(115, 15);
             label1.TabIndex = 2;
             label1.Text = "Column description:";
             // 
             // descTextBox
             // 
-            descTextBox.Location = new System.Drawing.Point(414, 92);
-            descTextBox.Margin = new System.Windows.Forms.Padding(6);
+            descTextBox.Location = new System.Drawing.Point(223, 43);
             descTextBox.Name = "descTextBox";
-            descTextBox.Size = new System.Drawing.Size(1046, 39);
+            descTextBox.Size = new System.Drawing.Size(565, 23);
             descTextBox.TabIndex = 3;
             // 
             // applyButton
             // 
-            applyButton.Location = new System.Drawing.Point(414, 154);
-            applyButton.Margin = new System.Windows.Forms.Padding(6);
+            applyButton.Location = new System.Drawing.Point(223, 72);
             applyButton.Name = "applyButton";
-            applyButton.Size = new System.Drawing.Size(139, 49);
+            applyButton.Size = new System.Drawing.Size(75, 23);
             applyButton.TabIndex = 4;
             applyButton.Text = "Apply";
             applyButton.UseVisualStyleBackColor = true;
@@ -149,25 +144,23 @@
             // 
             // statusStrip1
             // 
-            statusStrip1.ImageScalingSize = new System.Drawing.Size(16, 16);
             statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { progressBar, messageToolStripStatusLabel });
-            statusStrip1.Location = new System.Drawing.Point(0, 938);
+            statusStrip1.Location = new System.Drawing.Point(0, 428);
             statusStrip1.Name = "statusStrip1";
-            statusStrip1.Padding = new System.Windows.Forms.Padding(2, 0, 26, 0);
-            statusStrip1.Size = new System.Drawing.Size(1486, 22);
+            statusStrip1.Size = new System.Drawing.Size(800, 22);
             statusStrip1.TabIndex = 5;
             statusStrip1.Text = "statusStrip1";
             // 
             // progressBar
             // 
             progressBar.Name = "progressBar";
-            progressBar.Size = new System.Drawing.Size(186, 21);
+            progressBar.Size = new System.Drawing.Size(100, 16);
             progressBar.Visible = false;
             // 
             // messageToolStripStatusLabel
             // 
             messageToolStripStatusLabel.Name = "messageToolStripStatusLabel";
-            messageToolStripStatusLabel.Size = new System.Drawing.Size(1458, 12);
+            messageToolStripStatusLabel.Size = new System.Drawing.Size(785, 17);
             messageToolStripStatusLabel.Spring = true;
             messageToolStripStatusLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
@@ -177,10 +170,9 @@
             panel1.Controls.Add(schemaComboBox);
             panel1.Controls.Add(schemaLabel);
             panel1.Dock = System.Windows.Forms.DockStyle.Left;
-            panel1.Location = new System.Drawing.Point(0, 42);
-            panel1.Margin = new System.Windows.Forms.Padding(6);
+            panel1.Location = new System.Drawing.Point(0, 25);
             panel1.Name = "panel1";
-            panel1.Size = new System.Drawing.Size(371, 896);
+            panel1.Size = new System.Drawing.Size(200, 403);
             panel1.TabIndex = 6;
             // 
             // schemaComboBox
@@ -188,10 +180,10 @@
             schemaComboBox.Dock = System.Windows.Forms.DockStyle.Top;
             schemaComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             schemaComboBox.FormattingEnabled = true;
-            schemaComboBox.Location = new System.Drawing.Point(0, 32);
-            schemaComboBox.Margin = new System.Windows.Forms.Padding(6, 4, 6, 4);
+            schemaComboBox.Location = new System.Drawing.Point(0, 15);
+            schemaComboBox.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             schemaComboBox.Name = "schemaComboBox";
-            schemaComboBox.Size = new System.Drawing.Size(371, 40);
+            schemaComboBox.Size = new System.Drawing.Size(200, 23);
             schemaComboBox.TabIndex = 9;
             schemaComboBox.SelectedIndexChanged += SchemaComboBox_SelectedIndexChanged;
             // 
@@ -200,24 +192,22 @@
             schemaLabel.AutoSize = true;
             schemaLabel.Dock = System.Windows.Forms.DockStyle.Top;
             schemaLabel.Location = new System.Drawing.Point(0, 0);
-            schemaLabel.Margin = new System.Windows.Forms.Padding(6, 0, 6, 0);
             schemaLabel.Name = "schemaLabel";
-            schemaLabel.Size = new System.Drawing.Size(103, 32);
+            schemaLabel.Size = new System.Drawing.Size(52, 15);
             schemaLabel.TabIndex = 8;
             schemaLabel.Text = "Schema:";
             // 
             // BatchColumnDesc
             // 
-            AutoScaleDimensions = new System.Drawing.SizeF(13F, 32F);
+            AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            ClientSize = new System.Drawing.Size(1486, 960);
+            ClientSize = new System.Drawing.Size(800, 450);
             Controls.Add(applyButton);
             Controls.Add(descTextBox);
             Controls.Add(label1);
             Controls.Add(panel1);
             Controls.Add(statusStrip1);
             Controls.Add(toolStrip1);
-            Margin = new System.Windows.Forms.Padding(6);
             Name = "BatchColumnDesc";
             Text = "BatchColumnDesc";
             Load += BatchColumnDesc_Load;

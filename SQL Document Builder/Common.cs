@@ -242,13 +242,15 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Get table list from the database
         /// </summary>
-        public static List<ObjectName> GetTableList()
+        public static List<ObjectName> GetObjectList(ObjectName.ObjectTypeEnums objType)
         {
             var tables = new List<ObjectName>();
             var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
             try
             {
-                var cmd = new SqlCommand("SELECT TABLE_SCHEMA, TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' ORDER BY TABLE_SCHEMA, TABLE_NAME", conn) { CommandType = CommandType.Text };
+                var sql = string.Format("SELECT TABLE_SCHEMA, TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = @TableType ORDER BY TABLE_SCHEMA, TABLE_NAME");
+                var cmd = new SqlCommand(sql, conn) { CommandType = CommandType.Text };
+                cmd.Parameters.AddWithValue("@TableType", objType == ObjectName.ObjectTypeEnums.View ? "View" : "BASE TABLE");
                 conn.Open();
                 var reader = cmd.ExecuteReader();
                 while (reader.Read())
@@ -258,7 +260,7 @@ namespace SQL_Document_Builder
                     {
                         tables.Add(new ObjectName()
                         {
-                            ObjectType = ObjectName.ObjectTypeEnums.Table,
+                            ObjectType = objType,
                             Schema = schemaName,
                             Name = reader.GetString(1)
                         });
@@ -277,39 +279,39 @@ namespace SQL_Document_Builder
             return tables;
         }
 
-        /// <summary>
-        /// Get table list from the database
-        /// </summary>
-        public static List<ObjectName> GetViewList()
-        {
-            var tables = new List<ObjectName>();
-            var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
-            try
-            {
-                var cmd = new SqlCommand("SELECT TABLE_SCHEMA, TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'View' ORDER BY TABLE_SCHEMA, TABLE_NAME", conn) { CommandType = CommandType.Text };
-                conn.Open();
-                var reader = cmd.ExecuteReader();
-                while (reader.Read())
-                {
-                    tables.Add(new ObjectName()
-                    {
-                        ObjectType = ObjectName.ObjectTypeEnums.Table,
-                        Schema = reader.GetString(0),
-                        Name = reader.GetString(1)
-                    });
-                }
+        ///// <summary>
+        ///// Get table list from the database
+        ///// </summary>
+        //public static List<ObjectName> GetViewList()
+        //{
+        //    var tables = new List<ObjectName>();
+        //    var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+        //    try
+        //    {
+        //        var cmd = new SqlCommand("SELECT TABLE_SCHEMA, TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'View' ORDER BY TABLE_SCHEMA, TABLE_NAME", conn) { CommandType = CommandType.Text };
+        //        conn.Open();
+        //        var reader = cmd.ExecuteReader();
+        //        while (reader.Read())
+        //        {
+        //            tables.Add(new ObjectName()
+        //            {
+        //                ObjectType = ObjectName.ObjectTypeEnums.View,
+        //                Schema = reader.GetString(0),
+        //                Name = reader.GetString(1)
+        //            });
+        //        }
 
-            }
-            catch (Exception ex)
-            {
-                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                conn.Close();
-            }
-            return tables;
-        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Common.MsgBox(ex.Message, MessageBoxIcon.Error);
+        //    }
+        //    finally
+        //    {
+        //        conn.Close();
+        //    }
+        //    return tables;
+        //}
 
         public static List<string> GetTableColumns(ObjectName tableName) { 
             var columns = new List<string>();

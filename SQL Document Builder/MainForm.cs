@@ -124,6 +124,19 @@ namespace SQL_Document_Builder
                         //}
                     }
 
+                    for (int i = 0; i < connectToToolStripMenuItem.DropDown.Items.Count; i++)
+                    {
+                        var submenuitem = (ConnectionMenuItem)connectToToolStripMenuItem.DropDown.Items[i];
+                        if (submenuitem.Connection.Equals(connection))
+                        {
+                            submenuitem.Checked = true;
+                        }
+                        else
+                        {
+                            submenuitem.Checked = false;
+                        }
+                    }
+
                     //if (errMessage.Length > 0)
                     //{
                     //    MessageBox.Show(errMessage, Properties.Resources.A005, MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -1110,18 +1123,6 @@ namespace SQL_Document_Builder
         //    //}
         //}
 
-        private void TableListToolStripMenuItem1_Click(object sender, EventArgs e)
-        {
-            sqlTextBox.Text = string.Empty;
-            using var dlg = new Schemapicker();
-            if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
-            {
-                var builder = new SharePoint();
-                sqlTextBox.Text = builder.BuildTableList(dlg.Schema);
-            }
-            statusToolStripStatusLabe.Text = "Complete!";
-        }
-
         private void ViewListToolStripMenuItem1_Click(object sender, EventArgs e)
         {
             sqlTextBox.Text = string.Empty;
@@ -1181,6 +1182,32 @@ namespace SQL_Document_Builder
             form.ShowDialog();
         }
 
+        private void StartBuild()
+        {
+            this.Cursor = Cursors.WaitCursor;
+            sqlTextBox.Text = String.Empty;
+            sqlTextBox.Enabled = false;
+            sqlTextBox.Cursor = Cursors.WaitCursor;
+            statusToolStripStatusLabe.Text = "Please wait while generate the scripts";
+            progressBar.Maximum = 100;
+            progressBar.Value = 0;
+            progressBar.Visible = true;
+            Application.DoEvents();
+        }
+
+        private void EndBuild()
+        {
+            sqlTextBox.Enabled = true;
+            sqlTextBox.Cursor = Cursors.Default;
+            progressBar.Visible = false;
+            statusToolStripStatusLabe.Text = "Complete!";
+            this.Cursor = Cursors.Default;
+            if (sqlTextBox.Text.Length > 0)
+            {
+                Clipboard.SetText(sqlTextBox.Text);
+            }
+        }
+
         /// <summary>
         /// Generate description scripts for tables
         /// </summary>
@@ -1188,15 +1215,12 @@ namespace SQL_Document_Builder
         /// <param name="e"></param>
         private async void ObjectDescriptionsToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            sqlTextBox.Text = String.Empty;
+
             using var dlg = new Schemapicker();
             if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
             {
-                this.Cursor = Cursors.WaitCursor;
-                sqlTextBox.Text = String.Empty;
-                statusToolStripStatusLabe.Text = "Please wait while generate the scripts";
-                progressBar.Value = 0;
-                progressBar.Visible = true;
-                Application.DoEvents();
+                StartBuild();
 
                 var progress = new Progress<int>(value =>
                 {
@@ -1206,21 +1230,15 @@ namespace SQL_Document_Builder
                 string scripts = String.Empty;
                 await Task.Run(() =>
                 {
-                    scripts = ObjectDescription.BuildTableDescriptions(dlg.Schema, progress);
+                    scripts = ObjectDescription.BuildObjectDescriptions(ObjectName.ObjectTypeEnums.Table, dlg.Schema, progress);
                 });
 
                 if (scripts != null)
                 {
                     sqlTextBox.Text = scripts;
-                    if(scripts.Length > 0)
-                    {
-                        Clipboard.SetText(scripts);
-                    }
                 }
 
-                progressBar.Visible = false;
-                statusToolStripStatusLabe.Text = "Complete!";
-                this.Cursor = Cursors.Default;
+                EndBuild();
             }
         }
 
@@ -1236,11 +1254,7 @@ namespace SQL_Document_Builder
             using var dlg = new Schemapicker();
             if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
             {
-                statusToolStripStatusLabe.Text = "Please wait while generate the scripts...";
-                progressBar.Value = 0;
-                progressBar.Visible = true;
-                Application.DoEvents();
-                this.Cursor = Cursors.WaitCursor;
+                StartBuild();
 
                 var progress = new Progress<int>(value =>
                 {
@@ -1250,16 +1264,38 @@ namespace SQL_Document_Builder
                 string scripts = String.Empty;
                 await Task.Run(() =>
                 {
-                    scripts = ObjectDescription.BuildViewDescriptions(dlg.Schema, progress);
+                    scripts = ObjectDescription.BuildObjectDescriptions(ObjectName.ObjectTypeEnums.View, dlg.Schema, progress);
                 });
 
                 sqlTextBox.Text = scripts;
-                Clipboard.SetText(scripts);
 
-                progressBar.Visible = false;
+                EndBuild();
+            }
+        }
 
-                this.Cursor = Cursors.Default;
-                statusToolStripStatusLabe.Text = "Complete!";
+        private async void TableListToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            sqlTextBox.Text = string.Empty;
+            using var dlg = new Schemapicker();
+            if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
+            {
+                StartBuild();
+
+                var progress = new Progress<int>(value =>
+                {
+                    progressBar.Value = value;
+                });
+
+                string scripts = String.Empty;
+                var builder = new SharePoint();
+                await Task.Run(() =>
+                {
+                    scripts = builder.BuildTableList(dlg.Schema, progress);
+                });
+
+                sqlTextBox.Text = scripts;
+
+                EndBuild();
             }
         }
     }

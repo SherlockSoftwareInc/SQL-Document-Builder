@@ -5,14 +5,19 @@ namespace SQL_Document_Builder
 {
     internal class ObjectDescription
     {
-        public static string BuildTableDescriptions(string schemaName, IProgress<int> progress)
+        public static string BuildObjectDescriptions(ObjectName.ObjectTypeEnums objType, string schemaName, IProgress<int> progress)
         {
             var sb = new StringBuilder();
 
-            var tables = Common.GetTableList();
+            var tables = Common.GetObjectList(objType);
             for (int i = 0; i < tables.Count; i++)
             {
+                int percentComplete = (i * 100) / tables.Count;
+                if (percentComplete > 0 && percentComplete % 2 == 0)
+                    progress.Report(percentComplete + 1);
+
                 var table = tables[i];
+                bool spaceAdded = false;
 
                 bool generate = true;
                 if (schemaName.Length > 0 && !schemaName.Equals(table.Schema, StringComparison.CurrentCultureIgnoreCase))
@@ -27,6 +32,9 @@ namespace SQL_Document_Builder
                         var tableDesc = dbTable.Description;
                         if (tableDesc.Length > 0)
                         {
+                            //sb.AppendLine(string.Format("-- VIEW: {0}.{1}", table.Schema, table.Name));
+                            sb.AppendLine();
+                            spaceAdded = true;
                             sb.AppendLine(string.Format("EXEC ADMIN.usp_AddObjectDescription '{0}.{1}', N'{2}';", table.Schema, table.Name, tableDesc.Replace("'", "''")));
                         }
                     }
@@ -36,75 +44,121 @@ namespace SQL_Document_Builder
                         var colDesc = column.Description;
                         if (colDesc.Length > 0)
                         {
-                            sb.Append(string.Format("EXEC ADMIN.usp_AddColumnDescription '{0}.{1}', '{2}', N'{3}';\r\n", table.Schema, table.Name, column, colDesc.Replace("'", "''")));
+                            if (!spaceAdded)
+                            {
+                                //sb.AppendLine(string.Format("-- VIEW: {0}.{1}", table.Schema, table.Name));
+                                sb.AppendLine();
+                                spaceAdded = true;
+                            }
+                            sb.AppendLine(string.Format("EXEC ADMIN.usp_AddColumnDescription '{0}.{1}', '{2}', N'{3}';", table.Schema, table.Name, column.ColumnName, colDesc.Replace("'", "''")));
                         }
                     }
-
-                    //var tableDesc = Common.GetTableDescription(table);
-                    //if (tableDesc?.Length > 0)
-                    //{
-                    //    sb.Append(string.Format("EXEC ADMIN.usp_AddObjectDescription '{0}.{1}', N'{2}';\r\n", table.Schema, table.Name, tableDesc.Replace("'", "''")));
-                    //}
-                    //var columnsDesc = BuildTableColumnsDescriptions(table);
-                    //if (columnsDesc?.Length > 0)
-                    //{
-                    //    sb.AppendLine(columnsDesc);
-                    //}
                 }
-
-                var percentComplete = (i * 100) / tables.Count;
-                progress.Report(percentComplete);
             }
             return sb.ToString();
         }
 
-        public static string BuildViewDescriptions(string schemaName, IProgress<int> progress)
-        {
-            var sb = new StringBuilder();
-
-            var tables = Common.GetViewList();
-            for (int i = 0; i < tables.Count; i++)
-            {
-                var table = tables[i];
-
-                bool generate = true;
-                if (schemaName.Length > 0 && !schemaName.Equals(table.Schema, StringComparison.CurrentCultureIgnoreCase))
-                {
-                    generate = false;
-                }
-                if (generate)
-                {
-                    var obj = new DBObject();
-                    obj.Open(table.Schema, table.Name, ObjectName.ObjectTypeEnums.View, Properties.Settings.Default.dbConnectionString);
-                    sb.AppendLine(obj.DescriptionScript());
-                    //var tableDesc = Common.GetTableDescription(table);
-                    //if (tableDesc?.Length > 0)
-                    //{
-                    //    sb.Append(string.Format("EXEC ADMIN.usp_AddObjectDescription '{0}.{1}', N'{2}';\r\n", table.Schema, table.Name, tableDesc.Replace("'", "''")));
-                    //}
-                    //var columnsDesc = BuildTableColumnsDescriptions(table);
-                    //if (columnsDesc?.Length > 0)
-                    //{
-                    //    sb.AppendLine(columnsDesc);
-                    //}
-                }
-
-                var percentComplete = (i * 100) / tables.Count;
-                progress.Report(percentComplete);
-            }
-            return sb.ToString();
-        }
-
-        //private static string BuildTableColumnsDescriptions(ObjectName tableName)
+        //public static string BuildTableDescriptions(string schemaName, IProgress<int> progress)
         //{
         //    var sb = new StringBuilder();
-        //    var columns = Common.GetTableColumns(tableName);
-        //    foreach (var column in columns)
+
+        //    var tables = Common.GetTableList();
+        //    for (int i = 0; i < tables.Count; i++)
         //    {
-        //        var columnDesc = Common.GetColumnDescription(tableName, column);
-        //        if (columnDesc?.Length > 0)
+        //        int percentComplete = (i * 100) / tables.Count;
+        //        if (percentComplete > 0 && percentComplete % 2 == 0)
+        //            progress.Report(percentComplete + 1);
+
+        //        var table = tables[i];
+        //        bool spaceAdded = false;
+
+        //        bool generate = true;
+        //        if (schemaName.Length > 0 && !schemaName.Equals(table.Schema, StringComparison.CurrentCultureIgnoreCase))
         //        {
-        //            sb.Append(string.Format("EXEC ADMIN.usp_AddColumnDescription '{0}.{1}', '{2}', N'{3}';\r\n", tableName.Schema, tableName.Name, column, columnDesc.Replace("'", "''")));
+        //            generate = false;
+        //        }
+        //        if (generate)
+        //        {
+        //            var dbTable = new DBObject();
+        //            if (dbTable.Open(table, Properties.Settings.Default.dbConnectionString))
+        //            {
+        //                var tableDesc = dbTable.Description;
+        //                if (tableDesc.Length > 0)
+        //                {
+        //                    //sb.AppendLine(string.Format("-- VIEW: {0}.{1}", table.Schema, table.Name));
+        //                    sb.AppendLine();
+        //                    spaceAdded = true;
+        //                    sb.AppendLine(string.Format("EXEC ADMIN.usp_AddObjectDescription '{0}.{1}', N'{2}';", table.Schema, table.Name, tableDesc.Replace("'", "''")));
+        //                }
+        //            }
+
+        //            foreach (var column in dbTable.Columns)
+        //            {
+        //                var colDesc = column.Description;
+        //                if (colDesc.Length > 0)
+        //                {
+        //                    if (!spaceAdded)
+        //                    {
+        //                        //sb.AppendLine(string.Format("-- VIEW: {0}.{1}", table.Schema, table.Name));
+        //                        sb.AppendLine();
+        //                        spaceAdded = true;
+        //                    }
+        //                    sb.AppendLine(string.Format("EXEC ADMIN.usp_AddColumnDescription '{0}.{1}', '{2}', N'{3}';", table.Schema, table.Name, column.ColumnName, colDesc.Replace("'", "''")));
+        //                }
+        //            }
+        //        }
+        //    }
+        //    return sb.ToString();
+        //}
+
+        //public static string BuildViewDescriptions(string schemaName, IProgress<int> progress)
+        //{
+        //    var sb = new StringBuilder();
+
+        //    var tables = Common.GetViewList();
+        //    for (int i = 0; i < tables.Count; i++)
+        //    {
+        //        int percentComplete = (i * 100) / tables.Count;
+        //        if (percentComplete > 0 && percentComplete % 2 == 0)
+        //            progress.Report(percentComplete + 1);
+
+        //        var table = tables[i];
+        //        bool spaceAdded = false;
+
+        //        bool generate = true;
+        //        if (schemaName.Length > 0 && !schemaName.Equals(table.Schema, StringComparison.CurrentCultureIgnoreCase))
+        //        {
+        //            generate = false;
+        //        }
+        //        if (generate)
+        //        {
+        //            var dbTable = new DBObject();
+        //            if (dbTable.Open(table, Properties.Settings.Default.dbConnectionString))
+        //            {
+        //                var tableDesc = dbTable.Description;
+        //                if (tableDesc.Length > 0)
+        //                {
+        //                    //sb.AppendLine(string.Format("-- VIEW: {0}.{1}", table.Schema, table.Name));
+        //                    sb.AppendLine();
+        //                    spaceAdded = true;
+        //                    sb.AppendLine(string.Format("EXEC ADMIN.usp_AddObjectDescription '{0}.{1}', N'{2}';", table.Schema, table.Name, tableDesc.Replace("'", "''")));
+        //                }
+        //            }
+
+        //            foreach (var column in dbTable.Columns)
+        //            {
+        //                var colDesc = column.Description;
+        //                if (colDesc.Length > 0)
+        //                {
+        //                    if (!spaceAdded)
+        //                    {
+        //                        //sb.AppendLine(string.Format("-- VIEW: {0}.{1}", table.Schema, table.Name));
+        //                        sb.AppendLine();
+        //                        spaceAdded = true;
+        //                    }
+        //                    sb.AppendLine(string.Format("EXEC ADMIN.usp_AddColumnDescription '{0}.{1}', '{2}', N'{3}';", table.Schema, table.Name, column.ColumnName, colDesc.Replace("'", "''")));
+        //                }
+        //            }
         //        }
         //    }
         //    return sb.ToString();
