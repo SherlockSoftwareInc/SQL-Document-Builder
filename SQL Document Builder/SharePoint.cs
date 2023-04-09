@@ -110,7 +110,7 @@ namespace SQL_Document_Builder
                     AppendLine("\t\t<tr>");
                     AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + tableSchema + "</td>");
                     AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + string.Format("[[{0}.{1}|{1}]]", tableSchema, tableName) + "</td>");
-                    AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + Common.GetTableDescription(new ObjectName() { Schema = tableSchema, Name = tableName }) + "</td>");
+                    AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + Common.GetTableDescription(new ObjectName() { Schema = tableSchema, Name = tableName, ObjectType= ObjectName.ObjectTypeEnums.View  }) + "</td>");
                     AppendLine("\t\t</tr>");
                 }
 

@@ -34,13 +34,15 @@ namespace SQL_Document_Builder
             return sb.ToString();
         }
 
-        public static string BuildViewDescriptions(string schemaName)
+        public static string BuildViewDescriptions(string schemaName, IProgress<int> progress)
         {
             var sb = new StringBuilder();
 
             var tables = Common.GetViewList();
-            foreach (var table in tables)
+            for (int i = 0; i < tables.Count; i++)
             {
+                var table = tables[i];
+
                 bool generate = true;
                 if (schemaName.Length > 0 && !schemaName.Equals(table.Schema, StringComparison.CurrentCultureIgnoreCase))
                 {
@@ -48,17 +50,24 @@ namespace SQL_Document_Builder
                 }
                 if (generate)
                 {
-                    var tableDesc = Common.GetTableDescription(table);
-                    if (tableDesc?.Length > 0)
-                    {
-                        sb.Append(string.Format("EXEC ADMIN.usp_AddObjectDescription '{0}.{1}', N'{2}';\r\n", table.Schema, table.Name, tableDesc.Replace("'", "''")));
-                    }
-                    var columnsDesc = BuildTableColumnsDescriptions(table);
-                    if (columnsDesc?.Length > 0)
-                    {
-                        sb.AppendLine(columnsDesc);
-                    }
+                    var obj = new DBObject();
+                    obj.Open(table.Schema, table.Name, ObjectName.ObjectTypeEnums.View, Properties.Settings.Default.dbConnectionString);
+                    sb.AppendLine(obj.DescriptionScript());
+                    //var tableDesc = Common.GetTableDescription(table);
+                    //if (tableDesc?.Length > 0)
+                    //{
+                    //    sb.Append(string.Format("EXEC ADMIN.usp_AddObjectDescription '{0}.{1}', N'{2}';\r\n", table.Schema, table.Name, tableDesc.Replace("'", "''")));
+                    //}
+                    //var columnsDesc = BuildTableColumnsDescriptions(table);
+                    //if (columnsDesc?.Length > 0)
+                    //{
+                    //    sb.AppendLine(columnsDesc);
+                    //}
                 }
+
+                var percentComplete = (i * 100) / tables.Count;
+                progress.Report(percentComplete);
+
             }
             return sb.ToString();
         }

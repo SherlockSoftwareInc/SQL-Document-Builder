@@ -80,7 +80,7 @@
 
         public bool IsEmpty()
         {
-            return _name.Length > 0 && _schema.Length > 0;
+            return _name.Length == 0 || _schema.Length == 0;
         }
 
         public override string ToString()

@@ -15,7 +15,7 @@ namespace SQL_Document_Builder
         private readonly SQLServerConnections _connections = new();
         private int _connectionCount = 0;
         private string? _database = string.Empty;
-        private SQLDatabaseConnectionItem? _selectedConnection;
+        private SQLDatabaseConnectionItem _selectedConnection = new SQLDatabaseConnectionItem();
         private string? _server = string.Empty;
         private readonly System.Text.StringBuilder _script = new();
 
@@ -443,7 +443,7 @@ namespace SQL_Document_Builder
                 LocalToolStripMenuItem_Click(this, e);
             }
             else
-            { 
+            {
                 AzureToolStripMenuItem_Click(this, e);
             }
         }
@@ -481,44 +481,44 @@ namespace SQL_Document_Builder
             sqlTextBox.Paste();
         }
 
-        /// <summary>
-        /// Populate connections to menu and combobox
-        /// </summary>
-        private void PopulateConnections()
-        {
-            _selectedConnection = null;
+        ///// <summary>
+        ///// Populate connections to menu and combobox
+        ///// </summary>
+        //private void PopulateConnections()
+        //{
+        //    _selectedConnection = null;
 
-            // clear menu items under Connect to... menu
-            for (int i = connectToToolStripMenuItem.DropDown.Items.Count - 1; i >= 0; i--)
-            {
-                ConnectionMenuItem submenuitem = (ConnectionMenuItem)connectToToolStripMenuItem.DropDown.Items[i];
-                submenuitem.Click -= OnConnectionToolStripMenuItem_Click;
-                connectToToolStripMenuItem.DropDownItems.RemoveAt(i);
-            }
+        //    // clear menu items under Connect to... menu
+        //    for (int i = connectToToolStripMenuItem.DropDown.Items.Count - 1; i >= 0; i--)
+        //    {
+        //        ConnectionMenuItem submenuitem = (ConnectionMenuItem)connectToToolStripMenuItem.DropDown.Items[i];
+        //        submenuitem.Click -= OnConnectionToolStripMenuItem_Click;
+        //        connectToToolStripMenuItem.DropDownItems.RemoveAt(i);
+        //    }
 
-            var connections = _connections.Connections;
-            if (connections.Count == 0)
-            {
-                AddConnection();
-            }
-            else
-            {
-                for (int i = 0; i < connections.Count; i++)
-                {
-                    var item = connections[i];
-                    if (item.ConnectionString?.Length > 1)
-                    {
-                        var submenuitem = new ConnectionMenuItem(item)
-                        {
-                            Name = string.Format("ConnectionMenuItem{0}", i + 1),
-                            Size = new Size(300, 26),
-                        };
-                        submenuitem.Click += OnConnectionToolStripMenuItem_Click;
-                        connectToToolStripMenuItem.DropDown.Items.Add(submenuitem);
-                    }
-                }
-            }
-        }
+        //    var connections = _connections.Connections;
+        //    if (connections.Count == 0)
+        //    {
+        //        AddConnection();
+        //    }
+        //    else
+        //    {
+        //        for (int i = 0; i < connections.Count; i++)
+        //        {
+        //            var item = connections[i];
+        //            if (item.ConnectionString?.Length > 1)
+        //            {
+        //                var submenuitem = new ConnectionMenuItem(item)
+        //                {
+        //                    Name = string.Format("ConnectionMenuItem{0}", i + 1),
+        //                    Size = new Size(300, 26),
+        //                };
+        //                submenuitem.Click += OnConnectionToolStripMenuItem_Click;
+        //                connectToToolStripMenuItem.DropDown.Items.Add(submenuitem);
+        //            }
+        //        }
+        //    }
+        //}
 
         /// <summary>
         /// Handles "Save" menu item click event: Save the current content in the text box into a file
@@ -1018,17 +1018,20 @@ namespace SQL_Document_Builder
                 databaseToolStripStatusLabel.Text = database;
                 Properties.Settings.Default.dbConnectionString = builder.ConnectionString;
                 Properties.Settings.Default.LastAccessConnectionIndex = 0;
+
+                _selectedConnection.ServerName = server;
+                _selectedConnection.Database = database;
             }
 
-            for (int i = 0; i < _connections.Connections.Count; i++)
-            {
-                var item = _connections.Connections[i];
-                if (item.ServerName == server && item.Database == database)
-                {
-                    _selectedConnection = item;
-                }
+            //for (int i = 0; i < _connections.Connections.Count; i++)
+            //{
+            //    var item = _connections.Connections[i];
+            //    if (item.ServerName == server && item.Database == database)
+            //    {
+            //        _selectedConnection = item;
+            //    }
 
-            }
+            //}
             //const string server = "phsa-csbc-pcr-prod-sql-server.database.windows.net";
             //const string database = "pcr_analytic";
             //var builder = new System.Data.SqlClient.SqlConnectionStringBuilder()
@@ -1090,17 +1093,20 @@ namespace SQL_Document_Builder
                 databaseToolStripStatusLabel.Text = database;
                 Properties.Settings.Default.dbConnectionString = builder.ConnectionString;
                 Properties.Settings.Default.LastAccessConnectionIndex = 1;
-            }
 
-            for (int i = 0; i < _connections.Connections.Count; i++)
-            {
-                var item = _connections.Connections[i];
-                if (item.ServerName == server && item.Database == database)
-                {
-                    _selectedConnection = item;
-                }
+                _selectedConnection.ServerName = server;
+                _selectedConnection.Database = database;
 
             }
+
+            //for (int i = 0; i < _connections.Connections.Count; i++)
+            //{
+            //    var item = _connections.Connections[i];
+            //    if (item.ServerName == server && item.Database == database)
+            //    {
+            //        _selectedConnection = item;
+            //    }
+            //}
         }
 
         private void TableListToolStripMenuItem1_Click(object sender, EventArgs e)
@@ -1189,7 +1195,7 @@ namespace SQL_Document_Builder
             this.Cursor = Cursors.Default;
         }
 
-        private void viewsDescriptionsToolStripMenuItem_Click(object sender, EventArgs e)
+        private async void viewsDescriptionsToolStripMenuItem_Click(object sender, EventArgs e)
         {
             this.Cursor = Cursors.WaitCursor;
             sqlTextBox.Text = String.Empty;
@@ -1198,7 +1204,27 @@ namespace SQL_Document_Builder
             using var dlg = new Schemapicker();
             if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
             {
-                sqlTextBox.Text = ObjectDescription.BuildViewDescriptions(dlg.Schema);
+                statusToolStripStatusLabe.Text = "Please wait while generate the scripts...";
+                progressBar.Value = 0;
+                progressBar.Visible = true;
+                Application.DoEvents();
+
+                var progress = new Progress<int>(value =>
+                {
+                    progressBar.Value = value;
+                });
+
+                string scripts = String.Empty;
+                await Task.Run(() =>
+                {
+                    scripts = ObjectDescription.BuildViewDescriptions(dlg.Schema, progress);
+                });
+
+                sqlTextBox.Text = scripts;
+                Clipboard.SetText(scripts);
+
+                progressBar.Visible = false;
+                //sqlTextBox.Text = _script.ToString();
             }
 
             statusToolStripStatusLabe.Text = "Complete!";
