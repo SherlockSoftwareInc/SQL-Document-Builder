@@ -1,9 +1,12 @@
 ﻿using Microsoft.SqlServer.Management.Smo;
+using NPOI.SS.UserModel;
+using NPOI.XSSF.UserModel;
 using System;
 using System.Collections.Specialized;
 using System.Data;
 using System.Data.SqlClient;
 using System.Drawing;
+using System.IO;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -1297,6 +1300,147 @@ namespace SQL_Document_Builder
 
                 EndBuild();
             }
+        }
+
+        /// <summary>
+        /// Output all object descriptions to a file
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private async void OutputDescriptionsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // Create a new save file dialog
+            SaveFileDialog saveFileDialog = new()
+            {
+                // Set the file dialog filter to XLSX files
+                Filter = "Excel Workbook (*.xlsx)|*.xlsx"
+            };
+
+            // Show the save file dialog and get the result
+            DialogResult result = saveFileDialog.ShowDialog();
+
+            // Check if the user clicked the OK button
+            if (result == DialogResult.OK)
+            {
+                // Create a new XLSX workbook
+                XSSFWorkbook workbook = new();
+                ISheet sheet = workbook.CreateSheet("Sheet1");
+
+                // Write column headers
+                IRow headerRow = sheet.CreateRow(0);
+                headerRow.CreateCell(0).SetCellValue("Table Schema");
+                headerRow.CreateCell(1).SetCellValue("Table Name");
+                headerRow.CreateCell(2).SetCellValue("Column Name");
+                headerRow.CreateCell(3).SetCellValue("Description");
+
+                statusToolStripStatusLabe.Text = "Please wait while generate the list...";
+                progressBar.Value = 0;
+                progressBar.Visible = true;
+                progressBar.Maximum = 100;
+                Application.DoEvents();
+
+                var progress = new Progress<int>(value =>
+                {
+                    progressBar.Value = value > progressBar.Maximum ? progressBar.Maximum : value;
+                });
+                await Task.Run(() => OutputObjectsDescriptions(sheet, progress));
+
+                //GenerateTableScript(database, dlg.Schema);
+                progressBar.Visible = false;
+
+                // Save the workbook to the selected file
+                using FileStream stream = new(saveFileDialog.FileName, FileMode.Create, FileAccess.Write);
+                workbook.Write(stream);
+
+                // Open the file
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo()
+                {
+                    FileName = saveFileDialog.FileName,
+                    UseShellExecute = true
+                });
+
+                statusToolStripStatusLabe.Text = "Complete";
+            }
+        }
+
+        /// <summary>
+        /// Fetch and output descriptions for all tables and views
+        /// </summary>
+        /// <param name="sheet"></param>
+        /// <param name="progress"></param>
+        private void OutputObjectsDescriptions(ISheet sheet, IProgress<int> progress)
+        {
+            var tables = Common.GetObjectList(ObjectName.ObjectTypeEnums.Table);
+            var views = Common.GetObjectList(ObjectName.ObjectTypeEnums.View);
+            int total = tables.Count + views.Count;
+
+            if (total > 0)
+            {
+                int index = 1;
+                for (int i = 0; i < tables.Count; i++)
+                {
+                    var percentComplete = (i * 100) / total;
+                    progress.Report(percentComplete);
+
+                    var tableObject = new DBObject();
+                    tableObject.Open(tables[i], Properties.Settings.Default.dbConnectionString);
+                    index = ObjectToExcel(sheet, index, tableObject);
+                    //index++;
+                }
+
+                for (int i = 0; i < views.Count; i++)
+                {
+                    var percentComplete = ((i + tables.Count) * 100) / total;
+                    progress.Report(percentComplete);
+
+                    var tableObject = new DBObject();
+                    tableObject.Open(views[i], Properties.Settings.Default.dbConnectionString);
+                    index = ObjectToExcel(sheet, index, tableObject);
+                    //index++;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Output description of a database object
+        /// </summary>
+        /// <param name="sheet"></param>
+        /// <param name="startRow"></param>
+        /// <param name="dBObject"></param>
+        /// <returns></returns>
+        private int ObjectToExcel(ISheet sheet, int startRow, DBObject dBObject)
+        {
+            // output object description
+            IRow objRow = sheet.CreateRow(startRow);
+            WriteCell(objRow, 0, dBObject.TableSchema);
+            WriteCell(objRow, 1, dBObject.TableName);
+            WriteCell(objRow, 3, dBObject.Description);
+
+            var index = startRow + 1;
+            // output column description
+            foreach (var column in dBObject.Columns)
+            {
+                IRow row = sheet.CreateRow(index++);
+                WriteCell(row, 0, dBObject.TableSchema);
+                WriteCell(row, 1, dBObject.TableName);
+                WriteCell(row, 2, column.ColumnName);
+                WriteCell(row, 3, column.Description);
+            }
+
+            return index;
+        }
+
+        /// <summary>
+        /// Write a value to a specfic column in a row
+        /// </summary>
+        /// <param name="row"></param>
+        /// <param name="col"></param>
+        /// <param name="value"></param>
+        private void WriteCell(IRow row, int col, string value)
+        {
+            // Write cell value
+            ICell cell = row.CreateCell(col);
+            cell.SetCellValue(value);
         }
     }
 }
