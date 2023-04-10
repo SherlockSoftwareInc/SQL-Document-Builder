@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.SqlServer.Management.Smo;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
@@ -77,11 +78,25 @@ namespace SQL_Document_Builder
             return sb.ToString();
         }
 
+        /// <summary>
+        /// Open a database object
+        /// </summary>
+        /// <param name="objectName"></param>
+        /// <param name="connectionString"></param>
+        /// <returns></returns>
         public bool Open(ObjectName objectName, string connectionString)
         {
             return Open(objectName.Schema, objectName.Name, objectName.ObjectType, connectionString);
         }
 
+        /// <summary>
+        /// Open a database object
+        /// </summary>
+        /// <param name="schemaName"></param>
+        /// <param name="tableName"></param>
+        /// <param name="objectType"></param>
+        /// <param name="connectionString"></param>
+        /// <returns></returns>
         public bool Open(string schemaName, string tableName, ObjectTypeEnums objectType, string connectionString)
         {
             bool result = false;
@@ -116,13 +131,13 @@ namespace SQL_Document_Builder
                     }
                     dr.Close();
 
-                    foreach (var column in Columns)
-                    {
-                        if (column.ColumnName != null)
-                        {
-                            column.Description = Common.GetColumnDescription(ObjectName, column.ColumnName);
-                        }
-                    }
+                    //foreach (var column in Columns)
+                    //{
+                    //    if (column.ColumnName != null)
+                    //    {
+                    //        column.Description = Common.GetColumnDescription(ObjectName, column.ColumnName);
+                    //    }
+                    //}
 
                     result = true;
                 }
@@ -135,9 +150,71 @@ namespace SQL_Document_Builder
                     conn.Close();
                 }
                 Description = GetTableDesc();
+                GetColumnDesc();
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// Get descriptions of columns
+        /// </summary>
+        /// <returns></returns>
+        private void GetColumnDesc()
+        {
+            var conn = new SqlConnection(ConnectionString);
+            try
+            {
+                var cmd = new SqlCommand()
+                {
+                    Connection = conn,
+                    CommandType = CommandType.Text,
+                    CommandText = string.Format("SELECT C.Name, E.value Description FROM sys.schemas S INNER JOIN sys.{0} T ON S.schema_id = T.schema_id INNER JOIN sys.columns C ON T.object_id = C.object_id INNER JOIN sys.extended_properties E ON T.object_id = E.major_id AND C.column_id = E.minor_id WHERE E.name = N'MS_Description' AND S.name = @Schema AND T.name = @TableName", TableType == ObjectTypeEnums.Table ? "tables" : "views"),
+                };
+                cmd.Parameters.Add(new SqlParameter("@Schema", TableSchema));
+                cmd.Parameters.Add(new SqlParameter("@TableName", TableName));
+                conn.Open();
+
+                using var dr = cmd.ExecuteReader();
+                while (dr.Read())
+                {
+                    if (dr[1] != DBNull.Value)
+                    {
+                        var columnName = dr.GetString(0);
+                        var column = GetColumn(columnName);
+                        if (column != null)
+                        {
+                            column.Description = dr.GetString(1);
+                        }
+                    }
+                }
+                dr.Close();
+            }
+            catch (Exception)
+            {
+                // ignore the error
+            }
+            finally
+            {
+                conn.Close();
+            }
+        }
+
+        /// <summary>
+        /// Get a column object by column name
+        /// </summary>
+        /// <param name="columnName"></param>
+        /// <returns></returns>
+        public DBColumn? GetColumn(string columnName)
+        {
+            foreach (var col in Columns)
+            {
+                if (col.ColumnName == columnName)
+                {
+                    return col;
+                }
+            }
+            return null;
         }
 
         /// <summary>
@@ -147,15 +224,15 @@ namespace SQL_Document_Builder
         {
             if (ConnectionString.Length == 0) return;
 
-            DBColumn? column = null;
-            foreach (var col in Columns)
-            {
-                if (col.ColumnName == columnName)
-                {
-                    column = col;
-                    break;
-                }
-            }
+            DBColumn? column = GetColumn(columnName);
+            //foreach (var col in Columns)
+            //{
+            //    if (col.ColumnName == columnName)
+            //    {
+            //        column = col;
+            //        break;
+            //    }
+            //}
             if (column != null)
             {
                 column.Description = description;
