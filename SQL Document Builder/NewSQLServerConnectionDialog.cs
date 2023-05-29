@@ -1,10 +1,6 @@
-﻿using Microsoft.Win32;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Data.SqlClient;
-using System.Linq;
 using System.Windows.Forms;
-using Microsoft.SqlServer.Management.Smo;
 
 namespace SQL_Document_Builder
 {
@@ -388,6 +384,5 @@ namespace SQL_Document_Builder
                 Cursor = Cursors.Default;
             }
         }
-
     }
 }

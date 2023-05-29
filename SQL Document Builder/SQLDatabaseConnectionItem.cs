@@ -478,9 +478,12 @@ namespace SQL_Document_Builder
                 writer.WriteValue("True");
                 writer.WriteEndElement();
 
-                writer.WriteStartElement("ConnectionString");
-                writer.WriteValue(BuildSecureConnectionString(ConnectionString));
-                writer.WriteEndElement();
+                if(ConnectionString!= null)
+                {
+                    writer.WriteStartElement("ConnectionString");
+                    writer.WriteValue(BuildSecureConnectionString(ConnectionString));
+                    writer.WriteEndElement();
+                }
             }
             else
             {
@@ -506,16 +509,13 @@ namespace SQL_Document_Builder
                     writer.WriteValue(RememberPassword.ToString());
                     writer.WriteEndElement();
 
-                    if (RememberPassword)
+                    if (RememberPassword && Password != null)
                     {
                         writer.WriteStartElement("Pwd");
                         writer.WriteValue(EncryptPwd(Password));
                         writer.WriteEndElement();
 
                         BuildConnectionString();
-                        writer.WriteStartElement("ConnectionString");
-                        writer.WriteValue(BuildSecureConnectionString(ConnectionString));
-                        writer.WriteEndElement();
                     }
                 }
                 else if (AuthenticationType == 4 || AuthenticationType == 5)
@@ -525,9 +525,12 @@ namespace SQL_Document_Builder
                     writer.WriteEndElement();
                 }
 
-                writer.WriteStartElement("ConnectionString");
-                writer.WriteValue(BuildSecureConnectionString(ConnectionString));
-                writer.WriteEndElement();
+                if (ConnectionString != null)
+                {
+                    writer.WriteStartElement("ConnectionString");
+                    writer.WriteValue(BuildSecureConnectionString(ConnectionString));
+                    writer.WriteEndElement();
+                }
 
                 writer.WriteStartElement("EncryptConnection");
                 writer.WriteValue(EncryptConnection.ToString());

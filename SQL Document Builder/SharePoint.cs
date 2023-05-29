@@ -72,20 +72,6 @@ namespace SQL_Document_Builder
                     }
                 }
 
-                //var dr = cmd.ExecuteReader();
-                //while (dr.Read())
-                //{
-                //    string tableSchema = dr.GetString(0);
-                //    string tableName = dr.GetString(1);
-                //    AppendLine("\t\t<tr>");
-                //    AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + tableSchema + "</td>");
-                //    AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + string.Format("[[{0}.{1}|{1}]]", tableSchema, tableName) + "</td>");
-                //    AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + Common.GetTableDescription(new ObjectName() { Schema = tableSchema, Name = tableName }) + "</td>");
-                //    //AppendLine(string.Format("| {0} || [[DW Table: {0}.{1}|{1}]] || {2}", tableSchema, tableName, Common.GetTableDescription(new ObjectName() { Schema = tableSchema, Name = tableName })));
-                //    AppendLine("\t\t</tr>");
-                //}
-                //dr.Close();
-
                 AppendLine("\t</tbody>");
                 AppendLine("\t</table>");
             }
@@ -104,7 +90,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Scan user view in the database and generate the creation script for them
         /// </summary>
-        public string BuildViewList(string schemaName)
+        public string BuildViewList(string schemaName, IProgress<int> progress)
         {
             _script.Clear();
 
@@ -127,19 +113,30 @@ namespace SQL_Document_Builder
                 var cmd = new SqlCommand(sql, conn)
                 { CommandType = CommandType.Text };
                 conn.Open();
-                var dr = cmd.ExecuteReader();
-                while (dr.Read())
+                var ds = new DataSet();
+                var dat = new SqlDataAdapter(cmd);
+                dat.Fill(ds);
+                if (ds.Tables[0].Rows.Count > 0)
                 {
-                    string tableSchema = dr.GetString(0);
-                    string tableName = dr.GetString(1);
-                    AppendLine("\t\t<tr>");
-                    AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + tableSchema + "</td>");
-                    AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + string.Format("[[{0}.{1}|{1}]]", tableSchema, tableName) + "</td>");
-                    AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + Common.GetTableDescription(new ObjectName() { Schema = tableSchema, Name = tableName, ObjectType = ObjectName.ObjectTypeEnums.View }) + "</td>");
-                    AppendLine("\t\t</tr>");
+                    for (int i = 0; i < ds.Tables[0].Rows.Count; i++)
+                    {
+                        int percentComplete = (i * 100) / ds.Tables[0].Rows.Count;
+                        if (percentComplete > 0 && percentComplete % 2 == 0)
+                        {
+                            progress.Report(percentComplete + 1);
+                        }
+
+                        DataRow dr = ds.Tables[0].Rows[i];
+                        string tableSchema = (string)dr[0];
+                        string tableName = (string)dr[1];
+                        AppendLine("\t\t<tr>");
+                        AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + tableSchema + "</td>");
+                        AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + string.Format("[[{0}.{1}|{1}]]", tableSchema, tableName) + "</td>");
+                        AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + Common.GetTableDescription(new ObjectName() { Schema = tableSchema, Name = tableName, ObjectType = ObjectName.ObjectTypeEnums.View }) + "</td>");
+                        AppendLine("\t\t</tr>");
+                    }
                 }
 
-                dr.Close();
                 AppendLine("\t</tbody>");
                 AppendLine("\t</table>");
             }
@@ -349,24 +346,27 @@ namespace SQL_Document_Builder
                 //BuildFormList(objectName);
                 BuildVariableDefinition(objectName);
 
-                // add ETL section
-                AppendLine("<div>");
-                AppendLine("<h2>ETL Process to Build This Table</h2>");
-                AppendLine("<ul>");
-                AppendLine(string.Format("<li> The data is copied from [[PCRL1.{0}]] table by removing the data from the&#160;draft&#160;or invalid forms.</li>", objectName.Name));
-                AppendLine("</ul>");
-                AppendLine("</div>");
-                AppendLine("<div>");
-                AppendLine("<h2>Codes to Build This Table</h2>");
-                AppendLine("<p>");
-                AppendLine("Paste codes here");
-                AppendLine("</p>");
-                AppendLine("</div>");
+                if (!IsExcludePCRTable(objectName.Name))
+                {
+                    // add ETL section
+                    AppendLine("<div>");
+                    AppendLine("<h2>ETL Process to Build This Table</h2>");
+                    AppendLine("<ul>");
+                    AppendLine(string.Format("<li> The data is copied from [[PCRL1.{0}]] table by removing the data from the&#160;draft&#160;or invalid forms.</li>", objectName.Name));
+                    AppendLine("</ul>");
+                    AppendLine("</div>");
+                    AppendLine("<div>");
+                    AppendLine("<h2>Codes to Build This Table</h2>");
+                    AppendLine("<p>");
+                    AppendLine("Paste codes here");
+                    AppendLine("</p>");
+                    AppendLine("</div>");
+                }
 
-                // add footer
-                AppendLine("<hr/>");
-                AppendLine("<div>Back to [[PCR database tables (CVI.Source)]]</div>");
-                AppendLine("<div>Back to [[Data warehouse tables]]</div>");
+                //// add footer
+                //AppendLine("<hr/>");
+                //AppendLine("<div>Back to [[PCR database tables (CVI.Source)]]</div>");
+                //AppendLine("<div>Back to [[Data warehouse tables]]</div>");
             }
             else if (objectName.Schema.Equals("PCRL1", StringComparison.CurrentCultureIgnoreCase))
             {
@@ -374,13 +374,31 @@ namespace SQL_Document_Builder
                 BuildVariableDefinitionL1(objectName);
                 BuildTargetTables(objectName);
 
-                // add footer
-                AppendLine("<hr/>");
-                AppendLine("<div>Back to [[PCR database tables (CVI.Source)]]</div>");
-                AppendLine("<div>Back to [[Data warehouse tables]]</div>");
+                //// add footer
+                //AppendLine("<hr/>");
+                //AppendLine("<div>Back to [[PCR database tables (CVI.Source)]]</div>");
+                //AppendLine("<div>Back to [[Data warehouse tables]]</div>");
             }
 
             return _script.ToString();
+        }
+
+        private bool IsExcludePCRTable(string tableName)
+        {
+            if (tableName.StartsWith("vw_")) return true;
+            if (tableName.StartsWith("LT_")) return true;
+            if (tableName.StartsWith("AT_")) return true;
+            if (tableName.IndexOf("Mapping") > 0) return true;
+
+            var excludeList = new List<string>() {
+                "EoP","EoS","EoS_HRD","EoS_OnHold","EoS_THV","Form","OrganizationHA" };
+
+            foreach (var item in excludeList)
+            {
+                if (item.Equals(tableName, StringComparison.CurrentCultureIgnoreCase))
+                    return true;
+            }
+            return false;
         }
 
         private void BuildFormList(ObjectName objectName)
@@ -634,20 +652,6 @@ namespace SQL_Document_Builder
                     var reader = cmd.ExecuteReader();
                     while (reader.Read())
                     {
-                        /*
-                        ,Program
-,FormName
-,FormTitle
-,QuestionTitle
-,QuestionnaireItemId
-,QuestionnaireId
-,ParentQuestionnaireItemId
-,QiDefinition
-,LinkId
-,GroupedValue
-,CodeValue
-                         */
-
                         string l1Table = reader.GetString("L1TableName");
                         if (!L1Tables.Contains(l1Table))
                         {
@@ -672,16 +676,6 @@ namespace SQL_Document_Builder
                             MappingCategorieIDs.Add(mappingCat);
                             MappingCategories.Add(reader.GetString("CategoryName"));
                         }
-
-                        //if (reader["MappingCat"] != DBNull.Value)
-                        //{
-                        //}
-
-                        //string sourceDataType = reader.GetString("SourceDataType");
-                        //if (!SourceDataTypes.Contains(sourceDataType))
-                        //{
-                        //    SourceDataTypes.Add(sourceDataType);
-                        //}
                     }
                     reader.Close();
                     result = true;

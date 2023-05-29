@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Windows.Forms;
@@ -42,13 +43,19 @@ namespace SQL_Document_Builder
             {
                 using var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
                 conn.Open();
-                DataTable schemaTable = conn.GetSchema(System.Data.OleDb.OleDbMetaDataCollectionNames.Tables);
+                DataTable schemaTable = conn.GetSchema("Tables");   //System.Data.OleDb.OleDbMetaDataCollectionNames.Tables
                 if (schemaTable.Rows.Count > 0)
                 {
                     var dtSchemas = schemaTable.DefaultView.ToTable(true, "TABLE_SCHEMA");
+                    var schemas = new List<string>();
                     foreach (DataRow dr in dtSchemas.Rows)
                     {
-                        schemaListBox.Items.Add((string)dr[0]);
+                        schemas.Add((string)dr[0]);
+                    }
+                    schemas.Sort();
+                    foreach (var schema in schemas)
+                    {
+                        schemaListBox.Items.Add(schema);
                     }
                 }
 

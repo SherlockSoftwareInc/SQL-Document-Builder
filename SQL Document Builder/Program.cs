@@ -14,7 +14,7 @@ namespace SQL_Document_Builder
             Application.SetHighDpiMode(HighDpiMode.SystemAware);
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new MainForm());
+            Application.Run(new TableBuilderForm());
         }
     }
 }

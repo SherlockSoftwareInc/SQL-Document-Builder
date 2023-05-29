@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net5.0-windows</TargetFramework>
+    <TargetFramework>net6.0-windows</TargetFramework>
     <RootNamespace>SQL_Document_Builder</RootNamespace>
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
@@ -13,14 +13,15 @@
     <StartupObject>SQL_Document_Builder.Program</StartupObject>
     <ApplicationIcon>sql_script.ico</ApplicationIcon>
     <PackageIcon>SQL128.png</PackageIcon>
-    <AssemblyVersion>1.2.3</AssemblyVersion>
-    <FileVersion>1.2.3</FileVersion>
+    <AssemblyVersion>2.0.0</AssemblyVersion>
+    <FileVersion>2.0.0</FileVersion>
     <RepositoryUrl>https://github.com/SherlockSoftwareInc/SQL-Document-Builder</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>
     <Compile Remove="Form1.cs" />
     <Compile Remove="Form1.Designer.cs" />
+    <Compile Remove="Wiki.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -32,8 +33,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.SqlServer.SqlManagementObjects" Version="170.13.0" />
-    <PackageReference Include="NPOI.Excel" Version="2.1.1" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.5" />
   </ItemGroup>
 
