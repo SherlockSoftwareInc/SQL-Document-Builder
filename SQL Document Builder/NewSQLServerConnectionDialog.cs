@@ -143,7 +143,7 @@ namespace SQL_Document_Builder
 
                 //Driver={Sql Driver 17 for SQL Server};Server=svmsq06;Database=AFDataMart_DEV;Trusted_Connection=Yes;
 
-                var builder = new System.Data.SqlClient.SqlConnectionStringBuilder()
+                var builder = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder()
                 {
                     DataSource = serverName,
                     InitialCatalog = dbName,

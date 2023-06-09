@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System.Drawing;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -570,7 +570,7 @@ namespace SQL_Document_Builder
             _settingItems.Settings = Properties.Settings.Default.SchemaSettings;
 
             var lastConnection = Properties.Settings.Default.LastAccessConnectionIndex;
-            ConnectionMenuItem? selectedItem = null;
+            ConnectionMenuItem? selectedItem;
             if (lastConnection <= 0 || lastConnection >= _connections.Connections.Count)
             {
                 selectedItem = (ConnectionMenuItem)connectToToolStripMenuItem.DropDown.Items[0];

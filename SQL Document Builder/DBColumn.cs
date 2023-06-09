@@ -4,7 +4,7 @@ namespace SQL_Document_Builder
 {
     internal class DBColumn
     {
-        public DBColumn(System.Data.SqlClient.SqlDataReader dr)
+        public DBColumn(Microsoft.Data.SqlClient.SqlDataReader dr)
         {
             ColID = (int)dr["ORDINAL_POSITION"];
             ColumnName = (string)dr["COLUMN_NAME"];
