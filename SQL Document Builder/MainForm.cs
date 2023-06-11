@@ -27,38 +27,36 @@ namespace SQL_Document_Builder
         /// <returns></returns>
         private bool AddConnection()
         {
-            using (var dlg = new NewSQLServerConnectionDialog())
+            using var dlg = new NewSQLServerConnectionDialog();
+            if (dlg.ShowDialog() == DialogResult.OK)
             {
-                if (dlg.ShowDialog() == DialogResult.OK)
+                var connection = new SQLDatabaseConnectionItem()
                 {
-                    var connection = new SQLDatabaseConnectionItem()
-                    {
-                        Name = dlg.ConnectionName,
-                        ServerName = dlg.ServerName,
-                        Database = dlg.DatabaseName,
-                        AuthenticationType = dlg.Authentication,
-                        UserName = dlg.UserName,
-                        Password = dlg.Password,
-                        RememberPassword = dlg.RememberPassword
-                    };
+                    Name = dlg.ConnectionName,
+                    ServerName = dlg.ServerName,
+                    Database = dlg.DatabaseName,
+                    AuthenticationType = dlg.Authentication,
+                    UserName = dlg.UserName,
+                    Password = dlg.Password,
+                    RememberPassword = dlg.RememberPassword
+                };
 
-                    connection.BuildConnectionString();
-                    _connections.Add(dlg.ConnectionName, dlg.ServerName, dlg.DatabaseName,
-                        dlg.Authentication, dlg.UserName, dlg.Password,
-                        connection.ConnectionString, dlg.RememberPassword);
+                connection.BuildConnectionString();
+                _connections.Add(dlg.ConnectionName, dlg.ServerName, dlg.DatabaseName,
+                    dlg.Authentication, dlg.UserName, dlg.Password,
+                    connection.ConnectionString, dlg.RememberPassword);
 
-                    _connections.Save();
+                _connections.Save();
 
-                    var submenuitem = new ConnectionMenuItem(connection)
-                    {
-                        Name = string.Format("ConnectionMenuItem{0}", _connectionCount++),
-                        Size = new Size(300, 26),
-                    };
-                    submenuitem.Click += new System.EventHandler(this.OnConnectionToolStripMenuItem_Click);
-                    connectToToolStripMenuItem.DropDown.Items.Add(submenuitem);
+                var submenuitem = new ConnectionMenuItem(connection)
+                {
+                    Name = string.Format("ConnectionMenuItem{0}", _connectionCount++),
+                    Size = new Size(300, 26),
+                };
+                submenuitem.Click += new System.EventHandler(this.OnConnectionToolStripMenuItem_Click);
+                connectToToolStripMenuItem.DropDown.Items.Add(submenuitem);
 
-                    return true;
-                }
+                return true;
             }
             return false;
         }
