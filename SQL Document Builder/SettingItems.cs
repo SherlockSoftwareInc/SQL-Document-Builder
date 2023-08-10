@@ -91,6 +91,51 @@ namespace SQL_Document_Builder
                     return _items[i];
                 }
             }
+
+            string headText = string.Empty;
+            string footerText = string.Empty;
+
+            switch (schemaName.ToLower())
+            {
+                case "dbo":
+                    footerText = "<hr/>\r\n<div>Back to[[Data warehouse tables]]</div>\r\n<div>Back to[[Home]]</div>";
+                    break;
+
+                case "af":
+                    footerText = "<hr/>\r\n<div>Back to[[AF Database tables]]</div>\r\n<div>Back to[[Data warehouse tables]]</div>\r\n<div>Bac to[[Home]]</div>";
+                    break;
+
+                case "bccr":
+                    footerText = "<hr/>\r\n<div>Back to[[BCCR Database tables]]</div>\r\n<div>Back to[[Data warehouse tables]]</div>\r\n<div>Bac to[[Home]]</div>";
+                    break;
+
+                case "dih":
+                    footerText = "<hr/>\r\n<div>Back to[[APPROACH (HeartIS) database tables]]</div>\r\n<div>Bac to[[Home]]</div>";
+                    break;
+
+                case "joint":
+                    footerText = "<hr/>\r\n<div>Back to[[JOINT database tables]]</div>\r\n<div>Bac to[[Home]]</div>";
+                    break;
+
+                case "pcr":
+                case "pcrl1":
+                    footerText = "<hr/>\r\n<div>Back to [[PCR database tables (CVI.Source)]]</div>\r\n<div>Back to [[Data warehouse tables]]</div>";
+                    break;
+
+                case "wlv":
+                    footerText = "<hr/>\r\n<div>Back to[[WLV database tables]]</div>\r\n<div>Bac to[[Home]]</div>";
+                    break;
+
+                default:
+                    break;
+            }
+
+            if (headText.Length > 0 || footerText.Length > 0)
+            {
+                Add(schemaName, headText, footerText);
+                return GetSchemaSetting(schemaName);
+            }
+
             return null;
         }
 

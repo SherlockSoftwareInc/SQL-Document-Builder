@@ -29,67 +29,15 @@ namespace SQL_Document_Builder
                 {
                     string elementName = node.Name.ToLower();
                     string elementValue = node.InnerText;
-                    //switch (elementName)
-                    //{
-                    //    case "dbms":
-                    //        this.DBMSType = int.Parse(elementValue);
-                    //        break;
+                    ConnectionType = "SQL Server";
 
-                    //    case "name":
-                    //        this.Name = elementValue;
-                    //        break;
-
-                    //    case "server":
-                    //        this.ServerName = elementValue;
-                    //        break;
-
-                    //    case "database":
-                    //        this.Database = elementValue;
-                    //        break;
-
-                    //    case "user":
-                    //        this.UserName = elementValue;
-                    //        break;
-
-                    //    case "connectionstring":
-                    //        this.ConnectionString = ParseSecureConnectionString(elementValue);
-                    //        break;
-
-                    //    case "authentication":
-                    //        if (short.TryParse(elementValue, out short value))
-                    //        {
-                    //            if (value >= 0 && value < 7)
-                    //                this.AuthenticationType = value;
-                    //            else
-                    //                this.AuthenticationType = 0;
-                    //        }
-                    //        break;
-
-                    //    case "rememberpwd":
-                    //        this.RememberPassword = string.Compare(elementValue, "true", true) == 0;
-                    //        break;
-
-                    //    case "encryptconnection":
-                    //        this.EncryptConnection = string.Compare(elementValue, "true", true) == 0;
-                    //        break;
-
-                    //    case "trustservercertificate":
-                    //        this.TrustServerCertificate = string.Compare(elementValue, "true", true) == 0;
-                    //        break;
-
-                    //    case "pwd":
-                    //        this.Password = ParsePwd(elementValue);
-                    //        break;
-
-                    //    case "customconnection":
-                    //        this.IsCustom = true;
-                    //        break;
-
-                    //    default:
-                    //        break;
-                    //}
                     switch (elementName)
                     {
+                        case "connectiontype":
+                            if (elementValue.Length > 0)
+                                ConnectionType = elementValue;
+                            break;
+
                         case "authentication":
                             if (short.TryParse(elementValue, out short value))
                             {
@@ -155,6 +103,8 @@ namespace SQL_Document_Builder
             }
         }
 
+        public string ConnectionType { get; set; }
+
         /// <summary>
         /// Gets or sets a value indicating whether to use encrypted connections
         /// </summary>
@@ -209,7 +159,6 @@ namespace SQL_Document_Builder
 
         public void BuildConnectionString()
         {
-
             var builder = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder()
             {
                 DataSource = ServerName,
@@ -505,7 +454,7 @@ namespace SQL_Document_Builder
                 writer.WriteValue("True");
                 writer.WriteEndElement();
 
-                if(ConnectionString?.Length > 0)
+                if (ConnectionString?.Length > 0)
                 {
                     writer.WriteStartElement("ConnectionString");
                     writer.WriteValue(BuildSecureConnectionString(ConnectionString));

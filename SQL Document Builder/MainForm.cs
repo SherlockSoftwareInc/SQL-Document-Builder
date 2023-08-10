@@ -517,7 +517,7 @@ namespace SQL_Document_Builder
                     var item = connections[i];
                     //if(item.DBMSType == 1)
 
-                    if (item.ConnectionString?.Length > 1)
+                    if (item.ConnectionString?.Length > 1 && item.ConnectionType != "ODBC" )
                     {
                         var submenuitem = new ConnectionMenuItem(item)
                         {

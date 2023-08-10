@@ -1,32 +1,55 @@
-﻿using System;
+﻿using Microsoft.Data.SqlClient;
+using System;
 using System.Collections.Generic;
 using System.Data;
-using Microsoft.Data.SqlClient;
 using System.Drawing;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace SQL_Document_Builder
 {
+    /// <summary>
+    /// The table builder form.
+    /// </summary>
     public partial class TableBuilderForm : Form
     {
+        /// <summary>
+        /// The database connections.
+        /// </summary>
         private readonly SQLServerConnections _connections = new();
-        private readonly SettingItems _settingItems = new();
+
+        /// <summary>
+        /// The count of database connections.
+        /// </summary>
         private int _connectionCount = 0;
-        private SQLDatabaseConnectionItem? _selectedConnection = new SQLDatabaseConnectionItem();
+
+        /// <summary>
+        /// The selected connection.
+        /// </summary>
+        private SQLDatabaseConnectionItem? _selectedConnection = new();
+
+        /// <summary>
+        /// The tables.
+        /// </summary>
         private DataTable _tables = new();
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="TableBuilderForm"/> class.
+        /// </summary>
         public TableBuilderForm()
         {
             InitializeComponent();
         }
 
+        /// <summary>
+        /// Gets or Sets the connection.
+        /// </summary>
         public SQLDatabaseConnectionItem? Connection { get; set; }
 
         /// <summary>
-        /// Open add connection dialog and start to add a new database connection
+        /// Add database connection.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>A bool.</returns>
         private bool AddConnection()
         {
             using var dlg = new NewSQLServerConnectionDialog();
@@ -63,6 +86,12 @@ namespace SQL_Document_Builder
             return false;
         }
 
+        /// <summary>
+        /// Add list item.
+        /// </summary>
+        /// <param name="tableType">The table type.</param>
+        /// <param name="schema">The schema.</param>
+        /// <param name="tableName">The table name.</param>
         private void AddListItem(string tableType, string schema, string tableName)
         {
             ObjectName.ObjectTypeEnums objectType = (tableType == "VIEW") ? ObjectName.ObjectTypeEnums.View : ObjectName.ObjectTypeEnums.Table;
@@ -75,34 +104,29 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Append text to the bottom of the text box
+        /// Appends the line.
         /// </summary>
-        /// <param name="text"></param>
+        /// <param name="text">The text.</param>
         private void AppendLine(string text)
         {
             sqlTextBox.AppendText(text + Environment.NewLine);
         }
 
         /// <summary>
-        /// Show the batch description form
+        /// Batches the tool strip button click.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The E.</param>
         private void BatchToolStripButton_Click(object sender, EventArgs e)
         {
             using var frm = new BatchColumnDesc();
             frm.ShowDialog();
         }
 
-        private void BuildToolStripButton_Click(object sender, EventArgs e)
-        {
-            //BuildScript();
-        }
-
         /// <summary>
-        /// Change current database connection to a new connection
+        /// Change database connection.
         /// </summary>
-        /// <param name="connection">New db connection</param>
+        /// <param name="connection">The connection.</param>
         private void ChangeDBConnection(SQLDatabaseConnectionItem connection)
         {
             if (connection != null)
@@ -182,6 +206,11 @@ namespace SQL_Document_Builder
             }
         }
 
+        /// <summary>
+        /// Clipboard the to table tool strip menu item click.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The E.</param>
         private void ClipboardToTableToolStripMenuItem_Click(object sender, EventArgs e)
         {
             sqlTextBox.Text = String.Empty;
@@ -201,31 +230,59 @@ namespace SQL_Document_Builder
             statusToolStripStatusLabe.Text = "Complete!";
         }
 
+        /// <summary>
+        /// Close tool strip button click.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The E.</param>
         private void CloseToolStripButton_Click(object sender, EventArgs e)
         {
             Close();
         }
 
         /// <summary>
-        /// Handles "Copy" menu item click event: Copy the selected text in the text box
+        /// Copy tool strip menu item click.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The E.</param>
         private void CopyToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            sqlTextBox.Copy();
+            if (sender?.GetType() == typeof(TextBox))
+            {
+                TextBox textBox = (TextBox)sender;
+                textBox.Copy();
+            }
+            else if (sender?.GetType() == typeof(DBObjectDefPanel))
+            {
+                DBObjectDefPanel dBObjectDefPanel = (DBObjectDefPanel)sender;
+                dBObjectDefPanel.Copy();
+            }
         }
 
         /// <summary>
-        /// Handles "Cut" menu item click event: Cut the selected text in the text box
+        /// Cuts the tool strip menu item click.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The E.</param>
         private void CutToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            sqlTextBox.Cut();
+            if (sender?.GetType() == typeof(TextBox))
+            {
+                TextBox textBox = (TextBox)sender;
+                textBox.Cut();
+            }
+            else if (sender?.GetType() == typeof(DBObjectDefPanel))
+            {
+                DBObjectDefPanel dBObjectDefPanel = (DBObjectDefPanel)sender;
+                dBObjectDefPanel.Cut();
+            }
         }
 
+        /// <summary>
+        /// Descs the edit tool strip button click.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The E.</param>
         private void DescEditToolStripButton_Click(object sender, EventArgs e)
         {
             if (objectsListBox.SelectedItem != null)
@@ -243,6 +300,9 @@ namespace SQL_Document_Builder
             }
         }
 
+        /// <summary>
+        /// End build.
+        /// </summary>
         private void EndBuild()
         {
             sqlTextBox.Enabled = true;
@@ -256,6 +316,56 @@ namespace SQL_Document_Builder
             }
         }
 
+        /// <summary>
+        /// Returns the text for the foot section.
+        /// </summary>
+        /// <returns>A string.</returns>
+        private string FooterText()
+        {
+            string footerText = string.Empty;
+
+            if (objectsListBox.SelectedItem != null)
+            {
+                var objectName = (ObjectName)objectsListBox.SelectedItem;
+                var objectType = objectName.ObjectType == ObjectName.ObjectTypeEnums.View ? "view" : "table";
+
+                footerText = objectName.Schema.ToLower() switch
+                {
+                    "dbo" => $@"<hr/>
+<div>Back to[[Data warehouse {objectType}s]]</div>
+<div>Back to[[Home]]</div>",
+                    "af" => $@"<hr/>
+<div>Back to[[AF Database {objectType}s]]</div>
+<div>Back to[[Home]]</div>",
+                    "bccr" => $@"<hr/>
+<div>Back to[[BCCR Database {objectType}s]]</div>
+<div>Back to[[Home]]</div>",
+                    "dih" => $@"<hr/>
+<div>Back to[[APPROACH (HeartIS) database {objectType}s]]</div>
+<div>Back to[[Home]]</div>",
+                    "joint" => $@"<hr/>
+<div>Back to[[JOINT database {objectType}s]]</div>
+<div>Back to[[Home]]</div>",
+                    "pcr" or "pcrl1" => $@"<hr/>
+<div>Back to [[PCR database {objectType}s (CVI.Source)]]</div>
+<div>Back to[[Home]]</div>",
+                    "wlv" => $@"<hr/>
+<div>Back to[[WLV database {objectType}s]]</div>
+<div>Back to[[Home]]</div>",
+                    _ => $@"<hr/>
+<div>Back to[[{objectName.Schema.ToUpper()} schema {objectType}s]]</div>
+<div>Back to[[Home]]</div>",
+                };
+            }
+
+            return footerText;
+        }
+
+        /// <summary>
+        /// Function the list tool strip menu item1 click.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The E.</param>
         private void FunctionListToolStripMenuItem1_Click(object sender, EventArgs e)
         {
             sqlTextBox.Text = string.Empty;
@@ -269,7 +379,7 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Get table list from the database
+        /// Gets the table list.
         /// </summary>
         private void GetTableList()
         {
@@ -295,10 +405,29 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Generate description scripts for tables
+        /// Headers the text.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        /// <returns>A string.</returns>
+        private string HeaderText()
+        {
+            string result = string.Empty;
+            //if (headerTextBox.Text.Length > 0)
+            //{
+            //    if (objectsListBox.SelectedItem != null)
+            //    {
+            //        var objectName = (ObjectName)objectsListBox.SelectedItem;
+            //        var objectType = objectName.ObjectType == ObjectName.ObjectTypeEnums.View ? "View" : "Table";
+            //        result = headerTextBox.Text.Replace("$Table", objectType);
+            //    }
+            //}
+            return result;
+        }
+
+        /// <summary>
+        /// Object descriptions tool strip menu item click.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The E.</param>
         private async void ObjectDescriptionsToolStripMenuItem_Click(object sender, EventArgs e)
         {
             sqlTextBox.Text = String.Empty;
@@ -328,17 +457,39 @@ namespace SQL_Document_Builder
             }
         }
 
+        /// <summary>
+        /// Objects the list box double click.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The E.</param>
         private void ObjectsListBox_DoubleClick(object sender, EventArgs e)
         {
             //BuildScript();
         }
 
         /// <summary>
-        /// Handle connection menu item click event:
-        ///     Open selected connection
+        /// Objects the list box selected index changed.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The E.</param>
+        private void ObjectsListBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (objectsListBox.SelectedItem != null)
+            {
+                var objectName = (ObjectName)objectsListBox.SelectedItem;
+                definitionPanel.Open(objectName);
+            }
+            else
+            {
+                definitionPanel.Open(null);
+            }
+        }
+
+        /// <summary>
+        /// On connection tool strip menu item click.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The E.</param>
         private void OnConnectionToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             if (sender?.GetType() == typeof(ConnectionMenuItem))
@@ -357,17 +508,26 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Handles "Paste" menu item click event: Paste the text from the clipboard to the text box
+        /// Paste tool strip menu item click.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The E.</param>
         private void PasteToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            sqlTextBox.Paste();
+            if (sender?.GetType() == typeof(TextBox))
+            {
+                TextBox textBox = (TextBox)sender;
+                textBox.Paste();
+            }
+            else if (sender?.GetType() == typeof(DBObjectDefPanel))
+            {
+                DBObjectDefPanel dBObjectDefPanel = (DBObjectDefPanel)sender;
+                dBObjectDefPanel.Paste();
+            }
         }
 
         /// <summary>
-        /// Populate the object list box
+        ///
         /// </summary>
         private void Populate()
         {
@@ -424,7 +584,7 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Populate connections to menu and combobox
+        /// Populates the connections.
         /// </summary>
         private void PopulateConnections()
         {
@@ -464,6 +624,9 @@ namespace SQL_Document_Builder
             }
         }
 
+        /// <summary>
+        /// Populates the schema.
+        /// </summary>
         private void PopulateSchema()
         {
             schemaComboBox.Items.Clear();
@@ -482,12 +645,22 @@ namespace SQL_Document_Builder
             }
         }
 
+        /// <summary>
+        /// Queries the data to table tool strip menu item click.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The E.</param>
         private void QueryDataToTableToolStripMenuItem_Click(object sender, EventArgs e)
         {
             using var form = new QueryDataToTableForm();
             form.ShowDialog();
         }
 
+        /// <summary>
+        /// Save tool strip menu item click.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The E.</param>
         private async void SaveToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var oFile = new SaveFileDialog() { Filter = "Text file(*.txt)|*.txt|SQL script(*.sql)|*.sql|All files(*.*)|*.*" };
@@ -500,33 +673,48 @@ namespace SQL_Document_Builder
             }
         }
 
+        /// <summary>
+        /// Schemata the combo box selected index changed.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The E.</param>
         private void SchemaComboBox_SelectedIndexChanged(object sender, EventArgs e)
         {
             Populate();
-            var schemaSetting = _settingItems.GetSchemaSetting(schemaComboBox.Text);
-            if (schemaSetting != null)
-            {
-                headerTextBox.Text = schemaSetting.HeaderText;
-                footerTextBox.Text = schemaSetting.FooterText;
-            }
         }
 
+        /// <summary>
+        /// Search text box text changed.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The E.</param>
         private void SearchTextBox_TextChanged(object sender, EventArgs e)
         {
             Populate();
         }
 
         /// <summary>
-        /// Handles "Select all" menu item click event: Select all content in the text box
+        /// Selects the all tool strip menu item click.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The E.</param>
         private void SelectAllToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            sqlTextBox.SelectionStart = 0;
-            sqlTextBox.SelectionLength = sqlTextBox.TextLength;
+            if (sender?.GetType() == typeof(TextBox))
+            {
+                TextBox textBox = (TextBox)sender;
+                textBox.SelectAll();
+            }
+            else if (sender?.GetType() == typeof(DBObjectDefPanel))
+            {
+                DBObjectDefPanel dBObjectDefPanel = (DBObjectDefPanel)sender;
+                dBObjectDefPanel.SelectAll();
+            }
         }
 
+        /// <summary>
+        /// Start build.
+        /// </summary>
         private void StartBuild()
         {
             this.Cursor = Cursors.WaitCursor;
@@ -540,6 +728,11 @@ namespace SQL_Document_Builder
             Application.DoEvents();
         }
 
+        /// <summary>
+        /// Storeds the procedure list tool strip menu item1 click.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The E.</param>
         private void StoredProcedureListToolStripMenuItem1_Click(object sender, EventArgs e)
         {
             sqlTextBox.Text = string.Empty;
@@ -552,22 +745,29 @@ namespace SQL_Document_Builder
             }
         }
 
+        /// <summary>
+        /// Tables the builder form form closing.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The E.</param>
         private void TableBuilderForm_FormClosing(object sender, FormClosingEventArgs e)
         {
-            Properties.Settings.Default.SchemaSettings = _settingItems.Settings;
-            Properties.Settings.Default.HeaderText = headerTextBox.Text;
-            Properties.Settings.Default.FooterText = footerTextBox.Text;
-            Properties.Settings.Default.Save();
+            //Properties.Settings.Default.SchemaSettings = _settingItems.Settings;
+            //Properties.Settings.Default.Templetes = templates.TemplatesValue;
+            //Properties.Settings.Default.Save();
         }
 
+        /// <summary>
+        /// Tables the builder form load.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The E.</param>
         private void TableBuilderForm_Load(object sender, EventArgs e)
         {
             WindowState = FormWindowState.Maximized;
 
             _connections.Load();
             PopulateConnections();
-
-            _settingItems.Settings = Properties.Settings.Default.SchemaSettings;
 
             var lastConnection = Properties.Settings.Default.LastAccessConnectionIndex;
             ConnectionMenuItem? selectedItem;
@@ -597,6 +797,11 @@ namespace SQL_Document_Builder
             collapsibleSplitter1.SplitterDistance = (int)(this.Width * 0.25F);
         }
 
+        /// <summary>
+        /// Tables the definition tool strip menu item click.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The E.</param>
         private void TableDefinitionToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (objectsListBox.SelectedItem != null)
@@ -618,42 +823,11 @@ namespace SQL_Document_Builder
             }
         }
 
-        private string HeaderText()
-        {
-            string result = string.Empty;
-            if (headerTextBox.Text.Length > 0)
-            {
-                if (objectsListBox.SelectedItem != null)
-                {
-                    var objectName = (ObjectName)objectsListBox.SelectedItem;
-                    var objectType = objectName.ObjectType == ObjectName.ObjectTypeEnums.View ? "View" : "Table";
-                    result = headerTextBox.Text.Replace("$Table", objectType);
-                }
-            }
-            return result;
-        }
-
-        private string FooterText()
-        {
-            string result = string.Empty;
-            if (footerTextBox.Text.Length > 0)
-            {
-                if (objectsListBox.SelectedItem != null)
-                {
-                    var objectName = (ObjectName)objectsListBox.SelectedItem;
-                    var objectType = objectName.ObjectType == ObjectName.ObjectTypeEnums.View ? "View" : "Table";
-                    result = footerTextBox.Text.Replace("$Table", objectType);
-                }
-            }
-            return result;
-        }
-
         /// <summary>
-        /// Handles build table list menu/toolbar button click event
-        ///     Build the SharePoint script for tables in the selected schema
+        /// Table the list tool strip menu item1 click.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The E.</param>
         private async void TableListToolStripMenuItem1_Click(object sender, EventArgs e)
         {
             sqlTextBox.Text = string.Empty;
@@ -681,10 +855,10 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Handles "Table wiki" button click event: Generate wiki content of table structure
+        /// Tables the wiki tool strip button click.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The E.</param>
         private void TableWikiToolStripButton_Click(object sender, EventArgs e)
         {
             //if (objectsListBox.SelectedItem != null)
@@ -705,6 +879,11 @@ namespace SQL_Document_Builder
             //}
         }
 
+        /// <summary>
+        /// Value the list tool strip menu item click.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The E.</param>
         private void ValueListToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (objectsListBox.SelectedItem != null)
@@ -717,10 +896,10 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Handles "Value wiki" button click event: generate wiki content of a table value
+        /// Values the wiki tool strip button click.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The E.</param>
         private void ValuesWikiToolStripButton_Click(object sender, EventArgs e)
         {
             //if (objectsListBox.SelectedItem != null)
@@ -733,11 +912,10 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Handles build view list menu/toolbar button click event
-        ///     Build the SharePoint script for views in the selected schema
+        /// View the list tool strip menu item1 click.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The E.</param>
         private async void ViewListToolStripMenuItem1_Click(object sender, EventArgs e)
         {
             sqlTextBox.Text = string.Empty;
@@ -773,10 +951,10 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Generate description scripts for views
+        /// Views the descriptions tool strip menu item click.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The E.</param>
         private async void ViewsDescriptionsToolStripMenuItem_Click(object sender, EventArgs e)
         {
             sqlTextBox.Text = String.Empty;
@@ -800,33 +978,6 @@ namespace SQL_Document_Builder
                 sqlTextBox.Text = scripts;
 
                 EndBuild();
-            }
-        }
-
-        private void ObjectsListBox_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            if (objectsListBox.SelectedItem != null)
-            {
-                var objectName = (ObjectName)objectsListBox.SelectedItem;
-                definitionPanel.Open(objectName);
-            }
-            else
-            {
-                definitionPanel.Open(null);
-            }
-        }
-
-        private void SettingTextBox_Validated(object sender, EventArgs e)
-        {
-            var schemaSetting = _settingItems.GetSchemaSetting(schemaComboBox.Text);
-            if (schemaSetting != null)
-            {
-                schemaSetting.HeaderText = headerTextBox.Text;
-                schemaSetting.FooterText = footerTextBox.Text;
-            }
-            else
-            {
-                _settingItems.Add(schemaComboBox.Text, headerTextBox.Text, footerTextBox.Text);
             }
         }
     }

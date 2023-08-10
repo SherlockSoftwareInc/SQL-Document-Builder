@@ -30,7 +30,7 @@
         {
             panel1 = new System.Windows.Forms.Panel();
             tablenameLabel = new System.Windows.Forms.Label();
-            tableLabel = new System.Windows.Forms.Label();
+            tableLabel = new System.Windows.Forms.TextBox();
             columnDefDataGridView = new System.Windows.Forms.DataGridView();
             panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)columnDefDataGridView).BeginInit();
@@ -59,26 +59,31 @@
             // tableLabel
             // 
             tableLabel.BackColor = System.Drawing.Color.FromArgb(192, 255, 255);
-            tableLabel.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
             tableLabel.Dock = System.Windows.Forms.DockStyle.Bottom;
-            tableLabel.Location = new System.Drawing.Point(0, 590);
+            tableLabel.Location = new System.Drawing.Point(0, 554);
+            tableLabel.Multiline = true;
             tableLabel.Name = "tableLabel";
-            tableLabel.Size = new System.Drawing.Size(529, 36);
+            tableLabel.Size = new System.Drawing.Size(529, 72);
             tableLabel.TabIndex = 1;
             tableLabel.Click += TableLabel_Click;
+            tableLabel.Validated += TableLabel_Validated;
             // 
             // columnDefDataGridView
             // 
             columnDefDataGridView.AllowUserToAddRows = false;
             columnDefDataGridView.AllowUserToDeleteRows = false;
+            columnDefDataGridView.AutoSizeRowsMode = System.Windows.Forms.DataGridViewAutoSizeRowsMode.AllCells;
+            columnDefDataGridView.ClipboardCopyMode = System.Windows.Forms.DataGridViewClipboardCopyMode.EnableWithoutHeaderText;
             columnDefDataGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             columnDefDataGridView.Dock = System.Windows.Forms.DockStyle.Fill;
             columnDefDataGridView.Location = new System.Drawing.Point(0, 30);
             columnDefDataGridView.Name = "columnDefDataGridView";
-            columnDefDataGridView.ReadOnly = true;
-            columnDefDataGridView.Size = new System.Drawing.Size(529, 560);
-            columnDefDataGridView.TabIndex = 2;
+            columnDefDataGridView.RowTemplate.Resizable = System.Windows.Forms.DataGridViewTriState.True;
+            columnDefDataGridView.Size = new System.Drawing.Size(529, 524);
+            columnDefDataGridView.TabIndex = 1;
             columnDefDataGridView.CellClick += ColumnDefDataGridView_CellClick;
+            columnDefDataGridView.CellDoubleClick += ColumnDefDataGridView_CellDoubleClick;
+            columnDefDataGridView.CellValidated += ColumnDefDataGridView_CellValidated;
             // 
             // ColumnDefView
             // 
@@ -93,12 +98,13 @@
             panel1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)columnDefDataGridView).EndInit();
             ResumeLayout(false);
+            PerformLayout();
         }
 
         #endregion
 
         private System.Windows.Forms.Panel panel1;
-        private System.Windows.Forms.Label tableLabel;
+        private System.Windows.Forms.TextBox tableLabel;
         private System.Windows.Forms.DataGridView columnDefDataGridView;
         private System.Windows.Forms.Label tablenameLabel;
     }

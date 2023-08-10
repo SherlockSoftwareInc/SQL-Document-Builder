@@ -94,6 +94,7 @@ namespace SQL_Document_Builder
         private void DescTextBox_Validated(object sender, EventArgs e)
         {
             SaveChange();
+            //columnView.Open(TableName);
         }
 
         /// <summary>
@@ -112,6 +113,58 @@ namespace SQL_Document_Builder
                     columnView.UpdateTableDescription(descTextBox.Text);
                 }
                 _descChanged = false;
+            }
+        }
+
+        public void Copy()
+        {
+            var currentControl = this.ActiveControl;
+            if (currentControl?.GetType() == typeof(TextBox))
+            {
+                TextBox textBox = (TextBox)currentControl;
+                textBox.Copy();
+            }
+            else if (currentControl?.GetType() == typeof(ColumnDefView))
+            { 
+            }
+        }
+
+        public void Cut()
+        {
+            var currentControl = this.ActiveControl;
+            if (currentControl?.GetType() == typeof(TextBox))
+            {
+                TextBox textBox = (TextBox)currentControl;
+                textBox.Cut();
+            }
+            else if (currentControl?.GetType() == typeof(ColumnDefView))
+            {
+            }
+        }
+
+        public void Paste()
+        {
+            var currentControl = this.ActiveControl;
+            if (currentControl?.GetType() == typeof(TextBox))
+            {
+                TextBox textBox = (TextBox)currentControl;
+                textBox.Paste();
+            }
+            else if (currentControl?.GetType() == typeof(ColumnDefView))
+            {
+            }
+        }
+
+        public void SelectAll()
+        {
+            var currentControl = this.ActiveControl;
+            if (currentControl?.GetType() == typeof(TextBox))
+            {
+                TextBox textBox = (TextBox)currentControl;
+                textBox.SelectAll();
+            }
+            else if (currentControl?.GetType() == typeof(ColumnDefView))
+            {
             }
         }
 

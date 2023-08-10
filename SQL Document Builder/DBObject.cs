@@ -1,14 +1,20 @@
-﻿using System;
+﻿using Microsoft.Data.SqlClient;
+using System;
 using System.Collections.Generic;
 using System.Data;
-using Microsoft.Data.SqlClient;
 using System.Windows.Forms;
 using static SQL_Document_Builder.ObjectName;
 
 namespace SQL_Document_Builder
 {
+    /// <summary>
+    /// The DB object.
+    /// </summary>
     internal class DBObject
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DBObject"/> class.
+        /// </summary>
         public DBObject()
         {
             ObjectName = new ObjectName();
@@ -52,9 +58,9 @@ namespace SQL_Document_Builder
         private string ConnectionString { get; set; } = string.Empty;
 
         /// <summary>
-        /// Returns script for add description
+        /// Descriptions the script.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>A string.</returns>
         public string DescriptionScript()
         {
             var sb = new System.Text.StringBuilder();
@@ -78,24 +84,24 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Open a database object
+        ///
         /// </summary>
-        /// <param name="objectName"></param>
-        /// <param name="connectionString"></param>
-        /// <returns></returns>
+        /// <param name="objectName">The object name.</param>
+        /// <param name="connectionString">The connection string.</param>
+        /// <returns>A bool.</returns>
         public bool Open(ObjectName objectName, string connectionString)
         {
             return Open(objectName.Schema, objectName.Name, objectName.ObjectType, connectionString);
         }
 
         /// <summary>
-        /// Open a database object
+        ///
         /// </summary>
-        /// <param name="schemaName"></param>
-        /// <param name="tableName"></param>
-        /// <param name="objectType"></param>
-        /// <param name="connectionString"></param>
-        /// <returns></returns>
+        /// <param name="schemaName">The schema name.</param>
+        /// <param name="tableName">The table name.</param>
+        /// <param name="objectType">The object type.</param>
+        /// <param name="connectionString">The connection string.</param>
+        /// <returns>A bool.</returns>
         public bool Open(string schemaName, string tableName, ObjectTypeEnums objectType, string connectionString)
         {
             bool result = false;
@@ -156,9 +162,8 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Get descriptions of columns
+        /// Gets the column desc.
         /// </summary>
-        /// <returns></returns>
         private void GetColumnDesc()
         {
             var conn = new SqlConnection(ConnectionString);
@@ -200,10 +205,10 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Get a column object by column name
+        /// Gets the column.
         /// </summary>
-        /// <param name="columnName"></param>
-        /// <returns></returns>
+        /// <param name="columnName">The column name.</param>
+        /// <returns>A DBColumn? .</returns>
         public DBColumn? GetColumn(string columnName)
         {
             foreach (var col in Columns)
@@ -216,86 +221,205 @@ namespace SQL_Document_Builder
             return null;
         }
 
+        ///// <summary>
+        ///// Updates the column desc.
+        ///// </summary>
+        ///// <param name="columnName">The column name.</param>
+        ///// <param name="description">The description.</param>
+        //public void UpdateColumnDesc(string columnName, string description)
+        //{
+        //    if (ConnectionString.Length == 0) return;
+
+        //    DBColumn? column = GetColumn(columnName);
+
+        //    if (column != null)
+        //    {
+        //        column.Description = description;
+
+        //        var conn = new SqlConnection(ConnectionString);
+        //        try
+        //        {
+        //            var cmd = new SqlCommand("ADMIN.usp_AddColumnDescription", conn) { CommandType = CommandType.StoredProcedure };
+
+        //            cmd.Parameters.AddWithValue("@TableName", ObjectName.FullName);
+        //            cmd.Parameters.AddWithValue("@ColumnName", columnName);
+        //            cmd.Parameters.AddWithValue("@Description", description);
+
+        //            conn.Open();
+        //            cmd.ExecuteNonQuery();
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            Common.MsgBox(ex.Message, MessageBoxIcon.Error);
+        //        }
+        //        finally
+        //        {
+        //            conn.Close();
+        //        }
+        //    }
+        //}
+
         /// <summary>
-        /// Save the description of the selected column
+        /// Updates the column description.
         /// </summary>
-        public void UpdateColumnDesc(string columnName, string description)
+        /// <param name="columnName">The column name.</param>
+        /// <param name="newDescription">The new description.</param>
+        public void UpdateColumnDescription(string columnName, string newDescription)
         {
-            if (ConnectionString.Length == 0) return;
+            if (ConnectionString.Length == 0 || newDescription.Length == 0) return;
 
             DBColumn? column = GetColumn(columnName);
-            //foreach (var col in Columns)
-            //{
-            //    if (col.ColumnName == columnName)
-            //    {
-            //        column = col;
-            //        break;
-            //    }
-            //}
+
             if (column != null)
             {
-                column.Description = description;
+                column.Description = newDescription;
 
-                var conn = new SqlConnection(ConnectionString);
                 try
                 {
-                    var cmd = new SqlCommand("ADMIN.usp_AddColumnDescription", conn) { CommandType = CommandType.StoredProcedure };
+                    using SqlConnection connection = new(ConnectionString);
+                    connection.Open();
 
-                    cmd.Parameters.AddWithValue("@TableName", ObjectName.FullName);
-                    cmd.Parameters.AddWithValue("@ColumnName", columnName);
-                    cmd.Parameters.AddWithValue("@Description", description);
+                    string query = $@"
+                IF EXISTS (
+                    SELECT 1
+                    FROM sys.extended_properties AS ep
+                    JOIN sys.objects AS o ON ep.major_id = o.object_id
+                    WHERE o.name = '{ObjectName.FullName}'
+                        AND ep.name = 'MS_Description'
+                        AND ep.minor_id = (
+                            SELECT column_id
+                            FROM sys.columns
+                            WHERE object_id = o.object_id
+                                AND name = '{columnName}'
+                        )
+                )
+                BEGIN
+                    EXEC sys.sp_updateextendedproperty
+                        @name = N'MS_Description',
+                        @value = '{newDescription}',
+                        @level0type = N'SCHEMA',
+                        @level0name = '{ObjectName.Schema}',
+                        @level1type = N'TABLE',
+                        @level1name = '{ObjectName.Name}',
+                        @level2type = N'COLUMN',
+                        @level2name = '{columnName}';
+                END
+                ELSE
+                BEGIN
+                    EXEC sys.sp_addextendedproperty
+                        @name = N'MS_Description',
+                        @value = '{newDescription}',
+                        @level0type = N'SCHEMA',
+                        @level0name = '{ObjectName.Schema}',
+                        @level1type = N'TABLE',
+                        @level1name = '{ObjectName.Name}',
+                        @level2type = N'COLUMN',
+                        @level2name = '{columnName}';
+                END";
 
-                    conn.Open();
-                    cmd.ExecuteNonQuery();
+                    using SqlCommand command = new(query, connection);
+                    command.ExecuteNonQuery();
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    Common.MsgBox(ex.Message, MessageBoxIcon.Error);
-                }
-                finally
-                {
-                    conn.Close();
                 }
             }
         }
 
         /// <summary>
-        /// Save the description of the object
+        /// Updates the table desc.
         /// </summary>
-        public void UpdateTableDesc(string description)
+        /// <param name="newDescription">The description.</param>
+        public void UpdateTableDesc(string newDescription)
         {
-            Description = description;
+            Description = newDescription;
 
-            if (!ObjectName.IsEmpty() && ConnectionString.Length > 0)
+            if (!ObjectName.IsEmpty() && ConnectionString.Length > 0 && newDescription.Length > 0)
             {
-                var conn = new SqlConnection(ConnectionString);
                 try
                 {
-                    var cmd = new SqlCommand("ADMIN.usp_AddObjectDescription", conn) { CommandType = CommandType.StoredProcedure };
+                    using SqlConnection connection = new(ConnectionString);
+                    connection.Open();
 
-                    cmd.Parameters.AddWithValue("@TableName", ObjectName.FullName);
-                    cmd.Parameters.AddWithValue("@Description", description);
+                    string query = $@"
+                IF EXISTS (
+                    SELECT 1
+                    FROM sys.extended_properties AS ep
+                    JOIN sys.objects AS o ON ep.major_id = o.object_id
+                    WHERE o.name = '{ObjectName.FullName}'
+                        AND ep.name = 'MS_Description'
+                )
+                BEGIN
+                    EXEC sys.sp_updateextendedproperty
+                        @name = N'MS_Description',
+                        @value = '{newDescription}',
+                        @level0type = N'SCHEMA',
+                        @level0name = '{ObjectName.Schema}',
+                        @level1type = N'{GetObjectType()}',
+                        @level1name = '{ObjectName.Name}';
+                END
+                ELSE
+                BEGIN
+                    EXEC sys.sp_addextendedproperty
+                        @name = N'MS_Description',
+                        @value = '{newDescription}',
+                        @level0type = N'SCHEMA',
+                        @level0name = '{ObjectName.Schema}',
+                        @level1type = N'{GetObjectType()}',
+                        @level1name = '{ObjectName.Name}';
+                END";
 
-                    conn.Open();
-                    cmd.ExecuteNonQuery();
+                    using SqlCommand command = new(query, connection);
+                    command.ExecuteNonQuery();
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    Common.MsgBox(ex.Message, MessageBoxIcon.Error);
                 }
-                finally
-                {
-                    conn.Close();
-                }
+                //var conn = new SqlConnection(ConnectionString);
+                //try
+                //{
+                //    var cmd = new SqlCommand("ADMIN.usp_AddObjectDescription", conn) { CommandType = CommandType.StoredProcedure };
+
+                //    cmd.Parameters.AddWithValue("@TableName", ObjectName.FullName);
+                //    cmd.Parameters.AddWithValue("@Description", description);
+
+                //    conn.Open();
+                //    cmd.ExecuteNonQuery();
+                //}
+                //catch (Exception ex)
+                //{
+                //    Common.MsgBox(ex.Message, MessageBoxIcon.Error);
+                //}
+                //finally
+                //{
+                //    conn.Close();
+                //}
             }
         }
 
+        private string GetObjectType()
+        {
+            string objectName = ObjectName.Name;
+
+            // You can add more cases to handle different object types if needed
+            if (objectName.ToLower().StartsWith("sp_") || objectName.ToLower().StartsWith("usp_"))
+            {
+                return "PROCEDURE";
+            }
+            else if (objectName.ToLower().StartsWith("vw_") || objectName.ToLower().StartsWith("v_"))
+            {
+                return "VIEW";
+            }
+            else
+            {
+                return "TABLE";
+            }
+        }
+         
         /// <summary>
-        /// Get description of table/view from the database
+        /// Gets the table desc.
         /// </summary>
-        /// <param name="schema"></param>
-        /// <param name="table"></param>
-        /// <returns></returns>
+        /// <returns>A string.</returns>
         private string GetTableDesc()
         {
             string result = string.Empty;

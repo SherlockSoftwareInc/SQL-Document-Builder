@@ -10,6 +10,19 @@ namespace SQL_Document_Builder
         public ColumnDefView()
         {
             InitializeComponent();
+            columnDefDataGridView.EditMode = DataGridViewEditMode.EditOnKeystrokeOrF2;
+            for (int i = 0; i < columnDefDataGridView.Columns.Count; i++)
+            {
+                var column = columnDefDataGridView.Columns[i];
+                if (column.DataPropertyName == "Description")
+                {
+                    column.ReadOnly = false;
+                }
+                else
+                {
+                    column.ReadOnly = true;
+                }
+            }
         }
 
         public event EventHandler? SelectedColumnChanged;
@@ -70,6 +83,11 @@ namespace SQL_Document_Builder
             }
         }
 
+        public void Copy()
+        {
+            //Clipboard.SetDataObject(columnDefDataGridView.GetClipboardContent());
+        }
+
         /// <summary>
         /// Open database object and populate its columns' info
         /// </summary>
@@ -117,7 +135,7 @@ namespace SQL_Document_Builder
         /// <param name="description"></param>
         public void UpdateColumnDesc(string columnName, string description)
         {
-            _dbObject.UpdateColumnDesc(columnName, description);
+            _dbObject.UpdateColumnDescription(columnName, description);
         }
 
         public void UpdateTableDescription(string description)
@@ -136,7 +154,7 @@ namespace SQL_Document_Builder
             for (int i = 0; i < _dbObject.Columns.Count; i++)
             {
                 var column = _dbObject.Columns[i];
-                if(column.ColumnName == columnName) { return column.Description; }
+                if (column.ColumnName == columnName) { return column.Description; }
             }
             return string.Empty;
         }
@@ -177,6 +195,64 @@ namespace SQL_Document_Builder
         private void TableLabel_Click(object sender, EventArgs e)
         {
             TableDescSelected?.Invoke(this, EventArgs.Empty);
+        }
+
+        private void ColumnDefDataGridView_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+        {
+            EditOptionDefinition(e.RowIndex);
+        }
+
+        private void ColumnDefDataGridView_CellValidated(object sender, DataGridViewCellEventArgs e)
+        {
+            int rowIndex = e.RowIndex;
+            if (rowIndex >= 0)
+            {
+                string columnName = (string)columnDefDataGridView.Rows[rowIndex].Cells["ColumnName"].Value;
+                string columnDesc = (string)columnDefDataGridView.Rows[rowIndex].Cells["Description"].Value;
+                UpdateColumnDesc(columnName, columnDesc);
+
+                //await SaveOptionDefinition(optionCode, optionDefinition);
+            }
+        }
+
+        private void ColumnDefDataGridView_CellValueChanged(object sender, DataGridViewCellEventArgs e)
+        {
+            //changed = true;
+        }
+
+        private void EditOptionDefinition(int rowIndex)
+        {
+            if (rowIndex == -1) return;
+
+            //string optionCode = columnDefDataGridView.Rows[rowIndex].Cells["Option Code"].Value.ToString();
+            //string optionDefinition = columnDefDataGridView.Rows[rowIndex].Cells["Questionnaire Item Option Definition"].Value.ToString();
+            //string displayText = columnDefDataGridView.Rows[rowIndex].Cells["Option Display Text"].Value.ToString();
+
+            //using (EditForm form = new EditForm()
+            //{
+            //    ReadOnly = !CanEdit,
+            //    DefinitionText = optionDefinition,
+            //    DisplayText = displayText,
+            //    OptionCode = optionCode
+            //})
+            //{
+            //    if (form.ShowDialog() == DialogResult.OK)
+            //    {
+            //        if (CanEdit)
+            //        {
+            //            if (!optionDefinition.Equals(form.DefinitionText))
+            //            {
+            //                columnDefDataGridView.Rows[rowIndex].Cells["Questionnaire Item Option Definition"].Value = form.DefinitionText;
+            //                await SaveOptionDefinition(optionCode, form.DefinitionText);
+            //            }
+            //        }
+            //    }
+            //}
+        }
+
+        private void TableLabel_Validated(object sender, EventArgs e)
+        {
+            _dbObject.UpdateTableDesc(tableLabel.Text);
         }
     }
 }

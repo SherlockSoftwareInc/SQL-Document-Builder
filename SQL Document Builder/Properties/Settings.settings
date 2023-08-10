@@ -36,5 +36,8 @@ Back to [[DW: Database tables|Data warehouse tables]]
     <Setting Name="SchemaSettings" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
     </Setting>
+    <Setting Name="Templetes" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
   </Settings>
 </SettingsFile>
