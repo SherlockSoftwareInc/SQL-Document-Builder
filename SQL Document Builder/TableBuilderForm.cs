@@ -47,7 +47,7 @@ namespace SQL_Document_Builder
         public SQLDatabaseConnectionItem? Connection { get; set; }
 
         /// <summary>
-        /// Add database connection.
+        /// Add connection.
         /// </summary>
         /// <returns>A bool.</returns>
         private bool AddConnection()
@@ -104,15 +104,6 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Appends the line.
-        /// </summary>
-        /// <param name="text">The text.</param>
-        private void AppendLine(string text)
-        {
-            sqlTextBox.AppendText(text + Environment.NewLine);
-        }
-
-        /// <summary>
         /// Batches the tool strip button click.
         /// </summary>
         /// <param name="sender">The sender.</param>
@@ -124,7 +115,7 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Change database connection.
+        /// Change DB connection.
         /// </summary>
         /// <param name="connection">The connection.</param>
         private void ChangeDBConnection(SQLDatabaseConnectionItem connection)
@@ -149,27 +140,14 @@ namespace SQL_Document_Builder
                     _selectedConnection = connection;
                     serverToolStripStatusLabel.Text = "";
                     databaseToolStripStatusLabel.Text = "";
-                    //_server = connection.ServerName;
-                    //_database = connection.Database;
 
                     string? connectionString = connection?.ConnectionString?.Length == 0 ? connection.Login() : connection?.ConnectionString;
 
-                    //string errMessage;
                     if (connectionString?.Length > 0)
                     {
-                        //errMessage = dbObjects.Open(connection);
-
-                        //if (errMessage.Length > 0)
-                        //{
-                        //    connection.ConnectionString = "";
-                        //    connection.Password = "";
-                        //}
-                        //else
-                        //{
                         serverToolStripStatusLabel.Text = connection?.ServerName;
                         databaseToolStripStatusLabel.Text = connection?.Database;
                         Properties.Settings.Default.dbConnectionString = connectionString;
-                        //}
                     }
 
                     for (int i = 0; i < connectToToolStripMenuItem.DropDown.Items.Count; i++)
@@ -193,11 +171,6 @@ namespace SQL_Document_Builder
                             break;
                         }
                     }
-
-                    //if (errMessage.Length > 0)
-                    //{
-                    //    MessageBox.Show(errMessage, Properties.Resources.A005, MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    //}
 
                     GetTableList();
                     PopulateSchema();
@@ -317,7 +290,7 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Returns the text for the foot section.
+        /// Footers the text.
         /// </summary>
         /// <returns>A string.</returns>
         private string FooterText()
@@ -498,7 +471,6 @@ namespace SQL_Document_Builder
 
                 statusToolStripStatusLabe.Text = string.Format("Connect to {0}...", menuItem.ToString());
                 Cursor = Cursors.WaitCursor;
-                Application.DoEvents();
 
                 ChangeDBConnection(menuItem.Connection);
 
@@ -725,7 +697,6 @@ namespace SQL_Document_Builder
             progressBar.Maximum = 100;
             progressBar.Value = 0;
             progressBar.Visible = true;
-            Application.DoEvents();
         }
 
         /// <summary>
@@ -818,7 +789,7 @@ namespace SQL_Document_Builder
                 }
                 var builder = new SharePoint();
                 sqlTextBox.AppendText(builder.GetTableDef(objectName));
-                AppendLine(FooterText());
+                sqlTextBox.AppendText(FooterText() + Environment.NewLine);
                 EndBuild();
             }
         }
