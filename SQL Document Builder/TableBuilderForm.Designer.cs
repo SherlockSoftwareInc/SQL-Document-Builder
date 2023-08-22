@@ -116,11 +116,12 @@
             // 
             // toolStrip1
             // 
+            toolStrip1.ImageScalingSize = new System.Drawing.Size(20, 20);
             toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { tableWikiToolStripButton, valuesWikiToolStripButton, toolStripButton1, toolStripSeparator2, descEditToolStripButton, toolStripSeparator3, toolStripDropDownButton1 });
             toolStrip1.Location = new System.Drawing.Point(0, 24);
             toolStrip1.Name = "toolStrip1";
             toolStrip1.Padding = new System.Windows.Forms.Padding(0, 0, 2, 0);
-            toolStrip1.Size = new System.Drawing.Size(927, 25);
+            toolStrip1.Size = new System.Drawing.Size(927, 27);
             toolStrip1.TabIndex = 0;
             toolStrip1.Text = "toolStrip1";
             // 
@@ -129,7 +130,7 @@
             tableWikiToolStripButton.Image = (System.Drawing.Image)resources.GetObject("tableWikiToolStripButton.Image");
             tableWikiToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             tableWikiToolStripButton.Name = "tableWikiToolStripButton";
-            tableWikiToolStripButton.Size = new System.Drawing.Size(75, 22);
+            tableWikiToolStripButton.Size = new System.Drawing.Size(79, 24);
             tableWikiToolStripButton.Text = "Table Def";
             tableWikiToolStripButton.Click += TableDefinitionToolStripMenuItem_Click;
             // 
@@ -138,7 +139,7 @@
             valuesWikiToolStripButton.Image = (System.Drawing.Image)resources.GetObject("valuesWikiToolStripButton.Image");
             valuesWikiToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             valuesWikiToolStripButton.Name = "valuesWikiToolStripButton";
-            valuesWikiToolStripButton.Size = new System.Drawing.Size(81, 22);
+            valuesWikiToolStripButton.Size = new System.Drawing.Size(85, 24);
             valuesWikiToolStripButton.Text = "Values List";
             valuesWikiToolStripButton.Click += ValueListToolStripMenuItem_Click;
             // 
@@ -147,28 +148,28 @@
             toolStripButton1.Image = (System.Drawing.Image)resources.GetObject("toolStripButton1.Image");
             toolStripButton1.ImageTransparentColor = System.Drawing.Color.Magenta;
             toolStripButton1.Name = "toolStripButton1";
-            toolStripButton1.Size = new System.Drawing.Size(59, 22);
+            toolStripButton1.Size = new System.Drawing.Size(63, 24);
             toolStripButton1.Text = "Query";
             toolStripButton1.Click += QueryDataToTableToolStripMenuItem_Click;
             // 
             // toolStripSeparator2
             // 
             toolStripSeparator2.Name = "toolStripSeparator2";
-            toolStripSeparator2.Size = new System.Drawing.Size(6, 25);
+            toolStripSeparator2.Size = new System.Drawing.Size(6, 27);
             // 
             // descEditToolStripButton
             // 
             descEditToolStripButton.Image = (System.Drawing.Image)resources.GetObject("descEditToolStripButton.Image");
             descEditToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             descEditToolStripButton.Name = "descEditToolStripButton";
-            descEditToolStripButton.Size = new System.Drawing.Size(92, 22);
+            descEditToolStripButton.Size = new System.Drawing.Size(96, 24);
             descEditToolStripButton.Text = "Descriptions";
             descEditToolStripButton.Click += DescEditToolStripButton_Click;
             // 
             // toolStripSeparator3
             // 
             toolStripSeparator3.Name = "toolStripSeparator3";
-            toolStripSeparator3.Size = new System.Drawing.Size(6, 25);
+            toolStripSeparator3.Size = new System.Drawing.Size(6, 27);
             // 
             // toolStripDropDownButton1
             // 
@@ -176,7 +177,7 @@
             toolStripDropDownButton1.Image = (System.Drawing.Image)resources.GetObject("toolStripDropDownButton1.Image");
             toolStripDropDownButton1.ImageTransparentColor = System.Drawing.Color.Magenta;
             toolStripDropDownButton1.Name = "toolStripDropDownButton1";
-            toolStripDropDownButton1.Size = new System.Drawing.Size(59, 22);
+            toolStripDropDownButton1.Size = new System.Drawing.Size(63, 24);
             toolStripDropDownButton1.Text = "Wiki";
             toolStripDropDownButton1.Visible = false;
             // 
@@ -199,10 +200,10 @@
             tabControl1.Controls.Add(tabPage1);
             tabControl1.Controls.Add(tabPage2);
             tabControl1.Dock = System.Windows.Forms.DockStyle.Left;
-            tabControl1.Location = new System.Drawing.Point(0, 49);
+            tabControl1.Location = new System.Drawing.Point(0, 51);
             tabControl1.Name = "tabControl1";
             tabControl1.SelectedIndex = 0;
-            tabControl1.Size = new System.Drawing.Size(277, 426);
+            tabControl1.Size = new System.Drawing.Size(277, 421);
             tabControl1.TabIndex = 1;
             // 
             // tabPage1
@@ -215,7 +216,7 @@
             tabPage1.Location = new System.Drawing.Point(4, 24);
             tabPage1.Name = "tabPage1";
             tabPage1.Padding = new System.Windows.Forms.Padding(3);
-            tabPage1.Size = new System.Drawing.Size(269, 398);
+            tabPage1.Size = new System.Drawing.Size(269, 393);
             tabPage1.TabIndex = 0;
             tabPage1.Text = "Objects";
             tabPage1.UseVisualStyleBackColor = true;
@@ -227,7 +228,7 @@
             objectsListBox.ItemHeight = 15;
             objectsListBox.Location = new System.Drawing.Point(3, 79);
             objectsListBox.Name = "objectsListBox";
-            objectsListBox.Size = new System.Drawing.Size(263, 316);
+            objectsListBox.Size = new System.Drawing.Size(263, 311);
             objectsListBox.TabIndex = 3;
             objectsListBox.SelectedIndexChanged += ObjectsListBox_SelectedIndexChanged;
             objectsListBox.DoubleClick += ObjectsListBox_DoubleClick;
@@ -288,7 +289,7 @@
             tabPage2.Location = new System.Drawing.Point(4, 24);
             tabPage2.Name = "tabPage2";
             tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            tabPage2.Size = new System.Drawing.Size(269, 398);
+            tabPage2.Size = new System.Drawing.Size(269, 393);
             tabPage2.TabIndex = 1;
             tabPage2.Text = "Output options";
             tabPage2.UseVisualStyleBackColor = true;
@@ -405,7 +406,7 @@
             sqlTextBox.Multiline = true;
             sqlTextBox.Name = "sqlTextBox";
             sqlTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            sqlTextBox.Size = new System.Drawing.Size(342, 426);
+            sqlTextBox.Size = new System.Drawing.Size(342, 421);
             sqlTextBox.TabIndex = 7;
             // 
             // menuStrip1
@@ -642,43 +643,44 @@
             helpToolStripMenuItem.Name = "helpToolStripMenuItem";
             helpToolStripMenuItem.Size = new System.Drawing.Size(44, 20);
             helpToolStripMenuItem.Text = "&Help";
-            helpToolStripMenuItem.Visible = false;
             // 
             // contentsToolStripMenuItem
             // 
             contentsToolStripMenuItem.Name = "contentsToolStripMenuItem";
-            contentsToolStripMenuItem.Size = new System.Drawing.Size(122, 22);
+            contentsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             contentsToolStripMenuItem.Text = "&Contents";
             // 
             // indexToolStripMenuItem
             // 
             indexToolStripMenuItem.Name = "indexToolStripMenuItem";
-            indexToolStripMenuItem.Size = new System.Drawing.Size(122, 22);
+            indexToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             indexToolStripMenuItem.Text = "&Index";
             // 
             // searchToolStripMenuItem
             // 
             searchToolStripMenuItem.Name = "searchToolStripMenuItem";
-            searchToolStripMenuItem.Size = new System.Drawing.Size(122, 22);
+            searchToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             searchToolStripMenuItem.Text = "&Search";
             // 
             // toolStripSeparator7
             // 
             toolStripSeparator7.Name = "toolStripSeparator7";
-            toolStripSeparator7.Size = new System.Drawing.Size(119, 6);
+            toolStripSeparator7.Size = new System.Drawing.Size(177, 6);
             // 
             // aboutToolStripMenuItem
             // 
             aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
-            aboutToolStripMenuItem.Size = new System.Drawing.Size(122, 22);
+            aboutToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             aboutToolStripMenuItem.Text = "&About...";
+            aboutToolStripMenuItem.Click += AboutToolStripMenuItem_Click;
             // 
             // statusStrip1
             // 
+            statusStrip1.ImageScalingSize = new System.Drawing.Size(20, 20);
             statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { progressBar, statusToolStripStatusLabe, serverToolStripStatusLabel, databaseToolStripStatusLabel });
-            statusStrip1.Location = new System.Drawing.Point(0, 475);
+            statusStrip1.Location = new System.Drawing.Point(0, 472);
             statusStrip1.Name = "statusStrip1";
-            statusStrip1.Size = new System.Drawing.Size(927, 22);
+            statusStrip1.Size = new System.Drawing.Size(927, 25);
             statusStrip1.TabIndex = 13;
             statusStrip1.Text = "statusStrip1";
             // 
@@ -692,7 +694,7 @@
             // statusToolStripStatusLabe
             // 
             statusToolStripStatusLabe.Name = "statusToolStripStatusLabe";
-            statusToolStripStatusLabe.Size = new System.Drawing.Size(788, 17);
+            statusToolStripStatusLabe.Size = new System.Drawing.Size(780, 20);
             statusToolStripStatusLabe.Spring = true;
             statusToolStripStatusLabe.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
@@ -700,33 +702,33 @@
             // 
             serverToolStripStatusLabel.Image = Properties.Resources.server;
             serverToolStripStatusLabel.Name = "serverToolStripStatusLabel";
-            serverToolStripStatusLabel.Size = new System.Drawing.Size(54, 17);
+            serverToolStripStatusLabel.Size = new System.Drawing.Size(58, 20);
             serverToolStripStatusLabel.Text = "server";
             // 
             // databaseToolStripStatusLabel
             // 
             databaseToolStripStatusLabel.Image = Properties.Resources.database;
             databaseToolStripStatusLabel.Name = "databaseToolStripStatusLabel";
-            databaseToolStripStatusLabel.Size = new System.Drawing.Size(70, 17);
+            databaseToolStripStatusLabel.Size = new System.Drawing.Size(74, 20);
             databaseToolStripStatusLabel.Text = "database";
             // 
             // scriptPanel
             // 
             scriptPanel.Controls.Add(sqlTextBox);
             scriptPanel.Dock = System.Windows.Forms.DockStyle.Fill;
-            scriptPanel.Location = new System.Drawing.Point(277, 49);
+            scriptPanel.Location = new System.Drawing.Point(277, 51);
             scriptPanel.Name = "scriptPanel";
-            scriptPanel.Size = new System.Drawing.Size(342, 426);
+            scriptPanel.Size = new System.Drawing.Size(342, 421);
             scriptPanel.TabIndex = 17;
             // 
             // definitionPanel
             // 
             definitionPanel.ConnectionString = "";
             definitionPanel.Dock = System.Windows.Forms.DockStyle.Right;
-            definitionPanel.Location = new System.Drawing.Point(627, 49);
+            definitionPanel.Location = new System.Drawing.Point(627, 51);
             definitionPanel.Margin = new System.Windows.Forms.Padding(6);
             definitionPanel.Name = "definitionPanel";
-            definitionPanel.Size = new System.Drawing.Size(300, 426);
+            definitionPanel.Size = new System.Drawing.Size(300, 421);
             definitionPanel.TabIndex = 16;
             definitionPanel.TableDescription = "";
             // 
@@ -738,9 +740,9 @@
             collapsibleSplitter1.ControlToHide = definitionPanel;
             collapsibleSplitter1.Dock = System.Windows.Forms.DockStyle.Right;
             collapsibleSplitter1.ExpandParentForm = false;
-            collapsibleSplitter1.Location = new System.Drawing.Point(619, 49);
+            collapsibleSplitter1.Location = new System.Drawing.Point(619, 51);
             collapsibleSplitter1.Name = "collapsibleSplitter1";
-            collapsibleSplitter1.Size = new System.Drawing.Size(8, 426);
+            collapsibleSplitter1.Size = new System.Drawing.Size(8, 421);
             collapsibleSplitter1.SplitterDistance = 300;
             collapsibleSplitter1.TabIndex = 18;
             collapsibleSplitter1.TabStop = false;

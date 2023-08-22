@@ -98,23 +98,23 @@ namespace SQL_Document_Builder
             switch (schemaName.ToLower())
             {
                 case "dbo":
-                    footerText = "<hr/>\r\n<div>Back to[[Data warehouse tables]]</div>\r\n<div>Back to[[Home]]</div>";
+                    footerText = "<hr/>\r\n<div>Back to[[Data warehouse tables]]</div>\r\n<div>Back to [[Home]]</div>";
                     break;
 
                 case "af":
-                    footerText = "<hr/>\r\n<div>Back to[[AF Database tables]]</div>\r\n<div>Back to[[Data warehouse tables]]</div>\r\n<div>Bac to[[Home]]</div>";
+                    footerText = "<hr/>\r\n<div>Back to[[AF Database tables]]</div>\r\n<div>Back to[[Data warehouse tables]]</div>\r\n<div>Bac to [[Home]]</div>";
                     break;
 
                 case "bccr":
-                    footerText = "<hr/>\r\n<div>Back to[[BCCR Database tables]]</div>\r\n<div>Back to[[Data warehouse tables]]</div>\r\n<div>Bac to[[Home]]</div>";
+                    footerText = "<hr/>\r\n<div>Back to[[BCCR Database tables]]</div>\r\n<div>Back to[[Data warehouse tables]]</div>\r\n<div>Bac to [[Home]]</div>";
                     break;
 
                 case "dih":
-                    footerText = "<hr/>\r\n<div>Back to[[APPROACH (HeartIS) database tables]]</div>\r\n<div>Bac to[[Home]]</div>";
+                    footerText = "<hr/>\r\n<div>Back to[[APPROACH (HeartIS) database tables]]</div>\r\n<div>Bac to [[Home]]</div>";
                     break;
 
                 case "joint":
-                    footerText = "<hr/>\r\n<div>Back to[[JOINT database tables]]</div>\r\n<div>Bac to[[Home]]</div>";
+                    footerText = "<hr/>\r\n<div>Back to[[JOINT database tables]]</div>\r\n<div>Bac to [[Home]]</div>";
                     break;
 
                 case "pcr":
@@ -123,7 +123,7 @@ namespace SQL_Document_Builder
                     break;
 
                 case "wlv":
-                    footerText = "<hr/>\r\n<div>Back to[[WLV database tables]]</div>\r\n<div>Bac to[[Home]]</div>";
+                    footerText = "<hr/>\r\n<div>Back to[[WLV database tables]]</div>\r\n<div>Bac to [[Home]]</div>";
                     break;
 
                 default:

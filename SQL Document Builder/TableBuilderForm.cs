@@ -220,14 +220,14 @@ namespace SQL_Document_Builder
         /// <param name="e">The E.</param>
         private void CopyToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (sender?.GetType() == typeof(TextBox))
+            if (ActiveControl?.GetType() == typeof(TextBox))
             {
-                TextBox textBox = (TextBox)sender;
+                TextBox textBox = (TextBox)ActiveControl;
                 textBox.Copy();
             }
-            else if (sender?.GetType() == typeof(DBObjectDefPanel))
+            else if (ActiveControl?.GetType() == typeof(DBObjectDefPanel))
             {
-                DBObjectDefPanel dBObjectDefPanel = (DBObjectDefPanel)sender;
+                DBObjectDefPanel dBObjectDefPanel = (DBObjectDefPanel)ActiveControl;
                 dBObjectDefPanel.Copy();
             }
         }
@@ -239,14 +239,14 @@ namespace SQL_Document_Builder
         /// <param name="e">The E.</param>
         private void CutToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (sender?.GetType() == typeof(TextBox))
+            if (ActiveControl?.GetType() == typeof(TextBox))
             {
-                TextBox textBox = (TextBox)sender;
+                TextBox textBox = (TextBox)ActiveControl;
                 textBox.Cut();
             }
-            else if (sender?.GetType() == typeof(DBObjectDefPanel))
+            else if (ActiveControl?.GetType() == typeof(DBObjectDefPanel))
             {
-                DBObjectDefPanel dBObjectDefPanel = (DBObjectDefPanel)sender;
+                DBObjectDefPanel dBObjectDefPanel = (DBObjectDefPanel)ActiveControl;
                 dBObjectDefPanel.Cut();
             }
         }
@@ -305,29 +305,29 @@ namespace SQL_Document_Builder
                 footerText = objectName.Schema.ToLower() switch
                 {
                     "dbo" => $@"<hr/>
-<div>Back to[[Data warehouse {objectType}s]]</div>
-<div>Back to[[Home]]</div>",
+<div>Back to [[Data warehouse {objectType}s]]</div>
+<div>Back to [[Home]]</div>",
                     "af" => $@"<hr/>
-<div>Back to[[AF Database {objectType}s]]</div>
-<div>Back to[[Home]]</div>",
+<div>Back to [[AF Database {objectType}s]]</div>
+<div>Back to [[Home]]</div>",
                     "bccr" => $@"<hr/>
-<div>Back to[[BCCR Database {objectType}s]]</div>
-<div>Back to[[Home]]</div>",
+<div>Back to [[BCCR Database {objectType}s]]</div>
+<div>Back to [[Home]]</div>",
                     "dih" => $@"<hr/>
-<div>Back to[[APPROACH (HeartIS) database {objectType}s]]</div>
-<div>Back to[[Home]]</div>",
+<div>Back to [[APPROACH (HeartIS) database {objectType}s]]</div>
+<div>Back to [[Home]]</div>",
                     "joint" => $@"<hr/>
-<div>Back to[[JOINT database {objectType}s]]</div>
-<div>Back to[[Home]]</div>",
+<div>Back to [[JOINT database {objectType}s]]</div>
+<div>Back to [[Home]]</div>",
                     "pcr" or "pcrl1" => $@"<hr/>
 <div>Back to [[PCR database {objectType}s (CVI.Source)]]</div>
-<div>Back to[[Home]]</div>",
+<div>Back to [[Home]]</div>",
                     "wlv" => $@"<hr/>
-<div>Back to[[WLV database {objectType}s]]</div>
-<div>Back to[[Home]]</div>",
+<div>Back to [[WLV database {objectType}s]]</div>
+<div>Back to [[Home]]</div>",
                     _ => $@"<hr/>
-<div>Back to[[{objectName.Schema.ToUpper()} schema {objectType}s]]</div>
-<div>Back to[[Home]]</div>",
+<div>Back to [[{objectName.Schema.ToUpper()} schema {objectType}s]]</div>
+<div>Back to [[Home]]</div>",
                 };
             }
 
@@ -486,14 +486,14 @@ namespace SQL_Document_Builder
         /// <param name="e">The E.</param>
         private void PasteToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (sender?.GetType() == typeof(TextBox))
+            if (ActiveControl?.GetType() == typeof(TextBox))
             {
-                TextBox textBox = (TextBox)sender;
+                TextBox textBox = (TextBox)ActiveControl;
                 textBox.Paste();
             }
-            else if (sender?.GetType() == typeof(DBObjectDefPanel))
+            else if (ActiveControl?.GetType() == typeof(DBObjectDefPanel))
             {
-                DBObjectDefPanel dBObjectDefPanel = (DBObjectDefPanel)sender;
+                DBObjectDefPanel dBObjectDefPanel = (DBObjectDefPanel)ActiveControl;
                 dBObjectDefPanel.Paste();
             }
         }
@@ -672,14 +672,14 @@ namespace SQL_Document_Builder
         /// <param name="e">The E.</param>
         private void SelectAllToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (sender?.GetType() == typeof(TextBox))
+            if (ActiveControl?.GetType() == typeof(TextBox))
             {
-                TextBox textBox = (TextBox)sender;
+                TextBox textBox = (TextBox)ActiveControl;
                 textBox.SelectAll();
             }
-            else if (sender?.GetType() == typeof(DBObjectDefPanel))
+            else if (ActiveControl?.GetType() == typeof(DBObjectDefPanel))
             {
-                DBObjectDefPanel dBObjectDefPanel = (DBObjectDefPanel)sender;
+                DBObjectDefPanel dBObjectDefPanel = (DBObjectDefPanel)ActiveControl;
                 dBObjectDefPanel.SelectAll();
             }
         }
@@ -950,6 +950,13 @@ namespace SQL_Document_Builder
 
                 EndBuild();
             }
+        }
+
+        private void AboutToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // show about box
+            using var dlg = new AboutBox();
+            dlg.ShowDialog();
         }
     }
 }

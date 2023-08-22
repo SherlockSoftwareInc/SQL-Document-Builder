@@ -264,7 +264,7 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="columnName">The column name.</param>
         /// <param name="newDescription">The new description.</param>
-        public void UpdateColumnDescription(string columnName, string newDescription)
+        public void UpdateColumnDescription(string columnName, string newDescription, bool isView)
         {
             if (ConnectionString.Length == 0 || newDescription.Length == 0) return;
 
@@ -273,6 +273,8 @@ namespace SQL_Document_Builder
             if (column != null)
             {
                 column.Description = newDescription;
+                string newDesc = newDescription.Replace("'", "''");
+                string tableType = isView ? "VIEW" : "TABLE";
 
                 try
                 {
@@ -296,10 +298,10 @@ namespace SQL_Document_Builder
                 BEGIN
                     EXEC sys.sp_updateextendedproperty
                         @name = N'MS_Description',
-                        @value = '{newDescription}',
+                        @value = '{newDesc}',
                         @level0type = N'SCHEMA',
                         @level0name = '{ObjectName.Schema}',
-                        @level1type = N'TABLE',
+                        @level1type = N'{tableType}',
                         @level1name = '{ObjectName.Name}',
                         @level2type = N'COLUMN',
                         @level2name = '{columnName}';
@@ -308,10 +310,10 @@ namespace SQL_Document_Builder
                 BEGIN
                     EXEC sys.sp_addextendedproperty
                         @name = N'MS_Description',
-                        @value = '{newDescription}',
+                        @value = '{newDesc}',
                         @level0type = N'SCHEMA',
                         @level0name = '{ObjectName.Schema}',
-                        @level1type = N'TABLE',
+                        @level1type = N'{tableType}',
                         @level1name = '{ObjectName.Name}',
                         @level2type = N'COLUMN',
                         @level2name = '{columnName}';
@@ -336,6 +338,7 @@ namespace SQL_Document_Builder
 
             if (!ObjectName.IsEmpty() && ConnectionString.Length > 0 && newDescription.Length > 0)
             {
+                string newDesc = newDescription.Replace("'", "''");
                 try
                 {
                     using SqlConnection connection = new(ConnectionString);
@@ -352,7 +355,7 @@ namespace SQL_Document_Builder
                 BEGIN
                     EXEC sys.sp_updateextendedproperty
                         @name = N'MS_Description',
-                        @value = '{newDescription}',
+                        @value = '{newDesc}',
                         @level0type = N'SCHEMA',
                         @level0name = '{ObjectName.Schema}',
                         @level1type = N'{GetObjectType()}',
@@ -362,7 +365,7 @@ namespace SQL_Document_Builder
                 BEGIN
                     EXEC sys.sp_addextendedproperty
                         @name = N'MS_Description',
-                        @value = '{newDescription}',
+                        @value = '{newDesc}',
                         @level0type = N'SCHEMA',
                         @level0name = '{ObjectName.Schema}',
                         @level1type = N'{GetObjectType()}',
