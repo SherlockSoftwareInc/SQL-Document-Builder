@@ -952,11 +952,53 @@ namespace SQL_Document_Builder
             }
         }
 
+        /// <summary>
+        /// Abouts the tool strip menu item_ click.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
         private void AboutToolStripMenuItem_Click(object sender, EventArgs e)
         {
             // show about box
             using var dlg = new AboutBox();
             dlg.ShowDialog();
+        }
+
+        /// <summary>
+        /// Assistants the content tool strip menu item_ click.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private async void AssistantContentToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            sqlTextBox.Text = string.Empty;
+
+            try
+            {
+                StartBuild();
+
+                var progress = new Progress<int>(value =>
+                {
+                    progressBar.Value = value;
+                });
+
+                MSSchemaContentBuilder builder = new();
+
+                string contents = String.Empty;
+                await Task.Run(() =>
+                {
+                    contents = builder.SchemaContent(Properties.Settings.Default.dbConnectionString, progress);
+                });
+
+                sqlTextBox.Text = contents;
+
+                EndBuild();
+            }
+            catch (Exception ex)
+            {
+                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
+            }
+
         }
     }
 }
