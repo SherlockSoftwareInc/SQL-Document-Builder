@@ -118,5 +118,17 @@ namespace SQL_Document_Builder.Properties {
                 this["SchemaSettings"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string Templetes {
+            get {
+                return ((string)(this["Templetes"]));
+            }
+            set {
+                this["Templetes"] = value;
+            }
+        }
     }
 }

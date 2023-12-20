@@ -3,13 +3,35 @@ using System.Windows.Forms;
 
 namespace SQL_Document_Builder
 {
+    /// <summary>
+    /// The column def view.
+    /// </summary>
     public partial class ColumnDefView : UserControl
     {
+        /// <summary>
+        /// The db object.
+        /// </summary>
         private DBObject _dbObject = new();
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="ColumnDefView"/> class.
+        /// </summary>
         public ColumnDefView()
         {
             InitializeComponent();
+            columnDefDataGridView.EditMode = DataGridViewEditMode.EditOnKeystrokeOrF2;
+            for (int i = 0; i < columnDefDataGridView.Columns.Count; i++)
+            {
+                var column = columnDefDataGridView.Columns[i];
+                if (column.DataPropertyName == "Description")
+                {
+                    column.ReadOnly = false;
+                }
+                else
+                {
+                    column.ReadOnly = true;
+                }
+            }
         }
 
         public event EventHandler? SelectedColumnChanged;
@@ -43,12 +65,12 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Gets table name
         /// </summary>
-        public string? TableName => _dbObject?.TableName;
+        public string? TableFullName => _dbObject?.ObjectName.FullName;
 
         /// <summary>
         /// Gets table name
         /// </summary>
-        public string? TableFullName => _dbObject?.ObjectName.FullName;
+        public string? TableName => _dbObject?.TableName;
 
         /// <summary>
         /// Gets object type
@@ -56,7 +78,7 @@ namespace SQL_Document_Builder
         public ObjectName.ObjectTypeEnums? TableType => _dbObject?.TableType;
 
         /// <summary>
-        /// Clear the control
+        ///
         /// </summary>
         public void Clear()
         {
@@ -71,10 +93,68 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Open database object and populate its columns' info
+        /// Columns the description.
         /// </summary>
-        /// <param name="schema"></param>
-        /// <param name="table"></param>
+        /// <param name="columnName">The column name.</param>
+        /// <returns>A string.</returns>
+        public string ColumnDescription(string columnName)
+        {
+            for (int i = 0; i < _dbObject.Columns.Count; i++)
+            {
+                var column = _dbObject.Columns[i];
+                if (column.ColumnName == columnName) { return column.Description; }
+            }
+            return string.Empty;
+        }
+
+        /// <summary>
+        ///
+        /// </summary>
+        public void Copy()
+        {
+            //Clipboard.SetDataObject(columnDefDataGridView.GetClipboardContent());
+            var currentControl = this.ActiveControl;
+            if (currentControl?.GetType() == typeof(TextBox))
+            {
+                TextBox textBox = (TextBox)currentControl;
+                textBox.Copy();
+            }
+            else if (currentControl?.GetType() == typeof(Label))
+            {
+                Label label = (Label)currentControl;
+                Clipboard.SetText(label.Text);
+            }
+            else if (currentControl?.GetType() == typeof(DataGridView))
+            {
+                DataGridView defView = (DataGridView)currentControl;
+                var value = defView.CurrentCell?.Value.ToString();
+                if (!string.IsNullOrEmpty(value))
+                {
+                    Clipboard.SetText(value);
+                }
+            }
+        }
+
+        /// <summary>
+        ///
+        /// </summary>
+        public void Cut()
+        {
+            var currentControl = this.ActiveControl;
+            if (currentControl?.GetType() == typeof(TextBox))
+            {
+                TextBox textBox = (TextBox)currentControl;
+                if (textBox.Enabled)
+                {
+                    textBox.Cut();
+                }
+            }
+        }
+
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="objectName">The object name.</param>
         public void Open(ObjectName? objectName)
         {
             Clear();
@@ -111,15 +191,48 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Set the description of a column
+        ///
         /// </summary>
-        /// <param name="columnName"></param>
-        /// <param name="description"></param>
-        public void UpdateColumnDesc(string columnName, string description)
+        public void Paste()
         {
-            _dbObject.UpdateColumnDesc(columnName, description);
+            var currentControl = this.ActiveControl;
+            if (currentControl?.GetType() == typeof(TextBox))
+            {
+                TextBox textBox = (TextBox)currentControl;
+                if (textBox.Enabled)
+                {
+                    textBox.Paste();
+                }
+            }
         }
 
+        /// <summary>
+        /// Selects the all.
+        /// </summary>
+        public void SelectAll()
+        {
+            var currentControl = this.ActiveControl;
+            if (currentControl?.GetType() == typeof(TextBox))
+            {
+                TextBox textBox = (TextBox)currentControl;
+                textBox.SelectAll();
+            }
+        }
+
+        /// <summary>
+        /// Updates the column desc.
+        /// </summary>
+        /// <param name="columnName">The column name.</param>
+        /// <param name="description">The description.</param>
+        public void UpdateColumnDesc(string columnName, string description, bool isView)
+        {
+            _dbObject.UpdateColumnDescription(columnName, description, isView);
+        }
+
+        /// <summary>
+        /// Updates the table description.
+        /// </summary>
+        /// <param name="description">The description.</param>
         public void UpdateTableDescription(string description)
         {
             _dbObject.UpdateTableDesc(description);
@@ -127,22 +240,7 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Gets description of a specified column
-        /// </summary>
-        /// <param name="columnName"></param>
-        /// <returns></returns>
-        public string ColumnDescription(string columnName)
-        {
-            for (int i = 0; i < _dbObject.Columns.Count; i++)
-            {
-                var column = _dbObject.Columns[i];
-                if(column.ColumnName == columnName) { return column.Description; }
-            }
-            return string.Empty;
-        }
-
-        /// <summary>
-        /// Change selected row
+        /// Change row selection.
         /// </summary>
         private void ChangeRowSelection()
         {
@@ -159,24 +257,105 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Handle data grid cell click event:
-        ///     Tell host that selected column changed
+        /// Columns the def data grid view cell click.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The E.</param>
         private void ColumnDefDataGridView_CellClick(object sender, DataGridViewCellEventArgs e)
         {
             ChangeRowSelection();
         }
 
         /// <summary>
-        /// Handles table description lable click event: Raise an event to indicate table description has been selected
+        /// Columns the def data grid view cell double click.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The E.</param>
+        private void ColumnDefDataGridView_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+        {
+            EditOptionDefinition(e.RowIndex);
+        }
+
+        /// <summary>
+        /// Columns the def data grid view cell validated.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The E.</param>
+        private void ColumnDefDataGridView_CellValidated(object sender, DataGridViewCellEventArgs e)
+        {
+            int rowIndex = e.RowIndex;
+            if (rowIndex >= 0)
+            {
+                string columnName = (string)columnDefDataGridView.Rows[rowIndex].Cells["ColumnName"].Value;
+                string columnDesc = (string)columnDefDataGridView.Rows[rowIndex].Cells["Description"].Value;
+                UpdateColumnDesc(columnName, columnDesc, _dbObject.TableType == ObjectName.ObjectTypeEnums.View);
+
+                //await SaveOptionDefinition(optionCode, optionDefinition);
+            }
+        }
+
+        /// <summary>
+        /// Columns the def data grid view cell value changed.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The E.</param>
+        private void ColumnDefDataGridView_CellValueChanged(object sender, DataGridViewCellEventArgs e)
+        {
+            //changed = true;
+        }
+
+        /// <summary>
+        /// Edits the option definition.
+        /// </summary>
+        /// <param name="rowIndex">The row index.</param>
+        private void EditOptionDefinition(int rowIndex)
+        {
+            if (rowIndex == -1) return;
+
+            //string optionCode = columnDefDataGridView.Rows[rowIndex].Cells["Option Code"].Value.ToString();
+            //string optionDefinition = columnDefDataGridView.Rows[rowIndex].Cells["Questionnaire Item Option Definition"].Value.ToString();
+            //string displayText = columnDefDataGridView.Rows[rowIndex].Cells["Option Display Text"].Value.ToString();
+
+            //using (EditForm form = new EditForm()
+            //{
+            //    ReadOnly = !CanEdit,
+            //    DefinitionText = optionDefinition,
+            //    DisplayText = displayText,
+            //    OptionCode = optionCode
+            //})
+            //{
+            //    if (form.ShowDialog() == DialogResult.OK)
+            //    {
+            //        if (CanEdit)
+            //        {
+            //            if (!optionDefinition.Equals(form.DefinitionText))
+            //            {
+            //                columnDefDataGridView.Rows[rowIndex].Cells["Questionnaire Item Option Definition"].Value = form.DefinitionText;
+            //                await SaveOptionDefinition(optionCode, form.DefinitionText);
+            //            }
+            //        }
+            //    }
+            //}
+        }
+
+        /// <summary>
+        /// Table the label click.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The E.</param>
         private void TableLabel_Click(object sender, EventArgs e)
         {
             TableDescSelected?.Invoke(this, EventArgs.Empty);
+        }
+
+        /// <summary>
+        /// Table the label validated.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The E.</param>
+        private void TableLabel_Validated(object sender, EventArgs e)
+        {
+            _dbObject.UpdateTableDesc(tableLabel.Text);
         }
     }
 }

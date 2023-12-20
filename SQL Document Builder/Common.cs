@@ -1,13 +1,62 @@
-﻿using System;
+﻿using Microsoft.Data.SqlClient;
+using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
 using System.Windows.Forms;
 
 namespace SQL_Document_Builder
 {
+    /// <summary>
+    /// The common class.
+    /// </summary>
     internal class Common
     {
+        /// <summary>
+        /// Get the database object type.
+        /// </summary>
+        /// <param name="connectionString">The connection string.</param>
+        /// <param name="objectSchema">The object schema.</param>
+        /// <param name="objectName">The object name.</param>
+        /// <returns>A string.</returns>
+        static string GetObjectType(string connectionString, ObjectName objectName)
+        {
+            using SqlConnection connection = new(connectionString);
+            connection.Open();
+
+            string query = $@"
+                SELECT TABLE_TYPE
+                FROM INFORMATION_SCHEMA.TABLES
+                WHERE TABLE_SCHEMA = '{objectName.Schema}' AND TABLE_NAME = '{objectName.Name}';";
+
+            using (SqlCommand command = new(query, connection))
+            {
+                string? objectType = command.ExecuteScalar() as string;
+
+                if (string.IsNullOrEmpty(objectType))
+                {
+                    return "Unknown"; // Object not found or not a table/view
+                }
+                else if (objectType == "BASE TABLE")
+                {
+                    return "Table";
+                }
+                else if (objectType == "VIEW")
+                {
+                    return "View";
+                }
+                else
+                {
+                    return "Other"; // Handle other object types as needed
+                }
+            }
+        }
+
+
+        /// <summary>
+        /// Gets the table description.
+        /// </summary>
+        /// <param name="objectName">The object name.</param>
+        /// <returns>A string.</returns>
         public static string GetTableDescription(ObjectName objectName)
         {
             string result = string.Empty;
@@ -38,6 +87,12 @@ namespace SQL_Document_Builder
             return result;
         }
 
+        /// <summary>
+        /// Gets the column description.
+        /// </summary>
+        /// <param name="objectName">The object name.</param>
+        /// <param name="column">The column.</param>
+        /// <returns>A string.</returns>
         public static string GetColumnDescription(ObjectName objectName, string column)
         {
             string result = string.Empty;
@@ -76,12 +131,12 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Get description of a column
+        /// Gets the column desc.
         /// </summary>
-        /// <param name="schema">object schema</param>
-        /// <param name="table">object name</param>
-        /// <param name="column">column name</param>
-        /// <returns></returns>
+        /// <param name="schema">The schema.</param>
+        /// <param name="table">The table.</param>
+        /// <param name="column">The column.</param>
+        /// <returns>A string.</returns>
         public static string GetColumnDesc(string schema, string table, string column)
         {
             string result = string.Empty;
@@ -111,45 +166,45 @@ namespace SQL_Document_Builder
             return result;
         }
 
-        ///// <summary>
-        ///// Show input box
-        ///// </summary>
-        ///// <param name="prompt">Prompt text</param>
-        ///// <param name="title">Title of the input box</param>
-        ///// <param name="defaultValue">default value</param>
-        ///// <returns></returns>
-        //public static string InputBox(string prompt, string title, string defaultValue)
-        //{
-        //    using (var dlg = new InputBox()
-        //    {
-        //        Title = title,
-        //        Prompt = prompt,
-        //        Default = defaultValue
-        //    })
-        //    {
-        //        if (dlg.ShowDialog() == DialogResult.OK)
-        //        {
-        //            return dlg.InputText;
-        //        }
-        //    }
-        //    return "";
-        //}
+        /// <summary>
+        /// Input the box.
+        /// </summary>
+        /// <param name="prompt">The prompt.</param>
+        /// <param name="title">The title.</param>
+        /// <param name="defaultValue">The default value.</param>
+        /// <returns>A string.</returns>
+        public static string InputBox(string prompt, string title = "", string defaultValue = "")
+        {
+            using (var dlg = new InputBox()
+            {
+                Title = title.Length == 0 ? Application.ProductName : title,
+                Prompt = prompt,
+                Default = defaultValue
+            })
+            {
+                if (dlg.ShowDialog() == DialogResult.OK)
+                {
+                    return dlg.InputText;
+                }
+            }
+            return "";
+        }
 
         /// <summary>
-        /// Show a message box
+        /// Msg the box.
         /// </summary>
-        /// <param name="message"></param>
-        /// <param name="icon"></param>
+        /// <param name="message">The message.</param>
+        /// <param name="icon">The icon.</param>
         public static void MsgBox(string message, MessageBoxIcon icon)
         {
             MessageBox.Show(message, "Message", MessageBoxButtons.OK, icon);
         }
 
         /// <summary>
-        /// Remove quota from the object name
+        /// Remove quota.
         /// </summary>
-        /// <param name="text"></param>
-        /// <returns></returns>
+        /// <param name="text">The text.</param>
+        /// <returns>A string.</returns>
         public static string RemoveQuota(string text)
         {
             if (text.StartsWith("[") && text.EndsWith("]"))
@@ -162,6 +217,11 @@ namespace SQL_Document_Builder
             }
         }
 
+        /// <summary>
+        /// Queries the data to HTML table.
+        /// </summary>
+        /// <param name="sql">The sql.</param>
+        /// <returns>A string.</returns>
         public static string QueryDataToHTMLTable(string sql)
         {
             var sb = new System.Text.StringBuilder();
@@ -194,10 +254,12 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Returns HTML script for the data in the data table
+        /// Data the table to HTML.
         /// </summary>
-        /// <param name="dt"></param>
-        /// <returns></returns>
+        /// <param name="dt">The dt.</param>
+        /// <param name="margin">The margin.</param>
+        /// <param name="fontSize">The font size.</param>
+        /// <returns>A string.</returns>
         public static string DataTableToHTML(DataTable dt, int margin = 1, Single fontSize = 14)
         {
             var sb = new System.Text.StringBuilder();
@@ -239,8 +301,10 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Get table list from the database
+        /// Get the object list.
         /// </summary>
+        /// <param name="objType">The obj type.</param>
+        /// <returns><![CDATA[List<ObjectName>]]></returns>
         public static List<ObjectName> GetObjectList(ObjectName.ObjectTypeEnums objType)
         {
             var tables = new List<ObjectName>();
@@ -265,7 +329,6 @@ namespace SQL_Document_Builder
                         });
                     }
                 }
-
             }
             catch (Exception ex)
             {
@@ -312,13 +375,19 @@ namespace SQL_Document_Builder
         //    return tables;
         //}
 
-        public static List<string> GetTableColumns(ObjectName tableName) { 
+        /// <summary>
+        /// Gets the table columns.
+        /// </summary>
+        /// <param name="tableName">The table name.</param>
+        /// <returns><![CDATA[List<string>]]></returns>
+        public static List<string> GetTableColumns(ObjectName tableName)
+        {
             var columns = new List<string>();
 
             var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
             try
             {
-                var cmd = new SqlCommand(string .Format("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '{0}' AND TABLE_NAME = '{1}'", tableName.Schema, tableName.Name), conn) { CommandType = CommandType.Text };
+                var cmd = new SqlCommand(string.Format("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '{0}' AND TABLE_NAME = '{1}'", tableName.Schema, tableName.Name), conn) { CommandType = CommandType.Text };
                 conn.Open();
                 var reader = cmd.ExecuteReader();
                 while (reader.Read())

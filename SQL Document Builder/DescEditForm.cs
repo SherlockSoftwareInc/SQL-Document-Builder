@@ -95,7 +95,7 @@ namespace SQL_Document_Builder
             {
                 if (columnNameLabel.Text.Length > 0)
                 {
-                    columnView.UpdateColumnDesc(columnNameLabel.Text, descTextBox.Text);
+                    columnView.UpdateColumnDesc(columnNameLabel.Text, descTextBox.Text, columnView.TableType == ObjectName.ObjectTypeEnums.View);
                 }
                 else
                 {

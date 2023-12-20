@@ -29,30 +29,13 @@ namespace SQL_Document_Builder
                 {
                     string elementName = node.Name.ToLower();
                     string elementValue = node.InnerText;
+                    ConnectionType = "SQL Server";
+
                     switch (elementName)
                     {
-                        case "dbms":
-                            this.DBMSType = int.Parse(elementValue);
-                            break;
-
-                        case "name":
-                            this.Name = elementValue;
-                            break;
-
-                        case "server":
-                            this.ServerName = elementValue;
-                            break;
-
-                        case "database":
-                            this.Database = elementValue;
-                            break;
-
-                        case "user":
-                            this.UserName = elementValue;
-                            break;
-
-                        case "connectionstring":
-                            this.ConnectionString = ParseSecureConnectionString(elementValue);
+                        case "connectiontype":
+                            if (elementValue.Length > 0)
+                                ConnectionType = elementValue;
                             break;
 
                         case "authentication":
@@ -65,24 +48,47 @@ namespace SQL_Document_Builder
                             }
                             break;
 
-                        case "rememberpwd":
-                            this.RememberPassword = string.Compare(elementValue, "true", true) == 0;
-                            break;
-
-                        case "encryptconnection":
-                            this.EncryptConnection = string.Compare(elementValue, "true", true) == 0;
-                            break;
-
-                        case "trustservercertificate":
-                            this.TrustServerCertificate = string.Compare(elementValue, "true", true) == 0;
-                            break;
-
-                        case "pwd":
-                            this.Password = ParsePwd(elementValue);
+                        case "connectionstring":
+                            this.ConnectionString = ParseSecureConnectionString(elementValue);
                             break;
 
                         case "customconnection":
                             this.IsCustom = true;
+                            break;
+
+                        case "database":
+                            this.Database = elementValue;
+                            break;
+
+                        case "encryptconnection":
+                            EncryptConnection = elementValue.Equals("true", StringComparison.CurrentCultureIgnoreCase);
+                            break;
+
+                        case "name":
+                            this.Name = elementValue;
+                            break;
+
+                        case "server":
+                            this.ServerName = elementValue;
+                            break;
+
+                        case "TrustServerCertificate":
+                            TrustServerCertificate = elementValue.Equals("true", StringComparison.CurrentCultureIgnoreCase);
+                            break;
+
+                        case "user":
+                            this.UserName = elementValue;
+                            break;
+
+                        case "rememberpwd":
+                            if (string.Compare(elementValue, "true", true) == 0)
+                                this.RememberPassword = true;
+                            else
+                                this.RememberPassword = false;
+                            break;
+
+                        case "pwd":
+                            this.Password = ParsePwd(elementValue);
                             break;
 
                         default:
@@ -96,6 +102,8 @@ namespace SQL_Document_Builder
                 }
             }
         }
+
+        public string ConnectionType { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether to use encrypted connections
@@ -151,79 +159,48 @@ namespace SQL_Document_Builder
 
         public void BuildConnectionString()
         {
-            //bool integratedSecurity = (AuthenticationType == 0);
-            //var builder = new System.Data.SqlClient.SqlConnectionStringBuilder()
-            //{
-            //    DataSource = ServerName,
-            //    InitialCatalog = Database,
-            //    IntegratedSecurity = integratedSecurity
-            //};
-            //if (!integratedSecurity)
-            //{
-            //    builder.UserID = UserName;
-            //    builder.Password = Password;
-            //}
-            //SqlConnectionStringBuilder builder = new()
-            //{
-            //    //Driver = "Sql Driver 17 for SQL Server"
-            //};
-
-            var builder = new System.Data.SqlClient.SqlConnectionStringBuilder()
+            var builder = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder()
             {
                 DataSource = ServerName,
                 InitialCatalog = Database,
-                //IntegratedSecurity = true,
-                Encrypt = true,
-                TrustServerCertificate = true,
+                Encrypt = EncryptConnection,
+                TrustServerCertificate = TrustServerCertificate
             };
 
-            //builder.Add("Server", "phsa-csbc-pcr-prod-sql-server.database.windows.net");
-            //builder.Add("Database", "pcr_analytic");
-            //builder.Add("Authentication", "ActiveDirectoryInteractive");
-            //builder.Add("UID", UserName);
-            //builder.Add("PWD", Password);
-            //builder.Add("Server", ServerName);
-            //builder.Add("Database", Database);
             switch (AuthenticationType)
             {
-                case 0:     //Windows Authentication
+                case 1: //SQL Server authentication
+                    builder.Authentication = Microsoft.Data.SqlClient.SqlAuthenticationMethod.SqlPassword;
+                    break;
+
+                case 2: //Active Directory Password Authentication
+                    builder.Authentication = Microsoft.Data.SqlClient.SqlAuthenticationMethod.ActiveDirectoryPassword;
+                    break;
+
+                case 3: //Active Directory Integrated Authentication
+                    builder.Authentication = Microsoft.Data.SqlClient.SqlAuthenticationMethod.ActiveDirectoryIntegrated;
+                    break;
+
+                case 4: //Active Directory Interactive Authentication
+                    builder.Authentication = Microsoft.Data.SqlClient.SqlAuthenticationMethod.ActiveDirectoryInteractive;
+                    break;
+
+                case 5: //Service Principal Authentication
+                    builder.Authentication = Microsoft.Data.SqlClient.SqlAuthenticationMethod.ActiveDirectoryServicePrincipal;
+                    break;
+
+                case 6: //Managed Service Identity Authentication
+                    builder.Authentication = Microsoft.Data.SqlClient.SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow;
+                    break;
+
+                default:    //Windows Authentication
                     builder.IntegratedSecurity = true;
-                    //builder.Add("Trusted_Connection", "yes");
-                    break;
-
-                case 1:     //SQL Server Authentication
-                    break;
-
-                //case 2:     //Active Directory - Interactive
-                //    builder.Authentication = SqlAuthenticationMethod.ActiveDirectoryInteractive;
-                //    //builder.Add("Authentication", "ActiveDirectoryInteractive");
-                //    break;
-
-                //case 3:     //Active Directory - Integrated
-                //    builder.Authentication = SqlAuthenticationMethod.ActiveDirectoryIntegrated;
-                //    //builder.Add("Authentication", "ActiveDirectoryIntegrated");
-                //    break;
-
-                //case 4:     //Active Directory - Password
-                //    builder.Authentication = SqlAuthenticationMethod.ActiveDirectoryPassword;
-                //    //builder.Add("Authentication", "ActiveDirectoryPassword");
-                //    break;
-
-                //case 5:     //Active Directory -Service Principal
-                //    builder.Authentication = SqlAuthenticationMethod.ActiveDirectoryServicePrincipal;
-                //    //builder.Add("Authentication", "ActiveDirectoryServicePrincipal");
-                //    break;
-
-                default:
+                    builder.TrustServerCertificate = true;
                     break;
             }
 
-            if (UserName?.Trim().Length > 0)
-                builder.UserID = UserName;
-            //builder.Add("UID", UserName);
-            if (Password?.Trim().Length > 0)
-                builder.Password = Password;
-            //builder.Add("PWD", Password);
+            if (UserName?.Length > 0) builder.UserID = UserName;
+            if (Password?.Length > 0) builder.Password = Password;
 
             ConnectionString = builder.ConnectionString;
         }
@@ -312,7 +289,7 @@ namespace SQL_Document_Builder
                     //if (dlg.Password?.Trim().Length > 0)
                     //    builder.Add("PWD", dlg.Password);
 
-                    var builder = new System.Data.SqlClient.SqlConnectionStringBuilder()
+                    var builder = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder()
                     {
                         DataSource = dlg.ServerName,
                         InitialCatalog = dlg.DatabaseName,
@@ -320,32 +297,35 @@ namespace SQL_Document_Builder
                         TrustServerCertificate = true,
                     };
 
-                    switch (AuthenticationType)
+                    switch (dlg.Authentication)
                     {
-                        case 0:     //Windows Authentication
+                        case 1: //SQL Server authentication
+                            builder.Authentication = Microsoft.Data.SqlClient.SqlAuthenticationMethod.SqlPassword;
+                            break;
+
+                        case 2: //Active Directory Password Authentication
+                            builder.Authentication = Microsoft.Data.SqlClient.SqlAuthenticationMethod.ActiveDirectoryPassword;
+                            break;
+
+                        case 3: //Active Directory Integrated Authentication
+                            builder.Authentication = Microsoft.Data.SqlClient.SqlAuthenticationMethod.ActiveDirectoryIntegrated;
+                            break;
+
+                        case 4: //Active Directory Interactive Authentication
+                            builder.Authentication = Microsoft.Data.SqlClient.SqlAuthenticationMethod.ActiveDirectoryInteractive;
+                            break;
+
+                        case 5: //Service Principal Authentication
+                            builder.Authentication = Microsoft.Data.SqlClient.SqlAuthenticationMethod.ActiveDirectoryServicePrincipal;
+                            break;
+
+                        case 6: //Managed Service Identity Authentication
+                            builder.Authentication = Microsoft.Data.SqlClient.SqlAuthenticationMethod.ActiveDirectoryDeviceCodeFlow;
+                            break;
+
+                        default:    //Windows Authentication
                             builder.IntegratedSecurity = true;
-                            break;
-
-                        case 1:     //SQL Server Authentication
-                            break;
-
-                        //case 2:     //Active Directory - Interactive
-                        //    builder.Authentication = SqlAuthenticationMethod.ActiveDirectoryInteractive;
-                        //    break;
-
-                        //case 3:     //Active Directory - Integrated
-                        //    builder.Authentication = SqlAuthenticationMethod.ActiveDirectoryIntegrated;
-                        //    break;
-
-                        //case 4:     //Active Directory - Password
-                        //    builder.Authentication = SqlAuthenticationMethod.ActiveDirectoryPassword;
-                        //    break;
-
-                        //case 5:     //Active Directory -Service Principal
-                        //    builder.Authentication = SqlAuthenticationMethod.ActiveDirectoryServicePrincipal;
-                        //    break;
-
-                        default:
+                            builder.TrustServerCertificate = true;
                             break;
                     }
 
@@ -464,10 +444,6 @@ namespace SQL_Document_Builder
         {
             writer.WriteStartElement("ConnectionItem");
 
-            writer.WriteStartElement("DBMS");
-            writer.WriteValue(DBMSType.ToString());
-            writer.WriteEndElement();
-
             writer.WriteStartElement("Name");
             writer.WriteValue(Name);
             writer.WriteEndElement();
@@ -478,7 +454,7 @@ namespace SQL_Document_Builder
                 writer.WriteValue("True");
                 writer.WriteEndElement();
 
-                if(ConnectionString!= null)
+                if (ConnectionString?.Length > 0)
                 {
                     writer.WriteStartElement("ConnectionString");
                     writer.WriteValue(BuildSecureConnectionString(ConnectionString));
@@ -509,7 +485,7 @@ namespace SQL_Document_Builder
                     writer.WriteValue(RememberPassword.ToString());
                     writer.WriteEndElement();
 
-                    if (RememberPassword && Password != null)
+                    if (RememberPassword)
                     {
                         writer.WriteStartElement("Pwd");
                         writer.WriteValue(EncryptPwd(Password));
@@ -525,7 +501,7 @@ namespace SQL_Document_Builder
                     writer.WriteEndElement();
                 }
 
-                if (ConnectionString != null)
+                if (ConnectionString?.Length > 0)
                 {
                     writer.WriteStartElement("ConnectionString");
                     writer.WriteValue(BuildSecureConnectionString(ConnectionString));

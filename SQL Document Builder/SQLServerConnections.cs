@@ -11,7 +11,7 @@ namespace SQL_Document_Builder
      /// </summary>
     public class SQLServerConnections
     {
-        readonly private List<SQLDatabaseConnectionItem> _connections = new();
+        private readonly List<SQLDatabaseConnectionItem> _connections = new();
         private string _tmpFile = "";   // a temporary file to save the changes during the editing
 
         /// <summary>
@@ -92,6 +92,7 @@ namespace SQL_Document_Builder
             if (index >= 0 && index < _connections.Count)
                 _connections.RemoveAt(index);
         }
+
         /// <summary>
         /// Save connection settings to file
         /// </summary>
@@ -115,13 +116,13 @@ namespace SQL_Document_Builder
         private static string FilePath()
         {
             string dataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Sherlock Software Inc");
-            dataPath = Path.Combine(dataPath, "SQLDocBuilder");
+            dataPath = Path.Combine(dataPath, "Octofy");
             if (!Directory.Exists(dataPath))
             {
                 Directory.CreateDirectory(dataPath);
             }
 
-            return Path.Combine(dataPath, "Connections.dat");
+            return Path.Combine(dataPath, "Connections2.dat");
         }
 
         /// <summary>
@@ -148,7 +149,7 @@ namespace SQL_Document_Builder
                                 if (string.Compare(sNodeName, "ConnectionItem", true) == 0)
                                 {
                                     var connectionItem = new SQLDatabaseConnectionItem(node);
-                                    if (connectionItem?.Name?.Length > 0)
+                                    if (connectionItem?.Name?.Length > 0 && !connectionItem.ConnectionType.Equals("ODBC", StringComparison.OrdinalIgnoreCase))
                                         _connections.Add(connectionItem);
                                 }
                             }

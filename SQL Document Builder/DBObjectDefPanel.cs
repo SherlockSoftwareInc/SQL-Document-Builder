@@ -3,15 +3,69 @@ using System.Windows.Forms;
 
 namespace SQL_Document_Builder
 {
+    /// <summary>
+    /// The DB object def panel.
+    /// </summary>
     public partial class DBObjectDefPanel : UserControl
     {
+        /// <summary>
+        /// The desc changed.
+        /// </summary>
         private bool _descChanged = false;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DBObjectDefPanel"/> class.
+        /// </summary>
         public DBObjectDefPanel()
         {
             InitializeComponent();
         }
 
+        /// <summary>
+        /// Object name to open
+        /// </summary>
+        private ObjectName? TableName { get; set; }
+
+        /// <summary>
+        /// Perform copy
+        /// </summary>
+        public void Copy()
+        {
+            var currentControl = this.ActiveControl;
+            if (currentControl?.GetType() == typeof(TextBox))
+            {
+                TextBox textBox = (TextBox)currentControl;
+                textBox.Copy();
+            }
+            else if (currentControl?.GetType() == typeof(ColumnDefView))
+            {
+                ColumnDefView defView = (ColumnDefView)currentControl;
+                defView.Copy();
+            }
+        }
+
+        /// <summary>
+        /// Perform cut
+        /// </summary>
+        public void Cut()
+        {
+            var currentControl = this.ActiveControl;
+            if (currentControl?.GetType() == typeof(TextBox))
+            {
+                TextBox textBox = (TextBox)currentControl;
+                textBox.Cut();
+            }
+            else if (currentControl?.GetType() == typeof(ColumnDefView))
+            {
+                ColumnDefView defView = (ColumnDefView)currentControl;
+                defView.Cut();
+            }
+        }
+
+        /// <summary>
+        /// Open a database object
+        /// </summary>
+        /// <param name="tableName">The table name.</param>
         public void Open(ObjectName? tableName)
         {
             SaveChange();
@@ -21,17 +75,46 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Object name to open
+        /// Perform paste
         /// </summary>
-        private ObjectName? TableName { get; set; }
+        public void Paste()
+        {
+            var currentControl = this.ActiveControl;
+            if (currentControl?.GetType() == typeof(TextBox))
+            {
+                TextBox textBox = (TextBox)currentControl;
+                textBox.Paste();
+            }
+            else if (currentControl?.GetType() == typeof(ColumnDefView))
+            {
+                ColumnDefView defView = (ColumnDefView)currentControl;
+                defView.Paste();
+            }
+        }
 
         /// <summary>
-        /// Handles column view selected column change event:
-        ///     1. Save changes
-        ///     2. Show selected column name and description in the edit panel
+        /// Perform Select all.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        public void SelectAll()
+        {
+            var currentControl = this.ActiveControl;
+            if (currentControl?.GetType() == typeof(TextBox))
+            {
+                TextBox textBox = (TextBox)currentControl;
+                textBox.SelectAll();
+            }
+            else if (currentControl?.GetType() == typeof(ColumnDefView))
+            {
+                ColumnDefView defView = (ColumnDefView)currentControl;
+                defView.SelectAll();
+            }
+        }
+
+        /// <summary>
+        /// Columns the def view1 selected column changed.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The E.</param>
         private void ColumnDefView1_SelectedColumnChanged(object sender, EventArgs e)
         {
             SaveChange();
@@ -53,6 +136,11 @@ namespace SQL_Document_Builder
             }
         }
 
+        /// <summary>
+        /// Columns the view table desc selected.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The E.</param>
         private void ColumnView_TableDescSelected(object sender, EventArgs e)
         {
             titleLabel.Text = (columnView.TableType == ObjectName.ObjectTypeEnums.View ? "View: " : "Table: ") + columnView.TableFullName;
@@ -61,43 +149,49 @@ namespace SQL_Document_Builder
             _descChanged = false;
         }
 
+        /// <summary>
+        /// DB the object def panel size changed.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The E.</param>
         private void DBObjectDefPanel_SizeChanged(object sender, EventArgs e)
         {
-            if(panel1.Width> 34)             descTextBox.Width = panel1.Width - 24;
+            if (panel1.Width > 34) descTextBox.Width = panel1.Width - 24;
         }
 
         /// <summary>
-        /// Handles form closing event: Ensure change has been saved
+        /// Descs the edit form form closing.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The E.</param>
         private void DescEditForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             SaveChange();
         }
 
         /// <summary>
-        /// Handles description text box text change event: set change indicator
+        /// Descs the text box text changed.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The E.</param>
         private void DescTextBox_TextChanged(object sender, EventArgs e)
         {
             _descChanged = true;
         }
 
         /// <summary>
-        /// Handles description text box validated event: Save the change
+        /// Descs the text box validated.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The E.</param>
         private void DescTextBox_Validated(object sender, EventArgs e)
         {
             SaveChange();
+            //columnView.Open(TableName);
         }
 
         /// <summary>
-        /// Save the change
+        /// Save the changes.
         /// </summary>
         private void SaveChange()
         {
@@ -105,7 +199,7 @@ namespace SQL_Document_Builder
             {
                 if (columnNameLabel.Text.Length > 0)
                 {
-                    columnView.UpdateColumnDesc(columnNameLabel.Text, descTextBox.Text);
+                    columnView.UpdateColumnDesc(columnNameLabel.Text, descTextBox.Text, columnView.TableType == ObjectName.ObjectTypeEnums.View);
                 }
                 else
                 {
@@ -114,6 +208,5 @@ namespace SQL_Document_Builder
                 _descChanged = false;
             }
         }
-
     }
 }
