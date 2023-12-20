@@ -27,6 +27,16 @@ namespace SQL_Document_Builder
         private string _connectionString = string.Empty;
 
         /// <summary>
+        /// Gets or sets a value indicating whether include table description.
+        /// </summary>
+        public bool IncludeTableDescription { get; set; } = false;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether include column description.
+        /// </summary>
+        public bool IncludeColumnDescription { get; set; } = false;
+
+        /// <summary>
         /// Build and returns schemata contents.
         /// </summary>
         /// <param name="connectionString">The connection string.</param>
@@ -57,7 +67,7 @@ namespace SQL_Document_Builder
                 using SqlDataAdapter da = new(cmd);
                 da.Fill(ds);
 
-                if(ds?.Tables.Count > 0)
+                if (ds?.Tables.Count > 0)
                 {
                     for (int i = 0; i < ds.Tables[0].Rows.Count; i++)
                     {
@@ -74,7 +84,7 @@ namespace SQL_Document_Builder
                         // get the table type
                         string tableType = row["TABLE_TYPE"].ToString();
                         // build the content for the table or view
-                        BuildTableContent(schemaName, tableName, tableType, i+1);
+                        BuildTableContent(schemaName, tableName, tableType, i + 1);
                     }
                 }
 
@@ -112,34 +122,7 @@ namespace SQL_Document_Builder
                 }
             }
 
-
-
             return sbSchemaContent.ToString();
-        }
-
-        /// <summary>
-        /// Builds the table content.
-        /// </summary>
-        /// <param name="schemaName">The schema name.</param>
-        /// <param name="tableName">The table name.</param>
-        /// <param name="tableType">The table type.</param>
-        private void BuildTableContent(string schemaName, string tableName, string tableType, int index)
-        {
-            var objectType = tableType == "BASE TABLE" ? "Table" : "View";
-            string tableDesc =  $"{index}.{objectType} [{schemaName}].[{tableName}]";
-            string tableDescription = GetTableDescription(schemaName, tableName);
-            if (!string.IsNullOrEmpty(tableDescription))
-            {
-                tableDesc += $": {tableDescription}";
-            }
-            else
-            { 
-                tableDesc += ":";
-            }
-
-            sbSchemaContent.AppendLine(tableDesc);
-
-            BuildTableColumnContent(schemaName, tableName);
         }
 
         /// <summary>
@@ -166,7 +149,11 @@ namespace SQL_Document_Builder
                     // get the column type
                     string columnType = dr.GetString(2);
                     // get the column description
-                    string columnDescription = GetColumnDescription(schemaName, tableName, columnName);
+                    string columnDescription = string.Empty;
+                    if (IncludeColumnDescription)
+                    {
+                        columnDescription = GetColumnDescription(schemaName, tableName, columnName);
+                    }
                     // get the column foreign key
                     string columnForeignKey = foreignKeys.GetForeignKey(schemaName, tableName, columnName);
                     // get the column primary key
@@ -182,7 +169,8 @@ namespace SQL_Document_Builder
                         // add the foreign key if any
                         if (!string.IsNullOrEmpty(columnForeignKey))
                         {
-                            content += $", foreign Key references '{columnForeignKey}')";
+                            //content += $", foreign Key references '{columnForeignKey}')";
+                            content += $", references to '{columnForeignKey}')";
                         }
                         else
                         {
@@ -212,7 +200,38 @@ namespace SQL_Document_Builder
                     conn.Close();
                 }
             }
+        }
 
+        /// <summary>
+        /// Builds the table content.
+        /// </summary>
+        /// <param name="schemaName">The schema name.</param>
+        /// <param name="tableName">The table name.</param>
+        /// <param name="tableType">The table type.</param>
+        private void BuildTableContent(string schemaName, string tableName, string tableType, int index)
+        {
+            var objectType = tableType == "BASE TABLE" ? "Table" : "View";
+            string tableDesc = $"{index}.{objectType} [{schemaName}].[{tableName}]";
+            string tableDescription = GetTableDescription(schemaName, tableName);
+            if (IncludeTableDescription)
+            {
+                if (!string.IsNullOrEmpty(tableDescription))
+                {
+                    tableDesc += $": {tableDescription}";
+                }
+                else
+                {
+                    tableDesc += ":";
+                }
+            }
+            else
+            {
+                tableDesc += ":";
+            }
+
+            sbSchemaContent.AppendLine(tableDesc);
+
+            BuildTableColumnContent(schemaName, tableName);
         }
 
         /// <summary>
@@ -278,7 +297,7 @@ namespace SQL_Document_Builder
 
                 if (dr.Read())
                 {
-                    if(!dr.IsDBNull(0))
+                    if (!dr.IsDBNull(0))
                         tableDesc = dr.GetString(0);
                 }
 
@@ -297,9 +316,7 @@ namespace SQL_Document_Builder
                 }
             }
 
-            return tableDesc.Replace("\r\n"," ");
+            return tableDesc.Replace("\r\n", " ");
         }
-
-
     }
 }
