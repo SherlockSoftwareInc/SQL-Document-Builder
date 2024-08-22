@@ -1,6 +1,7 @@
-﻿using System;
-using System.Data;
+﻿using DarkModeForms;
 using Microsoft.Data.SqlClient;
+using System;
+using System.Data;
 using System.Drawing;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -16,9 +17,13 @@ namespace SQL_Document_Builder
         private string? _server = string.Empty;
         private readonly System.Text.StringBuilder _script = new();
 
+        private DarkModeCS DM = null;
+        private bool IsDarkMode = false;
+
         public MainForm()
         {
             InitializeComponent();
+            //DM = new DarkModeCS(this);
         }
 
         /// <summary>
@@ -415,6 +420,8 @@ namespace SQL_Document_Builder
         /// <param name="e"></param>
         private void MainForm_Load(object sender, EventArgs e)
         {
+            IsDarkMode = DM.IsDarkMode;
+
             WindowState = FormWindowState.Maximized;
 
             _connections.Load();
@@ -517,7 +524,7 @@ namespace SQL_Document_Builder
                     var item = connections[i];
                     //if(item.DBMSType == 1)
 
-                    if (item.ConnectionString?.Length > 1 && item.ConnectionType != "ODBC" )
+                    if (item.ConnectionString?.Length > 1 && item.ConnectionType != "ODBC")
                     {
                         var submenuitem = new ConnectionMenuItem(item)
                         {
@@ -1358,7 +1365,6 @@ namespace SQL_Document_Builder
 
         private void customizeToolStripMenuItem_Click(object sender, EventArgs e)
         {
-
         }
 
         ///// <summary>
