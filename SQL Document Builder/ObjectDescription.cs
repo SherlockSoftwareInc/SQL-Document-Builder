@@ -3,8 +3,18 @@ using System.Text;
 
 namespace SQL_Document_Builder
 {
+    /// <summary>
+    /// The object description.
+    /// </summary>
     internal class ObjectDescription
     {
+        /// <summary>
+        /// Builds the descriptions for all objects in a specified schame.
+        /// </summary>
+        /// <param name="objType">The obj type.</param>
+        /// <param name="schemaName">The schema name.</param>
+        /// <param name="progress">The progress.</param>
+        /// <returns>A string.</returns>
         public static string BuildObjectDescriptions(ObjectName.ObjectTypeEnums objType, string schemaName, IProgress<int> progress)
         {
             var sb = new StringBuilder();
@@ -57,5 +67,48 @@ namespace SQL_Document_Builder
             }
             return sb.ToString();
         }
+
+        /// <summary>
+        /// Builds the object description.
+        /// </summary>
+        /// <param name="schemaName">The schema name.</param>
+        /// <param name="tableName">The table name.</param>
+        /// <returns>A string.</returns>
+        public static string BuildObjectDescription(ObjectName objectName)
+        {
+            bool spaceAdded = false;
+            var sb = new StringBuilder();
+
+            var dbTable = new DBObject();
+            if (dbTable.Open(objectName, Properties.Settings.Default.dbConnectionString))
+            {
+                var tableDesc = dbTable.Description;
+                if (tableDesc.Length > 0)
+                {
+                    //sb.AppendLine(string.Format("-- VIEW: {0}.{1}", table.Schema, table.Name));
+                    sb.AppendLine();
+                    spaceAdded = true;
+                    sb.AppendLine($"EXEC ADMIN.usp_AddObjectDescription '{objectName.Schema}.{objectName.Name}', N'{tableDesc.Replace("'", "''")}';");
+                }
+            }
+
+            foreach (var column in dbTable.Columns)
+            {
+                var colDesc = column.Description;
+                if (colDesc.Length > 0)
+                {
+                    if (!spaceAdded)
+                    {
+                        //sb.AppendLine(string.Format("-- VIEW: {0}.{1}", table.Schema, table.Name));
+                        sb.AppendLine();
+                        spaceAdded = true;
+                    }
+                    sb.AppendLine($"EXEC ADMIN.usp_AddColumnDescription '{objectName.Schema}.{objectName.Name}', '{column.ColumnName}', N'{colDesc.Replace("'", "''")}';");
+                }
+            }
+
+            return sb.ToString();
+        }
+
     }
 }

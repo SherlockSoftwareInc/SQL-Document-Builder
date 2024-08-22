@@ -100,6 +100,8 @@
             serverToolStripStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             databaseToolStripStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             sqlTextBox = new System.Windows.Forms.TextBox();
+            toolStripSeparator12 = new System.Windows.Forms.ToolStripSeparator();
+            queryToINSERTToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             menuStrip1.SuspendLayout();
             toolStrip1.SuspendLayout();
             statusStrip1.SuspendLayout();
@@ -391,7 +393,7 @@
             // 
             // toolsToolStripMenuItem
             // 
-            toolsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { customizeToolStripMenuItem, optionsToolStripMenuItem });
+            toolsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { customizeToolStripMenuItem, optionsToolStripMenuItem, toolStripSeparator12, queryToINSERTToolStripMenuItem });
             toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
             toolsToolStripMenuItem.Size = new System.Drawing.Size(46, 20);
             toolsToolStripMenuItem.Text = "&Tools";
@@ -402,7 +404,7 @@
             customizeToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             customizeToolStripMenuItem.Text = "&Customize";
             customizeToolStripMenuItem.Visible = false;
-            customizeToolStripMenuItem.Click += customizeToolStripMenuItem_Click;
+            customizeToolStripMenuItem.Click += CustomizeToolStripMenuItem_Click;
             // 
             // optionsToolStripMenuItem
             // 
@@ -624,6 +626,18 @@
             sqlTextBox.Size = new System.Drawing.Size(897, 426);
             sqlTextBox.TabIndex = 3;
             // 
+            // toolStripSeparator12
+            // 
+            toolStripSeparator12.Name = "toolStripSeparator12";
+            toolStripSeparator12.Size = new System.Drawing.Size(177, 6);
+            // 
+            // queryToINSERTToolStripMenuItem
+            // 
+            queryToINSERTToolStripMenuItem.Name = "queryToINSERTToolStripMenuItem";
+            queryToINSERTToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            queryToINSERTToolStripMenuItem.Text = "Query to INSERT";
+            queryToINSERTToolStripMenuItem.Click += QueryToINSERTToolStripMenuItem_Click;
+            // 
             // MainForm
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -722,5 +736,7 @@
         private System.Windows.Forms.ToolStripMenuItem viewsDescriptionsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem outputDescriptionsToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator11;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator12;
+        private System.Windows.Forms.ToolStripMenuItem queryToINSERTToolStripMenuItem;
     }
 }
