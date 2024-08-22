@@ -998,7 +998,39 @@ namespace SQL_Document_Builder
             {
                 Common.MsgBox(ex.Message, MessageBoxIcon.Error);
             }
+        }
 
+        /// <summary>
+        /// Handles "Query to INSERT" strip menu item_ click.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void QueryInsertToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using var form = new QueryDataToTableForm()
+            {
+                InsertStatement = true
+            };
+            form.ShowDialog();
+        }
+
+        /// <summary>
+        /// Handles the "Table description" tool strip menu item click:
+        /// generate the table description and column descriptions.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void TableDescriptionToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var objectName = (ObjectName)objectsListBox.SelectedItem;
+            if (!string.IsNullOrEmpty(objectName?.Name))
+            {
+                sqlTextBox.Text = ObjectDescription.BuildObjectDescription(objectName);
+                if(!string.IsNullOrEmpty(sqlTextBox.Text))
+                {
+                    Clipboard.SetText(sqlTextBox.Text);
+                }
+            }
         }
     }
 }

@@ -254,6 +254,100 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Queries the data and generate the insert statements.
+        /// </summary>
+        /// <param name="sql">The sql.</param>
+        /// <returns>A string.</returns>
+        public static string QueryDataToInsertStatement(string sql)
+        {
+            var sb = new System.Text.StringBuilder();
+
+            var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+            try
+            {
+                var cmd = new SqlCommand(sql, conn)
+                { CommandType = CommandType.Text };
+                conn.Open();
+
+                // go through each row and create insert statement
+                var reader = cmd.ExecuteReader();
+                if (reader.HasRows)
+                {
+                    // get the column names
+                    var columnNames = string.Empty;
+                    for (int i = 0; i < reader.FieldCount; i++)
+                    {
+                        columnNames += reader.GetName(i) + ", ";
+                    }
+                    columnNames = columnNames.Substring(0, columnNames.Length - 2);
+                    sb.AppendLine($"INSERT INTO YourTableName ({columnNames}) VALUES ");
+
+                    while (reader.Read())
+                    {
+                        sb.Append("\t(");
+                        for (int i = 0; i < reader.FieldCount; i++)
+                        {
+                            if (reader.IsDBNull(i))
+                            {
+                                sb.Append("NULL");
+                            }
+                            else
+                            {
+                                switch (reader.GetFieldType(i).Name)
+                                {
+                                    case "String":
+                                        sb.Append("'" + reader.GetString(i).Replace("'", "''") + "'");
+                                        break;
+                                    case "DateTime":
+                                        sb.Append("'" + reader.GetDateTime(i).ToString("yyyy-MM-dd HH:mm:ss") + "'");
+                                        break;
+                                    case "Int32":
+                                        sb.Append("'" + reader.GetInt32(i) + "'");
+                                        break;
+                                    case "Int64":
+                                        sb.Append("'" + reader.GetInt64(i) + "'");
+                                        break;
+                                    case "Decimal":
+                                        sb.Append(reader.GetDecimal(i));
+                                        break;
+                                    case "Double":
+                                        sb.Append(reader.GetDouble(i));
+                                        break;
+                                    case "Single":
+                                        sb.Append(reader.GetFloat(i));
+                                        break;
+                                    case "Boolean":
+                                        sb.Append(reader.GetBoolean(i) ? "1" : "0");
+                                        break;
+                                    default:
+                                        sb.Append("'" + reader.GetValue(i) + "'");
+                                        break;
+                                }
+                            }
+                            if (i < reader.FieldCount - 1)
+                            {
+                                sb.Append(", ");
+                            }
+                        }
+                        sb.AppendLine("),");
+                    }
+                }
+
+
+            }
+            catch (Exception ex)
+            {
+                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                conn.Close();
+            }
+            return sb.ToString();
+        }
+
+
+        /// <summary>
         /// Data the table to HTML.
         /// </summary>
         /// <param name="dt">The dt.</param>

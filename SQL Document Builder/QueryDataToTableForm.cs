@@ -3,45 +3,55 @@ using System.Windows.Forms;
 
 namespace SQL_Document_Builder
 {
+    /// <summary>
+    /// The query data to table form.
+    /// </summary>
     public partial class QueryDataToTableForm : Form
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="QueryDataToTableForm"/> class.
+        /// </summary>
         public QueryDataToTableForm()
         {
             InitializeComponent();
         }
 
-        private void exitToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            Close();
-        }
+        /// <summary>
+        /// Gets or sets a value indicating whether insert statement.
+        /// </summary>
+        public bool InsertStatement { get; set; } = false;
 
-        private void pasteToolStripButton_Click(object sender, EventArgs e)
-        {
-            if (Clipboard.ContainsText())
-            {
-                sqlTextBox.Text = Clipboard.GetText();
-            }
-        }
-
-        private void newToolStripButton_Click(object sender, EventArgs e)
-        {
-            sqlTextBox.Text = string.Empty;
-        }
-
-
-        private void copyToolStripButton_Click(object sender, EventArgs e)
+        /// <summary>
+        /// Copies the tool strip button_ click.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void CopyToolStripButton_Click(object sender, EventArgs e)
         {
             htmlTextBox.SelectAll();
             htmlTextBox.Copy();
         }
 
-        private void executeToolStripButton_Click(object sender, EventArgs e)
+        /// <summary>
+        /// Executes the tool strip button_ click.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void ExecuteToolStripButton_Click(object sender, EventArgs e)
         {
             if (sqlTextBox.Text.ToLower().StartsWith("select "))
             {
                 try
                 {
-                    htmlTextBox.Text = Common.QueryDataToHTMLTable(sqlTextBox.Text);
+                    if (InsertStatement)
+                    {
+                        htmlTextBox.Text = Common.QueryDataToInsertStatement(sqlTextBox.Text);
+                    }
+                    else
+                    {
+                        htmlTextBox.Text = Common.QueryDataToHTMLTable(sqlTextBox.Text);
+                    }
+
                     Clipboard.SetText(htmlTextBox.Text);
                 }
                 catch (Exception ex)
@@ -55,12 +65,55 @@ namespace SQL_Document_Builder
             }
         }
 
-        private void selectAllToolStripMenuItem_Click(object sender, EventArgs e)
+        /// <summary>
+        /// Exits the tool strip menu item_ click.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void ExitToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Close();
+        }
+
+        /// <summary>
+        /// News the tool strip button_ click.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void NewToolStripButton_Click(object sender, EventArgs e)
+        {
+            sqlTextBox.Text = string.Empty;
+        }
+
+        /// <summary>
+        /// Pastes the tool strip button_ click.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void PasteToolStripButton_Click(object sender, EventArgs e)
+        {
+            if (Clipboard.ContainsText())
+            {
+                sqlTextBox.Text = Clipboard.GetText();
+            }
+        }
+
+        /// <summary>
+        /// Selects the all tool strip menu item_ click.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void SelectAllToolStripMenuItem_Click(object sender, EventArgs e)
         {
             htmlTextBox.SelectAll();
         }
 
-        private void sqlTextBox_TextChanged(object sender, EventArgs e)
+        /// <summary>
+        /// Sqls the text box_ text changed.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void SqlTextBox_TextChanged(object sender, EventArgs e)
         {
             htmlTextBox.Text = string.Empty;
         }

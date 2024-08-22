@@ -66,6 +66,8 @@
             toolStripSeparator4 = new System.Windows.Forms.ToolStripSeparator();
             saveToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             toolStripSeparator5 = new System.Windows.Forms.ToolStripSeparator();
+            assistantContentToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            toolStripSeparator11 = new System.Windows.Forms.ToolStripSeparator();
             exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             editToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             cutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -91,6 +93,10 @@
             optionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             batchColumnDescToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            toolStripSeparator12 = new System.Windows.Forms.ToolStripSeparator();
+            queryInsertToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            toolStripSeparator13 = new System.Windows.Forms.ToolStripSeparator();
+            tableDescriptionToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             contentsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             indexToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -105,8 +111,6 @@
             scriptPanel = new System.Windows.Forms.Panel();
             definitionPanel = new ColumnDefView();
             collapsibleSplitter1 = new CollapsibleSplitter();
-            toolStripSeparator11 = new System.Windows.Forms.ToolStripSeparator();
-            assistantContentToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             toolStrip1.SuspendLayout();
             tabControl1.SuspendLayout();
             tabPage1.SuspendLayout();
@@ -432,7 +436,7 @@
             // 
             connectToToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { localToolStripMenuItem, azureToolStripMenuItem });
             connectToToolStripMenuItem.Name = "connectToToolStripMenuItem";
-            connectToToolStripMenuItem.Size = new System.Drawing.Size(184, 26);
+            connectToToolStripMenuItem.Size = new System.Drawing.Size(165, 22);
             connectToToolStripMenuItem.Text = "Connect to...";
             // 
             // localToolStripMenuItem
@@ -450,7 +454,7 @@
             // toolStripSeparator4
             // 
             toolStripSeparator4.Name = "toolStripSeparator4";
-            toolStripSeparator4.Size = new System.Drawing.Size(181, 6);
+            toolStripSeparator4.Size = new System.Drawing.Size(162, 6);
             // 
             // saveToolStripMenuItem
             // 
@@ -458,19 +462,31 @@
             saveToolStripMenuItem.ImageTransparentColor = System.Drawing.Color.Magenta;
             saveToolStripMenuItem.Name = "saveToolStripMenuItem";
             saveToolStripMenuItem.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.S;
-            saveToolStripMenuItem.Size = new System.Drawing.Size(184, 26);
+            saveToolStripMenuItem.Size = new System.Drawing.Size(165, 22);
             saveToolStripMenuItem.Text = "&Save";
             saveToolStripMenuItem.Click += SaveToolStripMenuItem_Click;
             // 
             // toolStripSeparator5
             // 
             toolStripSeparator5.Name = "toolStripSeparator5";
-            toolStripSeparator5.Size = new System.Drawing.Size(181, 6);
+            toolStripSeparator5.Size = new System.Drawing.Size(162, 6);
+            // 
+            // assistantContentToolStripMenuItem
+            // 
+            assistantContentToolStripMenuItem.Name = "assistantContentToolStripMenuItem";
+            assistantContentToolStripMenuItem.Size = new System.Drawing.Size(165, 22);
+            assistantContentToolStripMenuItem.Text = "Assistant content";
+            assistantContentToolStripMenuItem.Click += AssistantContentToolStripMenuItem_Click;
+            // 
+            // toolStripSeparator11
+            // 
+            toolStripSeparator11.Name = "toolStripSeparator11";
+            toolStripSeparator11.Size = new System.Drawing.Size(162, 6);
             // 
             // exitToolStripMenuItem
             // 
             exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            exitToolStripMenuItem.Size = new System.Drawing.Size(184, 26);
+            exitToolStripMenuItem.Size = new System.Drawing.Size(165, 22);
             exitToolStripMenuItem.Text = "&Exit";
             exitToolStripMenuItem.Click += CloseToolStripButton_Click;
             // 
@@ -609,7 +625,7 @@
             // 
             // toolsToolStripMenuItem
             // 
-            toolsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { customizeToolStripMenuItem, optionsToolStripMenuItem, toolStripSeparator1, batchColumnDescToolStripMenuItem });
+            toolsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { customizeToolStripMenuItem, optionsToolStripMenuItem, toolStripSeparator1, batchColumnDescToolStripMenuItem, toolStripSeparator12, queryInsertToolStripMenuItem, toolStripSeparator13, tableDescriptionToolStripMenuItem });
             toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
             toolsToolStripMenuItem.Size = new System.Drawing.Size(46, 20);
             toolsToolStripMenuItem.Text = "&Tools";
@@ -617,27 +633,51 @@
             // customizeToolStripMenuItem
             // 
             customizeToolStripMenuItem.Name = "customizeToolStripMenuItem";
-            customizeToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
+            customizeToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             customizeToolStripMenuItem.Text = "&Customize";
             customizeToolStripMenuItem.Visible = false;
             // 
             // optionsToolStripMenuItem
             // 
             optionsToolStripMenuItem.Name = "optionsToolStripMenuItem";
-            optionsToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
+            optionsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             optionsToolStripMenuItem.Text = "&Options";
             // 
             // toolStripSeparator1
             // 
             toolStripSeparator1.Name = "toolStripSeparator1";
-            toolStripSeparator1.Size = new System.Drawing.Size(175, 6);
+            toolStripSeparator1.Size = new System.Drawing.Size(177, 6);
             // 
             // batchColumnDescToolStripMenuItem
             // 
             batchColumnDescToolStripMenuItem.Name = "batchColumnDescToolStripMenuItem";
-            batchColumnDescToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
+            batchColumnDescToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             batchColumnDescToolStripMenuItem.Text = "Batch Column Desc";
             batchColumnDescToolStripMenuItem.Click += BatchToolStripButton_Click;
+            // 
+            // toolStripSeparator12
+            // 
+            toolStripSeparator12.Name = "toolStripSeparator12";
+            toolStripSeparator12.Size = new System.Drawing.Size(177, 6);
+            // 
+            // queryInsertToolStripMenuItem
+            // 
+            queryInsertToolStripMenuItem.Name = "queryInsertToolStripMenuItem";
+            queryInsertToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            queryInsertToolStripMenuItem.Text = "Query to INSERT";
+            queryInsertToolStripMenuItem.Click += QueryInsertToolStripMenuItem_Click;
+            // 
+            // toolStripSeparator13
+            // 
+            toolStripSeparator13.Name = "toolStripSeparator13";
+            toolStripSeparator13.Size = new System.Drawing.Size(177, 6);
+            // 
+            // tableDescriptionToolStripMenuItem
+            // 
+            tableDescriptionToolStripMenuItem.Name = "tableDescriptionToolStripMenuItem";
+            tableDescriptionToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            tableDescriptionToolStripMenuItem.Text = "Table description";
+            tableDescriptionToolStripMenuItem.Click += TableDescriptionToolStripMenuItem_Click;
             // 
             // helpToolStripMenuItem
             // 
@@ -750,18 +790,6 @@
             collapsibleSplitter1.TabStop = false;
             collapsibleSplitter1.UseAnimations = false;
             collapsibleSplitter1.VisualStyle = VisualStyles.Mozilla;
-            // 
-            // toolStripSeparator11
-            // 
-            toolStripSeparator11.Name = "toolStripSeparator11";
-            toolStripSeparator11.Size = new System.Drawing.Size(181, 6);
-            // 
-            // assistantContentToolStripMenuItem
-            // 
-            assistantContentToolStripMenuItem.Name = "assistantContentToolStripMenuItem";
-            assistantContentToolStripMenuItem.Size = new System.Drawing.Size(184, 26);
-            assistantContentToolStripMenuItem.Text = "Assistant content";
-            assistantContentToolStripMenuItem.Click += AssistantContentToolStripMenuItem_Click;
             // 
             // TableBuilderForm
             // 
@@ -879,5 +907,9 @@
         private System.Windows.Forms.ToolStripMenuItem saveTempleteToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator11;
         private System.Windows.Forms.ToolStripMenuItem assistantContentToolStripMenuItem;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator12;
+        private System.Windows.Forms.ToolStripMenuItem queryInsertToolStripMenuItem;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator13;
+        private System.Windows.Forms.ToolStripMenuItem tableDescriptionToolStripMenuItem;
     }
 }

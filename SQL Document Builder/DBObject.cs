@@ -91,7 +91,32 @@ namespace SQL_Document_Builder
         /// <returns>A bool.</returns>
         public bool Open(ObjectName objectName, string connectionString)
         {
-            return Open(objectName.Schema, objectName.Name, objectName.ObjectType, connectionString);
+            var objectType = objectName.ObjectType;
+            if(objectType == ObjectTypeEnums.None)
+            {
+                // determine the object type
+                var sql = $"SELECT TABLE_TYPE FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = '{objectName.Schema}' AND TABLE_NAME = '{objectName.Name}'";
+                using SqlConnection conn = new(connectionString);
+                try
+                {
+                    using SqlCommand cmd = new(sql, conn);
+                    conn.Open();
+                    var objType = cmd.ExecuteScalar();
+                    if (objType != null)
+                    {
+                        objectType = objType.ToString().ToLower() == "view" ? ObjectTypeEnums.View : ObjectTypeEnums.Table;
+                    }
+                }
+                catch (SqlException)
+                {
+                    //return;
+                }
+                finally
+                {
+                    conn.Close();
+                }
+            }
+            return Open(objectName.Schema, objectName.Name, objectType, connectionString);
         }
 
         /// <summary>

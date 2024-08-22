@@ -1,6 +1,6 @@
-﻿using System;
+﻿using Microsoft.Data.SqlClient;
+using System;
 using System.Data;
-using Microsoft.Data.SqlClient;
 using System.Drawing;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -10,15 +10,58 @@ namespace SQL_Document_Builder
     public partial class MainForm : Form
     {
         private readonly SQLServerConnections _connections = new();
+        private readonly System.Text.StringBuilder _script = new();
         private int _connectionCount = 0;
         private string? _database = string.Empty;
         private SQLDatabaseConnectionItem? _selectedConnection = new SQLDatabaseConnectionItem();
         private string? _server = string.Empty;
-        private readonly System.Text.StringBuilder _script = new();
 
         public MainForm()
         {
             InitializeComponent();
+        }
+
+        /// <summary>
+        /// Convert tab to row
+        /// </summary>
+        /// <param name="values"></param>
+        /// <param name="delimiter"></param>
+        /// <returns></returns>
+        private static string TabToRow(string values, string delimiter = "||")
+        {
+            var columns = values.Split('\t');
+            string results = delimiter[..1] + " ";
+            for (int i = 0; i < columns.Length; i++)
+            {
+                if (i == 0)
+                {
+                    results += columns[i];
+                }
+                else
+                {
+                    results += " " + delimiter + " " + columns[i];
+                }
+            }
+            return results;
+        }
+
+        /// <summary>
+        /// Test that the server is connected
+        /// </summary>
+        /// <param name="connectionString">The connection string</param>
+        /// <returns>true if the connection is opened</returns>
+        private static async Task<bool> TestConnection(string connectionString)
+        {
+            using SqlConnection connection = new(connectionString);
+            try
+            {
+                await connection.OpenAsync();
+                return true;
+            }
+            catch (SqlException)
+            {
+                return false;
+            }
         }
 
         /// <summary>
@@ -156,6 +199,23 @@ namespace SQL_Document_Builder
             //}
         }
 
+        private void ClipboardToTableToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            sqlTextBox.Text = String.Empty;
+
+            if (Clipboard.ContainsText())
+            {
+                var metaData = Clipboard.GetText();
+
+                if (metaData.Length > 1)
+                {
+                    var builder = new SharePoint();
+                    sqlTextBox.Text = builder.TextToTable(metaData);
+                }
+            }
+            statusToolStripStatusLabe.Text = "Complete!";
+        }
+
         /// <summary>
         /// Handles "Copy" menu item click event: Copy the selected text in the text box
         /// </summary>
@@ -166,6 +226,10 @@ namespace SQL_Document_Builder
             sqlTextBox.Copy();
         }
 
+        private void CustomizeToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+        }
+
         /// <summary>
         /// Handles "Cut" menu item click event: Cut the selected text in the text box
         /// </summary>
@@ -174,6 +238,19 @@ namespace SQL_Document_Builder
         private void CutToolStripMenuItem_Click(object sender, EventArgs e)
         {
             sqlTextBox.Cut();
+        }
+
+        private void EndBuild()
+        {
+            sqlTextBox.Enabled = true;
+            sqlTextBox.Cursor = Cursors.Default;
+            progressBar.Visible = false;
+            statusToolStripStatusLabe.Text = "Complete!";
+            this.Cursor = Cursors.Default;
+            if (sqlTextBox.Text.Length > 0)
+            {
+                Clipboard.SetText(sqlTextBox.Text);
+            }
         }
 
         /// <summary>
@@ -331,6 +408,18 @@ namespace SQL_Document_Builder
         //    }
         //}
 
+        private void FunctionListToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            sqlTextBox.Text = string.Empty;
+            using var dlg = new Schemapicker();
+            if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
+            {
+                var builder = new SharePoint();
+                sqlTextBox.Text = builder.BuildFunctionList(dlg.Schema);
+            }
+            statusToolStripStatusLabe.Text = "Complete!";
+        }
+
         /// <summary>
         /// Get script of a stored procedure
         /// </summary>
@@ -458,6 +547,40 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Generate description scripts for tables
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private async void ObjectDescriptionsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            sqlTextBox.Text = String.Empty;
+
+            using var dlg = new Schemapicker();
+            if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
+            {
+                StartBuild();
+
+                var progress = new Progress<int>(value =>
+                {
+                    progressBar.Value = value;
+                });
+
+                string scripts = String.Empty;
+                await Task.Run(() =>
+                {
+                    scripts = ObjectDescription.BuildObjectDescriptions(ObjectName.ObjectTypeEnums.Table, dlg.Schema, progress);
+                });
+
+                if (scripts != null)
+                {
+                    sqlTextBox.Text = scripts;
+                }
+
+                EndBuild();
+            }
+        }
+
+        /// <summary>
         /// Handle connection menu item click event:
         ///     Open selected connection
         /// </summary>
@@ -478,6 +601,71 @@ namespace SQL_Document_Builder
                 Cursor = Cursors.Default;
                 statusToolStripStatusLabe.Text = "";
             }
+        }
+
+        private void OptionsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+        }
+
+        /// <summary>
+        /// Output all object descriptions to a file
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private async void OutputDescriptionsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            //// Create a new save file dialog
+            //SaveFileDialog saveFileDialog = new()
+            //{
+            //    // Set the file dialog filter to XLSX files
+            //    Filter = "Excel Workbook (*.xlsx)|*.xlsx"
+            //};
+
+            //// Show the save file dialog and get the result
+            //DialogResult result = saveFileDialog.ShowDialog();
+
+            //// Check if the user clicked the OK button
+            //if (result == DialogResult.OK)
+            //{
+            //    // Create a new XLSX workbook
+            //    XSSFWorkbook workbook = new();
+            //    ISheet sheet = workbook.CreateSheet("Sheet1");
+
+            //    // Write column headers
+            //    IRow headerRow = sheet.CreateRow(0);
+            //    headerRow.CreateCell(0).SetCellValue("Table Schema");
+            //    headerRow.CreateCell(1).SetCellValue("Table Name");
+            //    headerRow.CreateCell(2).SetCellValue("Column Name");
+            //    headerRow.CreateCell(3).SetCellValue("Description");
+
+            //    statusToolStripStatusLabe.Text = "Please wait while generate the list...";
+            //    progressBar.Value = 0;
+            //    progressBar.Visible = true;
+            //    progressBar.Maximum = 100;
+            //    Application.DoEvents();
+
+            //    var progress = new Progress<int>(value =>
+            //    {
+            //        progressBar.Value = value > progressBar.Maximum ? progressBar.Maximum : value;
+            //    });
+            //    await Task.Run(() => OutputObjectsDescriptions(sheet, progress));
+
+            //    //GenerateTableScript(database, dlg.Schema);
+            //    progressBar.Visible = false;
+
+            //    // Save the workbook to the selected file
+            //    using FileStream stream = new(saveFileDialog.FileName, FileMode.Create, FileAccess.Write);
+            //    workbook.Write(stream);
+
+            //    // Open the file
+            //    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo()
+            //    {
+            //        FileName = saveFileDialog.FileName,
+            //        UseShellExecute = true
+            //    });
+
+            //    statusToolStripStatusLabe.Text = "Complete";
+            //}
         }
 
         /// <summary>
@@ -517,7 +705,7 @@ namespace SQL_Document_Builder
                     var item = connections[i];
                     //if(item.DBMSType == 1)
 
-                    if (item.ConnectionString?.Length > 1 && item.ConnectionType != "ODBC" )
+                    if (item.ConnectionString?.Length > 1 && item.ConnectionType != "ODBC")
                     {
                         var submenuitem = new ConnectionMenuItem(item)
                         {
@@ -529,6 +717,34 @@ namespace SQL_Document_Builder
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Handles "Query data to table" tool strip menu item click.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void QueryDataToTableToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using var form = new QueryDataToTableForm()
+            {
+                InsertStatement = false
+            };
+            form.ShowDialog();
+        }
+
+        /// <summary>
+        /// Handles "Query to INSERT" strip menu item_ click.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void QueryToINSERTToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using var form = new QueryDataToTableForm()
+            {
+                InsertStatement = true
+            };
+            form.ShowDialog();
         }
 
         /// <summary>
@@ -781,6 +997,19 @@ namespace SQL_Document_Builder
             }
         }
 
+        private void StartBuild()
+        {
+            this.Cursor = Cursors.WaitCursor;
+            sqlTextBox.Text = String.Empty;
+            sqlTextBox.Enabled = false;
+            sqlTextBox.Cursor = Cursors.WaitCursor;
+            statusToolStripStatusLabe.Text = "Please wait while generate the scripts";
+            progressBar.Maximum = 100;
+            progressBar.Value = 0;
+            progressBar.Visible = true;
+            Application.DoEvents();
+        }
+
         /// <summary>
         /// Handles "SPs" button click event: Generate script for stored procedures
         /// </summary>
@@ -841,6 +1070,18 @@ namespace SQL_Document_Builder
             //statusToolStripStatusLabe.Text = "Complete!";
         }
 
+        private void StoredProcedureListToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            sqlTextBox.Text = string.Empty;
+            using var dlg = new Schemapicker();
+            if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
+            {
+                var builder = new SharePoint();
+                sqlTextBox.Text = builder.BuildSPList(dlg.Schema);
+            }
+            statusToolStripStatusLabe.Text = "Complete!";
+        }
+
         /// <summary>
         /// Handles "Table" button click event: Generate script for tables
         /// </summary>
@@ -856,6 +1097,32 @@ namespace SQL_Document_Builder
             //    sqlTextBox.Text = builder.BuildTableList(dlg.Schema);
             //}
             //statusToolStripStatusLabe.Text = "Complete!";
+        }
+
+        private async void TableListToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            sqlTextBox.Text = string.Empty;
+            using var dlg = new Schemapicker();
+            if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
+            {
+                StartBuild();
+
+                var progress = new Progress<int>(value =>
+                {
+                    progressBar.Value = value;
+                });
+
+                string scripts = String.Empty;
+                var builder = new SharePoint();
+                await Task.Run(() =>
+                {
+                    scripts = builder.BuildTableList(dlg.Schema, progress);
+                });
+
+                sqlTextBox.Text = scripts;
+
+                EndBuild();
+            }
         }
 
         /// <summary>
@@ -906,30 +1173,6 @@ namespace SQL_Document_Builder
             //        statusToolStripStatusLabe.Text = string.Empty;
             //    }
             //}
-        }
-
-        /// <summary>
-        /// Convert tab to row
-        /// </summary>
-        /// <param name="values"></param>
-        /// <param name="delimiter"></param>
-        /// <returns></returns>
-        private static string TabToRow(string values, string delimiter = "||")
-        {
-            var columns = values.Split('\t');
-            string results = delimiter[..1] + " ";
-            for (int i = 0; i < columns.Length; i++)
-            {
-                if (i == 0)
-                {
-                    results += columns[i];
-                }
-                else
-                {
-                    results += " " + delimiter + " " + columns[i];
-                }
-            }
-            return results;
         }
 
         /// <summary>
@@ -1003,10 +1246,6 @@ namespace SQL_Document_Builder
             //statusToolStripStatusLabe.Text = "Complete!";
         }
 
-        private void OptionsToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-        }
-
         //private async void AzureToolStripMenuItem_Click(object sender, EventArgs e)
         //{
         //    const string server = "(local)";
@@ -1062,26 +1301,6 @@ namespace SQL_Document_Builder
         //    //    Properties.Settings.Default.dbConnectionString = builder.ConnectionString;
         //    //}
         //}
-
-        /// <summary>
-        /// Test that the server is connected
-        /// </summary>
-        /// <param name="connectionString">The connection string</param>
-        /// <returns>true if the connection is opened</returns>
-        private static async Task<bool> TestConnection(string connectionString)
-        {
-            using SqlConnection connection = new(connectionString);
-            try
-            {
-                await connection.OpenAsync();
-                return true;
-            }
-            catch (SqlException)
-            {
-                return false;
-            }
-        }
-
         //private async void LocalToolStripMenuItem_Click(object sender, EventArgs e)
         //{
         //    const string server = "svmsq06";
@@ -1130,114 +1349,6 @@ namespace SQL_Document_Builder
         //    }
         //    statusToolStripStatusLabe.Text = "Complete!";
         //}
-
-        private void StoredProcedureListToolStripMenuItem1_Click(object sender, EventArgs e)
-        {
-            sqlTextBox.Text = string.Empty;
-            using var dlg = new Schemapicker();
-            if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
-            {
-                var builder = new SharePoint();
-                sqlTextBox.Text = builder.BuildSPList(dlg.Schema);
-            }
-            statusToolStripStatusLabe.Text = "Complete!";
-        }
-
-        private void FunctionListToolStripMenuItem1_Click(object sender, EventArgs e)
-        {
-            sqlTextBox.Text = string.Empty;
-            using var dlg = new Schemapicker();
-            if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
-            {
-                var builder = new SharePoint();
-                sqlTextBox.Text = builder.BuildFunctionList(dlg.Schema);
-            }
-            statusToolStripStatusLabe.Text = "Complete!";
-        }
-
-        private void ClipboardToTableToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            sqlTextBox.Text = String.Empty;
-
-            if (Clipboard.ContainsText())
-            {
-                var metaData = Clipboard.GetText();
-
-                if (metaData.Length > 1)
-                {
-                    var builder = new SharePoint();
-                    sqlTextBox.Text = builder.TextToTable(metaData);
-                }
-            }
-            statusToolStripStatusLabe.Text = "Complete!";
-        }
-
-        private void QueryDataToTableToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            using var form = new QueryDataToTableForm();
-            form.ShowDialog();
-        }
-
-        private void StartBuild()
-        {
-            this.Cursor = Cursors.WaitCursor;
-            sqlTextBox.Text = String.Empty;
-            sqlTextBox.Enabled = false;
-            sqlTextBox.Cursor = Cursors.WaitCursor;
-            statusToolStripStatusLabe.Text = "Please wait while generate the scripts";
-            progressBar.Maximum = 100;
-            progressBar.Value = 0;
-            progressBar.Visible = true;
-            Application.DoEvents();
-        }
-
-        private void EndBuild()
-        {
-            sqlTextBox.Enabled = true;
-            sqlTextBox.Cursor = Cursors.Default;
-            progressBar.Visible = false;
-            statusToolStripStatusLabe.Text = "Complete!";
-            this.Cursor = Cursors.Default;
-            if (sqlTextBox.Text.Length > 0)
-            {
-                Clipboard.SetText(sqlTextBox.Text);
-            }
-        }
-
-        /// <summary>
-        /// Generate description scripts for tables
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private async void ObjectDescriptionsToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            sqlTextBox.Text = String.Empty;
-
-            using var dlg = new Schemapicker();
-            if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
-            {
-                StartBuild();
-
-                var progress = new Progress<int>(value =>
-                {
-                    progressBar.Value = value;
-                });
-
-                string scripts = String.Empty;
-                await Task.Run(() =>
-                {
-                    scripts = ObjectDescription.BuildObjectDescriptions(ObjectName.ObjectTypeEnums.Table, dlg.Schema, progress);
-                });
-
-                if (scripts != null)
-                {
-                    sqlTextBox.Text = scripts;
-                }
-
-                EndBuild();
-            }
-        }
-
         /// <summary>
         /// Generate description scripts for views
         /// </summary>
@@ -1267,98 +1378,6 @@ namespace SQL_Document_Builder
 
                 EndBuild();
             }
-        }
-
-        private async void TableListToolStripMenuItem1_Click(object sender, EventArgs e)
-        {
-            sqlTextBox.Text = string.Empty;
-            using var dlg = new Schemapicker();
-            if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
-            {
-                StartBuild();
-
-                var progress = new Progress<int>(value =>
-                {
-                    progressBar.Value = value;
-                });
-
-                string scripts = String.Empty;
-                var builder = new SharePoint();
-                await Task.Run(() =>
-                {
-                    scripts = builder.BuildTableList(dlg.Schema, progress);
-                });
-
-                sqlTextBox.Text = scripts;
-
-                EndBuild();
-            }
-        }
-
-        /// <summary>
-        /// Output all object descriptions to a file
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private async void OutputDescriptionsToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            //// Create a new save file dialog
-            //SaveFileDialog saveFileDialog = new()
-            //{
-            //    // Set the file dialog filter to XLSX files
-            //    Filter = "Excel Workbook (*.xlsx)|*.xlsx"
-            //};
-
-            //// Show the save file dialog and get the result
-            //DialogResult result = saveFileDialog.ShowDialog();
-
-            //// Check if the user clicked the OK button
-            //if (result == DialogResult.OK)
-            //{
-            //    // Create a new XLSX workbook
-            //    XSSFWorkbook workbook = new();
-            //    ISheet sheet = workbook.CreateSheet("Sheet1");
-
-            //    // Write column headers
-            //    IRow headerRow = sheet.CreateRow(0);
-            //    headerRow.CreateCell(0).SetCellValue("Table Schema");
-            //    headerRow.CreateCell(1).SetCellValue("Table Name");
-            //    headerRow.CreateCell(2).SetCellValue("Column Name");
-            //    headerRow.CreateCell(3).SetCellValue("Description");
-
-            //    statusToolStripStatusLabe.Text = "Please wait while generate the list...";
-            //    progressBar.Value = 0;
-            //    progressBar.Visible = true;
-            //    progressBar.Maximum = 100;
-            //    Application.DoEvents();
-
-            //    var progress = new Progress<int>(value =>
-            //    {
-            //        progressBar.Value = value > progressBar.Maximum ? progressBar.Maximum : value;
-            //    });
-            //    await Task.Run(() => OutputObjectsDescriptions(sheet, progress));
-
-            //    //GenerateTableScript(database, dlg.Schema);
-            //    progressBar.Visible = false;
-
-            //    // Save the workbook to the selected file
-            //    using FileStream stream = new(saveFileDialog.FileName, FileMode.Create, FileAccess.Write);
-            //    workbook.Write(stream);
-
-            //    // Open the file
-            //    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo()
-            //    {
-            //        FileName = saveFileDialog.FileName,
-            //        UseShellExecute = true
-            //    });
-
-            //    statusToolStripStatusLabe.Text = "Complete";
-            //}
-        }
-
-        private void customizeToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-
         }
 
         ///// <summary>
