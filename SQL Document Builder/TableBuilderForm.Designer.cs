@@ -633,49 +633,49 @@
             // customizeToolStripMenuItem
             // 
             customizeToolStripMenuItem.Name = "customizeToolStripMenuItem";
-            customizeToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            customizeToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
             customizeToolStripMenuItem.Text = "&Customize";
             customizeToolStripMenuItem.Visible = false;
             // 
             // optionsToolStripMenuItem
             // 
             optionsToolStripMenuItem.Name = "optionsToolStripMenuItem";
-            optionsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            optionsToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
             optionsToolStripMenuItem.Text = "&Options";
             // 
             // toolStripSeparator1
             // 
             toolStripSeparator1.Name = "toolStripSeparator1";
-            toolStripSeparator1.Size = new System.Drawing.Size(177, 6);
+            toolStripSeparator1.Size = new System.Drawing.Size(175, 6);
             // 
             // batchColumnDescToolStripMenuItem
             // 
             batchColumnDescToolStripMenuItem.Name = "batchColumnDescToolStripMenuItem";
-            batchColumnDescToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            batchColumnDescToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
             batchColumnDescToolStripMenuItem.Text = "Batch Column Desc";
             batchColumnDescToolStripMenuItem.Click += BatchToolStripButton_Click;
             // 
             // toolStripSeparator12
             // 
             toolStripSeparator12.Name = "toolStripSeparator12";
-            toolStripSeparator12.Size = new System.Drawing.Size(177, 6);
+            toolStripSeparator12.Size = new System.Drawing.Size(175, 6);
             // 
             // queryInsertToolStripMenuItem
             // 
             queryInsertToolStripMenuItem.Name = "queryInsertToolStripMenuItem";
-            queryInsertToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            queryInsertToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
             queryInsertToolStripMenuItem.Text = "Query to INSERT";
             queryInsertToolStripMenuItem.Click += QueryInsertToolStripMenuItem_Click;
             // 
             // toolStripSeparator13
             // 
             toolStripSeparator13.Name = "toolStripSeparator13";
-            toolStripSeparator13.Size = new System.Drawing.Size(177, 6);
+            toolStripSeparator13.Size = new System.Drawing.Size(175, 6);
             // 
             // tableDescriptionToolStripMenuItem
             // 
             tableDescriptionToolStripMenuItem.Name = "tableDescriptionToolStripMenuItem";
-            tableDescriptionToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            tableDescriptionToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
             tableDescriptionToolStripMenuItem.Text = "Table description";
             tableDescriptionToolStripMenuItem.Click += TableDescriptionToolStripMenuItem_Click;
             // 

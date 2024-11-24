@@ -791,6 +791,13 @@ namespace SQL_Document_Builder
                 }
                 var builder = new SharePoint();
                 sqlTextBox.AppendText(builder.GetTableDef(objectName));
+
+                if ((objectName.Name.StartsWith("LT_")) || (objectName.Name.StartsWith("AT_")))
+                {
+                    var valueBuilder = new SharePoint();
+                    sqlTextBox.AppendText(valueBuilder.GetTableValues(objectName.FullName));
+                }
+
                 sqlTextBox.AppendText(FooterText() + Environment.NewLine);
                 EndBuild();
             }

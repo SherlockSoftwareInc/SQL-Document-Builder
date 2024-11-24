@@ -343,26 +343,35 @@ namespace SQL_Document_Builder
 
             if (objectName.Schema.Equals("PCR", StringComparison.CurrentCultureIgnoreCase))
             {
-                //BuildFormList(objectName);
-                BuildVariableDefinition(objectName);
+                // exclude the table that the name starts with "vw_" or "LT_" or "AT_" or contains "Mapping"
+                bool exclude = false;
+                if (objectName.Name.StartsWith("vw_")) exclude = true;
+                if (objectName.Name.StartsWith("LT_")) exclude = true;
+                if (objectName.Name.StartsWith("AT_")) exclude = true;
+                if (objectName.Name.IndexOf("Mapping") > 0) exclude = true;
 
-                if (!IsExcludePCRTable(objectName.Name))
+                if (!exclude)
                 {
-                    // add ETL section
-                    AppendLine("<div>");
-                    AppendLine("<h2>ETL Process to Build This Table</h2>");
-                    AppendLine("<ul>");
-                    AppendLine(string.Format("<li> The data is copied from [[PCRL1.{0}]] table by removing the data from the&#160;draft&#160;or invalid forms.</li>", objectName.Name));
-                    AppendLine("</ul>");
-                    AppendLine("</div>");
-                    AppendLine("<div>");
-                    AppendLine("<h2>Codes to Build This Table</h2>");
-                    AppendLine("<p>");
-                    AppendLine("Paste codes here");
-                    AppendLine("</p>");
-                    AppendLine("</div>");
-                }
+                    //BuildFormList(objectName);
+                    BuildVariableDefinition(objectName);
 
+                    if (!IsExcludePCRTable(objectName.Name))
+                    {
+                        // add ETL section
+                        AppendLine("<div>");
+                        AppendLine("<h2>ETL Process to Build This Table</h2>");
+                        AppendLine("<ul>");
+                        AppendLine(string.Format("<li> The data is copied from [[PCRL1.{0}]] table by removing the data from the&#160;draft&#160;or invalid forms.</li>", objectName.Name));
+                        AppendLine("</ul>");
+                        AppendLine("</div>");
+                        AppendLine("<div>");
+                        AppendLine("<h2>Codes to Build This Table</h2>");
+                        AppendLine("<p>");
+                        AppendLine("Paste codes here");
+                        AppendLine("</p>");
+                        AppendLine("</div>");
+                    }
+                }
                 //// add footer
                 //AppendLine("<hr/>");
                 //AppendLine("<div>Back to [[PCR database tables (CVI.Source)]]</div>");
@@ -841,7 +850,7 @@ namespace SQL_Document_Builder
         public string GetTableValues(string tableName)
         {
             AppendLine("<div>");
-            AppendLine("<h2>Table Values of " + tableName + ":<h2>");
+            AppendLine("<h2>Table Values:</h2>");
             string sql = string.Format("SELECT * FROM {0}", tableName);
             AppendLine(Common.QueryDataToHTMLTable(sql));
             AppendLine("</div>");
