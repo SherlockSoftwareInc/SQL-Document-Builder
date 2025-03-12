@@ -1035,10 +1035,40 @@ namespace SQL_Document_Builder
             if (!string.IsNullOrEmpty(objectName?.Name))
             {
                 sqlTextBox.Text = ObjectDescription.BuildObjectDescription(objectName);
-                if(!string.IsNullOrEmpty(sqlTextBox.Text))
+                if (!string.IsNullOrEmpty(sqlTextBox.Text))
                 {
                     Clipboard.SetText(sqlTextBox.Text);
                 }
+            }
+        }
+
+        /// <summary>
+        /// handles the "create primary key" tool strip menu item click:
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void CreatePrimaryKeyToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            sqlTextBox.Text = definitionPanel.PrimaryKeyScript();
+            if (!string.IsNullOrEmpty(sqlTextBox.Text))
+            {
+                Clipboard.SetText(sqlTextBox.Text);
+
+            }
+        }
+
+        /// <summary>
+        /// Handles the "create index" tool strip menu item click:
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void CreateIndexToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            sqlTextBox.Text = definitionPanel.CreateIndexScript();
+            if (!string.IsNullOrEmpty(sqlTextBox.Text))
+            {
+                Clipboard.SetText(sqlTextBox.Text);
+
             }
         }
     }

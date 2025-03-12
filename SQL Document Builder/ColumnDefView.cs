@@ -152,7 +152,7 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        ///
+        /// Open the database object schema
         /// </summary>
         /// <param name="objectName">The object name.</param>
         public void Open(ObjectName? objectName)
@@ -357,5 +357,61 @@ namespace SQL_Document_Builder
         {
             _dbObject.UpdateTableDesc(tableLabel.Text);
         }
+
+        /// <summary>
+        /// generate the script for create the primary key
+        /// </summary>
+        /// <returns>A string.</returns>
+        public string PrimaryKeyScript()
+        {
+            string sql = "";
+            // get the first column name from the data grid view
+            if (columnDefDataGridView.Rows.Count > 0)
+            {
+                string columnName = (string)columnDefDataGridView.Rows[0].Cells["ColumnName"].Value;
+                sql = $@"IF NOT EXISTS (
+    SELECT * FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS 
+    WHERE CONSTRAINT_TYPE = 'PRIMARY KEY' 
+    AND TABLE_NAME = '{TableName}'
+    AND TABLE_SCHEMA = '{Schema}'
+)
+BEGIN
+    ALTER TABLE [{Schema}].[{TableName}] 
+    ADD CONSTRAINT PK_{Schema}_{TableName} PRIMARY KEY ({columnName})
+END";
+            }
+
+            return sql;
+        }
+
+        /// <summary>
+        /// Generate the script to create an index for the selected column.
+        /// </summary>
+        /// <returns>A string.</returns>
+        public string CreateIndexScript()
+        {
+            // get the selected column name from the data grid view
+
+
+            string sql = "";
+            // get the selected column name from the data grid view
+            if (!string.IsNullOrEmpty(SelectedColumn))
+            {
+                string indexName = $"IX_{Schema}_{TableName}_{SelectedColumn}";
+                sql = $@"IF NOT EXISTS (
+    SELECT * FROM sys.indexes 
+    WHERE name = '{indexName}' 
+    AND object_id = OBJECT_ID('[{Schema}].[{TableName}]')
+)
+BEGIN
+    CREATE INDEX {indexName} 
+    ON [{Schema}].[{TableName}] ({SelectedColumn});
+END";
+            }
+
+            return sql;
+        }
+
+
     }
 }

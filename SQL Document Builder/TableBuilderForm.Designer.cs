@@ -97,6 +97,8 @@
             queryInsertToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             toolStripSeparator13 = new System.Windows.Forms.ToolStripSeparator();
             tableDescriptionToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            createPrimaryKeyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            createIndexToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             contentsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             indexToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -136,7 +138,7 @@
             tableWikiToolStripButton.Image = (System.Drawing.Image)resources.GetObject("tableWikiToolStripButton.Image");
             tableWikiToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             tableWikiToolStripButton.Name = "tableWikiToolStripButton";
-            tableWikiToolStripButton.Size = new System.Drawing.Size(80, 24);
+            tableWikiToolStripButton.Size = new System.Drawing.Size(79, 24);
             tableWikiToolStripButton.Text = "Table Def";
             tableWikiToolStripButton.Click += TableDefinitionToolStripMenuItem_Click;
             // 
@@ -190,14 +192,14 @@
             // tableToolStripMenuItem
             // 
             tableToolStripMenuItem.Name = "tableToolStripMenuItem";
-            tableToolStripMenuItem.Size = new System.Drawing.Size(157, 22);
+            tableToolStripMenuItem.Size = new System.Drawing.Size(156, 22);
             tableToolStripMenuItem.Text = "Table Definition";
             tableToolStripMenuItem.Click += TableWikiToolStripButton_Click;
             // 
             // valuesToolStripMenuItem
             // 
             valuesToolStripMenuItem.Name = "valuesToolStripMenuItem";
-            valuesToolStripMenuItem.Size = new System.Drawing.Size(157, 22);
+            valuesToolStripMenuItem.Size = new System.Drawing.Size(156, 22);
             valuesToolStripMenuItem.Text = "Value List";
             valuesToolStripMenuItem.Click += ValuesWikiToolStripButton_Click;
             // 
@@ -305,7 +307,7 @@
             checkBox10.AutoSize = true;
             checkBox10.Location = new System.Drawing.Point(8, 245);
             checkBox10.Name = "checkBox10";
-            checkBox10.Size = new System.Drawing.Size(82, 19);
+            checkBox10.Size = new System.Drawing.Size(83, 19);
             checkBox10.TabIndex = 7;
             checkBox10.Text = "checkBox1";
             checkBox10.UseVisualStyleBackColor = true;
@@ -315,7 +317,7 @@
             indexesCheckBox.AutoSize = true;
             indexesCheckBox.Location = new System.Drawing.Point(8, 220);
             indexesCheckBox.Name = "indexesCheckBox";
-            indexesCheckBox.Size = new System.Drawing.Size(65, 19);
+            indexesCheckBox.Size = new System.Drawing.Size(66, 19);
             indexesCheckBox.TabIndex = 8;
             indexesCheckBox.Text = "Indexes";
             indexesCheckBox.UseVisualStyleBackColor = true;
@@ -369,7 +371,7 @@
             extendedPropertiesCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
             extendedPropertiesCheckBox.Location = new System.Drawing.Point(8, 81);
             extendedPropertiesCheckBox.Name = "extendedPropertiesCheckBox";
-            extendedPropertiesCheckBox.Size = new System.Drawing.Size(127, 19);
+            extendedPropertiesCheckBox.Size = new System.Drawing.Size(128, 19);
             extendedPropertiesCheckBox.TabIndex = 13;
             extendedPropertiesCheckBox.Text = "ExtendedProperties";
             extendedPropertiesCheckBox.UseVisualStyleBackColor = true;
@@ -379,7 +381,7 @@
             includeIfNotExistsCheckBox.AutoSize = true;
             includeIfNotExistsCheckBox.Location = new System.Drawing.Point(8, 56);
             includeIfNotExistsCheckBox.Name = "includeIfNotExistsCheckBox";
-            includeIfNotExistsCheckBox.Size = new System.Drawing.Size(120, 19);
+            includeIfNotExistsCheckBox.Size = new System.Drawing.Size(121, 19);
             includeIfNotExistsCheckBox.TabIndex = 14;
             includeIfNotExistsCheckBox.Text = "IncludeIfNotExists";
             includeIfNotExistsCheckBox.UseVisualStyleBackColor = true;
@@ -625,9 +627,9 @@
             // 
             // toolsToolStripMenuItem
             // 
-            toolsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { customizeToolStripMenuItem, optionsToolStripMenuItem, toolStripSeparator1, batchColumnDescToolStripMenuItem, toolStripSeparator12, queryInsertToolStripMenuItem, toolStripSeparator13, tableDescriptionToolStripMenuItem });
+            toolsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { customizeToolStripMenuItem, optionsToolStripMenuItem, toolStripSeparator1, batchColumnDescToolStripMenuItem, toolStripSeparator12, queryInsertToolStripMenuItem, toolStripSeparator13, tableDescriptionToolStripMenuItem, createPrimaryKeyToolStripMenuItem, createIndexToolStripMenuItem });
             toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
-            toolsToolStripMenuItem.Size = new System.Drawing.Size(47, 20);
+            toolsToolStripMenuItem.Size = new System.Drawing.Size(46, 20);
             toolsToolStripMenuItem.Text = "&Tools";
             // 
             // customizeToolStripMenuItem
@@ -678,6 +680,20 @@
             tableDescriptionToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
             tableDescriptionToolStripMenuItem.Text = "Table description";
             tableDescriptionToolStripMenuItem.Click += TableDescriptionToolStripMenuItem_Click;
+            // 
+            // createPrimaryKeyToolStripMenuItem
+            // 
+            createPrimaryKeyToolStripMenuItem.Name = "createPrimaryKeyToolStripMenuItem";
+            createPrimaryKeyToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
+            createPrimaryKeyToolStripMenuItem.Text = "Create Primary Key";
+            createPrimaryKeyToolStripMenuItem.Click += CreatePrimaryKeyToolStripMenuItem_Click;
+            // 
+            // createIndexToolStripMenuItem
+            // 
+            createIndexToolStripMenuItem.Name = "createIndexToolStripMenuItem";
+            createIndexToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
+            createIndexToolStripMenuItem.Text = "Create Index";
+            createIndexToolStripMenuItem.Click += CreateIndexToolStripMenuItem_Click;
             // 
             // helpToolStripMenuItem
             // 
@@ -911,5 +927,7 @@
         private System.Windows.Forms.ToolStripMenuItem queryInsertToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator13;
         private System.Windows.Forms.ToolStripMenuItem tableDescriptionToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem createPrimaryKeyToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem createIndexToolStripMenuItem;
     }
 }
