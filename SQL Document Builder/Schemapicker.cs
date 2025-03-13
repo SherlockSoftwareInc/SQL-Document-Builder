@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using Microsoft.Data.SqlClient;
 using System.Windows.Forms;
+using System.ComponentModel;
 
 namespace SQL_Document_Builder
 {
@@ -13,6 +14,7 @@ namespace SQL_Document_Builder
             InitializeComponent();
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string? Schema { get; set; }
 
         private void CancelButton_Click(object sender, EventArgs e)

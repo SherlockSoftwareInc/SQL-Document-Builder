@@ -162,6 +162,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Gets or sets splitter distance (size of the control)
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
         public int SplitterDistance
         {
             get

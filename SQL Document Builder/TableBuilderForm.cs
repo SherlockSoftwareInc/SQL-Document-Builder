@@ -2,8 +2,10 @@
 using Microsoft.Data.SqlClient;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -23,6 +25,8 @@ namespace SQL_Document_Builder
         /// The count of database connections.
         /// </summary>
         private int _connectionCount = 0;
+
+        private string _fileName = string.Empty;
 
         /// <summary>
         /// The selected connection.
@@ -46,7 +50,20 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Gets or Sets the connection.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public SQLDatabaseConnectionItem? Connection { get; set; }
+
+        /// <summary>
+        /// Abouts the tool strip menu item_ click.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void AboutToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // show about box
+            using var dlg = new AboutBox();
+            dlg.ShowDialog();
+        }
 
         /// <summary>
         /// Add connection.
@@ -103,6 +120,42 @@ namespace SQL_Document_Builder
                 Schema = schema,
                 Name = tableName
             });
+        }
+
+        /// <summary>
+        /// Assistants the content tool strip menu item_ click.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private async void AssistantContentToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            sqlTextBox.Text = string.Empty;
+
+            try
+            {
+                StartBuild();
+
+                var progress = new Progress<int>(value =>
+                {
+                    progressBar.Value = value;
+                });
+
+                MSSchemaContentBuilder builder = new();
+
+                string contents = String.Empty;
+                await Task.Run(() =>
+                {
+                    contents = builder.SchemaContent(Properties.Settings.Default.dbConnectionString, progress);
+                });
+
+                SetScript(contents);
+
+                EndBuild();
+            }
+            catch (Exception ex)
+            {
+                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
+            }
         }
 
         /// <summary>
@@ -197,7 +250,7 @@ namespace SQL_Document_Builder
                 if (metaData.Length > 1)
                 {
                     var builder = new SharePoint();
-                    sqlTextBox.Text = builder.TextToTable(metaData);
+                    SetScript(builder.TextToTable(metaData));
                     EndBuild();
                 }
             }
@@ -231,6 +284,30 @@ namespace SQL_Document_Builder
             {
                 DBObjectDefPanel dBObjectDefPanel = (DBObjectDefPanel)ActiveControl;
                 dBObjectDefPanel.Copy();
+            }
+        }
+
+        /// <summary>
+        /// Handles the "create index" tool strip menu item click:
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void CreateIndexToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            SetScript(definitionPanel.CreateIndexScript());
+        }
+
+        /// <summary>
+        /// handles the "create primary key" tool strip menu item click:
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void CreatePrimaryKeyToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            SetScript(definitionPanel.PrimaryKeyScript());
+            if (!string.IsNullOrEmpty(sqlTextBox.Text))
+            {
+                Clipboard.SetText(sqlTextBox.Text);
             }
         }
 
@@ -348,7 +425,7 @@ namespace SQL_Document_Builder
             if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
             {
                 var builder = new SharePoint();
-                sqlTextBox.Text = builder.BuildFunctionList(dlg.Schema);
+                SetScript(builder.BuildFunctionList(dlg.Schema));
                 EndBuild();
             }
         }
@@ -425,7 +502,7 @@ namespace SQL_Document_Builder
 
                 if (scripts != null)
                 {
-                    sqlTextBox.Text = scripts;
+                    SetScript(scripts);
                 }
 
                 EndBuild();
@@ -452,7 +529,7 @@ namespace SQL_Document_Builder
             if (objectsListBox.SelectedItem != null)
             {
                 var objectName = (ObjectName)objectsListBox.SelectedItem;
-                definitionPanel.Open(objectName);
+                definitionPanel?.Open(objectName);
             }
             else
             {
@@ -505,7 +582,7 @@ namespace SQL_Document_Builder
         /// </summary>
         private void Populate()
         {
-            definitionPanel.Open(null);
+            definitionPanel?.Open(null);
             string schemaName = string.Empty;
             if (schemaComboBox.SelectedIndex > 0) schemaName = schemaComboBox.Items[schemaComboBox.SelectedIndex].ToString();
 
@@ -631,20 +708,62 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Handles "Query to INSERT" strip menu item_ click.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void QueryInsertToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using var form = new QueryDataToTableForm()
+            {
+                InsertStatement = true
+            };
+            form.ShowDialog();
+        }
+
+        /// <summary>
+        /// Saves the as tool strip menu item_ click.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private async void SaveAsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var oFile = new SaveFileDialog() { Filter = "SQL script(*.sql)|*.sql|Text file(*.txt)|*.txt|All files(*.*)|*.*" };
+            if (oFile.ShowDialog() == DialogResult.OK)
+            {
+                _fileName = oFile.FileName;
+                this.Text = $"SharePoint Script Builder - {_fileName}";
+            }
+
+            var file = new System.IO.StreamWriter(_fileName, false);
+            await file.WriteAsync(sqlTextBox.Text);
+            file.Close();
+            statusToolStripStatusLabe.Text = "Complete";
+        }
+
+        /// <summary>
         /// Save tool strip menu item click.
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The E.</param>
-        private async void SaveToolStripMenuItem_Click(object sender, EventArgs e)
+        private void SaveToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var oFile = new SaveFileDialog() { Filter = "Text file(*.txt)|*.txt|SQL script(*.sql)|*.sql|All files(*.*)|*.*" };
-            if (oFile.ShowDialog() == DialogResult.OK)
+            if (string.IsNullOrEmpty(_fileName))
             {
-                var file = new System.IO.StreamWriter(oFile.FileName, false);
-                await file.WriteAsync(sqlTextBox.Text);
-                file.Close();
-                statusToolStripStatusLabe.Text = "Complete";
+                var oFile = new SaveFileDialog() { Filter = "SQL script(*.sql)|*.sql|Text file(*.txt)|*.txt|All files(*.*)|*.*" };
+                if (oFile.ShowDialog() == DialogResult.OK)
+                {
+                    _fileName = oFile.FileName;
+                    this.Text = $"SharePoint Script Builder - {_fileName}";
+
+                    saveAsToolStripMenuItem.PerformClick();
+                }
             }
+            else
+            {
+                SetScript(sqlTextBox.Text);
+            }
+            statusToolStripStatusLabe.Text = "Complete";
         }
 
         /// <summary>
@@ -687,6 +806,39 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Saves the script.
+        /// </summary>
+        /// <param name="sql">The sql.</param>
+        private void SetScript(string sql)
+        {
+            if (string.IsNullOrEmpty(sql))
+            {
+                return;
+            }
+
+            sqlTextBox.Text = sql;
+            Clipboard.SetText(sql);
+
+            if (string.IsNullOrEmpty(_fileName))
+            {
+                return;
+            }
+
+            // append the script to the file
+            try
+            {
+                File.AppendAllText(_fileName, Environment.NewLine + sql);
+
+                //var file = new System.IO.StreamWriter(_fileName, true);
+                //file.WriteLine(sql);
+                //file.Close();
+            }
+            catch (Exception)
+            {
+            }
+        }
+
+        /// <summary>
         /// Start build.
         /// </summary>
         private void StartBuild()
@@ -713,7 +865,7 @@ namespace SQL_Document_Builder
             if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
             {
                 var builder = new SharePoint();
-                sqlTextBox.Text = builder.BuildSPList(dlg.Schema);
+                SetScript(builder.BuildSPList(dlg.Schema));
                 EndBuild();
             }
         }
@@ -761,13 +913,9 @@ namespace SQL_Document_Builder
                 Close();
             }
 
-            //headerTextBox.Text = Properties.Settings.Default.HeaderText;
-            //footerTextBox.Text = Properties.Settings.Default.FooterText;
-            //GetTableList();
-            //PopulateSchema();
-            //if (schemaComboBox.Items.Count > 0) schemaComboBox.SelectedIndex = 0;
             WindowState = FormWindowState.Maximized;
-            collapsibleSplitter1.SplitterDistance = (int)(this.Width * 0.25F);
+            if (collapsibleSplitter1 != null)
+                collapsibleSplitter1.SplitterDistance = (int)(this.Width * 0.25F);
         }
 
         /// <summary>
@@ -783,7 +931,7 @@ namespace SQL_Document_Builder
                 var header = HeaderText();
                 if (header.Length > 0)
                 {
-                    sqlTextBox.Text = header + Environment.NewLine;
+                    SetScript(header + Environment.NewLine);
                 }
                 else
                 {
@@ -800,6 +948,25 @@ namespace SQL_Document_Builder
 
                 sqlTextBox.AppendText(FooterText() + Environment.NewLine);
                 EndBuild();
+            }
+        }
+
+        /// <summary>
+        /// Handles the "Table description" tool strip menu item click:
+        /// generate the table description and column descriptions.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void TableDescriptionToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var objectName = (ObjectName)objectsListBox.SelectedItem;
+            if (!string.IsNullOrEmpty(objectName?.Name))
+            {
+                SetScript(ObjectDescription.BuildObjectDescription(objectName));
+                if (!string.IsNullOrEmpty(sqlTextBox.Text))
+                {
+                    Clipboard.SetText(sqlTextBox.Text);
+                }
             }
         }
 
@@ -828,7 +995,7 @@ namespace SQL_Document_Builder
                     scripts = builder.BuildTableList(dlg.Schema, progress);
                 });
 
-                sqlTextBox.Text = scripts;
+                SetScript(scripts);
 
                 EndBuild();
             }
@@ -870,7 +1037,7 @@ namespace SQL_Document_Builder
             {
                 var objectName = (ObjectName)objectsListBox.SelectedItem;
                 var builder = new SharePoint();
-                sqlTextBox.Text = builder.GetTableValues(objectName.FullName);
+                SetScript(builder.GetTableValues(objectName.FullName));
                 EndBuild();
             }
         }
@@ -916,7 +1083,7 @@ namespace SQL_Document_Builder
                     scripts = builder.BuildViewList(dlg.Schema, progress);
                 });
 
-                sqlTextBox.Text = scripts;
+                SetScript(scripts);
 
                 EndBuild();
             }
@@ -955,120 +1122,42 @@ namespace SQL_Document_Builder
                     scripts = ObjectDescription.BuildObjectDescriptions(ObjectName.ObjectTypeEnums.View, dlg.Schema, progress);
                 });
 
-                sqlTextBox.Text = scripts;
+                SetScript(scripts);
 
                 EndBuild();
             }
         }
 
         /// <summary>
-        /// Abouts the tool strip menu item_ click.
+        /// Handles the Click event of the OpenToolStripButton control.
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
-        private void AboutToolStripMenuItem_Click(object sender, EventArgs e)
+        private void OpenToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            // show about box
-            using var dlg = new AboutBox();
-            dlg.ShowDialog();
-        }
-
-        /// <summary>
-        /// Assistants the content tool strip menu item_ click.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private async void AssistantContentToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            sqlTextBox.Text = string.Empty;
-
-            try
+            var oFile = new OpenFileDialog() { Filter = "SQL script(*.sql)|*.sql|Text file(*.txt)|*.txt|All files(*.*)|*.*" };
+            if (oFile.ShowDialog() == DialogResult.OK)
             {
-                StartBuild();
+                _fileName = oFile.FileName;
+                this.Text = $"SharePoint Script Builder - {_fileName}";
 
-                var progress = new Progress<int>(value =>
-                {
-                    progressBar.Value = value;
-                });
-
-                MSSchemaContentBuilder builder = new();
-
-                string contents = String.Empty;
-                await Task.Run(() =>
-                {
-                    contents = builder.SchemaContent(Properties.Settings.Default.dbConnectionString, progress);
-                });
-
-                sqlTextBox.Text = contents;
-
-                EndBuild();
-            }
-            catch (Exception ex)
-            {
-                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
+                sqlTextBox.Text = File.ReadAllText(_fileName);
             }
         }
 
         /// <summary>
-        /// Handles "Query to INSERT" strip menu item_ click.
+        /// Handles the Click event of the NewToolStripButton control.
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
-        private void QueryInsertToolStripMenuItem_Click(object sender, EventArgs e)
+        private void NewToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            using var form = new QueryDataToTableForm()
+            var oFile = new SaveFileDialog() { Filter = "SQL script(*.sql)|*.sql|Text file(*.txt)|*.txt|All files(*.*)|*.*" };
+            if (oFile.ShowDialog() == DialogResult.OK)
             {
-                InsertStatement = true
-            };
-            form.ShowDialog();
-        }
-
-        /// <summary>
-        /// Handles the "Table description" tool strip menu item click:
-        /// generate the table description and column descriptions.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void TableDescriptionToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            var objectName = (ObjectName)objectsListBox.SelectedItem;
-            if (!string.IsNullOrEmpty(objectName?.Name))
-            {
-                sqlTextBox.Text = ObjectDescription.BuildObjectDescription(objectName);
-                if (!string.IsNullOrEmpty(sqlTextBox.Text))
-                {
-                    Clipboard.SetText(sqlTextBox.Text);
-                }
-            }
-        }
-
-        /// <summary>
-        /// handles the "create primary key" tool strip menu item click:
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void CreatePrimaryKeyToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            sqlTextBox.Text = definitionPanel.PrimaryKeyScript();
-            if (!string.IsNullOrEmpty(sqlTextBox.Text))
-            {
-                Clipboard.SetText(sqlTextBox.Text);
-
-            }
-        }
-
-        /// <summary>
-        /// Handles the "create index" tool strip menu item click:
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void CreateIndexToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            sqlTextBox.Text = definitionPanel.CreateIndexScript();
-            if (!string.IsNullOrEmpty(sqlTextBox.Text))
-            {
-                Clipboard.SetText(sqlTextBox.Text);
-
+                _fileName = oFile.FileName;
+                this.Text = $"SharePoint Script Builder - {_fileName}";
+                sqlTextBox.Text = string.Empty;
             }
         }
     }

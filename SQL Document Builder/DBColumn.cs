@@ -2,11 +2,18 @@
 
 namespace SQL_Document_Builder
 {
+    /// <summary>
+    /// The d b column.
+    /// </summary>
     internal class DBColumn
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DBColumn"/> class.
+        /// </summary>
+        /// <param name="dr">The dr.</param>
         public DBColumn(Microsoft.Data.SqlClient.SqlDataReader dr)
         {
-            ColID = (int)dr["ORDINAL_POSITION"];
+            ColID = Convert.ToString( dr["ORDINAL_POSITION"]);
             ColumnName = (string)dr["COLUMN_NAME"];
             string dtType = dr["DATA_TYPE"] == DBNull.Value ? string.Empty : (string)dr["DATA_TYPE"];
             string? strMaxLength = dr["CHARACTER_MAXIMUM_LENGTH"].ToString();
@@ -46,7 +53,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Gets or sets column sequence number
         /// </summary>
-        public int ColID { get; set; }
+        public string? ColID { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets column name

@@ -3,20 +3,31 @@ using Microsoft.Data.SqlClient;
 
 namespace SQL_Document_Builder
 {
+    /// <summary>
+    /// The table column item.
+    /// </summary>
     internal class TableColumnItem
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="TableColumnItem"/> class.
+        /// </summary>
+        /// <param name="column">The column.</param>
         public TableColumnItem(DBColumn column)
         {
-            ColID= column.ColID;
-            ColumnName= column.ColumnName;
+            ColID = column.ColID;
+            ColumnName = column.ColumnName;
             DataType = column.DataType;
             Nullable = column.Nullable;
             Description = column.Description;
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="TableColumnItem"/> class.
+        /// </summary>
+        /// <param name="dr">The dr.</param>
         public TableColumnItem(SqlDataReader dr)
         {
-            this.ColID = (int)dr["ORDINAL_POSITION"];
+            this.ColID = ((int)dr["ORDINAL_POSITION"]).ToString();
             this.ColumnName = dr["COLUMN_NAME"].ToString();
             string? dtType = dr["DATA_TYPE"].ToString();
             this.DataType = dtType;
@@ -54,10 +65,29 @@ namespace SQL_Document_Builder
             this.Nullable = (dr["IS_NULLABLE"].ToString() == "YES");
         }
 
-        public int ColID { get; set; }
+        /// <summary>
+        /// Gets or sets the col i d.
+        /// </summary>
+        public string? ColID { get; set; }
+
+        /// <summary>
+        /// Gets or sets the column name.
+        /// </summary>
         public string? ColumnName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the data type.
+        /// </summary>
         public string? DataType { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether nullable.
+        /// </summary>
         public bool Nullable { get; set; }
+
+        /// <summary>
+        /// Gets or sets the description.
+        /// </summary>
         public string? Description { get; set; }
     }
 }

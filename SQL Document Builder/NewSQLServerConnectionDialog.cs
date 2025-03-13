@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Windows.Forms;
 
 namespace SQL_Document_Builder
@@ -16,41 +17,49 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Authentication type
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public short Authentication { get; set; }
 
         /// <summary>
         /// Connection name
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string? ConnectionName { get; set; }
 
         /// <summary>
         /// Database connection string
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string? ConnectionString { get; set; }
 
         /// <summary>
         /// Database name
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string? DatabaseName { get; set; }
 
         /// <summary>
         ///
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string? Password { get; set; }
 
         /// <summary>
         ///
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool RememberPassword { get; set; }
 
         /// <summary>
         ///
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string? ServerName { get; set; }
 
         /// <summary>
         ///
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string? UserName { get; set; }
 
         /// <summary>

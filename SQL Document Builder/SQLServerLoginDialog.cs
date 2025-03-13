@@ -1,6 +1,7 @@
 ﻿using System;
 using Microsoft.Data.SqlClient;
 using System.Windows.Forms;
+using System.ComponentModel;
 
 namespace SQL_Document_Builder
 {
@@ -11,11 +12,17 @@ namespace SQL_Document_Builder
             InitializeComponent();
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public short Authentication { get; set; }
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string? ConnectionString { get; set; }
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string? DatabaseName { get; set; }
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string? Password { get; set; }
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string? ServerName { get; set; }
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string? UserName { get; set; }
 
         private void AuthenticationComboBox_SelectedIndexChanged(object sender, EventArgs e)

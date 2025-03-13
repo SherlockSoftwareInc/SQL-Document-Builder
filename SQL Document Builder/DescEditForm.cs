@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Windows.Forms;
 
 namespace SQL_Document_Builder
@@ -15,6 +16,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Object name to open
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public ObjectName? TableName { get; set; }
 
         /// <summary>

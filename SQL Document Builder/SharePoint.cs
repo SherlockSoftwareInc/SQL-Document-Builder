@@ -816,7 +816,7 @@ namespace SQL_Document_Builder
                 var dr = cmd.ExecuteReader();
                 while (dr.Read())
                 {
-                    int colID = dr.GetInt32("ORDINAL_POSITION");
+                    string? colID = (dr.GetInt32("ORDINAL_POSITION")).ToString();
                     string colName = dr.GetString("COLUMN_NAME");
                     string dataType = dr.GetString("DATA_TYPE");
                     if (dr["CHARACTER_MAXIMUM_LENGTH"] != DBNull.Value)
@@ -824,7 +824,7 @@ namespace SQL_Document_Builder
                         dataType = string.Format("{0}({1})", dataType, dr["CHARACTER_MAXIMUM_LENGTH"].ToString());
                     }
                     AppendLine("\t\t<tr>");
-                    AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + colID.ToString() + "</td>");
+                    AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + colID + "</td>");
                     AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + colName + "</td>");
                     AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + dataType + "</td>");
                     AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + Common.GetColumnDescription(objectName, colName) + "</td>");

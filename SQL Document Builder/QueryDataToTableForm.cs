@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Windows.Forms;
 
 namespace SQL_Document_Builder
@@ -19,6 +20,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Gets or sets a value indicating whether insert statement.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool InsertStatement { get; set; } = false;
 
         /// <summary>

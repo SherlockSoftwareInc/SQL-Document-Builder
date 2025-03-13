@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Windows.Forms;
 
 namespace SQL_Document_Builder
@@ -41,6 +42,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Gets or sets database connection
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string ConnectionString { get; set; } = "";
 
         /// <summary>
@@ -51,11 +53,13 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Get selected column name
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string? SelectedColumn { get; private set; }
 
         /// <summary>
         /// Gets or sets table description
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string TableDescription
         {
             get { return tableLabel.Text; }
@@ -378,7 +382,9 @@ namespace SQL_Document_Builder
 BEGIN
     ALTER TABLE [{Schema}].[{TableName}] 
     ADD CONSTRAINT PK_{Schema}_{TableName} PRIMARY KEY ({columnName})
-END";
+END
+GO
+";
             }
 
             return sql;
@@ -406,7 +412,9 @@ END";
 BEGIN
     CREATE INDEX {indexName} 
     ON [{Schema}].[{TableName}] ({SelectedColumn});
-END";
+END
+GO
+";
             }
 
             return sql;

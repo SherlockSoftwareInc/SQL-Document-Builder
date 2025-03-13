@@ -84,6 +84,23 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Gets the column.
+        /// </summary>
+        /// <param name="columnName">The column name.</param>
+        /// <returns>A DBColumn? .</returns>
+        public DBColumn? GetColumn(string columnName)
+        {
+            foreach (var col in Columns)
+            {
+                if (col.ColumnName == columnName)
+                {
+                    return col;
+                }
+            }
+            return null;
+        }
+
+        /// <summary>
         ///
         /// </summary>
         /// <param name="objectName">The object name.</param>
@@ -92,7 +109,7 @@ namespace SQL_Document_Builder
         public bool Open(ObjectName objectName, string connectionString)
         {
             var objectType = objectName.ObjectType;
-            if(objectType == ObjectTypeEnums.None)
+            if (objectType == ObjectTypeEnums.None)
             {
                 // determine the object type
                 var sql = $"SELECT TABLE_TYPE FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = '{objectName.Schema}' AND TABLE_NAME = '{objectName.Name}'";
@@ -169,6 +186,13 @@ namespace SQL_Document_Builder
                     //    }
                     //}
 
+                    if (objectType == ObjectTypeEnums.Table)
+                    {
+                        GetPrimaryKeys(TableSchema, TableName);
+
+                        GetIndexes(TableSchema, TableName);
+                    }
+
                     result = true;
                 }
                 catch (SqlException)
@@ -185,104 +209,6 @@ namespace SQL_Document_Builder
 
             return result;
         }
-
-        /// <summary>
-        /// Gets the column desc.
-        /// </summary>
-        private void GetColumnDesc()
-        {
-            var conn = new SqlConnection(ConnectionString);
-            try
-            {
-                var cmd = new SqlCommand()
-                {
-                    Connection = conn,
-                    CommandType = CommandType.Text,
-                    CommandText = string.Format("SELECT C.Name, E.value Description FROM sys.schemas S INNER JOIN sys.{0} T ON S.schema_id = T.schema_id INNER JOIN sys.columns C ON T.object_id = C.object_id INNER JOIN sys.extended_properties E ON T.object_id = E.major_id AND C.column_id = E.minor_id WHERE E.name = N'MS_Description' AND S.name = @Schema AND T.name = @TableName", TableType == ObjectTypeEnums.Table ? "tables" : "views"),
-                };
-                cmd.Parameters.Add(new SqlParameter("@Schema", TableSchema));
-                cmd.Parameters.Add(new SqlParameter("@TableName", TableName));
-                conn.Open();
-
-                using var dr = cmd.ExecuteReader();
-                while (dr.Read())
-                {
-                    if (dr[1] != DBNull.Value)
-                    {
-                        var columnName = dr.GetString(0);
-                        var column = GetColumn(columnName);
-                        if (column != null)
-                        {
-                            column.Description = dr.GetString(1);
-                        }
-                    }
-                }
-                dr.Close();
-            }
-            catch (Exception)
-            {
-                // ignore the error
-            }
-            finally
-            {
-                conn.Close();
-            }
-        }
-
-        /// <summary>
-        /// Gets the column.
-        /// </summary>
-        /// <param name="columnName">The column name.</param>
-        /// <returns>A DBColumn? .</returns>
-        public DBColumn? GetColumn(string columnName)
-        {
-            foreach (var col in Columns)
-            {
-                if (col.ColumnName == columnName)
-                {
-                    return col;
-                }
-            }
-            return null;
-        }
-
-        ///// <summary>
-        ///// Updates the column desc.
-        ///// </summary>
-        ///// <param name="columnName">The column name.</param>
-        ///// <param name="description">The description.</param>
-        //public void UpdateColumnDesc(string columnName, string description)
-        //{
-        //    if (ConnectionString.Length == 0) return;
-
-        //    DBColumn? column = GetColumn(columnName);
-
-        //    if (column != null)
-        //    {
-        //        column.Description = description;
-
-        //        var conn = new SqlConnection(ConnectionString);
-        //        try
-        //        {
-        //            var cmd = new SqlCommand("ADMIN.usp_AddColumnDescription", conn) { CommandType = CommandType.StoredProcedure };
-
-        //            cmd.Parameters.AddWithValue("@TableName", ObjectName.FullName);
-        //            cmd.Parameters.AddWithValue("@ColumnName", columnName);
-        //            cmd.Parameters.AddWithValue("@Description", description);
-
-        //            conn.Open();
-        //            cmd.ExecuteNonQuery();
-        //        }
-        //        catch (Exception ex)
-        //        {
-        //            Common.MsgBox(ex.Message, MessageBoxIcon.Error);
-        //        }
-        //        finally
-        //        {
-        //            conn.Close();
-        //        }
-        //    }
-        //}
 
         /// <summary>
         /// Updates the column description.
@@ -353,6 +279,19 @@ namespace SQL_Document_Builder
             }
         }
 
+        //            conn.Open();
+        //            cmd.ExecuteNonQuery();
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            Common.MsgBox(ex.Message, MessageBoxIcon.Error);
+        //        }
+        //        finally
+        //        {
+        //            conn.Close();
+        //        }
+        //    }
+        //}
         /// <summary>
         /// Updates the table desc.
         /// </summary>
@@ -425,6 +364,130 @@ namespace SQL_Document_Builder
             }
         }
 
+        /// <summary>
+        /// Gets the column desc.
+        /// </summary>
+        private void GetColumnDesc()
+        {
+            var conn = new SqlConnection(ConnectionString);
+            try
+            {
+                var cmd = new SqlCommand()
+                {
+                    Connection = conn,
+                    CommandType = CommandType.Text,
+                    CommandText = string.Format("SELECT C.Name, E.value Description FROM sys.schemas S INNER JOIN sys.{0} T ON S.schema_id = T.schema_id INNER JOIN sys.columns C ON T.object_id = C.object_id INNER JOIN sys.extended_properties E ON T.object_id = E.major_id AND C.column_id = E.minor_id WHERE E.name = N'MS_Description' AND S.name = @Schema AND T.name = @TableName", TableType == ObjectTypeEnums.Table ? "tables" : "views"),
+                };
+                cmd.Parameters.Add(new SqlParameter("@Schema", TableSchema));
+                cmd.Parameters.Add(new SqlParameter("@TableName", TableName));
+                conn.Open();
+
+                using var dr = cmd.ExecuteReader();
+                while (dr.Read())
+                {
+                    if (dr[1] != DBNull.Value)
+                    {
+                        var columnName = dr.GetString(0);
+                        var column = GetColumn(columnName);
+                        if (column != null)
+                        {
+                            column.Description = dr.GetString(1);
+                        }
+                    }
+                }
+                dr.Close();
+            }
+            catch (Exception)
+            {
+                // ignore the error
+            }
+            finally
+            {
+                conn.Close();
+            }
+        }
+
+        /// <summary>
+        /// Gets the indexes.
+        /// </summary>
+        /// <param name="tableSchema">The table schema.</param>
+        /// <param name="tableName">The table name.</param>
+        private void GetIndexes(string tableSchema, string tableName)
+        {
+            var sql = $@"SELECT distinct col.name AS ColumnName
+FROM sys.indexes ind
+INNER JOIN sys.index_columns ic ON ind.object_id = ic.object_id AND ind.index_id = ic.index_id
+INNER JOIN sys.columns col ON ic.object_id = col.object_id AND ic.column_id = col.column_id
+INNER JOIN sys.tables t ON ind.object_id = t.object_id
+INNER JOIN sys.schemas s ON t.schema_id = s.schema_id
+WHERE s.name = '{tableSchema}'
+AND t.name = '{tableName}'";
+
+            var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+            try
+            {
+                var cmd = new SqlCommand()
+                {
+                    Connection = conn,
+                    CommandText = sql,
+                    CommandType = CommandType.Text
+                };
+                conn.Open();
+                var dr = cmd.ExecuteReader();
+
+                while (dr.Read())
+                {
+                    var columnName = dr.GetString(0);
+                    // find the column in the Columns
+                    foreach (var column in Columns)
+                    {
+                        if (column.ColumnName.Equals(columnName, StringComparison.CurrentCultureIgnoreCase))
+                        {
+                            if(column.ColID.EndsWith("🗝") == false)
+                                column.ColID += "🔢";
+                        }
+                    }
+                }
+
+                dr.Close();
+            }
+            catch (Exception ex)
+            {
+                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                conn.Close();
+            }
+        }
+
+        ///// <summary>
+        ///// Updates the column desc.
+        ///// </summary>
+        ///// <param name="columnName">The column name.</param>
+        ///// <param name="description">The description.</param>
+        //public void UpdateColumnDesc(string columnName, string description)
+        //{
+        //    if (ConnectionString.Length == 0) return;
+
+        //    DBColumn? column = GetColumn(columnName);
+
+        //    if (column != null)
+        //    {
+        //        column.Description = description;
+
+        //        var conn = new SqlConnection(ConnectionString);
+        //        try
+        //        {
+        //            var cmd = new SqlCommand("ADMIN.usp_AddColumnDescription", conn) { CommandType = CommandType.StoredProcedure };
+
+        //            cmd.Parameters.AddWithValue("@TableName", ObjectName.FullName);
+        //            cmd.Parameters.AddWithValue("@ColumnName", columnName);
+        //            cmd.Parameters.AddWithValue("@Description", description);
+        /// <summary>
+        /// Gets the object type.
+        /// </summary>
+        /// <returns>A string.</returns>
         private string GetObjectType()
         {
             string objectName = ObjectName.Name;
@@ -443,7 +506,53 @@ namespace SQL_Document_Builder
                 return "TABLE";
             }
         }
-         
+
+        /// <summary>
+        /// Primaries the keys.
+        /// </summary>
+        /// <param name="schemaName">The schema name.</param>
+        /// <param name="tableName">The table name.</param>
+        /// <returns>A list of string.</returns>
+        private void GetPrimaryKeys(string schemaName, string tableName)
+        {
+            var sql = $"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE WHERE OBJECTPROPERTY(OBJECT_ID(CONSTRAINT_SCHEMA + '.' + CONSTRAINT_NAME), 'IsPrimaryKey') = 1 AND TABLE_NAME = '{tableName}' AND TABLE_SCHEMA = '{schemaName}'";
+            var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+            try
+            {
+                var cmd = new SqlCommand()
+                {
+                    Connection = conn,
+                    CommandText = sql,
+                    CommandType = CommandType.Text
+                };
+                conn.Open();
+                var dr = cmd.ExecuteReader();
+                while (dr.Read())
+                {
+                    var columnName = dr.GetString(0);
+                    // find the column in the Columns
+                    foreach (var column in Columns)
+                    {
+                        if (column.ColumnName.Equals(columnName, StringComparison.CurrentCultureIgnoreCase))
+                        {
+                            column.ColID += "🗝";
+                            break;
+                        }
+                    }
+                }
+
+                dr.Close();
+            }
+            catch (Exception ex)
+            {
+                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                conn.Close();
+            }
+        }
+
         /// <summary>
         /// Gets the table desc.
         /// </summary>

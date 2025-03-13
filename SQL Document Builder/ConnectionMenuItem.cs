@@ -1,4 +1,5 @@
-﻿using System.Windows.Forms;
+﻿using System.ComponentModel;
+using System.Windows.Forms;
 
 namespace SQL_Document_Builder
 {
@@ -13,6 +14,7 @@ namespace SQL_Document_Builder
             Connection = connectionItem;
         }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public SQLDatabaseConnectionItem Connection { get; set; }
 
         public string? ConnectionName
