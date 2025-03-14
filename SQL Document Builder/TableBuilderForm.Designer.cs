@@ -41,6 +41,9 @@
             valuesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             primaryKeyToolStripButton = new System.Windows.Forms.ToolStripButton();
             indexToolStripButton = new System.Windows.Forms.ToolStripButton();
+            exeToolStripDropDownButton = new System.Windows.Forms.ToolStripDropDownButton();
+            onDEVToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            onPRODToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             tabControl1 = new System.Windows.Forms.TabControl();
             tabPage1 = new System.Windows.Forms.TabPage();
             objectsListBox = new System.Windows.Forms.ListBox();
@@ -130,7 +133,7 @@
             // toolStrip1
             // 
             toolStrip1.ImageScalingSize = new System.Drawing.Size(20, 20);
-            toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { tableWikiToolStripButton, valuesWikiToolStripButton, toolStripButton1, toolStripSeparator2, descEditToolStripButton, toolStripSeparator3, toolStripDropDownButton1, primaryKeyToolStripButton, indexToolStripButton });
+            toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { tableWikiToolStripButton, valuesWikiToolStripButton, toolStripButton1, toolStripSeparator2, descEditToolStripButton, toolStripSeparator3, toolStripDropDownButton1, primaryKeyToolStripButton, indexToolStripButton, exeToolStripDropDownButton });
             toolStrip1.Location = new System.Drawing.Point(0, 24);
             toolStrip1.Name = "toolStrip1";
             toolStrip1.Padding = new System.Windows.Forms.Padding(0, 0, 2, 0);
@@ -225,6 +228,30 @@
             indexToolStripButton.Size = new System.Drawing.Size(60, 24);
             indexToolStripButton.Text = "Index";
             indexToolStripButton.Click += CreateIndexToolStripMenuItem_Click;
+            // 
+            // exeToolStripDropDownButton
+            // 
+            exeToolStripDropDownButton.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { onDEVToolStripMenuItem, onPRODToolStripMenuItem });
+            exeToolStripDropDownButton.Image = Properties.Resources.play16;
+            exeToolStripDropDownButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            exeToolStripDropDownButton.Name = "exeToolStripDropDownButton";
+            exeToolStripDropDownButton.Size = new System.Drawing.Size(71, 24);
+            exeToolStripDropDownButton.Text = "PROD";
+            exeToolStripDropDownButton.Click += ExeToolStripDropDownButton_Click;
+            // 
+            // onDEVToolStripMenuItem
+            // 
+            onDEVToolStripMenuItem.Name = "onDEVToolStripMenuItem";
+            onDEVToolStripMenuItem.Size = new System.Drawing.Size(166, 22);
+            onDEVToolStripMenuItem.Text = "Execute on DEV";
+            onDEVToolStripMenuItem.Click += OnDEVToolStripMenuItem_Click;
+            // 
+            // onPRODToolStripMenuItem
+            // 
+            onPRODToolStripMenuItem.Name = "onPRODToolStripMenuItem";
+            onPRODToolStripMenuItem.Size = new System.Drawing.Size(166, 22);
+            onPRODToolStripMenuItem.Text = "Execute on PROD";
+            onPRODToolStripMenuItem.Click += OnPRODToolStripMenuItem_Click;
             // 
             // tabControl1
             // 
@@ -982,5 +1009,8 @@
         private System.Windows.Forms.ToolStripButton indexToolStripButton;
         private System.Windows.Forms.ToolStripMenuItem openToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem newToolStripMenuItem1;
+        private System.Windows.Forms.ToolStripDropDownButton exeToolStripDropDownButton;
+        private System.Windows.Forms.ToolStripMenuItem onDEVToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem onPRODToolStripMenuItem;
     }
 }

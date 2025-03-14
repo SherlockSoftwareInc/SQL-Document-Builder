@@ -6,6 +6,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.IO;
+using System.Runtime.InteropServices.JavaScript;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -1160,157 +1161,63 @@ namespace SQL_Document_Builder
                 sqlTextBox.Text = string.Empty;
             }
         }
+
+        /// <summary>
+        /// Handles the Click event of the execute on DEV button.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void OnDEVToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            exeToolStripDropDownButton.Text = "DEV";
+            exeToolStripDropDownButton.PerformClick();
+        }
+
+        /// <summary>
+        /// Handles the Click event of the execute on PROD button.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void OnPRODToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            exeToolStripDropDownButton.Text = "DEV";
+            exeToolStripDropDownButton.PerformClick();
+        }
+
+        /// <summary>
+        /// Handles the Click event of the execute button.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void ExeToolStripDropDownButton_Click(object sender, EventArgs e)
+        {
+            var builder = new SqlConnectionStringBuilder
+            {
+                Encrypt = true,
+                TrustServerCertificate = true,
+                DataSource = "csbc-reporting-prod-sql.database.windows.net",
+                InitialCatalog = exeToolStripDropDownButton.Text == "DEV" ? "csbc-reporting-prod-sqldb-dev" : "csbc-reporting-prod-sqldb-prod",
+                Authentication = SqlAuthenticationMethod.ActiveDirectoryIntegrated,
+                UserID = $"{Environment.UserName}@phsa.ca"
+            };
+
+            using var conn = new SqlConnection(builder.ConnectionString);
+            try
+            {
+                conn.Open();
+                var cmd = new SqlCommand(sqlTextBox.Text, conn);
+                cmd.ExecuteNonQuery();
+                statusToolStripStatusLabe.Text = "Complete!";
+            }
+            catch (Exception ex)
+            {
+                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                conn.Close();
+            }
+        }
     }
 }
 
-///// <summary>
-///// Get description of a column
-///// </summary>
-///// <param name="schema">object schema</param>
-///// <param name="table">object name</param>
-///// <param name="column">column name</param>
-///// <returns></returns>
-//private string GetColumnDesc(string schema, string table, string column)
-//{
-//    string result = string.Empty;
-//    string sql = string.Format("SELECT E.value Description FROM sys.schemas S INNER JOIN sys.tables T ON S.schema_id = T.schema_id INNER JOIN sys.columns C ON T.object_id = C.object_id INNER JOIN sys.extended_properties E ON T.object_id = E.major_id AND C.column_id = E.minor_id AND E.name = 'MS_Description' AND S.name = '{0}' AND T.name = '{1}' AND C.name = '{2}'", schema, table, column);
-//    var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
-//    try
-//    {
-//        var cmd = new SqlCommand(sql, conn) { CommandType = CommandType.Text };
-//        conn.Open();
-//        var dr = cmd.ExecuteReader();
-//        if (dr.Read())
-//        {
-//            result = dr.GetString(0);  //dr[0].ToString();
-//        }
-
-//        dr.Close();
-//    }
-//    catch (Exception ex)
-//    {
-//        Common.MsgBox(ex.Message, MessageBoxIcon.Error);
-//    }
-//    finally
-//    {
-//        conn.Close();
-//    }
-
-//    return result;
-//}
-
-//private void BuildScript()
-//{
-//    if (objectsListBox.SelectedItem != null)
-//    {
-//        if (Connection != null)
-//        {
-//            var objectName = (ObjectName)objectsListBox.SelectedItem;
-//            sqlTextBox.Text = string.Empty;
-
-//            //https://docs.microsoft.com/en-us/dotnet/api/microsoft.sqlserver.management.smo.scriptingoptions?view=sql-smo-160
-//            ScriptingOptions scriptOptions = new()
-//            {
-//                ContinueScriptingOnError = true,
-//                ScriptDrops = scriptDropsCheckBox.Checked,
-//                ScriptForCreateDrop = scriptForCreateDropCheckBox.Checked,
-//                IncludeIfNotExists = includeIfNotExistsCheckBox.Checked,
-//                ExtendedProperties = extendedPropertiesCheckBox.Checked,
-//                AnsiPadding = ansiPaddingCheckBox.Checked,
-//                NoCollation = noCollationCheckBox.Checked,
-//                ScriptData = scriptDataCheckBox.Checked,
-//                IncludeHeaders = includeHeadersCheckBox.Checked
-//            };
-
-//            //GetTableDefWiki(RemoveQuota(tableElement[0]), RemoveQuota(tableElement[1]));
-//            Server server = new(Connection.ServerName);
-//            Database database = server.Databases[Connection.Database];
-//            Table table = database.Tables[objectName.Name, objectName.Schema];
-//            //Table table = database.Tables["pt_case"];
-//            if (table != null)
-//            {
-//                StringCollection result = table.Script(scriptOptions);
-//                foreach (var line in result)
-//                {
-//                    if (line != null)
-//                        AppendLine(line);
-//                }
-//                AppendLine("GO" + Environment.NewLine);
-
-//                //IndexCollection indexCol = table.Indexes;
-//                foreach (Microsoft.SqlServer.Management.Smo.Index myIndex in table.Indexes)
-//                {
-//                    /* Generating IF EXISTS and DROP command for table indexes */
-//                    StringCollection indexScripts = myIndex.Script(scriptOptions);
-//                    foreach (string? script in indexScripts)
-//                    {
-//                        if (script != null)
-//                            AppendLine(script);
-//                    }
-
-//                    /* Generating CREATE INDEX command for table indexes */
-//                    indexScripts = myIndex.Script();
-//                    foreach (string? script in indexScripts)
-//                    {
-//                        if (script != null)
-//                            AppendLine(script);
-//                    }
-//                }
-
-//                //Scripter scripter = new Scripter(server);
-//                ///* With ScriptingOptions you can specify different scripting
-//                //* options, for example to include IF NOT EXISTS, DROP
-//                //* statements, output location etc*/
-
-//                //foreach (Table myTable in database.Tables)
-//                //{
-//                //    /* Generating IF EXISTS and DROP command for tables */
-//                //    StringCollection tableScripts = myTable.Script(scriptOptions);
-//                //    foreach (string script in tableScripts)
-//                //    {
-//                //        AppendLine(script);
-//                //    }
-
-//                //    tableScripts = myTable.Script();
-//                //    foreach (string script in tableScripts)
-//                //    {
-//                //        AppendLine(script);
-//                //    }
-
-//                //    IndexCollection indexCol = myTable.Indexes;
-//                //    foreach (Microsoft.SqlServer.Management.Smo.Index myIndex in myTable.Indexes)
-//                //    {
-//                //        /* Generating IF EXISTS and DROP command for table indexes */
-//                //        StringCollection indexScripts = myIndex.Script(scriptOptions);
-//                //        foreach (string script in indexScripts)
-//                //        {
-//                //            AppendLine(script);
-//                //        }
-
-//                //        /* Generating CREATE INDEX command for table indexes */
-//                //        indexScripts = myIndex.Script();
-//                //        foreach (string script in indexScripts)
-//                //        {
-//                //            AppendLine(script);
-//                //        }
-//                //    }
-//                //}
-
-//                //foreach (var index in table.Indexes)
-//                //{
-//                //    //AppendLine(index.ToString());
-//                //    /* Generating IF EXISTS and DROP command for table indexes */
-//                //    StringCollection indexScripts = index.Script(scriptOptions);
-//                //    foreach (string script in indexScripts)
-//                //        Console.WriteLine(script);
-//                //    /* Generating CREATE INDEX command for table indexes */
-//                //    indexScripts = index.Script();
-//                //    foreach (string script in indexScripts)
-//                //        Console.WriteLine(script);
-//                //}
-
-//                //statusToolStripStatusLabe.Text = "Complete";
-//            }
-//        }
-//    }
-//}
