@@ -2,6 +2,8 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Drawing;
+using System.Text;
 using System.Windows.Forms;
 
 namespace SQL_Document_Builder
@@ -195,9 +197,9 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="message">The message.</param>
         /// <param name="icon">The icon.</param>
-        public static void MsgBox(string message, MessageBoxIcon icon)
+        public static DialogResult MsgBox(string message, MessageBoxIcon icon)
         {
-            MessageBox.Show(message, "Message", MessageBoxButtons.OK, icon);
+           return MessageBox.Show(message, "Message", MessageBoxButtons.OK, icon);
         }
 
         /// <summary>
@@ -254,36 +256,58 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Queries the data and generate the insert statements.
+        /// Queries the data and generates the insert statements.
         /// </summary>
-        /// <param name="sql">The sql.</param>
-        /// <returns>A string.</returns>
-        public static string QueryDataToInsertStatement(string sql)
+        /// <param name="sql">The SQL query to fetch data.</param>
+        /// <param name="tableName">The table name for the insert statements.</param>
+        /// <returns>A string containing the generated insert statements or a warning if rows exceed 500.</returns>
+        public static string QueryDataToInsertStatement(string sql, string tableName = "YourTableName")
         {
-            var sb = new System.Text.StringBuilder();
-
+            var sb = new StringBuilder();
             var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+
             try
             {
-                var cmd = new SqlCommand(sql, conn)
-                { CommandType = CommandType.Text };
+                var cmd = new SqlCommand(sql, conn) { CommandType = CommandType.Text };
                 conn.Open();
 
-                // go through each row and create insert statement
+                // Execute the query and read the data
                 var reader = cmd.ExecuteReader();
                 if (reader.HasRows)
                 {
-                    // get the column names
+                    // Get the column names
                     var columnNames = string.Empty;
                     for (int i = 0; i < reader.FieldCount; i++)
                     {
-                        columnNames += reader.GetName(i) + ", ";
+                        columnNames += $"[{reader.GetName(i)}], ";
                     }
-                    columnNames = columnNames.Substring(0, columnNames.Length - 2);
-                    sb.AppendLine($"INSERT INTO YourTableName ({columnNames}) VALUES ");
+                    columnNames = columnNames.Substring(0, columnNames.Length - 2); // Remove trailing comma and space
+
+                    int rowCount = 0;
+                    int batchCount = 0;
 
                     while (reader.Read())
                     {
+                        // Check if row count exceeds 500
+                        if (rowCount >= 500)
+                        {
+                            return "Too much rows";
+                        }
+
+                        // Start a new batch every 50 rows
+                        if (rowCount % 50 == 0)
+                        {
+                            if (batchCount > 0)
+                            {
+                                // Remove the trailing comma from the previous batch
+                                sb.Length -= 3; // Remove ",\n"
+                                sb.AppendLine(";"); // Close the previous batch
+                            }
+                            sb.AppendLine($"INSERT INTO {tableName} ({columnNames}) VALUES");
+                            batchCount++;
+                        }
+
+                        // Generate the values for the current row
                         sb.Append("\t(");
                         for (int i = 0; i < reader.FieldCount; i++)
                         {
@@ -302,10 +326,10 @@ namespace SQL_Document_Builder
                                         sb.Append("'" + reader.GetDateTime(i).ToString("yyyy-MM-dd HH:mm:ss") + "'");
                                         break;
                                     case "Int32":
-                                        sb.Append("'" + reader.GetInt32(i) + "'");
+                                        sb.Append(reader.GetInt32(i));
                                         break;
                                     case "Int64":
-                                        sb.Append("'" + reader.GetInt64(i) + "'");
+                                        sb.Append(reader.GetInt64(i));
                                         break;
                                     case "Decimal":
                                         sb.Append(reader.GetDecimal(i));
@@ -320,7 +344,7 @@ namespace SQL_Document_Builder
                                         sb.Append(reader.GetBoolean(i) ? "1" : "0");
                                         break;
                                     default:
-                                        sb.Append("'" + reader.GetValue(i) + "'");
+                                        sb.Append("'" + reader.GetValue(i).ToString().Replace("'", "''") + "'");
                                         break;
                                 }
                             }
@@ -330,10 +354,17 @@ namespace SQL_Document_Builder
                             }
                         }
                         sb.AppendLine("),");
+
+                        rowCount++;
+                    }
+
+                    // Remove the trailing comma from the last row in the last batch
+                    if (sb.Length > 0)
+                    {
+                        sb.Length -= 3; // Remove ",\n"
+                        sb.AppendLine(";"); // Close the last batch
                     }
                 }
-
-
             }
             catch (Exception ex)
             {
@@ -343,9 +374,9 @@ namespace SQL_Document_Builder
             {
                 conn.Close();
             }
+
             return sb.ToString();
         }
-
 
         /// <summary>
         /// Data the table to HTML.
@@ -499,6 +530,18 @@ namespace SQL_Document_Builder
             }
 
             return columns;
+        }
+
+        /// <summary>
+        /// Msgs the box.
+        /// </summary>
+        /// <param name="v">The v.</param>
+        /// <param name="yesNo">The yes no.</param>
+        /// <param name="warning">The warning.</param>
+        /// <returns>A DialogResult.</returns>
+        internal static DialogResult MsgBox(string v, MessageBoxButtons yesNo, MessageBoxIcon warning)
+        {
+            return MessageBox.Show(v, "Message", yesNo, warning);
         }
     }
 }

@@ -1,5 +1,8 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace SQL_Document_Builder
@@ -62,8 +65,8 @@ namespace SQL_Document_Builder
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string TableDescription
         {
-            get { return tableLabel.Text; }
-            set { tableLabel.Text = value; }
+            get { return tableDescTextBox.Text; }
+            set { tableDescTextBox.Text = value; }
         }
 
         /// <summary>
@@ -359,7 +362,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The E.</param>
         private void TableLabel_Validated(object sender, EventArgs e)
         {
-            _dbObject.UpdateTableDesc(tableLabel.Text);
+            _dbObject.UpdateTableDesc(tableDescTextBox.Text);
         }
 
         /// <summary>
@@ -374,13 +377,17 @@ namespace SQL_Document_Builder
             {
                 string columnName = (string)columnDefDataGridView.Rows[0].Cells["ColumnName"].Value;
                 sql = $@"IF NOT EXISTS (
-    SELECT * FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS 
-    WHERE CONSTRAINT_TYPE = 'PRIMARY KEY' 
+    SELECT * FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS
+    WHERE CONSTRAINT_TYPE = 'PRIMARY KEY'
     AND TABLE_NAME = '{TableName}'
     AND TABLE_SCHEMA = '{Schema}'
 )
 BEGIN
-    ALTER TABLE [{Schema}].[{TableName}] 
+    -- Make the column non-nullable
+    --ALTER TABLE [{Schema}].[{TableName}]
+    --ALTER COLUMN {columnName} smallint NOT NULL;
+
+    ALTER TABLE [{Schema}].[{TableName}]
     ADD CONSTRAINT PK_{Schema}_{TableName} PRIMARY KEY ({columnName})
 END
 GO
@@ -398,19 +405,18 @@ GO
         {
             // get the selected column name from the data grid view
 
-
             string sql = "";
             // get the selected column name from the data grid view
             if (!string.IsNullOrEmpty(SelectedColumn))
             {
                 string indexName = $"IX_{Schema}_{TableName}_{SelectedColumn}";
                 sql = $@"IF NOT EXISTS (
-    SELECT * FROM sys.indexes 
-    WHERE name = '{indexName}' 
+    SELECT * FROM sys.indexes
+    WHERE name = '{indexName}'
     AND object_id = OBJECT_ID('[{Schema}].[{TableName}]')
 )
 BEGIN
-    CREATE INDEX {indexName} 
+    CREATE INDEX {indexName}
     ON [{Schema}].[{TableName}] ({SelectedColumn});
 END
 GO
@@ -420,6 +426,224 @@ GO
             return sql;
         }
 
+        /// <summary>
+        /// Gets the create object script.
+        /// </summary>
+        /// <returns>A string.</returns>
+        public async Task<string?> GetCreateObjectScript()
+        {
+            if (string.IsNullOrEmpty(TableName))
+            {
+                throw new InvalidOperationException("Table name cannot be null or empty.");
+            }
 
+            // if the table is a view, return the create view script
+            if (TableType == ObjectName.ObjectTypeEnums.View)
+            {
+                StringBuilder createViewScript = new();
+
+                // Add the header
+                createViewScript.AppendLine($"/****** Object:  View [{Schema}].[{TableName}] ******/");
+
+                // Add drop table statement
+                createViewScript.AppendLine($"IF OBJECT_ID('[{Schema}].[{TableName}]', 'V') IS NOT NULL");
+                createViewScript.AppendLine($"\tDROP VIEW [{Schema}].[{TableName}];");
+                createViewScript.AppendLine($"GO");
+
+                var script = await _dbObject.GetViewDefinitionAsync();
+                createViewScript.Append(script);
+                createViewScript.AppendLine($"GO");
+                return createViewScript.ToString();
+            }
+            else
+            {
+                return GetCreateTableScript();
+            }
+        }
+
+        /// <summary>
+        /// Gets the create table script.
+        /// </summary>
+        /// <param name="connectionString">The connection string.</param>
+        /// <param name="tableName">The table name.</param>
+        /// <returns>A string.</returns>
+        public string GetCreateTableScript()
+        {
+            StringBuilder createTableScript = new();
+
+            // Add the header
+            createTableScript.AppendLine($"/****** Object:  Table [{Schema}].[{TableName}] ******/");
+
+            // Add drop table statement
+            createTableScript.AppendLine($"IF OBJECT_ID('[{Schema}].[{TableName}]', 'U') IS NOT NULL");
+            createTableScript.AppendLine($"\tDROP TABLE [{Schema}].[{TableName}];");
+            createTableScript.AppendLine($"GO");
+
+            // Get the primary key column names that the ColID ends with "🗝"
+            string primaryKeyColumns = string.Empty;
+            for (int i = 0; i < columnDefDataGridView.Rows.Count; i++)
+            {
+                DataGridViewRow row = columnDefDataGridView.Rows[i];
+                if (row.IsNewRow) continue; // Skip the new row placeholder
+                string colId = row.Cells["ColID"].Value?.ToString() ?? string.Empty;
+                if (colId.EndsWith("🗝"))
+                {
+                    string columnName = row.Cells["ColumnName"].Value?.ToString() ?? throw new InvalidOperationException("Column name cannot be null.");
+                    primaryKeyColumns += $"[{columnName}], ";
+                }
+            }
+            if (primaryKeyColumns.Length > 0)
+            {
+                primaryKeyColumns = primaryKeyColumns.TrimEnd(',', ' ');
+            }
+
+            // Add the CREATE TABLE statement
+            createTableScript.AppendLine($"CREATE TABLE [{Schema}].[{TableName}] (");
+
+            // Iterate through the rows in the DataGridView
+            for (int i = 0; i < columnDefDataGridView.Rows.Count; i++)
+            {
+                DataGridViewRow row = columnDefDataGridView.Rows[i];
+                if (row.IsNewRow) continue; // Skip the new row placeholder
+
+                // Safely retrieve column values
+                string columnName = row.Cells["ColumnName"].Value?.ToString() ?? throw new InvalidOperationException("Column name cannot be null.");
+                string dataType = row.Cells["DataType"].Value?.ToString() ?? throw new InvalidOperationException($"Data type for column '{columnName}' cannot be null.");
+                string isNullable = Convert.ToBoolean(row.Cells["Nullable"].Value) ? "NULL" : "NOT NULL";
+
+                // Append the column definition
+                createTableScript.Append($"\t[{columnName}] {dataType} {isNullable}");
+
+                // Add a comma if it's not the last valid row
+                if (i < columnDefDataGridView.Rows.Count - 1 && !columnDefDataGridView.Rows[i + 1].IsNewRow)
+                {
+                    createTableScript.AppendLine(",");
+                }
+                else if (string.IsNullOrEmpty(primaryKeyColumns))
+                {
+                    createTableScript.AppendLine(); // No primary key, just end the line
+                }
+                else
+                {
+                    createTableScript.AppendLine(","); // Add a comma if primary key exists
+                }
+            }
+
+            // Add the primary key constraint if it exists
+            if (!string.IsNullOrEmpty(primaryKeyColumns))
+            {
+                createTableScript.AppendLine($"\tCONSTRAINT PK_{Schema}_{TableName} PRIMARY KEY ({primaryKeyColumns})");
+            }
+
+            createTableScript.AppendLine(");");
+            createTableScript.AppendLine($"GO");
+
+            var indexScript = _dbObject.GetCreateIndexesScript($"[{Schema}].[{TableName}]");
+            if (!string.IsNullOrEmpty(indexScript))
+            {
+                createTableScript.AppendLine(indexScript);
+                createTableScript.AppendLine($"GO");
+            }
+
+            return createTableScript.ToString();
+        }
+
+        /// <summary>
+        /// Gets the table dependency script.
+        /// </summary>
+        /// <returns>A string.</returns>
+        private string GetTableDependencyScript()
+        {
+            var viewList = _dbObject.GetViewsUsingTable(Schema, TableName);
+
+            if (viewList != null && viewList.Count > 0)
+            {
+                // build the view list string
+                var viewListString = string.Join(", ", viewList.Select(v => $"[{v.SchemaName}].[{v.ViewName}]"));
+
+                return $"This table, [{Schema}].[{TableName}], serves as a reference table defining .... It is utilized in the views: {viewListString}.";
+            }
+
+            return string.Empty;
+        }
+
+        /// <summary>
+        /// Handles the column value frequency tool strip menu item click event.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void ColumnValueFrequencyToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // get the selected column name from the data grid view
+            if (columnDefDataGridView.SelectedCells.Count > 0)
+            {
+                int rowIndex = columnDefDataGridView.CurrentCell.RowIndex;
+                if (rowIndex == -1) return;
+
+                string columnName = (string)columnDefDataGridView.Rows[rowIndex].Cells["ColumnName"].Value;
+                if (string.IsNullOrEmpty(columnName))
+                {
+                    MessageBox.Show("Please select a column to get the frequency.");
+                    return;
+                }
+
+                string sql = $@"SELECT {columnName}, COUNT(*) AS Frequency FROM [{Schema}].[{TableName}] GROUP BY {columnName}";
+                using var dlg = new DataViewForm()
+                {
+                    SQL = sql,
+                    MultipleValue = false,
+                    Text = $"{columnName}",
+                    TableName = $"[{Schema}].[{TableName}]",
+                    EnableValueFrequency = true,
+                    DatabaseIndex = 0
+                };
+                dlg.ShowDialog();
+            }
+        }
+
+        /// <summary>
+        /// Handles the copy tool strip menu item click event.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void CopyToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Clipboard.SetDataObject(tableDescTextBox.SelectedText);
+        }
+
+        /// <summary>
+        /// Handles the paste tool strip menu item click event.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void PasteToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            tableDescTextBox.Paste();
+            _dbObject.UpdateTableDesc(tableDescTextBox.Text);
+        }
+
+        /// <summary>
+        /// Handles the add description tool strip menu item click event.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void AddDescriptionToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (tableDescTextBox.Text.Contains("This table,"))
+            {
+                MessageBox.Show("The description already contains a table dependency script.");
+                return;
+            }
+
+            string description = tableDescTextBox.Text;
+            if (description.Length > 0)
+            {
+                description += Environment.NewLine;
+            }
+            description += GetTableDependencyScript();
+
+            tableDescTextBox.Text = description;
+            _dbObject.UpdateTableDesc(description);
+        }
     }
 }

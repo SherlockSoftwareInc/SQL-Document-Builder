@@ -107,6 +107,11 @@ namespace SQL_Document_Builder
             }
         }
 
+        /// <summary>
+        /// Columns the view_ table desc selected.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
         private void ColumnView_TableDescSelected(object sender, EventArgs e)
         {
             titleLabel.Text = (columnView.TableType == ObjectName.ObjectTypeEnums.View ? "View: " : "Table: ") + columnView.TableFullName;

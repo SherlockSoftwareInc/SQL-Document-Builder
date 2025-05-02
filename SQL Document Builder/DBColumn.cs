@@ -35,6 +35,10 @@ namespace SQL_Document_Builder
                         {
                             DataType = string.Format("{0}({1})", dtType, strMaxLength);
                         }
+                        else if (maxLength == -1)
+                        {
+                            DataType = string.Format("{0}(MAX)", dtType);
+                        }
                     }
                     else
                     {

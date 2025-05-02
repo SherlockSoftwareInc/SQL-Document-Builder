@@ -6,7 +6,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.IO;
-using System.Runtime.InteropServices.JavaScript;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -28,6 +28,8 @@ namespace SQL_Document_Builder
         private int _connectionCount = 0;
 
         private string _fileName = string.Empty;
+
+        private bool _changed = false;
 
         /// <summary>
         /// The selected connection.
@@ -739,6 +741,8 @@ namespace SQL_Document_Builder
             var file = new System.IO.StreamWriter(_fileName, false);
             await file.WriteAsync(sqlTextBox.Text);
             file.Close();
+            _changed = false;
+
             statusToolStripStatusLabe.Text = "Complete";
         }
 
@@ -749,6 +753,8 @@ namespace SQL_Document_Builder
         /// <param name="e">The E.</param>
         private void SaveToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (!_changed) return;
+
             if (string.IsNullOrEmpty(_fileName))
             {
                 var oFile = new SaveFileDialog() { Filter = "SQL script(*.sql)|*.sql|Text file(*.txt)|*.txt|All files(*.*)|*.*" };
@@ -762,9 +768,9 @@ namespace SQL_Document_Builder
             }
             else
             {
-                SetScript(sqlTextBox.Text);
+                AppendSave();
             }
-            statusToolStripStatusLabe.Text = "Complete";
+            statusToolStripStatusLabe.Text = "Script appended to the file";
         }
 
         /// <summary>
@@ -784,7 +790,13 @@ namespace SQL_Document_Builder
         /// <param name="e">The E.</param>
         private void SearchTextBox_TextChanged(object sender, EventArgs e)
         {
-            Populate();
+            // reset the timer and start it
+            if (timer1 != null)
+            {
+                timer1.Stop();
+                timer1.Interval = 500;
+                timer1.Start();
+            }
         }
 
         /// <summary>
@@ -819,24 +831,6 @@ namespace SQL_Document_Builder
 
             sqlTextBox.Text = sql;
             Clipboard.SetText(sql);
-
-            if (string.IsNullOrEmpty(_fileName))
-            {
-                return;
-            }
-
-            // append the script to the file
-            try
-            {
-                File.AppendAllText(_fileName, Environment.NewLine + sql);
-
-                //var file = new System.IO.StreamWriter(_fileName, true);
-                //file.WriteLine(sql);
-                //file.Close();
-            }
-            catch (Exception)
-            {
-            }
         }
 
         /// <summary>
@@ -896,6 +890,7 @@ namespace SQL_Document_Builder
             PopulateConnections();
 
             var lastConnection = Properties.Settings.Default.LastAccessConnectionIndex;
+            lastConnection = 1;
             ConnectionMenuItem? selectedItem;
             if (lastConnection <= 0 || lastConnection >= _connections.Connections.Count)
             {
@@ -1143,6 +1138,7 @@ namespace SQL_Document_Builder
                 this.Text = $"SharePoint Script Builder - {_fileName}";
 
                 sqlTextBox.Text = File.ReadAllText(_fileName);
+                _changed = false;
             }
         }
 
@@ -1159,6 +1155,7 @@ namespace SQL_Document_Builder
                 _fileName = oFile.FileName;
                 this.Text = $"SharePoint Script Builder - {_fileName}";
                 sqlTextBox.Text = string.Empty;
+                _changed = false;
             }
         }
 
@@ -1169,8 +1166,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void OnDEVToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            exeToolStripDropDownButton.Text = "DEV";
-            exeToolStripDropDownButton.PerformClick();
+            ExecuteScripts("csbc-reporting-prod-sqldb-prod");
         }
 
         /// <summary>
@@ -1180,32 +1176,68 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void OnPRODToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            exeToolStripDropDownButton.Text = "DEV";
-            exeToolStripDropDownButton.PerformClick();
+            ExecuteScripts("csbc-reporting-prod-sqldb-dev");
         }
 
         /// <summary>
-        /// Handles the Click event of the execute button.
+        /// Executes the scripts.
         /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void ExeToolStripDropDownButton_Click(object sender, EventArgs e)
+        private void ExecuteScripts(string initialCatalog)
         {
+            string script = sqlTextBox.SelectedText;
+            if (script.Length == 0)
+            {
+                script = sqlTextBox.Text;
+            }
+
+            if (script.Length == 0)
+            {
+                Common.MsgBox("No SQL statements to execute", MessageBoxIcon.Information);
+                return;
+            }
+
+            // checks if there is a DROP statement in the script, ask for confirmation
+            if (script.Contains("DROP ", StringComparison.CurrentCultureIgnoreCase))
+            {
+                if (Common.MsgBox("The script contains a DROP statement. Are you sure you want to continue?", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
+                {
+                    return;
+                }
+            }
+
             var builder = new SqlConnectionStringBuilder
             {
                 Encrypt = true,
                 TrustServerCertificate = true,
                 DataSource = "csbc-reporting-prod-sql.database.windows.net",
-                InitialCatalog = exeToolStripDropDownButton.Text == "DEV" ? "csbc-reporting-prod-sqldb-dev" : "csbc-reporting-prod-sqldb-prod",
+                InitialCatalog = initialCatalog,
                 Authentication = SqlAuthenticationMethod.ActiveDirectoryIntegrated,
                 UserID = $"{Environment.UserName}@phsa.ca"
             };
 
-            using var conn = new SqlConnection(builder.ConnectionString);
+            // from the sqlTextBox.Text, break it into individual SQL statements by the GO keyword
+            //var sqlStatements = sqlTextBox.Text.Split(["GO"], StringSplitOptions.RemoveEmptyEntries);
+            var sqlStatements = Regex.Split(script, @"\bGO\b", RegexOptions.IgnoreCase | RegexOptions.Multiline);
+
+            // execute each statement
+            foreach (var sql in sqlStatements)
+            {
+                Execute(builder.ConnectionString, sql);
+            }
+        }
+
+        /// <summary>
+        /// Executes the.
+        /// </summary>
+        /// <param name="connectionString">The connection string.</param>
+        /// <param name="sql">The sql.</param>
+        private void Execute(string connectionString, string sql)
+        {
+            using var conn = new SqlConnection(connectionString);
             try
             {
                 conn.Open();
-                var cmd = new SqlCommand(sqlTextBox.Text, conn);
+                var cmd = new SqlCommand(sql, conn);
                 cmd.ExecuteNonQuery();
                 statusToolStripStatusLabe.Text = "Complete!";
             }
@@ -1218,6 +1250,145 @@ namespace SQL_Document_Builder
                 conn.Close();
             }
         }
+
+        /// <summary>
+        /// Saves the replace tool strip menu item_ click.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void SaveReplaceToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // save the text in the sqlTextBox to the file
+            if (string.IsNullOrEmpty(_fileName))
+            {
+                saveAsToolStripMenuItem.PerformClick();
+            }
+            else
+            {
+                File.WriteAllText(_fileName, sqlTextBox.Text);
+                _changed = false;
+            }
+        }
+
+        /// <summary>
+        /// Appends the save.
+        /// </summary>
+        private void AppendSave()
+        {
+            if (string.IsNullOrEmpty(_fileName))
+            {
+                return;
+            }
+
+            // append the script to the file
+            try
+            {
+                File.AppendAllText(_fileName, Environment.NewLine + sqlTextBox.Text);
+                _changed = false;
+
+                //var file = new System.IO.StreamWriter(_fileName, true);
+                //file.WriteLine(sql);
+                //file.Close();
+            }
+            catch (Exception)
+            {
+            }
+        }
+
+        /// <summary>
+        /// Handles the sql text box text changed event.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void SqlTextBox_TextChanged(object sender, EventArgs e)
+        {
+            _changed = true;
+            statusToolStripStatusLabe.Text = string.Empty;
+        }
+
+        /// <summary>
+        /// Handles the "create table" tool strip button click:
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private async void CreateTableToolStripButton_Click(object sender, EventArgs e)
+        {
+            sqlTextBox.Text = string.Empty;
+
+            var createScript = await definitionPanel.GetCreateObjectScript();
+            if (createScript == null)
+            {
+                return;
+            }
+
+            SetScript(createScript);
+
+            var objectName = (ObjectName)objectsListBox.SelectedItem;
+            if (!string.IsNullOrEmpty(objectName?.Name))
+            {
+                var description = ObjectDescription.BuildObjectDescription(objectName);
+                if (description.Length > 0)
+                {
+                    // append the description to the script
+                    sqlTextBox.AppendText(description);
+                    sqlTextBox.AppendText("GO" + Environment.NewLine);
+                }
+
+                if (!string.IsNullOrEmpty(sqlTextBox.Text))
+                {
+                    Clipboard.SetText(sqlTextBox.Text);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Handles timer tick.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void Timer1_Tick(object sender, EventArgs e)
+        {
+            timer1.Stop();
+            Populate();
+        }
+
+        /// <summary>
+        /// Handles the "insert" tool strip button click:
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void InsertToolStripButton_Click(object sender, EventArgs e)
+        {
+            var objectName = (ObjectName)objectsListBox.SelectedItem;
+            if (objectName != null)
+            {
+                var sql = $"select * from {objectName.FullName}";
+                var script = Common.QueryDataToInsertStatement(sql, objectName.FullName);
+
+                if (script == "Too much rows")
+                {
+                    Common.MsgBox("Too much rows to insert", MessageBoxIcon.Error);
+                    return;
+                }
+
+                // append the insert statement to the script
+                sqlTextBox.AppendText(script);
+                sqlTextBox.AppendText("GO" + Environment.NewLine);
+                if (!string.IsNullOrEmpty(sqlTextBox.Text))
+                {
+                    Clipboard.SetText(sqlTextBox.Text);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Handles the "execute on STG" tool strip menu item click:
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void ExecuteOnSTGToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ExecuteScripts("csbc-reporting-prod-sqldb-stg");
+        }
     }
 }
-
