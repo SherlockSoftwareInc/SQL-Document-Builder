@@ -1,7 +1,9 @@
-﻿using System;
+﻿using ExcelDataReader;
+using System;
 using System.Data;
-using System.Threading.Tasks;
+using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace SQL_Document_Builder
@@ -11,8 +13,6 @@ namespace SQL_Document_Builder
     /// </summary>
     public partial class ExcelSheetsForm : Form
     {
-        private string _connectionString = "";  // connection string to open the Excel file
-
         private DataTable _resultDataTable;
 
         /// <summary>
@@ -21,10 +21,6 @@ namespace SQL_Document_Builder
         public ExcelSheetsForm()
         {
             InitializeComponent();
-            //if (Properties.Settings.Default.DarkMode)
-            //{
-            //    _ = new DarkTheme(this);
-            //}
         }
 
         /// <summary>
@@ -33,59 +29,60 @@ namespace SQL_Document_Builder
         public DataTable ResultDataTable => _resultDataTable;
 
         /// <summary>
-        /// The Excel file name to analysis
+        /// The Excel file name to analyze.
         /// </summary>
         public string FileName { get; set; }
 
         /// <summary>
-        /// Open the Excel file with task cancellation control
+        /// Open the Excel file with task cancellation control.
         /// </summary>
-        /// <param name="connectionString"></param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        public async Task<string> OpenExcelFileAsync(string sql, string connectionString, CancellationToken cancellationToken)
+        /// <param name="sheetName">The sheet name to read data from.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>A string indicating the result.</returns>
+        public async Task<string> OpenExcelFileAsync(string sheetName, CancellationToken cancellationToken)
         {
             var result = "";
-            if (connectionString.Length > 0)
+            try
             {
-                using var conn = new System.Data.OleDb.OleDbConnection(connectionString);
-                try
+                using var stream = File.Open(FileName, FileMode.Open, FileAccess.Read);
+                using var reader = ExcelReaderFactory.CreateReader(stream);
+
+                var dataSetConfig = new ExcelDataSetConfiguration
                 {
-                    using var cmd = new System.Data.OleDb.OleDbCommand(sql, conn)
+                    ConfigureDataTable = _ => new ExcelDataTableConfiguration
                     {
-                        CommandType = CommandType.Text
-                    };
-                    await conn.OpenAsync(cancellationToken).ConfigureAwait(false);
-                    using CancellationTokenRegistration crt = cancellationToken.Register(() => cmd.Cancel());
-                    using var reader = await cmd.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false); /*.ConfigureAwait(false)*/
-                    _resultDataTable = new DataTable();
-                    _resultDataTable.Load(reader);
-                    reader.Close();
-                }
-                catch (OperationCanceledException)
-                {
-                    result = "Cancelled";
-                }
-                catch (System.Exception ex)
-                {
-                    result = ex.Message;
-                }
-                finally
-                {
-                    if (conn.State == ConnectionState.Open)
-                    {
-                        conn.Close();
+                        UseHeaderRow = true // Use the first row as column headers
                     }
+                };
+
+                var dataSet = await Task.Run(() => reader.AsDataSet(dataSetConfig), cancellationToken);
+
+                if (dataSet.Tables.Contains(sheetName))
+                {
+                    _resultDataTable = dataSet.Tables[sheetName];
+                }
+                else
+                {
+                    result = "Sheet not found.";
                 }
             }
+            catch (OperationCanceledException)
+            {
+                result = "Cancelled";
+            }
+            catch (Exception ex)
+            {
+                result = ex.Message;
+            }
+
             return result;
         }
 
         /// <summary>
-        /// Analysis button click event handle: start analysis selected sheet
+        /// Analysis button click event handle: start analysis of the selected sheet.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The event arguments.</param>
         private async void AnalysisButton_Click(object sender, EventArgs e)
         {
             try
@@ -93,18 +90,20 @@ namespace SQL_Document_Builder
                 var sheetName = sheetsListBox.SelectedItem?.ToString();
                 if (!string.IsNullOrEmpty(sheetName))
                 {
-                    var sql = $"select * from [{sheetName}]";
-                    var result = await OpenExcelFileAsync(sql, _connectionString, CancellationToken.None);
+                    var result = await OpenExcelFileAsync(sheetName, CancellationToken.None);
+                    if (!string.IsNullOrEmpty(result))
+                    {
+                        MessageBox.Show(result, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
                 }
             }
             catch (ObjectDisposedException)
             {
-                // ignore
+                // Ignore
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                //MessageBox.Show(ex.Message, Properties.Resources.A005, MessageBoxButtons.OK, MessageBoxIcon.Error);
-                //throw;
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally
             {
@@ -113,69 +112,44 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Close button click event handle: Close the dialog
+        /// Close button click event handle: Close the dialog.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The event arguments.</param>
         private void CloseButton_Click(object sender, EventArgs e)
         {
             Close();
         }
 
         /// <summary>
-        /// Form load event handle
+        /// Form load event handle.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The event arguments.</param>
         private void ExcelSheetsForm_Load(object sender, EventArgs e)
         {
-            const string strPass = "";
-            if (FileName.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase))
+            try
             {
-                _connectionString = String.Format("provider=Microsoft.ACE.OLEDB.12.0;data source={0};{1}Extended Properties=Excel 12.0;", FileName, strPass);
-            }
-            else
-            {
-                _connectionString = String.Format("Provider=Microsoft.Jet.OLEDB.4.0;Data Source={0};{1}Extended Properties=Excel 8.0;", FileName, strPass);
-            }
-            startTimer.Start();
-        }
+                using var stream = File.Open(FileName, FileMode.Open, FileAccess.Read);
+                using var reader = ExcelReaderFactory.CreateReader(stream);
 
-        /// <summary>
-        /// start timer tick event handle
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void StartTimer_Tick(object sender, EventArgs e)
-        {
-            startTimer.Stop();
-
-            if (_connectionString.Length > 1)
-            {
-                try
+                var dataSet = reader.AsDataSet();
+                foreach (DataTable table in dataSet.Tables)
                 {
-                    using var conn = new System.Data.OleDb.OleDbConnection(_connectionString);
-                    conn.Open();
-                    DataTable dtSheets = conn.GetOleDbSchemaTable(System.Data.OleDb.OleDbSchemaGuid.Tables, null);
-
-                    foreach (DataRow dr in dtSheets.Rows)
-                    {
-                        sheetsListBox.Items.Add(dr["TABLE_NAME"].ToString());
-                    }
-
-                    if (sheetsListBox.Items.Count > 0)
-                    {
-                        sheetsListBox.SelectedIndex = 0;
-                        analysisButton.Enabled = true;
-                    }
-                    infoToolStripStatusLabel.Text = System.IO.Path.GetFileName(FileName);
+                    sheetsListBox.Items.Add(table.TableName);
                 }
-                catch (Exception ex)
+
+                if (sheetsListBox.Items.Count > 0)
                 {
-                    //MessageBox.Show(ex.Message, Properties.Resources.A005, MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    Close();
-                    //throw;
+                    sheetsListBox.SelectedIndex = 0;
+                    analysisButton.Enabled = true;
                 }
+
+                infoToolStripStatusLabel.Text = Path.GetFileName(FileName);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
     }

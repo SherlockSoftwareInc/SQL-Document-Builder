@@ -28,7 +28,6 @@
         /// </summary>
         private void InitializeComponent()
         {
-            components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ExcelSheetsForm));
             selectSheetLabel = new System.Windows.Forms.Label();
             closeButton = new System.Windows.Forms.Button();
@@ -36,7 +35,6 @@
             sheetsListBox = new System.Windows.Forms.ListBox();
             statusStrip1 = new System.Windows.Forms.StatusStrip();
             infoToolStripStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
-            startTimer = new System.Windows.Forms.Timer(components);
             statusStrip1.SuspendLayout();
             SuspendLayout();
             // 
@@ -77,11 +75,6 @@
             resources.ApplyResources(infoToolStripStatusLabel, "infoToolStripStatusLabel");
             infoToolStripStatusLabel.Spring = true;
             // 
-            // startTimer
-            // 
-            startTimer.Interval = 10;
-            startTimer.Tick += StartTimer_Tick;
-            // 
             // ExcelSheetsForm
             // 
             resources.ApplyResources(this, "$this");
@@ -110,6 +103,5 @@
         private System.Windows.Forms.ListBox sheetsListBox;
         private System.Windows.Forms.StatusStrip statusStrip1;
         private System.Windows.Forms.ToolStripStatusLabel infoToolStripStatusLabel;
-        private System.Windows.Forms.Timer startTimer;
     }
 }
