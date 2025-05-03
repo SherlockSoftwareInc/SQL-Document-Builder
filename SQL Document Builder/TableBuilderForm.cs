@@ -909,6 +909,8 @@ namespace SQL_Document_Builder
                 Close();
             }
 
+            extendedPropertiesCheckBox.Checked = Properties.Settings.Default.UseExtendedProperties;
+
             WindowState = FormWindowState.Maximized;
             if (collapsibleSplitter1 != null)
                 collapsibleSplitter1.SplitterDistance = (int)(this.Width * 0.25F);
@@ -955,10 +957,10 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void TableDescriptionToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var objectName = (ObjectName)objectsListBox.SelectedItem;
+            var objectName = objectsListBox.SelectedItem as ObjectName;
             if (!string.IsNullOrEmpty(objectName?.Name))
             {
-                SetScript(ObjectDescription.BuildObjectDescription(objectName));
+                SetScript(ObjectDescription.BuildObjectDescription(objectName, Properties.Settings.Default.UseExtendedProperties));
                 if (!string.IsNullOrEmpty(sqlTextBox.Text))
                 {
                     Clipboard.SetText(sqlTextBox.Text);
@@ -1323,10 +1325,10 @@ namespace SQL_Document_Builder
 
             SetScript(createScript);
 
-            var objectName = (ObjectName)objectsListBox.SelectedItem;
+            var objectName = objectsListBox.SelectedItem as ObjectName;
             if (!string.IsNullOrEmpty(objectName?.Name))
             {
-                var description = ObjectDescription.BuildObjectDescription(objectName);
+                var description = ObjectDescription.BuildObjectDescription(objectName, Properties.Settings.Default.UseExtendedProperties);
                 if (description.Length > 0)
                 {
                     // append the description to the script
@@ -1359,7 +1361,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void InsertToolStripButton_Click(object sender, EventArgs e)
         {
-            var objectName = (ObjectName)objectsListBox.SelectedItem;
+            var objectName = objectsListBox.SelectedItem as ObjectName;
             if (objectName != null)
             {
                 var sql = $"select * from {objectName.FullName}";
@@ -1426,6 +1428,109 @@ namespace SQL_Document_Builder
                     Clipboard.SetText(sqlTextBox.Text);
                 }
             }
+        }
+
+        /// <summary>
+        /// Handles the "Extended properties" check box checked changed event:
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void ExtendedPropertiesCheckBox_CheckedChanged(object sender, EventArgs e)
+        {
+            Properties.Settings.Default.UseExtendedProperties = extendedPropertiesCheckBox.Checked;
+            Properties.Settings.Default.Save();
+        }
+
+        /// <summary>
+        /// Handles the "Create stored procedure" tool strip menu item click:
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void UspToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            sqlTextBox.Text = $@"IF OBJECT_ID('dbo.usp_AddObjectDescription', 'P') IS NOT NULL
+	DROP PROCEDURE dbo.usp_AddObjectDescription;
+GO
+CREATE PROCEDURE usp_AddObjectDescription
+(
+	@TableName sysname,
+	@Description nvarchar(1024)
+)
+AS
+BEGIN
+    SET NOCOUNT ON
+
+	IF OBJECT_ID(@TableName) IS NOT NULL AND LEN(COALESCE(@Description, '')) > 0
+	BEGIN
+		DECLARE @Schema varchar(100) = OBJECT_SCHEMA_NAME(OBJECT_ID(@TableName));
+		DECLARE @ObjectName varchar(100) = OBJECT_NAME(OBJECT_ID(@TableName));
+		DECLARE @ObjectType varchar(100);
+		SELECT @ObjectType = CASE type_desc WHEN 'USER_TABLE' THEN 'TABLE' ELSE 'VIEW' END
+		  FROM sys.objects
+		 WHERE object_id = OBJECT_ID(@TableName);
+
+		IF EXISTS (	SELECT value
+					FROM sys.extended_properties
+					WHERE class = 1 AND major_id = OBJECT_ID(@TableName)
+						AND minor_id = 0
+						AND name = 'MS_Description')
+			EXEC sp_updateextendedproperty @name = N'MS_Description', @value = @Description, 
+				@level0type = N'SCHEMA', @level0name = @Schema, 
+				@level1type = @ObjectType, @level1name = @ObjectName;
+		ELSE
+			EXEC sp_addextendedproperty @name = N'MS_Description', @value = @Description, 
+				@level0type = N'SCHEMA', @level0name = @Schema, 
+				@level1type = @ObjectType, @level1name = @ObjectName;
+	
+	END
+END
+GO
+IF OBJECT_ID('dbo.usp_AddColumnDescription', 'P') IS NOT NULL
+	DROP PROCEDURE dbo.usp_AddColumnDescription;
+GO
+CREATE PROCEDURE usp_AddColumnDescription
+(
+	@TableName sysname,
+	@ColumnName varchar(200),
+	@Description nvarchar(1024)
+)
+AS
+BEGIN
+    SET NOCOUNT ON
+
+	IF OBJECT_ID(@TableName) IS NOT NULL AND LEN(COALESCE(@Description, '')) > 0
+		IF EXISTS (SELECT name
+					 FROM sys.columns 
+					WHERE object_id = OBJECT_ID(@TableName) 
+					  AND name = @ColumnName)
+		BEGIN 
+
+			DECLARE @Schema varchar(100) = OBJECT_SCHEMA_NAME(OBJECT_ID(@TableName));
+			DECLARE @ObjectName varchar(100) = OBJECT_NAME(OBJECT_ID(@TableName));
+			DECLARE @ObjectType varchar(100);
+			SELECT @ObjectType = CASE type_desc WHEN 'USER_TABLE' THEN 'TABLE' ELSE 'VIEW' END
+			  FROM sys.objects
+			 WHERE object_id = OBJECT_ID(@TableName);
+
+			IF EXISTS (	SELECT value
+						FROM sys.extended_properties
+						WHERE class = 1 AND major_id = OBJECT_ID(@TableName)
+							AND minor_id = (SELECT column_id FROM sys.columns WHERE name = @ColumnName AND object_id = OBJECT_ID(@TableName))
+							AND name = 'MS_Description')
+				EXEC sp_updateextendedproperty @name = N'MS_Description', @value = @Description, 
+					@level0type = N'SCHEMA', @level0name = @Schema, 
+					@level1type = @ObjectType, @level1name = @ObjectName, 
+					@level2type = N'COLUMN', @level2name = @ColumnName
+			ELSE
+				EXEC sp_addextendedproperty @name = N'MS_Description', @value = @Description, 
+					@level0type = N'SCHEMA', @level0name = @Schema, 
+					@level1type = @ObjectType, @level1name = @ObjectName, 
+					@level2type = N'COLUMN', @level2name = @ColumnName
+	
+		END
+END
+GO
+";
         }
     }
 }

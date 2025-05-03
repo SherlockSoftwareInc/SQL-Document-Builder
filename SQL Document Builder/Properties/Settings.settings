@@ -39,5 +39,8 @@ Back to [[DW: Database tables|Data warehouse tables]]
     <Setting Name="Templetes" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
     </Setting>
+    <Setting Name="UseExtendedProperties" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

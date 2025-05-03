@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SQL_Document_Builder.Properties;
+using System;
 using System.Text;
 
 namespace SQL_Document_Builder
@@ -45,7 +46,7 @@ namespace SQL_Document_Builder
                             //sb.AppendLine(string.Format("-- VIEW: {0}.{1}", table.Schema, table.Name));
                             sb.AppendLine();
                             spaceAdded = true;
-                            sb.AppendLine(string.Format("EXEC ADMIN.usp_AddObjectDescription '{0}.{1}', N'{2}';", table.Schema, table.Name, tableDesc.Replace("'", "''")));
+                            sb.AppendLine(string.Format("EXEC usp_AddObjectDescription '{0}.{1}', N'{2}';", table.Schema, table.Name, tableDesc.Replace("'", "''")));
                         }
                     }
 
@@ -60,7 +61,7 @@ namespace SQL_Document_Builder
                                 sb.AppendLine();
                                 spaceAdded = true;
                             }
-                            sb.AppendLine(string.Format("EXEC ADMIN.usp_AddColumnDescription '{0}.{1}', '{2}', N'{3}';", table.Schema, table.Name, column.ColumnName, colDesc.Replace("'", "''")));
+                            sb.AppendLine(string.Format("EXEC usp_AddColumnDescription '{0}.{1}', '{2}', N'{3}';", table.Schema, table.Name, column.ColumnName, colDesc.Replace("'", "''")));
                         }
                     }
                 }
@@ -74,7 +75,7 @@ namespace SQL_Document_Builder
         /// <param name="schemaName">The schema name.</param>
         /// <param name="tableName">The table name.</param>
         /// <returns>A string.</returns>
-        public static string BuildObjectDescription(ObjectName objectName)
+        public static string BuildObjectDescription(ObjectName objectName, bool useExtendedProperties)
         {
             bool spaceAdded = false;
             var sb = new StringBuilder();
@@ -85,10 +86,23 @@ namespace SQL_Document_Builder
                 var tableDesc = dbTable.Description;
                 if (tableDesc.Length > 0)
                 {
-                    //sb.AppendLine(string.Format("-- VIEW: {0}.{1}", table.Schema, table.Name));
                     sb.AppendLine();
                     spaceAdded = true;
-                    sb.AppendLine($"EXEC ADMIN.usp_AddObjectDescription '{objectName.Schema}.{objectName.Name}', N'{tableDesc.Replace("'", "''")}';");
+
+                    if (useExtendedProperties)
+                    {
+                        // Use sp_addextendedproperty for table description
+                        sb.AppendLine($"EXECUTE sp_addextendedproperty " +
+                                      $"@name = N'MS_Description', " +
+                                      $"@value = N'{tableDesc.Replace("'", "''")}', " +
+                                      $"@level0type = N'SCHEMA', @level0name = N'{objectName.Schema}', " +
+                                      $"@level1type = N'TABLE', @level1name = N'{objectName.Name}';");
+                    }
+                    else
+                    {
+                        // Use the default stored procedure for table description
+                        sb.AppendLine($"EXEC usp_AddObjectDescription '{objectName.Schema}.{objectName.Name}', N'{tableDesc.Replace("'", "''")}';");
+                    }
                 }
             }
 
@@ -99,11 +113,25 @@ namespace SQL_Document_Builder
                 {
                     if (!spaceAdded)
                     {
-                        //sb.AppendLine(string.Format("-- VIEW: {0}.{1}", table.Schema, table.Name));
                         sb.AppendLine();
                         spaceAdded = true;
                     }
-                    sb.AppendLine($"EXEC ADMIN.usp_AddColumnDescription '{objectName.Schema}.{objectName.Name}', '{column.ColumnName}', N'{colDesc.Replace("'", "''")}';");
+
+                    if (useExtendedProperties)
+                    {
+                        // Use sp_addextendedproperty for column description
+                        sb.AppendLine($"EXECUTE sp_addextendedproperty " +
+                                      $"@name = N'MS_Description', " +
+                                      $"@value = N'{colDesc.Replace("'", "''")}', " +
+                                      $"@level0type = N'SCHEMA', @level0name = N'{objectName.Schema}', " +
+                                      $"@level1type = N'TABLE', @level1name = N'{objectName.Name}', " +
+                                      $"@level2type = N'COLUMN', @level2name = N'{column.ColumnName}';");
+                    }
+                    else
+                    {
+                        // Use the default stored procedure for column description
+                        sb.AppendLine($"EXEC usp_AddColumnDescription '{objectName.Schema}.{objectName.Name}', '{column.ColumnName}', N'{colDesc.Replace("'", "''")}';");
+                    }
                 }
             }
 

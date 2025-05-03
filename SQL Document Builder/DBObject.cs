@@ -71,13 +71,13 @@ namespace SQL_Document_Builder
             {
                 if (Description.Length > 0)
                 {
-                    sb.AppendLine(string.Format("EXEC ADMIN.usp_AddObjectDescription '{0}', N'{1}'", ObjectName.FullName, Description));
+                    sb.AppendLine(string.Format("EXEC usp_AddObjectDescription '{0}', N'{1}'", ObjectName.FullName, Description));
                 }
                 foreach (var column in Columns)
                 {
                     if (column.Description.Length > 0)
                     {
-                        sb.AppendLine(string.Format("EXEC ADMIN.usp_AddColumnDescription '{0}', '{1}', N'{2}'", ObjectName.FullName, column.ColumnName, Description));
+                        sb.AppendLine(string.Format("EXEC usp_AddColumnDescription '{0}', '{1}', N'{2}'", ObjectName.FullName, column.ColumnName, Description));
                     }
                 }
             }
@@ -594,13 +594,9 @@ AND t.name = '{tableName}'";
                 throw new ArgumentNullException(nameof(fullViewName));
 
             // The SQL query remains the same, using OBJECT_ID which handles schema-qualified names
-            const string query = @"
-            SELECT
-               sm.definition
-            FROM
-               sys.sql_modules sm
-            WHERE
-               sm.object_id = OBJECT_ID(@SchemaQualifiedName);";
+            const string query = @"SELECT sm.definition
+FROM sys.sql_modules sm
+WHERE sm.object_id = OBJECT_ID(@SchemaQualifiedName);";
             // Optional: Add explicit type check if necessary
             // AND EXISTS (SELECT 1 FROM sys.objects o WHERE o.object_id = sm.object_id AND o.type = 'V');";
 

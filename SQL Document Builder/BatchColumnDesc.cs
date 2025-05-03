@@ -155,7 +155,7 @@ namespace SQL_Document_Builder
             SqlConnection? conn = new(Properties.Settings.Default.dbConnectionString);
             try
             {
-                var cmd = new SqlCommand("ADMIN.usp_AddColumnDescription", conn) { CommandType = CommandType.StoredProcedure };
+                var cmd = new SqlCommand("usp_AddColumnDescription", conn) { CommandType = CommandType.StoredProcedure };
 
                 cmd.Parameters.Add(new SqlParameter("@TableName", objectName));
                 cmd.Parameters.Add(new SqlParameter("@ColumnName", columnName));
