@@ -890,7 +890,7 @@ namespace SQL_Document_Builder
             PopulateConnections();
 
             var lastConnection = Properties.Settings.Default.LastAccessConnectionIndex;
-            lastConnection = 1;
+            //lastConnection = 1;
             ConnectionMenuItem? selectedItem;
             if (lastConnection <= 0 || lastConnection >= _connections.Connections.Count)
             {

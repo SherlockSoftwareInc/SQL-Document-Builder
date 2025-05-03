@@ -125,6 +125,8 @@
             serverToolStripStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             databaseToolStripStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             scriptPanel = new System.Windows.Forms.Panel();
+            definitionPanel = new ColumnDefView();
+            collapsibleSplitter1 = new CollapsibleSplitter();
             timer1 = new System.Windows.Forms.Timer(components);
             toolStrip1.SuspendLayout();
             tabControl1.SuspendLayout();
@@ -492,7 +494,7 @@
             sqlTextBox.Multiline = true;
             sqlTextBox.Name = "sqlTextBox";
             sqlTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            sqlTextBox.Size = new System.Drawing.Size(650, 421);
+            sqlTextBox.Size = new System.Drawing.Size(342, 421);
             sqlTextBox.TabIndex = 7;
             sqlTextBox.TextChanged += SqlTextBox_TextChanged;
             // 
@@ -748,70 +750,70 @@
             // customizeToolStripMenuItem
             // 
             customizeToolStripMenuItem.Name = "customizeToolStripMenuItem";
-            customizeToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            customizeToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
             customizeToolStripMenuItem.Text = "&Customize";
             customizeToolStripMenuItem.Visible = false;
             // 
             // optionsToolStripMenuItem
             // 
             optionsToolStripMenuItem.Name = "optionsToolStripMenuItem";
-            optionsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            optionsToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
             optionsToolStripMenuItem.Text = "&Options";
             // 
             // toolStripSeparator1
             // 
             toolStripSeparator1.Name = "toolStripSeparator1";
-            toolStripSeparator1.Size = new System.Drawing.Size(177, 6);
+            toolStripSeparator1.Size = new System.Drawing.Size(175, 6);
             // 
             // batchColumnDescToolStripMenuItem
             // 
             batchColumnDescToolStripMenuItem.Name = "batchColumnDescToolStripMenuItem";
-            batchColumnDescToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            batchColumnDescToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
             batchColumnDescToolStripMenuItem.Text = "Batch Column Desc";
             batchColumnDescToolStripMenuItem.Click += BatchToolStripButton_Click;
             // 
             // toolStripSeparator12
             // 
             toolStripSeparator12.Name = "toolStripSeparator12";
-            toolStripSeparator12.Size = new System.Drawing.Size(177, 6);
+            toolStripSeparator12.Size = new System.Drawing.Size(175, 6);
             // 
             // queryInsertToolStripMenuItem
             // 
             queryInsertToolStripMenuItem.Name = "queryInsertToolStripMenuItem";
-            queryInsertToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            queryInsertToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
             queryInsertToolStripMenuItem.Text = "Query to INSERT";
             queryInsertToolStripMenuItem.Click += QueryInsertToolStripMenuItem_Click;
             // 
             // excelToINSERTToolStripMenuItem
             // 
             excelToINSERTToolStripMenuItem.Name = "excelToINSERTToolStripMenuItem";
-            excelToINSERTToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            excelToINSERTToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
             excelToINSERTToolStripMenuItem.Text = "Excel to INSERT";
             excelToINSERTToolStripMenuItem.Click += ExcelToINSERTToolStripMenuItem_Click;
             // 
             // toolStripSeparator13
             // 
             toolStripSeparator13.Name = "toolStripSeparator13";
-            toolStripSeparator13.Size = new System.Drawing.Size(177, 6);
+            toolStripSeparator13.Size = new System.Drawing.Size(175, 6);
             // 
             // tableDescriptionToolStripMenuItem
             // 
             tableDescriptionToolStripMenuItem.Name = "tableDescriptionToolStripMenuItem";
-            tableDescriptionToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            tableDescriptionToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
             tableDescriptionToolStripMenuItem.Text = "Table description";
             tableDescriptionToolStripMenuItem.Click += TableDescriptionToolStripMenuItem_Click;
             // 
             // createPrimaryKeyToolStripMenuItem
             // 
             createPrimaryKeyToolStripMenuItem.Name = "createPrimaryKeyToolStripMenuItem";
-            createPrimaryKeyToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            createPrimaryKeyToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
             createPrimaryKeyToolStripMenuItem.Text = "Create Primary Key";
             createPrimaryKeyToolStripMenuItem.Click += CreatePrimaryKeyToolStripMenuItem_Click;
             // 
             // createIndexToolStripMenuItem
             // 
             createIndexToolStripMenuItem.Name = "createIndexToolStripMenuItem";
-            createIndexToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            createIndexToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
             createIndexToolStripMenuItem.Text = "Create Index";
             createIndexToolStripMenuItem.Click += CreateIndexToolStripMenuItem_Click;
             // 
@@ -896,8 +898,34 @@
             scriptPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             scriptPanel.Location = new System.Drawing.Point(277, 51);
             scriptPanel.Name = "scriptPanel";
-            scriptPanel.Size = new System.Drawing.Size(650, 421);
+            scriptPanel.Size = new System.Drawing.Size(342, 421);
             scriptPanel.TabIndex = 17;
+            // 
+            // definitionPanel
+            // 
+            definitionPanel.Dock = System.Windows.Forms.DockStyle.Right;
+            definitionPanel.Location = new System.Drawing.Point(627, 51);
+            definitionPanel.Margin = new System.Windows.Forms.Padding(6);
+            definitionPanel.Name = "definitionPanel";
+            definitionPanel.Size = new System.Drawing.Size(300, 421);
+            definitionPanel.TabIndex = 16;
+            // 
+            // collapsibleSplitter1
+            // 
+            collapsibleSplitter1.AnimationDelay = 20;
+            collapsibleSplitter1.AnimationStep = 20;
+            collapsibleSplitter1.BorderStyle3D = System.Windows.Forms.Border3DStyle.Flat;
+            collapsibleSplitter1.ControlToHide = definitionPanel;
+            collapsibleSplitter1.Dock = System.Windows.Forms.DockStyle.Right;
+            collapsibleSplitter1.ExpandParentForm = false;
+            collapsibleSplitter1.Location = new System.Drawing.Point(619, 51);
+            collapsibleSplitter1.Name = "collapsibleSplitter1";
+            collapsibleSplitter1.Size = new System.Drawing.Size(8, 421);
+            collapsibleSplitter1.SplitterDistance = 300;
+            collapsibleSplitter1.TabIndex = 18;
+            collapsibleSplitter1.TabStop = false;
+            collapsibleSplitter1.UseAnimations = false;
+            collapsibleSplitter1.VisualStyle = VisualStyles.Mozilla;
             // 
             // timer1
             // 
@@ -910,6 +938,8 @@
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             ClientSize = new System.Drawing.Size(927, 497);
             Controls.Add(scriptPanel);
+            Controls.Add(collapsibleSplitter1);
+            Controls.Add(definitionPanel);
             Controls.Add(tabControl1);
             Controls.Add(statusStrip1);
             Controls.Add(toolStrip1);

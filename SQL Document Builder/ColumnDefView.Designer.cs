@@ -40,10 +40,13 @@
             columnDefDataGridView = new System.Windows.Forms.DataGridView();
             columnContextMenuStrip = new System.Windows.Forms.ContextMenuStrip(components);
             columnValueFrequencyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            openTableContextMenuStrip = new System.Windows.Forms.ContextMenuStrip(components);
+            openToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             panel1.SuspendLayout();
             tableContextMenuStrip.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)columnDefDataGridView).BeginInit();
             columnContextMenuStrip.SuspendLayout();
+            openTableContextMenuStrip.SuspendLayout();
             SuspendLayout();
             // 
             // panel1
@@ -59,6 +62,7 @@
             // tablenameLabel
             // 
             tablenameLabel.AutoSize = true;
+            tablenameLabel.ContextMenuStrip = openTableContextMenuStrip;
             tablenameLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F);
             tablenameLabel.ForeColor = System.Drawing.SystemColors.HighlightText;
             tablenameLabel.Location = new System.Drawing.Point(6, 6);
@@ -142,6 +146,19 @@
             columnValueFrequencyToolStripMenuItem.Text = "Column Value Frequency";
             columnValueFrequencyToolStripMenuItem.Click += ColumnValueFrequencyToolStripMenuItem_Click;
             // 
+            // openTableContextMenuStrip
+            // 
+            openTableContextMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { openToolStripMenuItem });
+            openTableContextMenuStrip.Name = "openTableContextMenuStrip";
+            openTableContextMenuStrip.Size = new System.Drawing.Size(104, 26);
+            // 
+            // openToolStripMenuItem
+            // 
+            openToolStripMenuItem.Name = "openToolStripMenuItem";
+            openToolStripMenuItem.Size = new System.Drawing.Size(103, 22);
+            openToolStripMenuItem.Text = "Open";
+            openToolStripMenuItem.Click += OpenToolStripMenuItem_Click;
+            // 
             // ColumnDefView
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -156,6 +173,7 @@
             tableContextMenuStrip.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)columnDefDataGridView).EndInit();
             columnContextMenuStrip.ResumeLayout(false);
+            openTableContextMenuStrip.ResumeLayout(false);
             ResumeLayout(false);
             PerformLayout();
         }
@@ -173,5 +191,7 @@
         private System.Windows.Forms.ToolStripMenuItem pasteToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
         private System.Windows.Forms.ToolStripMenuItem addDescriptionToolStripMenuItem;
+        private System.Windows.Forms.ContextMenuStrip openTableContextMenuStrip;
+        private System.Windows.Forms.ToolStripMenuItem openToolStripMenuItem;
     }
 }

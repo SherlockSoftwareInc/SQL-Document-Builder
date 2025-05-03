@@ -645,5 +645,26 @@ GO
             tableDescTextBox.Text = description;
             _dbObject.UpdateTableDesc(description);
         }
+
+
+        /// <summary>
+        /// Handles the open tool strip menu item click event.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void OpenToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var sql = $@"SELECT * FROM [{Schema}].[{TableName}]";
+            using var dlg = new DataViewForm()
+            {
+                SQL = sql,
+                MultipleValue = false,
+                Text = $"{TableName}",
+                TableName = $"[{Schema}].[{TableName}]",
+                EnableValueFrequency = true,
+                DatabaseIndex = 0
+            };
+            dlg.ShowDialog();
+        }
     }
 }
