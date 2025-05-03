@@ -13,7 +13,7 @@ namespace SQL_Document_Builder
         /// <param name="dr">The dr.</param>
         public DBColumn(Microsoft.Data.SqlClient.SqlDataReader dr)
         {
-            ColID = Convert.ToString( dr["ORDINAL_POSITION"]);
+            ColID = Convert.ToString(dr["ORDINAL_POSITION"]);
             ColumnName = (string)dr["COLUMN_NAME"];
             string dtType = dr["DATA_TYPE"] == DBNull.Value ? string.Empty : (string)dr["DATA_TYPE"];
             string? strMaxLength = dr["CHARACTER_MAXIMUM_LENGTH"].ToString();

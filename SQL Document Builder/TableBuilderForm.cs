@@ -1390,5 +1390,42 @@ namespace SQL_Document_Builder
         {
             ExecuteScripts("csbc-reporting-prod-sqldb-stg");
         }
+
+        /// <summary>
+        /// Handles the "Excel to INSERT" tool strip menu item click:
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void ExcelToINSERTToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // get the Excel file name
+            var openFileDialog = new OpenFileDialog
+            {
+                Filter = "Excel files (*.xls;*.xlsx)|*.xls;*.xlsx|All files (*.*)|*.*",
+                Multiselect = false
+            };
+            if (openFileDialog.ShowDialog() != DialogResult.OK)
+            {
+                return;
+            }
+
+            var fileName = openFileDialog.FileName;
+
+            using var form = new ExcelSheetsForm()
+            {
+                FileName = fileName
+            };
+            form.ShowDialog();
+            if (form.ResultDataTable != null)
+            {
+                var dataHelper = new ExcelDataHelper(form.ResultDataTable);
+                sqlTextBox.Text = dataHelper.GetInsertStatement();
+                //sqlTextBox.AppendText("GO" + Environment.NewLine);
+                if (!string.IsNullOrEmpty(sqlTextBox.Text))
+                {
+                    Clipboard.SetText(sqlTextBox.Text);
+                }
+            }
+        }
     }
 }
