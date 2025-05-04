@@ -51,7 +51,9 @@
             tabControl1 = new System.Windows.Forms.TabControl();
             tabPage1 = new System.Windows.Forms.TabPage();
             objectsListBox = new System.Windows.Forms.ListBox();
+            panel1 = new System.Windows.Forms.Panel();
             searchTextBox = new System.Windows.Forms.TextBox();
+            clearSearchButton = new System.Windows.Forms.Button();
             searchLabel = new System.Windows.Forms.Label();
             schemaComboBox = new System.Windows.Forms.ComboBox();
             schemaLabel = new System.Windows.Forms.Label();
@@ -130,13 +132,19 @@
             definitionPanel = new ColumnDefView();
             collapsibleSplitter1 = new CollapsibleSplitter();
             timer1 = new System.Windows.Forms.Timer(components);
+            splitContainer1 = new System.Windows.Forms.SplitContainer();
             toolStrip1.SuspendLayout();
             tabControl1.SuspendLayout();
             tabPage1.SuspendLayout();
+            panel1.SuspendLayout();
             tabPage2.SuspendLayout();
             menuStrip1.SuspendLayout();
             statusStrip1.SuspendLayout();
             scriptPanel.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
+            splitContainer1.Panel1.SuspendLayout();
+            splitContainer1.Panel2.SuspendLayout();
+            splitContainer1.SuspendLayout();
             SuspendLayout();
             // 
             // toolStrip1
@@ -146,8 +154,8 @@
             toolStrip1.Location = new System.Drawing.Point(0, 24);
             toolStrip1.Name = "toolStrip1";
             toolStrip1.Padding = new System.Windows.Forms.Padding(0, 0, 2, 0);
-            toolStrip1.Size = new System.Drawing.Size(927, 27);
-            toolStrip1.TabIndex = 0;
+            toolStrip1.Size = new System.Drawing.Size(1143, 27);
+            toolStrip1.TabIndex = 1;
             toolStrip1.Text = "toolStrip1";
             // 
             // tableWikiToolStripButton
@@ -289,24 +297,24 @@
             // 
             tabControl1.Controls.Add(tabPage1);
             tabControl1.Controls.Add(tabPage2);
-            tabControl1.Dock = System.Windows.Forms.DockStyle.Left;
-            tabControl1.Location = new System.Drawing.Point(0, 51);
+            tabControl1.Dock = System.Windows.Forms.DockStyle.Fill;
+            tabControl1.Location = new System.Drawing.Point(0, 0);
             tabControl1.Name = "tabControl1";
             tabControl1.SelectedIndex = 0;
-            tabControl1.Size = new System.Drawing.Size(277, 421);
-            tabControl1.TabIndex = 1;
+            tabControl1.Size = new System.Drawing.Size(185, 671);
+            tabControl1.TabIndex = 2;
             // 
             // tabPage1
             // 
             tabPage1.Controls.Add(objectsListBox);
-            tabPage1.Controls.Add(searchTextBox);
+            tabPage1.Controls.Add(panel1);
             tabPage1.Controls.Add(searchLabel);
             tabPage1.Controls.Add(schemaComboBox);
             tabPage1.Controls.Add(schemaLabel);
             tabPage1.Location = new System.Drawing.Point(4, 24);
             tabPage1.Name = "tabPage1";
             tabPage1.Padding = new System.Windows.Forms.Padding(3);
-            tabPage1.Size = new System.Drawing.Size(269, 393);
+            tabPage1.Size = new System.Drawing.Size(177, 643);
             tabPage1.TabIndex = 0;
             tabPage1.Text = "Objects";
             tabPage1.UseVisualStyleBackColor = true;
@@ -316,21 +324,41 @@
             objectsListBox.Dock = System.Windows.Forms.DockStyle.Fill;
             objectsListBox.FormattingEnabled = true;
             objectsListBox.ItemHeight = 15;
-            objectsListBox.Location = new System.Drawing.Point(3, 79);
+            objectsListBox.Location = new System.Drawing.Point(3, 81);
             objectsListBox.Name = "objectsListBox";
-            objectsListBox.Size = new System.Drawing.Size(263, 311);
+            objectsListBox.Size = new System.Drawing.Size(171, 559);
             objectsListBox.TabIndex = 3;
             objectsListBox.SelectedIndexChanged += ObjectsListBox_SelectedIndexChanged;
             objectsListBox.DoubleClick += ObjectsListBox_DoubleClick;
             // 
+            // panel1
+            // 
+            panel1.Controls.Add(searchTextBox);
+            panel1.Controls.Add(clearSearchButton);
+            panel1.Dock = System.Windows.Forms.DockStyle.Top;
+            panel1.Location = new System.Drawing.Point(3, 56);
+            panel1.Name = "panel1";
+            panel1.Size = new System.Drawing.Size(171, 25);
+            panel1.TabIndex = 7;
+            panel1.Resize += Panel1_Resize;
+            // 
             // searchTextBox
             // 
-            searchTextBox.Dock = System.Windows.Forms.DockStyle.Top;
-            searchTextBox.Location = new System.Drawing.Point(3, 56);
+            searchTextBox.Location = new System.Drawing.Point(0, 0);
             searchTextBox.Name = "searchTextBox";
-            searchTextBox.Size = new System.Drawing.Size(263, 23);
-            searchTextBox.TabIndex = 1;
+            searchTextBox.Size = new System.Drawing.Size(171, 23);
+            searchTextBox.TabIndex = 0;
             searchTextBox.TextChanged += SearchTextBox_TextChanged;
+            // 
+            // clearSearchButton
+            // 
+            clearSearchButton.Location = new System.Drawing.Point(177, 0);
+            clearSearchButton.Name = "clearSearchButton";
+            clearSearchButton.Size = new System.Drawing.Size(23, 23);
+            clearSearchButton.TabIndex = 1;
+            clearSearchButton.Text = "X";
+            clearSearchButton.UseVisualStyleBackColor = true;
+            clearSearchButton.Click += ClearSearchButton_Click;
             // 
             // searchLabel
             // 
@@ -339,7 +367,7 @@
             searchLabel.Location = new System.Drawing.Point(3, 41);
             searchLabel.Name = "searchLabel";
             searchLabel.Size = new System.Drawing.Size(60, 15);
-            searchLabel.TabIndex = 0;
+            searchLabel.TabIndex = 2;
             searchLabel.Text = "Search for";
             // 
             // schemaComboBox
@@ -350,8 +378,8 @@
             schemaComboBox.Location = new System.Drawing.Point(3, 18);
             schemaComboBox.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             schemaComboBox.Name = "schemaComboBox";
-            schemaComboBox.Size = new System.Drawing.Size(263, 23);
-            schemaComboBox.TabIndex = 5;
+            schemaComboBox.Size = new System.Drawing.Size(171, 23);
+            schemaComboBox.TabIndex = 1;
             schemaComboBox.SelectedIndexChanged += SchemaComboBox_SelectedIndexChanged;
             // 
             // schemaLabel
@@ -361,7 +389,7 @@
             schemaLabel.Location = new System.Drawing.Point(3, 3);
             schemaLabel.Name = "schemaLabel";
             schemaLabel.Size = new System.Drawing.Size(52, 15);
-            schemaLabel.TabIndex = 4;
+            schemaLabel.TabIndex = 0;
             schemaLabel.Text = "Schema:";
             // 
             // tabPage2
@@ -379,7 +407,7 @@
             tabPage2.Location = new System.Drawing.Point(4, 24);
             tabPage2.Name = "tabPage2";
             tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            tabPage2.Size = new System.Drawing.Size(269, 393);
+            tabPage2.Size = new System.Drawing.Size(177, 643);
             tabPage2.TabIndex = 1;
             tabPage2.Text = "Output options";
             tabPage2.UseVisualStyleBackColor = true;
@@ -497,8 +525,8 @@
             sqlTextBox.Multiline = true;
             sqlTextBox.Name = "sqlTextBox";
             sqlTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            sqlTextBox.Size = new System.Drawing.Size(342, 421);
-            sqlTextBox.TabIndex = 7;
+            sqlTextBox.Size = new System.Drawing.Size(586, 671);
+            sqlTextBox.TabIndex = 0;
             sqlTextBox.TextChanged += SqlTextBox_TextChanged;
             // 
             // menuStrip1
@@ -507,8 +535,8 @@
             menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { fileToolStripMenuItem, editToolStripMenuItem, sharePointToolStripMenuItem, toolsToolStripMenuItem, helpToolStripMenuItem });
             menuStrip1.Location = new System.Drawing.Point(0, 0);
             menuStrip1.Name = "menuStrip1";
-            menuStrip1.Size = new System.Drawing.Size(927, 24);
-            menuStrip1.TabIndex = 12;
+            menuStrip1.Size = new System.Drawing.Size(1143, 24);
+            menuStrip1.TabIndex = 0;
             menuStrip1.Text = "menuStrip1";
             // 
             // fileToolStripMenuItem
@@ -873,10 +901,10 @@
             // 
             statusStrip1.ImageScalingSize = new System.Drawing.Size(20, 20);
             statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { progressBar, statusToolStripStatusLabe, serverToolStripStatusLabel, databaseToolStripStatusLabel });
-            statusStrip1.Location = new System.Drawing.Point(0, 472);
+            statusStrip1.Location = new System.Drawing.Point(0, 722);
             statusStrip1.Name = "statusStrip1";
-            statusStrip1.Size = new System.Drawing.Size(927, 25);
-            statusStrip1.TabIndex = 13;
+            statusStrip1.Size = new System.Drawing.Size(1143, 25);
+            statusStrip1.TabIndex = 6;
             statusStrip1.Text = "statusStrip1";
             // 
             // progressBar
@@ -889,7 +917,7 @@
             // statusToolStripStatusLabe
             // 
             statusToolStripStatusLabe.Name = "statusToolStripStatusLabe";
-            statusToolStripStatusLabe.Size = new System.Drawing.Size(780, 20);
+            statusToolStripStatusLabe.Size = new System.Drawing.Size(996, 20);
             statusToolStripStatusLabe.Spring = true;
             statusToolStripStatusLabe.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
@@ -911,19 +939,19 @@
             // 
             scriptPanel.Controls.Add(sqlTextBox);
             scriptPanel.Dock = System.Windows.Forms.DockStyle.Fill;
-            scriptPanel.Location = new System.Drawing.Point(277, 51);
+            scriptPanel.Location = new System.Drawing.Point(0, 0);
             scriptPanel.Name = "scriptPanel";
-            scriptPanel.Size = new System.Drawing.Size(342, 421);
+            scriptPanel.Size = new System.Drawing.Size(586, 671);
             scriptPanel.TabIndex = 17;
             // 
             // definitionPanel
             // 
             definitionPanel.Dock = System.Windows.Forms.DockStyle.Right;
-            definitionPanel.Location = new System.Drawing.Point(627, 51);
+            definitionPanel.Location = new System.Drawing.Point(783, 51);
             definitionPanel.Margin = new System.Windows.Forms.Padding(6);
             definitionPanel.Name = "definitionPanel";
-            definitionPanel.Size = new System.Drawing.Size(300, 421);
-            definitionPanel.TabIndex = 16;
+            definitionPanel.Size = new System.Drawing.Size(360, 671);
+            definitionPanel.TabIndex = 4;
             // 
             // collapsibleSplitter1
             // 
@@ -933,11 +961,11 @@
             collapsibleSplitter1.ControlToHide = definitionPanel;
             collapsibleSplitter1.Dock = System.Windows.Forms.DockStyle.Right;
             collapsibleSplitter1.ExpandParentForm = false;
-            collapsibleSplitter1.Location = new System.Drawing.Point(619, 51);
+            collapsibleSplitter1.Location = new System.Drawing.Point(775, 51);
             collapsibleSplitter1.Name = "collapsibleSplitter1";
-            collapsibleSplitter1.Size = new System.Drawing.Size(8, 421);
-            collapsibleSplitter1.SplitterDistance = 300;
-            collapsibleSplitter1.TabIndex = 18;
+            collapsibleSplitter1.Size = new System.Drawing.Size(8, 671);
+            collapsibleSplitter1.SplitterDistance = 360;
+            collapsibleSplitter1.TabIndex = 3;
             collapsibleSplitter1.TabStop = false;
             collapsibleSplitter1.UseAnimations = false;
             collapsibleSplitter1.VisualStyle = VisualStyles.Mozilla;
@@ -947,15 +975,31 @@
             timer1.Interval = 500;
             timer1.Tick += Timer1_Tick;
             // 
+            // splitContainer1
+            // 
+            splitContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
+            splitContainer1.Location = new System.Drawing.Point(0, 51);
+            splitContainer1.Name = "splitContainer1";
+            // 
+            // splitContainer1.Panel1
+            // 
+            splitContainer1.Panel1.Controls.Add(tabControl1);
+            // 
+            // splitContainer1.Panel2
+            // 
+            splitContainer1.Panel2.Controls.Add(scriptPanel);
+            splitContainer1.Size = new System.Drawing.Size(775, 671);
+            splitContainer1.SplitterDistance = 185;
+            splitContainer1.TabIndex = 18;
+            // 
             // TableBuilderForm
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            ClientSize = new System.Drawing.Size(927, 497);
-            Controls.Add(scriptPanel);
+            ClientSize = new System.Drawing.Size(1143, 747);
+            Controls.Add(splitContainer1);
             Controls.Add(collapsibleSplitter1);
             Controls.Add(definitionPanel);
-            Controls.Add(tabControl1);
             Controls.Add(statusStrip1);
             Controls.Add(toolStrip1);
             Controls.Add(menuStrip1);
@@ -970,6 +1014,8 @@
             tabControl1.ResumeLayout(false);
             tabPage1.ResumeLayout(false);
             tabPage1.PerformLayout();
+            panel1.ResumeLayout(false);
+            panel1.PerformLayout();
             tabPage2.ResumeLayout(false);
             tabPage2.PerformLayout();
             menuStrip1.ResumeLayout(false);
@@ -978,6 +1024,10 @@
             statusStrip1.PerformLayout();
             scriptPanel.ResumeLayout(false);
             scriptPanel.PerformLayout();
+            splitContainer1.Panel1.ResumeLayout(false);
+            splitContainer1.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)splitContainer1).EndInit();
+            splitContainer1.ResumeLayout(false);
             ResumeLayout(false);
             PerformLayout();
         }
@@ -1085,5 +1135,8 @@
         private System.Windows.Forms.ToolStripMenuItem excelToINSERTToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator14;
         private System.Windows.Forms.ToolStripMenuItem uspToolStripMenuItem;
+        private System.Windows.Forms.Panel panel1;
+        private System.Windows.Forms.Button clearSearchButton;
+        private System.Windows.Forms.SplitContainer splitContainer1;
     }
 }

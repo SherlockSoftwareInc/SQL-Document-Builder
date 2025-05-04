@@ -39,19 +39,19 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
-        private void ExecuteToolStripButton_Click(object sender, EventArgs e)
+        private async void ExecuteToolStripButton_Click(object sender, EventArgs e)
         {
-            if (sqlTextBox.Text.ToLower().StartsWith("select "))
+            if (sqlTextBox.Text.StartsWith("select ", StringComparison.CurrentCultureIgnoreCase))
             {
                 try
                 {
                     if (InsertStatement)
                     {
-                        htmlTextBox.Text = Common.QueryDataToInsertStatement(sqlTextBox.Text);
+                        htmlTextBox.Text = await Common.QueryDataToInsertStatementAsync(sqlTextBox.Text);
                     }
                     else
                     {
-                        htmlTextBox.Text = Common.QueryDataToHTMLTable(sqlTextBox.Text);
+                        htmlTextBox.Text = await Common.QueryDataToHTMLTableAsync(sqlTextBox.Text);
                     }
 
                     Clipboard.SetText(htmlTextBox.Text);

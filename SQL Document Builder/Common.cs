@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace SQL_Document_Builder
@@ -220,24 +221,25 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Queries the data to HTML table.
+        /// Queries the data to an HTML table asynchronously.
         /// </summary>
-        /// <param name="sql">The sql.</param>
-        /// <returns>A string.</returns>
-        public static string QueryDataToHTMLTable(string sql)
+        /// <param name="sql">The SQL query to fetch data.</param>
+        /// <returns>A Task<string> containing the HTML table.</returns>
+        public static async Task<string> QueryDataToHTMLTableAsync(string sql)
         {
-            var sb = new System.Text.StringBuilder();
-
+            var sb = new StringBuilder();
             var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+
             try
             {
-                var cmd = new SqlCommand(sql, conn)
-                { CommandType = CommandType.Text };
-                conn.Open();
+                var cmd = new SqlCommand(sql, conn) { CommandType = CommandType.Text };
+                await conn.OpenAsync();
 
                 var dat = new SqlDataAdapter(cmd);
                 var ds = new DataSet();
-                dat.Fill(ds);
+
+                // Fill the dataset asynchronously
+                await Task.Run(() => dat.Fill(ds));
 
                 if (ds?.Tables.Count > 0)
                 {
@@ -250,10 +252,12 @@ namespace SQL_Document_Builder
             }
             finally
             {
-                conn.Close();
+                await conn.CloseAsync();
             }
+
             return sb.ToString();
         }
+
 
         /// <summary>
         /// Queries the data and generates the insert statements.
@@ -261,7 +265,13 @@ namespace SQL_Document_Builder
         /// <param name="sql">The SQL query to fetch data.</param>
         /// <param name="tableName">The table name for the insert statements.</param>
         /// <returns>A string containing the generated insert statements or a warning if rows exceed 500.</returns>
-        public static string QueryDataToInsertStatement(string sql, string tableName = "YourTableName")
+        /// <summary>
+        /// Queries the data and generates the insert statements asynchronously.
+        /// </summary>
+        /// <param name="sql">The SQL query to fetch data.</param>
+        /// <param name="tableName">The table name for the insert statements.</param>
+        /// <returns>A Task<string> containing the generated insert statements or a warning if rows exceed 500.</returns>
+        public static async Task<string> QueryDataToInsertStatementAsync(string sql, string tableName = "YourTableName")
         {
             var sb = new StringBuilder();
             var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
@@ -269,10 +279,10 @@ namespace SQL_Document_Builder
             try
             {
                 var cmd = new SqlCommand(sql, conn) { CommandType = CommandType.Text };
-                conn.Open();
+                await conn.OpenAsync();
 
-                // Execute the query and read the data
-                var reader = cmd.ExecuteReader();
+                // Execute the query and read the data asynchronously
+                var reader = await cmd.ExecuteReaderAsync();
                 if (reader.HasRows)
                 {
                     // Get the column names
@@ -286,7 +296,7 @@ namespace SQL_Document_Builder
                     int rowCount = 0;
                     int batchCount = 0;
 
-                    while (reader.Read())
+                    while (await reader.ReadAsync())
                     {
                         // Check if row count exceeds 500
                         if (rowCount >= 500)
@@ -372,12 +382,12 @@ namespace SQL_Document_Builder
             }
             finally
             {
-                conn.Close();
+                await conn.CloseAsync();
             }
 
             return sb.ToString();
         }
-
+       
         /// <summary>
         /// Data the table to HTML.
         /// </summary>

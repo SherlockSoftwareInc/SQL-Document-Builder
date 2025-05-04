@@ -912,8 +912,10 @@ namespace SQL_Document_Builder
             extendedPropertiesCheckBox.Checked = Properties.Settings.Default.UseExtendedProperties;
 
             WindowState = FormWindowState.Maximized;
+            splitContainer1.SplitterDistance = 200;
             if (collapsibleSplitter1 != null)
-                collapsibleSplitter1.SplitterDistance = (int)(this.Width * 0.25F);
+                collapsibleSplitter1.SplitterDistance = (int)(this.Width * 0.3F);
+
         }
 
         /// <summary>
@@ -921,7 +923,7 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The E.</param>
-        private void TableDefinitionToolStripMenuItem_Click(object sender, EventArgs e)
+        private async void TableDefinitionToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (objectsListBox.SelectedItem != null)
             {
@@ -941,7 +943,7 @@ namespace SQL_Document_Builder
                 if ((objectName.Name.StartsWith("LT_")) || (objectName.Name.StartsWith("AT_")))
                 {
                     var valueBuilder = new SharePoint();
-                    sqlTextBox.AppendText(valueBuilder.GetTableValues(objectName.FullName));
+                    sqlTextBox.AppendText(await valueBuilder.GetTableValuesAsync(objectName.FullName));
                 }
 
                 sqlTextBox.AppendText(FooterText() + Environment.NewLine);
@@ -1029,13 +1031,13 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The E.</param>
-        private void ValueListToolStripMenuItem_Click(object sender, EventArgs e)
+        private async void ValueListToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (objectsListBox.SelectedItem != null)
             {
                 var objectName = (ObjectName)objectsListBox.SelectedItem;
                 var builder = new SharePoint();
-                SetScript(builder.GetTableValues(objectName.FullName));
+                SetScript(await builder.GetTableValuesAsync(objectName.FullName));
                 EndBuild();
             }
         }
@@ -1356,16 +1358,39 @@ namespace SQL_Document_Builder
 
         /// <summary>
         /// Handles the "insert" tool strip button click:
+        ///     Build the INSERT statement for the selected object.
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
-        private void InsertToolStripButton_Click(object sender, EventArgs e)
+        private async void InsertToolStripButton_Click(object sender, EventArgs e)
         {
-            var objectName = objectsListBox.SelectedItem as ObjectName;
+            ObjectName? objectName = objectsListBox.SelectedItem as ObjectName;
             if (objectName != null)
             {
+                // checks if the object is a table or view
+                if (objectName.ObjectType != ObjectName.ObjectTypeEnums.Table)
+                {
+                    // confirm if the user wants to continue
+                    if (Common.MsgBox("The object is not a table. Are you sure you want to continue?", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
+                    {
+                        return;
+                    }
+                }
+
+                // get the number of rows in the table
+                var rowCount = await DatabaseHelper.GetRowCountAsync(objectName.FullName);
+
+                // confirm if the user wants to continue when the number of rows is too much
+                if (rowCount > 1000)
+                {
+                    if (Common.MsgBox($"The table has {rowCount} rows. Are you sure you want to continue?", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
+                    {
+                        return;
+                    }
+                }
+
                 var sql = $"select * from {objectName.FullName}";
-                var script = Common.QueryDataToInsertStatement(sql, objectName.FullName);
+                var script = await Common.QueryDataToInsertStatementAsync(sql, objectName.FullName);
 
                 if (script == "Too much rows")
                 {
@@ -1395,6 +1420,7 @@ namespace SQL_Document_Builder
 
         /// <summary>
         /// Handles the "Excel to INSERT" tool strip menu item click:
+        ///     Load Excel file and generate INSERT statements for the data in the file.
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
@@ -1531,6 +1557,30 @@ BEGIN
 END
 GO
 ";
+            Clipboard.SetText(sqlTextBox.Text);
+        }
+
+        /// <summary>
+        /// Handles the "Panel1" resize event.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void Panel1_Resize(object sender, EventArgs e)
+        {
+            panel1.Height = searchTextBox.Height + 1;
+            clearSearchButton.Left = panel1.Width - clearSearchButton.Width - 1;
+            searchTextBox.Width = panel1.Width - clearSearchButton.Width - 2;
+        }
+
+        /// <summary>
+        /// Handles the "Clear search" button click event.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void ClearSearchButton_Click(object sender, EventArgs e)
+        {
+            searchTextBox.Text = string.Empty;
+            searchTextBox.Focus();
         }
     }
 }

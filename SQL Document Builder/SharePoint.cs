@@ -1,7 +1,8 @@
-﻿using System;
+﻿using Microsoft.Data.SqlClient;
+using System;
 using System.Collections.Generic;
 using System.Data;
-using Microsoft.Data.SqlClient;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace SQL_Document_Builder
@@ -410,19 +411,19 @@ namespace SQL_Document_Builder
             return false;
         }
 
-        private void BuildFormList(ObjectName objectName)
+        private async void BuildFormList(ObjectName objectName)
         {
             AppendLine("<div>");
             AppendLine("<h2>Questionnaire responses (Forms)&#160;where the data extracted from</h2>");
-            AppendLine(Common.QueryDataToHTMLTable(string.Format("SELECT distinct Program, FormName [Form Name], FormTitle [Form Title], QuestionnaireId, '' AS Version, '' AS [Start Date], '' AS [End Date] FROM ETL.vw_MappingControl WHERE targettable = '{0}'", objectName.Name)));
+            AppendLine(await Common.QueryDataToHTMLTableAsync(string.Format("SELECT distinct Program, FormName [Form Name], FormTitle [Form Title], QuestionnaireId, '' AS Version, '' AS [Start Date], '' AS [End Date] FROM ETL.vw_MappingControl WHERE targettable = '{0}'", objectName.Name)));
             AppendLine("</div>");
         }
 
-        private void BuildFormListL1(ObjectName objectName)
+        private async void BuildFormListL1(ObjectName objectName)
         {
             AppendLine("<div>");
             AppendLine("<h2>Questionnaire responses (Forms)&#160;where the data extracted from</h2>");
-            AppendLine(Common.QueryDataToHTMLTable(string.Format("SELECT distinct Program, FormName [Form Name], FormTitle [Form Title], QuestionnaireId, '' AS Version, '' AS [Start Date], '' AS [End Date] FROM ETL.vw_MappingControl WHERE L1TableName = '{0}'", objectName.Name)));
+            AppendLine(await Common.QueryDataToHTMLTableAsync(string.Format("SELECT distinct Program, FormName [Form Name], FormTitle [Form Title], QuestionnaireId, '' AS Version, '' AS [Start Date], '' AS [End Date] FROM ETL.vw_MappingControl WHERE L1TableName = '{0}'", objectName.Name)));
             AppendLine("</div>");
         }
 
@@ -847,12 +848,12 @@ namespace SQL_Document_Builder
         /// Build value list of the given table for wiki
         /// </summary>
         /// <param name="tableName"></param>
-        public string GetTableValues(string tableName)
+        public async Task<string> GetTableValuesAsync(string tableName)
         {
             AppendLine("<div>");
             AppendLine("<h2>Table Values:</h2>");
             string sql = string.Format("SELECT * FROM {0}", tableName);
-            AppendLine(Common.QueryDataToHTMLTable(sql));
+            AppendLine(await Common.QueryDataToHTMLTableAsync(sql));
             AppendLine("</div>");
 
             return _script.ToString();

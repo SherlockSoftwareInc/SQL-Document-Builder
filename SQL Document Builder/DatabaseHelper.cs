@@ -2,6 +2,7 @@
 using System;
 using System.Data;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace SQL_Document_Builder
@@ -167,6 +168,41 @@ namespace SQL_Document_Builder
             }
             return null;
         }
+
+        /// <summary>
+        /// Gets the row count of a table or view.
+        /// </summary>
+        /// <param name="fullName">The full name of object.</param>
+        /// <returns>An int.</returns>
+        /// <summary>
+        /// Gets the row count of a table or view asynchronously.
+        /// </summary>
+        /// <param name="fullName">The full name of the object.</param>
+        /// <returns>A Task<int> representing the row count.</returns>
+        internal static async Task<int> GetRowCountAsync(string fullName)
+        {
+            var sql = $"SELECT COUNT(*) FROM {fullName}";
+            try
+            {
+                using var connection = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+                using var command = new SqlCommand(sql, connection)
+                {
+                    CommandType = CommandType.Text,
+                    CommandTimeout = 50000
+                };
+
+                await connection.OpenAsync();
+                var result = await command.ExecuteScalarAsync();
+                return result != null ? Convert.ToInt32(result) : 0;
+            }
+            catch (Exception ex)
+            {
+                // Show error message
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            return 0;
+        }
+
 
         /// <summary>
         /// Gets the scalar value.
