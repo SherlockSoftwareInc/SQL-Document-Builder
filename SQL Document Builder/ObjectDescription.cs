@@ -86,7 +86,7 @@ namespace SQL_Document_Builder
                 var tableDesc = dbTable.Description;
                 if (tableDesc.Length > 0)
                 {
-                    sb.AppendLine();
+                    //sb.AppendLine();
                     spaceAdded = true;
 
                     if (useExtendedProperties)
@@ -113,7 +113,7 @@ namespace SQL_Document_Builder
                 {
                     if (!spaceAdded)
                     {
-                        sb.AppendLine();
+                        //sb.AppendLine();
                         spaceAdded = true;
                     }
 

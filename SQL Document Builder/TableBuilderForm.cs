@@ -562,23 +562,51 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Paste tool strip menu item click.
+        /// Handles the paste tool strip menu item click event.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The E.</param>
+        /// <param name="e">The e.</param>
         private void PasteToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (ActiveControl?.GetType() == typeof(TextBox))
+            Control focusedControl = GetFocusedControl(this);
+
+            if (focusedControl is TextBox textBox)
             {
-                TextBox textBox = (TextBox)ActiveControl;
                 textBox.Paste();
             }
-            else if (ActiveControl?.GetType() == typeof(DBObjectDefPanel))
+            else if (focusedControl is DBObjectDefPanel dBObjectDefPanel)
             {
-                DBObjectDefPanel dBObjectDefPanel = (DBObjectDefPanel)ActiveControl;
                 dBObjectDefPanel.Paste();
             }
+            else
+            {
+                MessageBox.Show("No valid control is focused for pasting.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
         }
+
+        /// <summary>
+        /// Recursively gets the currently focused control within a container.
+        /// </summary>
+        /// <param name="container">The container control.</param>
+        /// <returns>The focused control, or null if none is focused.</returns>
+        private Control GetFocusedControl(Control container)
+        {
+            if (container == null)
+                return null;
+
+            if (container.Focused)
+                return container;
+
+            foreach (Control child in container.Controls)
+            {
+                Control focused = GetFocusedControl(child);
+                if (focused != null)
+                    return focused;
+            }
+
+            return null;
+        }
+
 
         /// <summary>
         ///

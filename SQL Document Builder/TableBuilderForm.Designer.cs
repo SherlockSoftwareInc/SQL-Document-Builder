@@ -163,7 +163,7 @@
             tableWikiToolStripButton.Image = (System.Drawing.Image)resources.GetObject("tableWikiToolStripButton.Image");
             tableWikiToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             tableWikiToolStripButton.Name = "tableWikiToolStripButton";
-            tableWikiToolStripButton.Size = new System.Drawing.Size(80, 24);
+            tableWikiToolStripButton.Size = new System.Drawing.Size(79, 24);
             tableWikiToolStripButton.Text = "Table Def";
             tableWikiToolStripButton.Click += TableDefinitionToolStripMenuItem_Click;
             // 
@@ -217,14 +217,14 @@
             // tableToolStripMenuItem
             // 
             tableToolStripMenuItem.Name = "tableToolStripMenuItem";
-            tableToolStripMenuItem.Size = new System.Drawing.Size(157, 22);
+            tableToolStripMenuItem.Size = new System.Drawing.Size(156, 22);
             tableToolStripMenuItem.Text = "Table Definition";
             tableToolStripMenuItem.Click += TableWikiToolStripButton_Click;
             // 
             // valuesToolStripMenuItem
             // 
             valuesToolStripMenuItem.Name = "valuesToolStripMenuItem";
-            valuesToolStripMenuItem.Size = new System.Drawing.Size(157, 22);
+            valuesToolStripMenuItem.Size = new System.Drawing.Size(156, 22);
             valuesToolStripMenuItem.Text = "Value List";
             valuesToolStripMenuItem.Click += ValuesWikiToolStripButton_Click;
             // 
@@ -242,7 +242,7 @@
             indexToolStripButton.Image = (System.Drawing.Image)resources.GetObject("indexToolStripButton.Image");
             indexToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             indexToolStripButton.Name = "indexToolStripButton";
-            indexToolStripButton.Size = new System.Drawing.Size(59, 24);
+            indexToolStripButton.Size = new System.Drawing.Size(60, 24);
             indexToolStripButton.Text = "Index";
             indexToolStripButton.Click += CreateIndexToolStripMenuItem_Click;
             // 
@@ -251,27 +251,27 @@
             exeToolStripDropDownButton.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { onDEVToolStripMenuItem, onPRODToolStripMenuItem, executeOnSTGToolStripMenuItem });
             exeToolStripDropDownButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             exeToolStripDropDownButton.Name = "exeToolStripDropDownButton";
-            exeToolStripDropDownButton.Size = new System.Drawing.Size(43, 24);
+            exeToolStripDropDownButton.Size = new System.Drawing.Size(44, 24);
             exeToolStripDropDownButton.Text = "Exec";
             // 
             // onDEVToolStripMenuItem
             // 
             onDEVToolStripMenuItem.Name = "onDEVToolStripMenuItem";
-            onDEVToolStripMenuItem.Size = new System.Drawing.Size(165, 22);
+            onDEVToolStripMenuItem.Size = new System.Drawing.Size(166, 22);
             onDEVToolStripMenuItem.Text = "Execute on DEV";
             onDEVToolStripMenuItem.Click += OnDEVToolStripMenuItem_Click;
             // 
             // onPRODToolStripMenuItem
             // 
             onPRODToolStripMenuItem.Name = "onPRODToolStripMenuItem";
-            onPRODToolStripMenuItem.Size = new System.Drawing.Size(165, 22);
+            onPRODToolStripMenuItem.Size = new System.Drawing.Size(166, 22);
             onPRODToolStripMenuItem.Text = "Execute on PROD";
             onPRODToolStripMenuItem.Click += OnPRODToolStripMenuItem_Click;
             // 
             // executeOnSTGToolStripMenuItem
             // 
             executeOnSTGToolStripMenuItem.Name = "executeOnSTGToolStripMenuItem";
-            executeOnSTGToolStripMenuItem.Size = new System.Drawing.Size(165, 22);
+            executeOnSTGToolStripMenuItem.Size = new System.Drawing.Size(166, 22);
             executeOnSTGToolStripMenuItem.Text = "Execute on STG";
             executeOnSTGToolStripMenuItem.Click += ExecuteOnSTGToolStripMenuItem_Click;
             // 
@@ -280,7 +280,7 @@
             createTableToolStripButton.Image = (System.Drawing.Image)resources.GetObject("createTableToolStripButton.Image");
             createTableToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             createTableToolStripButton.Name = "createTableToolStripButton";
-            createTableToolStripButton.Size = new System.Drawing.Size(72, 24);
+            createTableToolStripButton.Size = new System.Drawing.Size(71, 24);
             createTableToolStripButton.Text = "CREATE";
             createTableToolStripButton.Click += CreateTableToolStripButton_Click;
             // 
@@ -289,7 +289,7 @@
             insertToolStripButton.Image = (System.Drawing.Image)resources.GetObject("insertToolStripButton.Image");
             insertToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             insertToolStripButton.Name = "insertToolStripButton";
-            insertToolStripButton.Size = new System.Drawing.Size(68, 24);
+            insertToolStripButton.Size = new System.Drawing.Size(67, 24);
             insertToolStripButton.Text = "INSERT";
             insertToolStripButton.Click += InsertToolStripButton_Click;
             // 
@@ -417,7 +417,7 @@
             checkBox10.AutoSize = true;
             checkBox10.Location = new System.Drawing.Point(8, 245);
             checkBox10.Name = "checkBox10";
-            checkBox10.Size = new System.Drawing.Size(82, 19);
+            checkBox10.Size = new System.Drawing.Size(83, 19);
             checkBox10.TabIndex = 7;
             checkBox10.Text = "checkBox1";
             checkBox10.UseVisualStyleBackColor = true;
@@ -427,7 +427,7 @@
             indexesCheckBox.AutoSize = true;
             indexesCheckBox.Location = new System.Drawing.Point(8, 220);
             indexesCheckBox.Name = "indexesCheckBox";
-            indexesCheckBox.Size = new System.Drawing.Size(65, 19);
+            indexesCheckBox.Size = new System.Drawing.Size(66, 19);
             indexesCheckBox.TabIndex = 8;
             indexesCheckBox.Text = "Indexes";
             indexesCheckBox.UseVisualStyleBackColor = true;
@@ -481,7 +481,7 @@
             extendedPropertiesCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
             extendedPropertiesCheckBox.Location = new System.Drawing.Point(8, 81);
             extendedPropertiesCheckBox.Name = "extendedPropertiesCheckBox";
-            extendedPropertiesCheckBox.Size = new System.Drawing.Size(127, 19);
+            extendedPropertiesCheckBox.Size = new System.Drawing.Size(128, 19);
             extendedPropertiesCheckBox.TabIndex = 13;
             extendedPropertiesCheckBox.Text = "ExtendedProperties";
             extendedPropertiesCheckBox.UseVisualStyleBackColor = true;
@@ -492,7 +492,7 @@
             includeIfNotExistsCheckBox.AutoSize = true;
             includeIfNotExistsCheckBox.Location = new System.Drawing.Point(8, 56);
             includeIfNotExistsCheckBox.Name = "includeIfNotExistsCheckBox";
-            includeIfNotExistsCheckBox.Size = new System.Drawing.Size(120, 19);
+            includeIfNotExistsCheckBox.Size = new System.Drawing.Size(121, 19);
             includeIfNotExistsCheckBox.TabIndex = 14;
             includeIfNotExistsCheckBox.Text = "IncludeIfNotExists";
             includeIfNotExistsCheckBox.UseVisualStyleBackColor = true;
@@ -651,7 +651,7 @@
             cutToolStripMenuItem.ImageTransparentColor = System.Drawing.Color.Magenta;
             cutToolStripMenuItem.Name = "cutToolStripMenuItem";
             cutToolStripMenuItem.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.X;
-            cutToolStripMenuItem.Size = new System.Drawing.Size(148, 22);
+            cutToolStripMenuItem.Size = new System.Drawing.Size(184, 26);
             cutToolStripMenuItem.Text = "Cu&t";
             cutToolStripMenuItem.Click += CutToolStripMenuItem_Click;
             // 
@@ -661,7 +661,7 @@
             copyToolStripMenuItem.ImageTransparentColor = System.Drawing.Color.Magenta;
             copyToolStripMenuItem.Name = "copyToolStripMenuItem";
             copyToolStripMenuItem.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.C;
-            copyToolStripMenuItem.Size = new System.Drawing.Size(148, 22);
+            copyToolStripMenuItem.Size = new System.Drawing.Size(184, 26);
             copyToolStripMenuItem.Text = "&Copy";
             copyToolStripMenuItem.Click += CopyToolStripMenuItem_Click;
             // 
@@ -671,31 +671,31 @@
             pasteToolStripMenuItem.ImageTransparentColor = System.Drawing.Color.Magenta;
             pasteToolStripMenuItem.Name = "pasteToolStripMenuItem";
             pasteToolStripMenuItem.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.V;
-            pasteToolStripMenuItem.Size = new System.Drawing.Size(148, 22);
+            pasteToolStripMenuItem.Size = new System.Drawing.Size(184, 26);
             pasteToolStripMenuItem.Text = "&Paste";
             pasteToolStripMenuItem.Click += PasteToolStripMenuItem_Click;
             // 
             // toolStripSeparator6
             // 
             toolStripSeparator6.Name = "toolStripSeparator6";
-            toolStripSeparator6.Size = new System.Drawing.Size(145, 6);
+            toolStripSeparator6.Size = new System.Drawing.Size(181, 6);
             // 
             // selectAllToolStripMenuItem
             // 
             selectAllToolStripMenuItem.Name = "selectAllToolStripMenuItem";
-            selectAllToolStripMenuItem.Size = new System.Drawing.Size(148, 22);
+            selectAllToolStripMenuItem.Size = new System.Drawing.Size(184, 26);
             selectAllToolStripMenuItem.Text = "Select &All";
             selectAllToolStripMenuItem.Click += SelectAllToolStripMenuItem_Click;
             // 
             // toolStripSeparator8
             // 
             toolStripSeparator8.Name = "toolStripSeparator8";
-            toolStripSeparator8.Size = new System.Drawing.Size(145, 6);
+            toolStripSeparator8.Size = new System.Drawing.Size(181, 6);
             // 
             // saveTempleteToolStripMenuItem
             // 
             saveTempleteToolStripMenuItem.Name = "saveTempleteToolStripMenuItem";
-            saveTempleteToolStripMenuItem.Size = new System.Drawing.Size(148, 22);
+            saveTempleteToolStripMenuItem.Size = new System.Drawing.Size(184, 26);
             saveTempleteToolStripMenuItem.Text = "Save templete";
             // 
             // sharePointToolStripMenuItem
@@ -775,7 +775,7 @@
             // 
             toolsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { customizeToolStripMenuItem, optionsToolStripMenuItem, toolStripSeparator1, batchColumnDescToolStripMenuItem, toolStripSeparator12, queryInsertToolStripMenuItem, excelToINSERTToolStripMenuItem, toolStripSeparator13, tableDescriptionToolStripMenuItem, createPrimaryKeyToolStripMenuItem, createIndexToolStripMenuItem, toolStripSeparator14, uspToolStripMenuItem });
             toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
-            toolsToolStripMenuItem.Size = new System.Drawing.Size(47, 20);
+            toolsToolStripMenuItem.Size = new System.Drawing.Size(46, 20);
             toolsToolStripMenuItem.Text = "&Tools";
             // 
             // customizeToolStripMenuItem

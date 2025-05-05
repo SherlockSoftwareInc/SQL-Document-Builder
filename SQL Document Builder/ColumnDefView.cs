@@ -541,6 +541,9 @@ GO
             var indexScript = _dbObject.GetCreateIndexesScript($"[{Schema}].[{TableName}]");
             if (!string.IsNullOrEmpty(indexScript))
             {
+                // remove the new line at the end of the script
+                indexScript = indexScript.TrimEnd('\r', '\n');
+
                 createTableScript.AppendLine(indexScript);
                 createTableScript.AppendLine($"GO");
             }
