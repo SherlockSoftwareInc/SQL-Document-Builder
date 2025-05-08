@@ -6,6 +6,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -594,7 +595,7 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="container">The container control.</param>
         /// <returns>The focused control, or null if none is focused.</returns>
-        private Control GetFocusedControl(Control container)
+        private Control? GetFocusedControl(Control container)
         {
             if (container == null)
                 return null;
@@ -604,7 +605,7 @@ namespace SQL_Document_Builder
 
             foreach (Control child in container.Controls)
             {
-                Control focused = GetFocusedControl(child);
+                Control? focused = GetFocusedControl(child);
                 if (focused != null)
                     return focused;
             }
@@ -612,33 +613,39 @@ namespace SQL_Document_Builder
             return null;
         }
 
-
         /// <summary>
-        ///
+        /// Populates the objects list box with tables, ordered by schema name and table name.
         /// </summary>
         private void Populate()
         {
             definitionPanel?.Open(null);
             string schemaName = string.Empty;
-            if (schemaComboBox.SelectedIndex > 0) schemaName = schemaComboBox.Items[schemaComboBox.SelectedIndex].ToString();
+            if (schemaComboBox.SelectedIndex > 0)
+                schemaName = schemaComboBox.Items[schemaComboBox.SelectedIndex].ToString();
 
             if (_tables != null)
             {
                 objectsListBox.Items.Clear();
                 string searchFor = searchTextBox.Text.Trim();
-                if (searchFor?.Length == 0)
+
+                // Sort the tables by schema name and table name
+                _tables.DefaultView.Sort = "TABLE_SCHEMA ASC, TABLE_NAME ASC";
+
+                if (string.IsNullOrEmpty(searchFor))
                 {
-                    if (schemaName?.Length == 0)
+                    if (string.IsNullOrEmpty(schemaName))
                     {
-                        foreach (DataRow row in _tables.Rows)
+                        foreach (DataRowView rowView in _tables.DefaultView)
                         {
+                            DataRow row = rowView.Row;
                             AddListItem((string)row["TABLE_TYPE"], (string)row["TABLE_SCHEMA"], (string)row["TABLE_NAME"]);
                         }
                     }
                     else
                     {
-                        foreach (DataRow row in _tables.Rows)
+                        foreach (DataRowView rowView in _tables.DefaultView)
                         {
+                            DataRow row = rowView.Row;
                             if (schemaName.Equals(row["TABLE_SCHEMA"].ToString(), StringComparison.CurrentCultureIgnoreCase))
                                 AddListItem((string)row["TABLE_TYPE"], (string)row["TABLE_SCHEMA"], (string)row["TABLE_NAME"]);
                         }
@@ -646,23 +653,31 @@ namespace SQL_Document_Builder
                 }
                 else
                 {
-                    var matches = _tables.Select(string.Format("TABLE_NAME LIKE '%{0}%'", searchFor));
-                    if (schemaName?.Length == 0)
+                    // Use the LIKE operator to find tables that contain the search string
+                    var matches = _tables.Select($"TABLE_NAME LIKE '%{searchFor}%'");
+
+                    // Sort the matches by schema name and table name
+                    var sortedMatches = matches
+                        .OrderBy(row => row["TABLE_SCHEMA"].ToString())
+                        .ThenBy(row => row["TABLE_NAME"].ToString());
+
+                    if (string.IsNullOrEmpty(schemaName))
                     {
-                        foreach (DataRow row in matches)
+                        foreach (DataRow row in sortedMatches)
                         {
                             AddListItem((string)row["TABLE_TYPE"], (string)row["TABLE_SCHEMA"], (string)row["TABLE_NAME"]);
                         }
                     }
                     else
                     {
-                        foreach (DataRow row in matches)
+                        foreach (DataRow row in sortedMatches)
                         {
                             if (schemaName.Equals(row["TABLE_SCHEMA"].ToString(), StringComparison.CurrentCultureIgnoreCase))
                                 AddListItem((string)row["TABLE_TYPE"], (string)row["TABLE_SCHEMA"], (string)row["TABLE_NAME"]);
                         }
                     }
                 }
+
                 if (objectsListBox.Items.Count > 0)
                 {
                     objectsListBox.SelectedIndex = 0;
