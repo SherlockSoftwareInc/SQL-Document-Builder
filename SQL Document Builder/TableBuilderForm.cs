@@ -278,15 +278,19 @@ namespace SQL_Document_Builder
         /// <param name="e">The E.</param>
         private void CopyToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (ActiveControl?.GetType() == typeof(TextBox))
+            Control focusedControl = GetFocusedControl(this);
+
+            if (focusedControl is TextBox textBox)
             {
-                TextBox textBox = (TextBox)ActiveControl;
                 textBox.Copy();
             }
-            else if (ActiveControl?.GetType() == typeof(DBObjectDefPanel))
+            else if (focusedControl is DBObjectDefPanel dBObjectDefPanel)
             {
-                DBObjectDefPanel dBObjectDefPanel = (DBObjectDefPanel)ActiveControl;
                 dBObjectDefPanel.Copy();
+            }
+            else
+            {
+                statusToolStripStatusLabe.Text = "No valid control is focused for copying.";
             }
         }
 
@@ -529,6 +533,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The E.</param>
         private void ObjectsListBox_SelectedIndexChanged(object sender, EventArgs e)
         {
+            statusToolStripStatusLabe.Text = string.Empty;
             if (objectsListBox.SelectedItem != null)
             {
                 var objectName = (ObjectName)objectsListBox.SelectedItem;
@@ -580,7 +585,7 @@ namespace SQL_Document_Builder
             }
             else
             {
-                MessageBox.Show("No valid control is focused for pasting.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                statusToolStripStatusLabe.Text = "No valid control is focused for pasting.";
             }
         }
 

@@ -651,7 +651,7 @@
             cutToolStripMenuItem.ImageTransparentColor = System.Drawing.Color.Magenta;
             cutToolStripMenuItem.Name = "cutToolStripMenuItem";
             cutToolStripMenuItem.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.X;
-            cutToolStripMenuItem.Size = new System.Drawing.Size(184, 26);
+            cutToolStripMenuItem.Size = new System.Drawing.Size(148, 22);
             cutToolStripMenuItem.Text = "Cu&t";
             cutToolStripMenuItem.Click += CutToolStripMenuItem_Click;
             // 
@@ -661,7 +661,7 @@
             copyToolStripMenuItem.ImageTransparentColor = System.Drawing.Color.Magenta;
             copyToolStripMenuItem.Name = "copyToolStripMenuItem";
             copyToolStripMenuItem.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.C;
-            copyToolStripMenuItem.Size = new System.Drawing.Size(184, 26);
+            copyToolStripMenuItem.Size = new System.Drawing.Size(148, 22);
             copyToolStripMenuItem.Text = "&Copy";
             copyToolStripMenuItem.Click += CopyToolStripMenuItem_Click;
             // 
@@ -671,31 +671,31 @@
             pasteToolStripMenuItem.ImageTransparentColor = System.Drawing.Color.Magenta;
             pasteToolStripMenuItem.Name = "pasteToolStripMenuItem";
             pasteToolStripMenuItem.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.V;
-            pasteToolStripMenuItem.Size = new System.Drawing.Size(184, 26);
+            pasteToolStripMenuItem.Size = new System.Drawing.Size(148, 22);
             pasteToolStripMenuItem.Text = "&Paste";
             pasteToolStripMenuItem.Click += PasteToolStripMenuItem_Click;
             // 
             // toolStripSeparator6
             // 
             toolStripSeparator6.Name = "toolStripSeparator6";
-            toolStripSeparator6.Size = new System.Drawing.Size(181, 6);
+            toolStripSeparator6.Size = new System.Drawing.Size(145, 6);
             // 
             // selectAllToolStripMenuItem
             // 
             selectAllToolStripMenuItem.Name = "selectAllToolStripMenuItem";
-            selectAllToolStripMenuItem.Size = new System.Drawing.Size(184, 26);
+            selectAllToolStripMenuItem.Size = new System.Drawing.Size(148, 22);
             selectAllToolStripMenuItem.Text = "Select &All";
             selectAllToolStripMenuItem.Click += SelectAllToolStripMenuItem_Click;
             // 
             // toolStripSeparator8
             // 
             toolStripSeparator8.Name = "toolStripSeparator8";
-            toolStripSeparator8.Size = new System.Drawing.Size(181, 6);
+            toolStripSeparator8.Size = new System.Drawing.Size(145, 6);
             // 
             // saveTempleteToolStripMenuItem
             // 
             saveTempleteToolStripMenuItem.Name = "saveTempleteToolStripMenuItem";
-            saveTempleteToolStripMenuItem.Size = new System.Drawing.Size(184, 26);
+            saveTempleteToolStripMenuItem.Size = new System.Drawing.Size(148, 22);
             saveTempleteToolStripMenuItem.Text = "Save templete";
             // 
             // sharePointToolStripMenuItem
