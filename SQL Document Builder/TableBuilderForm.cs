@@ -180,18 +180,18 @@ namespace SQL_Document_Builder
         {
             if (connection != null)
             {
-                bool connectionChanged = false;
-                if (_selectedConnection == null)
-                {
-                    connectionChanged = true;
-                }
-                else
-                {
-                    if (!_selectedConnection.Equals(connection))
-                    {
-                        connectionChanged = true;
-                    }
-                }
+                bool connectionChanged = true;
+                //if (_selectedConnection == null)
+                //{
+                //    connectionChanged = true;
+                //}
+                //else
+                //{
+                //    if (!_selectedConnection.Equals(connection))
+                //    {
+                //        connectionChanged = true;
+                //    }
+                //}
 
                 if (connectionChanged)
                 {
