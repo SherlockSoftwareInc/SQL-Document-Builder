@@ -227,6 +227,7 @@ namespace SQL_Document_Builder
                         if (_connections.Connections[i].Equals(connection))
                         {
                             Properties.Settings.Default.LastAccessConnectionIndex = i;
+                            Properties.Settings.Default.Save();
                             break;
                         }
                     }
