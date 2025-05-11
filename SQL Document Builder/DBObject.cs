@@ -25,7 +25,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Gets or sets columns
         /// </summary>
-        public List<DBColumn> Columns { get; set; } = new List<DBColumn>();
+        public List<DBColumn> Columns { get; set; } = [];
 
         /// <summary>
         /// Gets or set description for the object
@@ -60,29 +60,96 @@ namespace SQL_Document_Builder
         private string ConnectionString { get; set; } = string.Empty;
 
         /// <summary>
-        /// Descriptions the script.
+        /// Retrieves identity column details for the current table.
         /// </summary>
-        /// <returns>A string.</returns>
-        public string DescriptionScript()
+        /// <returns>A dictionary where the key is the column name and the value is a tuple containing seed and increment values.</returns>
+        public static Dictionary<string, (int SeedValue, int IncrementValue)> GetIdentityColumns(string? schemaName, string? tableName)
         {
-            var sb = new System.Text.StringBuilder();
+            var identityColumns = new Dictionary<string, (int SeedValue, int IncrementValue)>();
 
-            if (!ObjectName.IsEmpty())
+            string identityQuery = $@"
+SELECT
+    ic.name AS identity_column_name,
+    ic.seed_value,
+    ic.increment_value
+FROM sys.tables AS t
+INNER JOIN sys.schemas AS s ON t.schema_id = s.schema_id
+INNER JOIN sys.identity_columns AS ic ON t.object_id = ic.object_id
+WHERE t.name = '{tableName}'
+AND s.name = '{schemaName}';";
+
+            using (var connection = new SqlConnection(Properties.Settings.Default.dbConnectionString))
             {
-                if (Description.Length > 0)
+                connection.Open();
+                using var command = new SqlCommand(identityQuery, connection);
+                using var reader = command.ExecuteReader();
+                while (reader.Read())
                 {
-                    sb.AppendLine(string.Format("EXEC usp_AddObjectDescription '{0}', N'{1}'", ObjectName.FullName, Description));
-                }
-                foreach (var column in Columns)
-                {
-                    if (column.Description.Length > 0)
-                    {
-                        sb.AppendLine(string.Format("EXEC usp_AddColumnDescription '{0}', '{1}', N'{2}'", ObjectName.FullName, column.ColumnName, Description));
-                    }
+                    string columnName = reader.GetString(0);
+                    int seedValue = reader.GetInt32(1);
+                    int incrementValue = reader.GetInt32(2);
+                    identityColumns[columnName] = (seedValue, incrementValue);
                 }
             }
 
-            return sb.ToString();
+            return identityColumns;
+        }
+
+        /// <summary>
+        /// Gets the list of views where the specified table is used.
+        /// </summary>
+        /// <param name="connectionString">The connection string to the database.</param>
+        /// <param name="tableName">The name of the table to check.</param>
+        /// <param name="schemaName">The schema name of the table.</param>
+        /// <returns>A list of tuples containing the view name and schema name.</returns>
+        public static List<(string ViewName, string SchemaName)> GetViewsUsingTable(string? schemaName, string? tableName)
+        {
+            var views = new List<(string ViewName, string SchemaName)>();
+            if (string.IsNullOrEmpty(tableName))
+            {
+                return views;
+            }
+
+            if (string.IsNullOrEmpty(schemaName))
+                schemaName = "dbo";
+
+            string query = @"
+SELECT
+    v.name AS ViewName,
+    s.name AS SchemaName
+FROM
+    sys.views v
+    INNER JOIN sys.sql_expression_dependencies d ON v.object_id = d.referencing_id
+    INNER JOIN sys.objects o ON d.referenced_id = o.object_id
+    INNER JOIN sys.schemas s ON v.schema_id = s.schema_id
+WHERE
+    o.name = @TableName AND
+    s.name = @SchemaName;";
+
+            using (var connection = new SqlConnection(Properties.Settings.Default.dbConnectionString))
+            {
+                try
+                {
+                    connection.Open();
+                    using var command = new SqlCommand(query, connection);
+                    command.Parameters.AddWithValue("@TableName", tableName);
+                    command.Parameters.AddWithValue("@SchemaName", schemaName);
+
+                    using var reader = command.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        string viewName = reader.GetString(0);
+                        string schema = reader.GetString(1);
+                        views.Add((viewName, schema));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Common.MsgBox($"Error retrieving views: {ex.Message}", MessageBoxIcon.Error);
+                }
+            }
+
+            return views;
         }
 
         /// <summary>
@@ -103,7 +170,128 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        ///
+        /// Generates the SQL script to recreate all non-primary key, non-unique constraint indexes for the specified table.
+        /// </summary>
+        /// <param name="fullTableName">The full table name in the format [Schema].[TableName].</param>
+        /// <returns>A string containing the SQL script to recreate the indexes.</returns>
+        public string GetCreateIndexesScript(string fullTableName)
+        {
+            StringBuilder indexScript = new();
+
+            string query = $@"
+SELECT
+    'CREATE ' +
+    CASE WHEN i.is_unique = 1 THEN 'UNIQUE ' ELSE '' END +
+    i.type_desc COLLATE DATABASE_DEFAULT + ' INDEX ' +
+    QUOTENAME(i.name) + ' ON ' +
+    '{fullTableName}' +
+    ' (' +
+    (SELECT STRING_AGG(QUOTENAME(c.name) + CASE WHEN ic.is_descending_key = 1 THEN ' DESC' ELSE ' ASC' END, ', ') WITHIN GROUP (ORDER BY ic.key_ordinal)
+     FROM sys.index_columns ic
+     INNER JOIN sys.columns c ON ic.object_id = c.object_id AND ic.column_id = c.column_id
+     WHERE ic.object_id = i.object_id AND ic.index_id = i.index_id AND ic.is_included_column = 0) + ')' +
+    ISNULL(' INCLUDE (' +
+    (SELECT STRING_AGG(QUOTENAME(c2.name), ', ') WITHIN GROUP (ORDER BY ic2.index_column_id)
+     FROM sys.index_columns ic2
+     INNER JOIN sys.columns c2 ON ic2.object_id = c2.object_id AND ic2.column_id = c2.column_id
+     WHERE ic2.object_id = i.object_id AND ic2.index_id = i.index_id AND ic2.is_included_column = 1) + ')', '') +
+    ISNULL(' WHERE ' + i.filter_definition, '') +
+    ';'
+FROM
+    sys.indexes i
+WHERE
+    i.object_id = OBJECT_ID('{fullTableName}')
+    AND i.is_primary_key = 0
+    AND i.is_unique_constraint = 0
+    AND i.is_hypothetical = 0
+    AND i.index_id > 0
+ORDER BY
+    i.index_id;";
+
+            using (SqlConnection connection = new(ConnectionString))
+            {
+                SqlCommand command = new(query, connection);
+                connection.Open();
+
+                using SqlDataReader reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    indexScript.AppendLine(reader.GetString(0));
+                }
+            }
+
+            return indexScript.ToString();
+        }
+
+        /// <summary>
+        /// Retrieves the T-SQL definition script for a specific view using its fully qualified name.
+        /// </summary>
+        /// <param name="connectionString">The SQL Server connection string.</param>
+        /// <param name="fullViewName">The fully qualified name of the view (e.g., "[dbo].[vGetAllCategories]", "sales.CustomersView"). Should be in a format recognizable by OBJECT_ID.</param>
+        /// <returns>A string containing the view's definition, or null if not found or an error occurs.</returns>
+        /// <exception cref="ArgumentNullException">Thrown if connectionString or fullViewName is null or empty.</exception>
+        /// <remarks>
+        /// This function executes SQL targeting sys.sql_modules for objects identifiable via OBJECT_ID.
+        /// It assumes the object corresponding to fullViewName is a view or other SQL module.
+        /// It does NOT generate CREATE INDEX scripts.
+        /// </remarks>
+        public async Task<string?> GetViewDefinitionAsync()
+        {
+            string fullViewName = ObjectName.FullName;
+
+            // Validate the single full name parameter
+            if (string.IsNullOrWhiteSpace(fullViewName))
+                throw new ArgumentNullException(nameof(fullViewName));
+
+            // The SQL query remains the same, using OBJECT_ID which handles schema-qualified names
+            const string query = @"SELECT sm.definition
+FROM sys.sql_modules sm
+WHERE sm.object_id = OBJECT_ID(@SchemaQualifiedName);";
+            // Optional: Add explicit type check if necessary
+            // AND EXISTS (SELECT 1 FROM sys.objects o WHERE o.object_id = sm.object_id AND o.type = 'V');";
+
+            string? viewDefinition = null;
+
+            try
+            {
+                // Use 'await using' for automatic disposal
+                await using var connection = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+                await using var command = new SqlCommand(query, connection);
+                // Use the provided fullViewName directly as the parameter value
+                command.Parameters.AddWithValue("@SchemaQualifiedName", fullViewName);
+
+                await connection.OpenAsync();
+
+                // ExecuteScalarAsync is efficient for retrieving a single value
+                object? result = await command.ExecuteScalarAsync();
+
+                // Check if a result was returned and it's not DBNull
+                if (result != null && result != DBNull.Value)
+                {
+                    viewDefinition = result.ToString();
+                }
+                // Command is disposed here
+                // Connection is disposed here
+            }
+            catch (SqlException ex)
+            {
+                // Log the exception (replace Console.WriteLine with your logging framework)
+                Console.WriteLine($"SQL Error getting view definition for {fullViewName}: {ex.Message}");
+                // Depending on requirements, you might re-throw, return null, or handle differently
+                // throw; // Uncomment to propagate the exception
+            }
+            catch (Exception ex)
+            {
+                // Handle other potential exceptions
+                Console.WriteLine($"Error getting view definition for {fullViewName}: {ex.Message}");
+                // throw; // Uncomment to propagate the exception
+            }
+
+            return viewDefinition;
+        }
+
+        /// <summary>
+        /// Opens the data object.
         /// </summary>
         /// <param name="objectName">The object name.</param>
         /// <param name="connectionString">The connection string.</param>
@@ -120,10 +308,10 @@ namespace SQL_Document_Builder
                 {
                     using SqlCommand cmd = new(sql, conn);
                     conn.Open();
-                    var objType = cmd.ExecuteScalar();
+                    string? objType = (string)cmd.ExecuteScalar();
                     if (objType != null)
                     {
-                        objectType = objType.ToString().ToLower() == "view" ? ObjectTypeEnums.View : ObjectTypeEnums.Table;
+                        objectType = objType.ToString().Equals("view", StringComparison.CurrentCultureIgnoreCase) ? ObjectTypeEnums.View : ObjectTypeEnums.Table;
                     }
                 }
                 catch (SqlException)
@@ -298,70 +486,16 @@ IF EXISTS (SELECT value
 	    WHERE class = 1 AND major_id = OBJECT_ID(@TableName)
 	    AND minor_id = 0
 	    AND name = 'MS_Description')
-	EXEC sp_updateextendedproperty @name = N'MS_Description', @value = N'{newDesc}', 
-		@level0type = N'SCHEMA', @level0name = '{ObjectName.Schema}', 
+	EXEC sp_updateextendedproperty @name = N'MS_Description', @value = N'{newDesc}',
+		@level0type = N'SCHEMA', @level0name = '{ObjectName.Schema}',
 		@level1type = @ObjectType, @level1name = '{ObjectName.Name}';
 ELSE
-	EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'{newDesc}', 
-		@level0type = N'SCHEMA', @level0name = '{ObjectName.Schema}', 
+	EXEC sp_addextendedproperty @name = N'MS_Description', @value = N'{newDesc}',
+		@level0type = N'SCHEMA', @level0name = '{ObjectName.Schema}',
 		@level1type = @ObjectType, @level1name = '{ObjectName.Name}';";
 
                 DatabaseHelper.ExecuteSQL(sql);
             }
-        }
-
-        /// <summary>
-        /// Generates the SQL script to recreate all non-primary key, non-unique constraint indexes for the specified table.
-        /// </summary>
-        /// <param name="fullTableName">The full table name in the format [Schema].[TableName].</param>
-        /// <returns>A string containing the SQL script to recreate the indexes.</returns>
-        public string GetCreateIndexesScript(string fullTableName)
-        {
-            StringBuilder indexScript = new();
-
-            string query = $@"
-SELECT
-    'CREATE ' +
-    CASE WHEN i.is_unique = 1 THEN 'UNIQUE ' ELSE '' END +
-    i.type_desc COLLATE DATABASE_DEFAULT + ' INDEX ' +
-    QUOTENAME(i.name) + ' ON ' +
-    '{fullTableName}' +
-    ' (' +
-    (SELECT STRING_AGG(QUOTENAME(c.name) + CASE WHEN ic.is_descending_key = 1 THEN ' DESC' ELSE ' ASC' END, ', ') WITHIN GROUP (ORDER BY ic.key_ordinal)
-     FROM sys.index_columns ic
-     INNER JOIN sys.columns c ON ic.object_id = c.object_id AND ic.column_id = c.column_id
-     WHERE ic.object_id = i.object_id AND ic.index_id = i.index_id AND ic.is_included_column = 0) + ')' +
-    ISNULL(' INCLUDE (' +
-    (SELECT STRING_AGG(QUOTENAME(c2.name), ', ') WITHIN GROUP (ORDER BY ic2.index_column_id)
-     FROM sys.index_columns ic2
-     INNER JOIN sys.columns c2 ON ic2.object_id = c2.object_id AND ic2.column_id = c2.column_id
-     WHERE ic2.object_id = i.object_id AND ic2.index_id = i.index_id AND ic2.is_included_column = 1) + ')', '') +
-    ISNULL(' WHERE ' + i.filter_definition, '') +
-    ';'
-FROM
-    sys.indexes i
-WHERE
-    i.object_id = OBJECT_ID('{fullTableName}')
-    AND i.is_primary_key = 0
-    AND i.is_unique_constraint = 0
-    AND i.is_hypothetical = 0
-    AND i.index_id > 0
-ORDER BY
-    i.index_id;";
-
-            using (SqlConnection connection = new(ConnectionString))
-            {
-                SqlCommand command = new(query, connection);
-                connection.Open();
-
-                using SqlDataReader reader = command.ExecuteReader();
-                while (reader.Read())
-                {
-                    indexScript.AppendLine(reader.GetString(0));
-                }
-            }
-
-            return indexScript.ToString();
         }
 
         /// <summary>
@@ -437,7 +571,7 @@ AND t.name = '{tableName}'";
 
                 while (dr.Read())
                 {
-                    var columnName = dr.GetString(0);
+                    string? columnName = dr.GetString(0);
                     // find the column in the Columns
                     foreach (var column in Columns)
                     {
@@ -458,29 +592,6 @@ AND t.name = '{tableName}'";
             finally
             {
                 conn.Close();
-            }
-        }
-
-        /// <summary>
-        /// Gets the object type.
-        /// </summary>
-        /// <returns>A string.</returns>
-        private string GetObjectType()
-        {
-            string objectName = ObjectName.Name;
-
-            // You can add more cases to handle different object types if needed
-            if (objectName.ToLower().StartsWith("sp_") || objectName.ToLower().StartsWith("usp_"))
-            {
-                return "PROCEDURE";
-            }
-            else if (objectName.ToLower().StartsWith("vw_") || objectName.ToLower().StartsWith("v_"))
-            {
-                return "VIEW";
-            }
-            else
-            {
-                return "TABLE";
             }
         }
 
@@ -571,130 +682,6 @@ AND t.name = '{tableName}'";
             }
 
             return result;
-        }
-
-        /// <summary>
-        /// Retrieves the T-SQL definition script for a specific view using its fully qualified name.
-        /// </summary>
-        /// <param name="connectionString">The SQL Server connection string.</param>
-        /// <param name="fullViewName">The fully qualified name of the view (e.g., "[dbo].[vGetAllCategories]", "sales.CustomersView"). Should be in a format recognizable by OBJECT_ID.</param>
-        /// <returns>A string containing the view's definition, or null if not found or an error occurs.</returns>
-        /// <exception cref="ArgumentNullException">Thrown if connectionString or fullViewName is null or empty.</exception>
-        /// <remarks>
-        /// This function executes SQL targeting sys.sql_modules for objects identifiable via OBJECT_ID.
-        /// It assumes the object corresponding to fullViewName is a view or other SQL module.
-        /// It does NOT generate CREATE INDEX scripts.
-        /// </remarks>
-        public async Task<string?> GetViewDefinitionAsync()
-        {
-            string fullViewName = ObjectName.FullName;
-
-            // Validate the single full name parameter
-            if (string.IsNullOrWhiteSpace(fullViewName))
-                throw new ArgumentNullException(nameof(fullViewName));
-
-            // The SQL query remains the same, using OBJECT_ID which handles schema-qualified names
-            const string query = @"SELECT sm.definition
-FROM sys.sql_modules sm
-WHERE sm.object_id = OBJECT_ID(@SchemaQualifiedName);";
-            // Optional: Add explicit type check if necessary
-            // AND EXISTS (SELECT 1 FROM sys.objects o WHERE o.object_id = sm.object_id AND o.type = 'V');";
-
-            string? viewDefinition = null;
-
-            try
-            {
-                // Use 'await using' for automatic disposal
-                await using var connection = new SqlConnection(Properties.Settings.Default.dbConnectionString);
-                await using var command = new SqlCommand(query, connection);
-                // Use the provided fullViewName directly as the parameter value
-                command.Parameters.AddWithValue("@SchemaQualifiedName", fullViewName);
-
-                await connection.OpenAsync();
-
-                // ExecuteScalarAsync is efficient for retrieving a single value
-                object? result = await command.ExecuteScalarAsync();
-
-                // Check if a result was returned and it's not DBNull
-                if (result != null && result != DBNull.Value)
-                {
-                    viewDefinition = result.ToString();
-                }
-                // Command is disposed here
-                // Connection is disposed here
-            }
-            catch (SqlException ex)
-            {
-                // Log the exception (replace Console.WriteLine with your logging framework)
-                Console.WriteLine($"SQL Error getting view definition for {fullViewName}: {ex.Message}");
-                // Depending on requirements, you might re-throw, return null, or handle differently
-                // throw; // Uncomment to propagate the exception
-            }
-            catch (Exception ex)
-            {
-                // Handle other potential exceptions
-                Console.WriteLine($"Error getting view definition for {fullViewName}: {ex.Message}");
-                // throw; // Uncomment to propagate the exception
-            }
-
-            return viewDefinition;
-        }
-
-        /// <summary>
-        /// Gets the list of views where the specified table is used.
-        /// </summary>
-        /// <param name="connectionString">The connection string to the database.</param>
-        /// <param name="tableName">The name of the table to check.</param>
-        /// <param name="schemaName">The schema name of the table.</param>
-        /// <returns>A list of tuples containing the view name and schema name.</returns>
-        public List<(string ViewName, string SchemaName)> GetViewsUsingTable(string? schemaName, string? tableName)
-        {
-            var views = new List<(string ViewName, string SchemaName)>();
-            if (string.IsNullOrEmpty(tableName))
-            {
-                return views;
-            }
-
-            if (string.IsNullOrEmpty(schemaName))
-                schemaName = "dbo";
-
-            string query = @"
-SELECT
-    v.name AS ViewName,
-    s.name AS SchemaName
-FROM
-    sys.views v
-    INNER JOIN sys.sql_expression_dependencies d ON v.object_id = d.referencing_id
-    INNER JOIN sys.objects o ON d.referenced_id = o.object_id
-    INNER JOIN sys.schemas s ON v.schema_id = s.schema_id
-WHERE
-    o.name = @TableName AND
-    s.name = @SchemaName;";
-
-            using (var connection = new SqlConnection(Properties.Settings.Default.dbConnectionString))
-            {
-                try
-                {
-                    connection.Open();
-                    using var command = new SqlCommand(query, connection);
-                    command.Parameters.AddWithValue("@TableName", tableName);
-                    command.Parameters.AddWithValue("@SchemaName", schemaName);
-
-                    using var reader = command.ExecuteReader();
-                    while (reader.Read())
-                    {
-                        string viewName = reader.GetString(0);
-                        string schema = reader.GetString(1);
-                        views.Add((viewName, schema));
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Common.MsgBox($"Error retrieving views: {ex.Message}", MessageBoxIcon.Error);
-                }
-            }
-
-            return views;
         }
     }
 }
