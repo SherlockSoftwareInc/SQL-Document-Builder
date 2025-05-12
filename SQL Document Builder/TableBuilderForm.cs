@@ -52,12 +52,6 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Gets or Sets the connection.
-        /// </summary>
-        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public SQLDatabaseConnectionItem? Connection { get; set; }
-
-        /// <summary>
         /// Abouts the tool strip menu item_ click.
         /// </summary>
         /// <param name="sender">The sender.</param>
@@ -182,17 +176,6 @@ namespace SQL_Document_Builder
             if (connection != null)
             {
                 bool connectionChanged = true;
-                //if (_selectedConnection == null)
-                //{
-                //    connectionChanged = true;
-                //}
-                //else
-                //{
-                //    if (!_selectedConnection.Equals(connection))
-                //    {
-                //        connectionChanged = true;
-                //    }
-                //}
 
                 if (connectionChanged)
                 {
@@ -215,20 +198,13 @@ namespace SQL_Document_Builder
                         if (submenuitem.Connection.Equals(connection))
                         {
                             submenuitem.Checked = true;
+
+                            Properties.Settings.Default.LastAccessConnectionIndex = i;
+                            Properties.Settings.Default.Save();
                         }
                         else
                         {
                             submenuitem.Checked = false;
-                        }
-                    }
-
-                    for (int i = 0; i < _connections.Connections.Count; i++)
-                    {
-                        if (_connections.Connections[i].Equals(connection))
-                        {
-                            Properties.Settings.Default.LastAccessConnectionIndex = i;
-                            Properties.Settings.Default.Save();
-                            break;
                         }
                     }
 
@@ -939,6 +915,10 @@ namespace SQL_Document_Builder
             PopulateConnections();
 
             var lastConnection = Properties.Settings.Default.LastAccessConnectionIndex;
+            // set lastConnection to 0 if it is not set or out of range
+            if (lastConnection < 0 || lastConnection >= connectToToolStripMenuItem.DropDown.Items.Count)
+                lastConnection = 0;
+
             //lastConnection = 1;
             ConnectionMenuItem? selectedItem;
             if (lastConnection <= 0 || lastConnection >= _connections.Connections.Count)
@@ -1630,6 +1610,16 @@ GO
         {
             searchTextBox.Text = string.Empty;
             searchTextBox.Focus();
+        }
+
+        /// <summary>
+        /// Handles the "Create" tool strip menu item click event.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void CREATEToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }
