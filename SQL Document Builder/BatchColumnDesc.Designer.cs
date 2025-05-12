@@ -71,7 +71,7 @@
             // 
             searchToolStripTextBox.Name = "searchToolStripTextBox";
             searchToolStripTextBox.Size = new System.Drawing.Size(200, 25);
-            searchToolStripTextBox.TextBoxTextAlignChanged += searchToolStripTextBox_TextBoxTextAlignChanged;
+            searchToolStripTextBox.TextBoxTextAlignChanged += SearchToolStripTextBox_TextBoxTextAlignChanged;
             searchToolStripTextBox.KeyUp += SearchToolStripTextBox_KeyUp;
             // 
             // searchToolStripButton

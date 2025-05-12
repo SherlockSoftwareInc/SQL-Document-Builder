@@ -873,14 +873,14 @@
             // cREATEToolStripMenuItem
             // 
             cREATEToolStripMenuItem.Name = "cREATEToolStripMenuItem";
-            cREATEToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            cREATEToolStripMenuItem.Size = new System.Drawing.Size(177, 22);
             cREATEToolStripMenuItem.Text = "CREATE";
             cREATEToolStripMenuItem.Click += CREATEToolStripMenuItem_Click;
             // 
             // objectsDescriptionToolStripMenuItem
             // 
             objectsDescriptionToolStripMenuItem.Name = "objectsDescriptionToolStripMenuItem";
-            objectsDescriptionToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            objectsDescriptionToolStripMenuItem.Size = new System.Drawing.Size(177, 22);
             objectsDescriptionToolStripMenuItem.Text = "Objects Description";
             // 
             // helpToolStripMenuItem

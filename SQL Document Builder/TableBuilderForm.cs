@@ -1619,6 +1619,15 @@ GO
         /// <param name="e">The e.</param>
         private void CREATEToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            var form = new DBObjectsSelectForm("YourConnectionStringHere");
+            if (form.ShowDialog() == DialogResult.OK)
+            {
+                var selectedObjects = form.SelectedObjects;
+                foreach (var obj in selectedObjects)
+                {
+                    Console.WriteLine($"Schema: {obj.SchemaName}, Name: {obj.ObjectName}, Type: {obj.ObjectType}");
+                }
+            }
 
         }
     }

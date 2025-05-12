@@ -1,215 +1,33 @@
-﻿using System;
+﻿using Microsoft.Data.SqlClient;
+using System;
 using System.Collections.Generic;
 using System.Data;
-using Microsoft.Data.SqlClient;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace SQL_Document_Builder
 {
+    /// <summary>
+    /// The batch column desc.
+    /// </summary>
     public partial class BatchColumnDesc : Form
     {
         private DataTable _tables = new();
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="BatchColumnDesc"/> class.
+        /// </summary>
         public BatchColumnDesc()
         {
             InitializeComponent();
         }
 
-        private void SearchToolStripTextBox_KeyUp(object sender, KeyEventArgs e)
-        {
-            if (e.KeyCode == Keys.Enter)
-            {
-                PerformSearch();
-            }
-        }
-
-        private void PerformSearch()
-        {
-            objectsListBox.Items.Clear();
-
-            string searchFor = searchToolStripTextBox.Text.Trim();
-            if (string.IsNullOrEmpty(searchFor))
-            {
-                return;
-            }
-
-            using SqlConnection conn = new(Properties.Settings.Default.dbConnectionString);
-            try
-            {
-                using SqlCommand cmd = new() { Connection = conn };
-                cmd.Parameters.Add(new SqlParameter("@searchFor", searchFor));
-                cmd.CommandText = "SELECT DISTINCT TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, 'BASE TABLE' TABLE_TYPE, COLUMN_NAME FROM information_schema.columns WHERE column_name = @SearchFor ORDER BY TABLE_NAME";
-
-                conn.Open();
-                var dr = cmd.ExecuteReader();
-                string schemaName = string.Empty;
-                if (schemaComboBox.SelectedIndex > 0) schemaName = (string)schemaComboBox.Items[schemaComboBox.SelectedIndex];
-
-                while (dr.Read())
-                {
-                    if (schemaName.Length > 0)
-                    {
-                        string tableSchema = (string)dr["TABLE_SCHEMA"];
-                        if (tableSchema.Equals(schemaName, StringComparison.CurrentCultureIgnoreCase))
-                        {
-                            objectsListBox.Items.Add(string.Format("{0}.{1}", dr["TABLE_SCHEMA"].ToString(), dr["TABLE_NAME"].ToString()));
-                        }
-                    }
-                    else
-                    {
-                        objectsListBox.Items.Add(string.Format("{0}.{1}", dr["TABLE_SCHEMA"].ToString(), dr["TABLE_NAME"].ToString()));
-                    }
-                }
-                dr.Close();
-            }
-            catch (SqlException)
-            {
-                throw;
-            }
-            finally
-            {
-                if (conn.State == ConnectionState.Open)
-                {
-                    conn.Close();
-                }
-            }
-            switch (objectsListBox.Items.Count)
-            {
-                case 0:
-                    messageToolStripStatusLabel.Text = "No match found";
-                    break;
-
-                case 1:
-                    messageToolStripStatusLabel.Text = "one matche found";
-                    break;
-
-                default:
-                    messageToolStripStatusLabel.Text = string.Format("{0} matches found", objectsListBox.Items.Count);
-                    break;
-            }
-
-            SelectAllToolStripButton_Click(this, EventArgs.Empty);
-        }
-
-        private void SearchToolStripButton_Click(object sender, EventArgs e)
-        {
-            PerformSearch();
-        }
-
-        private async void ApplyButton_Click(object sender, EventArgs e)
-        {
-            if (objectsListBox.CheckedItems.Count > 0)
-            {
-                var desc = descTextBox.Text.Trim();
-                var columnName = searchToolStripTextBox.Text.Trim();
-                if (desc.Length > 0 && columnName.Length > 0)
-                {
-                    Cursor = Cursors.WaitCursor;
-                    progressBar.Maximum = objectsListBox.CheckedItems.Count;
-                    progressBar.Value = 0;
-                    progressBar.Visible = true;
-
-                    // Set up an IProgress<int> instance to update the progress bar.
-                    var progress = new Progress<int>(value => progressBar.Value = value);
-
-                    // DoProcessing is run on the thread pool.
-                    await Task.Run(() => ApplyDescriptons(columnName, desc, progress));
-
-                    progressBar.Visible = false;
-                    Cursor = Cursors.Default;
-                    messageToolStripStatusLabel.Text = "Complete";
-                }
-            }
-        }
-
         /// <summary>
-        /// Apply column description for selected objects
+        /// Gets the table typ.
         /// </summary>
-        /// <param name="columnName"></param>
-        /// <param name="desc"></param>
-        /// <param name="progress"></param>
-        private void ApplyDescriptons(string columnName, string desc, IProgress<int> progress)
-        {
-            for (int i = 0; i < objectsListBox.CheckedItems.Count; i++)
-            {
-                if (i % 10 == 0)
-                {
-                    //var percentComplete = (i * 100) / objectsListBox.CheckedItems.Count;
-                    progress.Report(i);
-                }
-                var item = objectsListBox.CheckedItems[i];
-                if (item != null)
-                {
-                    var objectName = item.ToString();
-                    SaveColumnDesc(objectName, columnName, desc);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Save the description of the selected column
-        /// </summary>
-        private static void SaveColumnDesc(string? objectName, string columnName, string desc)
-        {
-            SqlConnection? conn = new(Properties.Settings.Default.dbConnectionString);
-            try
-            {
-                var cmd = new SqlCommand("usp_AddColumnDescription", conn) { CommandType = CommandType.StoredProcedure };
-
-                cmd.Parameters.Add(new SqlParameter("@TableName", objectName));
-                cmd.Parameters.Add(new SqlParameter("@ColumnName", columnName));
-                cmd.Parameters.Add(new SqlParameter("@Description", desc));
-
-                conn.Open();
-                cmd.ExecuteNonQuery();
-            }
-            catch (Exception ex)
-            {
-                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                conn.Close();
-            }
-            /*
-            var names = objectName.Split('.');
-            var schema = names[0];
-            var tableName = names[1];
-
-            //EXEC  'PCRL1.AfReferral', 'Priority', N'Priority at time of referral'
-
-            if (!IsColumnDescExists(schema, tableName, columnName))
-            {
-                SqlConnection? conn = new(Properties.Settings.Default.dbConnectionString);
-                try
-                {
-                    var cmd = new SqlCommand("sp_addextendedproperty", conn) { CommandType = CommandType.StoredProcedure };
-
-                    cmd.Parameters.Add(new SqlParameter("@name", "MS_Description"));
-                    cmd.Parameters.Add(new SqlParameter("@value", desc));
-                    cmd.Parameters.Add(new SqlParameter("@level0type ", "Schema"));
-                    cmd.Parameters.Add(new SqlParameter("@level0name", schema));
-                    cmd.Parameters.Add(new SqlParameter("@level1type", GetTableTyp(schema, tableName)));
-                    cmd.Parameters.Add(new SqlParameter("@level1name", tableName));
-                    cmd.Parameters.Add(new SqlParameter("@level2type", "Column"));
-                    cmd.Parameters.Add(new SqlParameter("@level2name", columnName));
-
-                    conn.Open();
-                    cmd.ExecuteNonQuery();
-                }
-                catch (Exception ex)
-                {
-                    Common.MsgBox(ex.Message, MessageBoxIcon.Error);
-                }
-                finally
-                {
-                    conn.Close();
-                }
-            }
-            */
-        }
-
+        /// <param name="schema">The schema.</param>
+        /// <param name="tableName">The table name.</param>
+        /// <returns>A string.</returns>
         private static string GetTableTyp(string schema, string tableName)
         {
             string result = "table";
@@ -284,22 +102,94 @@ namespace SQL_Document_Builder
             return result;
         }
 
-        private void SelectAllToolStripButton_Click(object sender, EventArgs e)
+        /// <summary>
+        /// Save the description of the selected column
+        /// </summary>
+        private static void SaveColumnDesc(string? objectName, string columnName, string desc)
         {
-            for (int i = 0; i < objectsListBox.Items.Count; i++)
+            SqlConnection? conn = new(Properties.Settings.Default.dbConnectionString);
+            try
             {
-                objectsListBox.SetItemChecked(i, true);
+                var cmd = new SqlCommand("usp_AddColumnDescription", conn) { CommandType = CommandType.StoredProcedure };
+
+                cmd.Parameters.Add(new SqlParameter("@TableName", objectName));
+                cmd.Parameters.Add(new SqlParameter("@ColumnName", columnName));
+                cmd.Parameters.Add(new SqlParameter("@Description", desc));
+
+                conn.Open();
+                cmd.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                conn.Close();
             }
         }
 
-        private void UnselectAllToolStripButton_Click(object sender, EventArgs e)
+        /// <summary>
+        /// Handles the click event of the apply button
+        ///     apply the column description for selected objects
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private async void ApplyButton_Click(object sender, EventArgs e)
         {
-            for (int i = 0; i < objectsListBox.Items.Count; i++)
+            if (objectsListBox.CheckedItems.Count > 0)
             {
-                objectsListBox.SetItemChecked(i, false);
+                var desc = descTextBox.Text.Trim();
+                var columnName = searchToolStripTextBox.Text.Trim();
+                if (desc.Length > 0 && columnName.Length > 0)
+                {
+                    Cursor = Cursors.WaitCursor;
+                    progressBar.Maximum = objectsListBox.CheckedItems.Count;
+                    progressBar.Value = 0;
+                    progressBar.Visible = true;
+
+                    // Set up an IProgress<int> instance to update the progress bar.
+                    var progress = new Progress<int>(value => progressBar.Value = value);
+
+                    // DoProcessing is run on the thread pool.
+                    await Task.Run(() => ApplyDescriptons(columnName, desc, progress));
+
+                    progressBar.Visible = false;
+                    Cursor = Cursors.Default;
+                    messageToolStripStatusLabel.Text = "Complete";
+                }
             }
         }
 
+        /// <summary>
+        /// Apply column description for selected objects
+        /// </summary>
+        /// <param name="columnName"></param>
+        /// <param name="desc"></param>
+        /// <param name="progress"></param>
+        private void ApplyDescriptons(string columnName, string desc, IProgress<int> progress)
+        {
+            for (int i = 0; i < objectsListBox.CheckedItems.Count; i++)
+            {
+                if (i % 10 == 0)
+                {
+                    //var percentComplete = (i * 100) / objectsListBox.CheckedItems.Count;
+                    progress.Report(i);
+                }
+                var item = objectsListBox.CheckedItems[i];
+                if (item != null)
+                {
+                    var objectName = item.ToString();
+                    SaveColumnDesc(objectName, columnName, desc);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Handles the load event of the form
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
         private void BatchColumnDesc_Load(object sender, EventArgs e)
         {
             GetTableList();
@@ -332,6 +222,71 @@ namespace SQL_Document_Builder
             }
         }
 
+        /// <summary>
+        /// Performs the search.
+        /// </summary>
+        private void PerformSearch()
+        {
+            objectsListBox.Items.Clear();
+
+            string searchFor = searchToolStripTextBox.Text.Trim();
+            if (string.IsNullOrEmpty(searchFor))
+            {
+                return;
+            }
+
+            using SqlConnection conn = new(Properties.Settings.Default.dbConnectionString);
+            try
+            {
+                using SqlCommand cmd = new() { Connection = conn };
+                cmd.Parameters.Add(new SqlParameter("@searchFor", searchFor));
+                cmd.CommandText = "SELECT DISTINCT TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, 'BASE TABLE' TABLE_TYPE, COLUMN_NAME FROM information_schema.columns WHERE column_name = @SearchFor ORDER BY TABLE_NAME";
+
+                conn.Open();
+                var dr = cmd.ExecuteReader();
+                string schemaName = string.Empty;
+                if (schemaComboBox.SelectedIndex > 0) schemaName = (string)schemaComboBox.Items[schemaComboBox.SelectedIndex];
+
+                while (dr.Read())
+                {
+                    if (schemaName.Length > 0)
+                    {
+                        string tableSchema = (string)dr["TABLE_SCHEMA"];
+                        if (tableSchema.Equals(schemaName, StringComparison.CurrentCultureIgnoreCase))
+                        {
+                            objectsListBox.Items.Add(string.Format("{0}.{1}", dr["TABLE_SCHEMA"].ToString(), dr["TABLE_NAME"].ToString()));
+                        }
+                    }
+                    else
+                    {
+                        objectsListBox.Items.Add(string.Format("{0}.{1}", dr["TABLE_SCHEMA"].ToString(), dr["TABLE_NAME"].ToString()));
+                    }
+                }
+                dr.Close();
+            }
+            catch (SqlException)
+            {
+                throw;
+            }
+            finally
+            {
+                if (conn.State == ConnectionState.Open)
+                {
+                    conn.Close();
+                }
+            }
+            messageToolStripStatusLabel.Text = objectsListBox.Items.Count switch
+            {
+                0 => "No match found",
+                1 => "one matche found",
+                _ => string.Format("{0} matches found", objectsListBox.Items.Count),
+            };
+            SelectAllToolStripButton_Click(this, EventArgs.Empty);
+        }
+
+        /// <summary>
+        /// Populates the schema.
+        /// </summary>
         private void PopulateSchema()
         {
             schemaComboBox.Items.Clear();
@@ -350,77 +305,73 @@ namespace SQL_Document_Builder
             }
         }
 
-        ///// <summary>
-        ///// Populate the object list box
-        ///// </summary>
-        //private void Populate()
-        //{
-        //    string schemaName = string.Empty;
-        //    if (schemaComboBox.SelectedIndex > 0) schemaName = schemaComboBox.Items[schemaComboBox.SelectedIndex].ToString();
-
-        //    if (_tables != null)
-        //    {
-        //        objectsListBox.Items.Clear();
-        //        string searchFor = searchTextBox.Text.Trim();
-        //        if (searchFor?.Length == 0)
-        //        {
-        //            if (schemaName?.Length == 0)
-        //            {
-        //                foreach (DataRow row in _tables.Rows)
-        //                {
-        //                    AddListItem((string)row["TABLE_TYPE"], (string)row["TABLE_SCHEMA"], (string)row["TABLE_NAME"]);
-        //                }
-        //            }
-        //            else
-        //            {
-        //                foreach (DataRow row in _tables.Rows)
-        //                {
-        //                    if (schemaName.Equals(row["TABLE_SCHEMA"].ToString(), StringComparison.CurrentCultureIgnoreCase))
-        //                        AddListItem((string)row["TABLE_TYPE"], (string)row["TABLE_SCHEMA"], (string)row["TABLE_NAME"]);
-        //                }
-        //            }
-        //        }
-        //        else
-        //        {
-        //            var matches = _tables.Select(string.Format("TABLE_NAME LIKE '%{0}%'", searchFor));
-        //            if (schemaName?.Length == 0)
-        //            {
-        //                foreach (DataRow row in matches)
-        //                {
-        //                    AddListItem((string)row["TABLE_TYPE"], (string)row["TABLE_SCHEMA"], (string)row["TABLE_NAME"]);
-        //                }
-        //            }
-        //            else
-        //            {
-        //                foreach (DataRow row in matches)
-        //                {
-        //                    if (schemaName.Equals(row["TABLE_SCHEMA"].ToString(), StringComparison.CurrentCultureIgnoreCase))
-        //                        AddListItem((string)row["TABLE_TYPE"], (string)row["TABLE_SCHEMA"], (string)row["TABLE_NAME"]);
-        //                }
-        //            }
-        //        }
-        //    }
-        //}
-
-        //private void AddListItem(string tableType, string schema, string tableName)
-        //{
-        //    ObjectName.ObjectTypeEnums objectType = (tableType == "VIEW") ? ObjectName.ObjectTypeEnums.View : ObjectName.ObjectTypeEnums.Table;
-        //    objectsListBox.Items.Add(new ObjectName()
-        //    {
-        //        ObjectType = objectType,
-        //        Schema = schema,
-        //        Name = tableName
-        //    });
-        //}
-
+        /// <summary>
+        /// Handles the selected index changed event of the schema combo box
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
         private void SchemaComboBox_SelectedIndexChanged(object sender, EventArgs e)
         {
             PerformSearch();
         }
 
-        private void searchToolStripTextBox_TextBoxTextAlignChanged(object sender, EventArgs e)
+        /// <summary>
+        /// Handles the click event of the search button
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void SearchToolStripButton_Click(object sender, EventArgs e)
+        {
+            PerformSearch();
+        }
+
+        /// <summary>
+        /// Handles the key up event of the search text box
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void SearchToolStripTextBox_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                PerformSearch();
+            }
+        }
+
+        /// <summary>
+        /// Handles the text changed event of the search text box
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void SearchToolStripTextBox_TextBoxTextAlignChanged(object sender, EventArgs e)
         {
             messageToolStripStatusLabel.Text = string.Empty;
+        }
+
+        /// <summary>
+        /// Handles the click event of the select all button
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void SelectAllToolStripButton_Click(object sender, EventArgs e)
+        {
+            for (int i = 0; i < objectsListBox.Items.Count; i++)
+            {
+                objectsListBox.SetItemChecked(i, true);
+            }
+        }
+
+        /// <summary>
+        /// Handles the click event of the unselect all button
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void UnselectAllToolStripButton_Click(object sender, EventArgs e)
+        {
+            for (int i = 0; i < objectsListBox.Items.Count; i++)
+            {
+                objectsListBox.SetItemChecked(i, false);
+            }
         }
     }
 }

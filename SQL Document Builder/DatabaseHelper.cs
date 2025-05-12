@@ -203,7 +203,6 @@ namespace SQL_Document_Builder
             return 0;
         }
 
-
         /// <summary>
         /// Gets the scalar value.
         /// </summary>
