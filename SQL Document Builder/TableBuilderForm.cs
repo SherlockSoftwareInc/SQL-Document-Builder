@@ -2,14 +2,12 @@
 using Microsoft.Data.SqlClient;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
 using System.IO;
-using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using static SQL_Document_Builder.ObjectName;
 
 namespace SQL_Document_Builder
 {
@@ -23,14 +21,14 @@ namespace SQL_Document_Builder
         /// </summary>
         private readonly SQLServerConnections _connections = new();
 
+        private bool _changed = false;
+
         /// <summary>
         /// The count of database connections.
         /// </summary>
         private int _connectionCount = 0;
 
         private string _fileName = string.Empty;
-
-        private bool _changed = false;
 
         /// <summary>
         /// The selected connection.
@@ -40,7 +38,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// The tables.
         /// </summary>
-        private DataTable _tables = new();
+        private List<ObjectName>? _tables = [];
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TableBuilderForm"/> class.
@@ -49,6 +47,29 @@ namespace SQL_Document_Builder
         {
             InitializeComponent();
             _ = new DarkModeCS(this);
+        }
+
+        /// <summary>
+        /// Recursively gets the currently focused control within a container.
+        /// </summary>
+        /// <param name="container">The container control.</param>
+        /// <returns>The focused control, or null if none is focused.</returns>
+        private static Control? GetFocusedControl(Control container)
+        {
+            if (container == null)
+                return null;
+
+            if (container.Focused)
+                return container;
+
+            foreach (Control child in container.Controls)
+            {
+                Control? focused = GetFocusedControl(child);
+                if (focused != null)
+                    return focused;
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -109,15 +130,30 @@ namespace SQL_Document_Builder
         /// <param name="tableType">The table type.</param>
         /// <param name="schema">The schema.</param>
         /// <param name="tableName">The table name.</param>
-        private void AddListItem(string tableType, string schema, string tableName)
+        private void AddListItem(ObjectTypeEnums tableType, string schema, string tableName)
         {
-            ObjectName.ObjectTypeEnums objectType = (tableType == "VIEW") ? ObjectName.ObjectTypeEnums.View : ObjectName.ObjectTypeEnums.Table;
-            objectsListBox.Items.Add(new ObjectName()
+            objectsListBox.Items.Add(new ObjectName(tableType, schema, tableName));
+        }
+
+        /// <summary>
+        /// Appends the save.
+        /// </summary>
+        private void AppendSave()
+        {
+            if (string.IsNullOrEmpty(_fileName))
             {
-                ObjectType = objectType,
-                Schema = schema,
-                Name = tableName
-            });
+                return;
+            }
+
+            // append the script to the file
+            try
+            {
+                File.AppendAllText(_fileName, Environment.NewLine + sqlTextBox.Text);
+                _changed = false;
+            }
+            catch (Exception)
+            {
+            }
         }
 
         /// <summary>
@@ -171,7 +207,7 @@ namespace SQL_Document_Builder
         /// Change DB connection.
         /// </summary>
         /// <param name="connection">The connection.</param>
-        private void ChangeDBConnection(SQLDatabaseConnectionItem connection)
+        private async void ChangeDBConnection(SQLDatabaseConnectionItem connection)
         {
             if (connection != null)
             {
@@ -208,11 +244,21 @@ namespace SQL_Document_Builder
                         }
                     }
 
-                    GetTableList();
-                    PopulateSchema();
-                    if (schemaComboBox.Items.Count > 0) schemaComboBox.SelectedIndex = 0;
+                    // set the object type combo box to the first item
+                    objectTypeComboBox.SelectedIndex = 0;
                 }
             }
+        }
+
+        /// <summary>
+        /// Handles the "Clear search" button click event.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void ClearSerachButton_Click(object sender, EventArgs e)
+        {
+            searchTextBox.Text = string.Empty;
+            searchTextBox.Focus();
         }
 
         /// <summary>
@@ -256,7 +302,11 @@ namespace SQL_Document_Builder
         /// <param name="e">The E.</param>
         private void CopyToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            Control focusedControl = GetFocusedControl(this);
+            Control? focusedControl = GetFocusedControl(this);
+            if (focusedControl == null)
+            {
+                return;
+            }
 
             if (focusedControl is TextBox textBox)
             {
@@ -283,6 +333,60 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Handles the "create insert" tool strip menu item click:
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private async void CREATEINSERTToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            sqlTextBox.Text = string.Empty;
+
+            List<ObjectName>? selectedObjects = SelectObjects();
+
+            if (selectedObjects == null || selectedObjects.Count == 0)
+            {
+                return;
+            }
+
+            foreach (ObjectName obj in selectedObjects)
+            {
+                // get the object create script
+                var script = await GetObjectCreateScript(obj);
+                sqlTextBox.AppendText(script);
+
+                // get the insert statement for the object
+                // get the number of rows in the table
+                var rowCount = await DatabaseHelper.GetRowCountAsync(obj.FullName);
+
+                // confirm if the user wants to continue when the number of rows is too much
+                if (rowCount > 1000)
+                {
+                    sqlTextBox.AppendText("-- Too many rows to insert" + Environment.NewLine + Environment.NewLine);
+                }
+                else
+                {
+                    var sql = $"select * from {obj.FullName}";
+                    var insertScript = await DatabaseDocBuilder.QueryDataToInsertStatementAsync(sql, obj.FullName);
+                    sqlTextBox.AppendText(insertScript + "GO" + Environment.NewLine);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Selects the objects.
+        /// </summary>
+        /// <returns>A List&lt;ObjectName&gt;? .</returns>
+        private static List<ObjectName>? SelectObjects()
+        {
+            var form = new DBObjectsSelectForm();
+            if (form.ShowDialog() == DialogResult.OK)
+            {
+                return form.SelectedObjects;
+            }
+            return null;
+        }
+
+        /// <summary>
         /// handles the "create primary key" tool strip menu item click:
         /// </summary>
         /// <param name="sender">The sender.</param>
@@ -293,6 +397,122 @@ namespace SQL_Document_Builder
             if (!string.IsNullOrEmpty(sqlTextBox.Text))
             {
                 Clipboard.SetText(sqlTextBox.Text);
+            }
+        }
+
+        /// <summary>
+        /// Handles the "create table" tool strip button click:
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private async void CreateTableToolStripButton_Click(object sender, EventArgs e)
+        {
+            sqlTextBox.Text = string.Empty;
+
+            if (objectsListBox.SelectedItem is not ObjectName objectName)
+            {
+                return;
+            }
+
+            var script = await GetObjectCreateScript(objectName);
+
+            if (!string.IsNullOrEmpty(script))
+            {
+                SetScript(script);
+            }
+
+            //var createScript = await DatabaseDocBuilder.GetCreateObjectScript(objectName);
+            //if (createScript == null)
+            //{
+            //    return;
+            //}
+
+            //SetScript(createScript);
+
+            //if (!string.IsNullOrEmpty(objectName?.Name))
+            //{
+            //    var description = ObjectDescription.BuildObjectDescription(objectName, Properties.Settings.Default.UseExtendedProperties);
+            //    if (description.Length > 0)
+            //    {
+            //        // append the description to the script
+            //        sqlTextBox.AppendText(description);
+            //        sqlTextBox.AppendText("GO" + Environment.NewLine);
+            //    }
+
+            //    if (!string.IsNullOrEmpty(sqlTextBox.Text))
+            //    {
+            //        Clipboard.SetText(sqlTextBox.Text);
+            //    }
+            //}
+        }
+
+        /// <summary>
+        /// Gets the object create script.
+        /// </summary>
+        /// <param name="objectName">The object name.</param>
+        /// <returns>A Task.</returns>
+        private static async Task<string> GetObjectCreateScript(ObjectName objectName)
+        {
+            string createScript = string.Empty;
+            if (objectName != null)
+            {
+                createScript = await DatabaseDocBuilder.GetCreateObjectScript(objectName);
+            }
+
+            if (string.IsNullOrEmpty(createScript))
+            {
+                return string.Empty;
+            }
+
+            // remove the space and new line at the end of the script
+            createScript = createScript.TrimEnd([' ', '\r', '\n', '\t']);
+
+            // add "GO" at the end of the script if it doesn't exist
+            if (!createScript.EndsWith("GO", StringComparison.CurrentCultureIgnoreCase))
+            {
+                createScript += Environment.NewLine + "GO" + Environment.NewLine;
+            }
+            else
+            {
+                createScript += Environment.NewLine;
+            }
+
+            // get the object description for table and view
+            if (objectName?.ObjectType == ObjectName.ObjectTypeEnums.Table || objectName?.ObjectType == ObjectName.ObjectTypeEnums.View)
+            {
+                var description = ObjectDescription.BuildObjectDescription(objectName, Properties.Settings.Default.UseExtendedProperties);
+                if (description.Length > 0)
+                {
+                    // append the description to the script
+                    createScript += description;
+                    createScript += Environment.NewLine + "GO" + Environment.NewLine;
+                }
+            }
+
+            return createScript;
+        }
+
+        /// <summary>
+        /// Handles the "Create" tool strip menu item click event.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private async void CREATEToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            sqlTextBox.Text = string.Empty;
+
+            List<ObjectName>? selectedObjects = SelectObjects();
+
+            if (selectedObjects == null || selectedObjects.Count == 0)
+            {
+                return;
+            }
+
+            foreach (ObjectName obj in selectedObjects)
+            {
+                var script = await GetObjectCreateScript(obj);
+
+                sqlTextBox.AppendText(script);
             }
         }
 
@@ -351,6 +571,124 @@ namespace SQL_Document_Builder
             {
                 Clipboard.SetText(sqlTextBox.Text);
             }
+        }
+
+        /// <summary>
+        /// Handles the "Excel to INSERT" tool strip menu item click:
+        ///     Load Excel file and generate INSERT statements for the data in the file.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void ExcelToINSERTToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // get the Excel file name
+            var openFileDialog = new OpenFileDialog
+            {
+                Filter = "Excel files (*.xls;*.xlsx)|*.xls;*.xlsx|All files (*.*)|*.*",
+                Multiselect = false
+            };
+            if (openFileDialog.ShowDialog() != DialogResult.OK)
+            {
+                return;
+            }
+
+            var fileName = openFileDialog.FileName;
+
+            using var form = new ExcelSheetsForm()
+            {
+                FileName = fileName
+            };
+            form.ShowDialog();
+            if (form.ResultDataTable != null)
+            {
+                var dataHelper = new ExcelDataHelper(form.ResultDataTable);
+                sqlTextBox.Text = dataHelper.GetInsertStatement();
+                //sqlTextBox.AppendText("GO" + Environment.NewLine);
+                if (!string.IsNullOrEmpty(sqlTextBox.Text))
+                {
+                    Clipboard.SetText(sqlTextBox.Text);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Handles the "execute on STG" tool strip menu item click:
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private async void ExecuteOnSTGToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            await ExecuteScripts("csbc-reporting-prod-sqldb-stg");
+        }
+
+        /// <summary>
+        /// Executes the scripts.
+        /// </summary>
+        private async Task ExecuteScripts(string initialCatalog)
+        {
+            string script = sqlTextBox.SelectedText;
+            if (script.Length == 0)
+            {
+                script = sqlTextBox.Text;
+            }
+
+            if (script.Length == 0)
+            {
+                Common.MsgBox("No SQL statements to execute", MessageBoxIcon.Information);
+                return;
+            }
+
+            // checks if there is a DROP statement in the script, ask for confirmation
+            if (script.Contains("DROP ", StringComparison.CurrentCultureIgnoreCase))
+            {
+                if (Common.MsgBox("The script contains a DROP statement. Are you sure you want to continue?", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
+                {
+                    return;
+                }
+            }
+
+            var builder = new SqlConnectionStringBuilder
+            {
+                Encrypt = true,
+                TrustServerCertificate = true,
+                DataSource = "csbc-reporting-prod-sql.database.windows.net",
+                InitialCatalog = initialCatalog,
+                Authentication = SqlAuthenticationMethod.ActiveDirectoryIntegrated,
+                UserID = $"{Environment.UserName}@phsa.ca"
+            };
+
+            // from the sqlTextBox.Text, break it into individual SQL statements by the GO keyword
+            //var sqlStatements = sqlTextBox.Text.Split(["GO"], StringSplitOptions.RemoveEmptyEntries);
+            var sqlStatements = Regex.Split(script, @"\bGO\b", RegexOptions.IgnoreCase | RegexOptions.Multiline);
+
+            // execute each statement
+            foreach (var sql in sqlStatements)
+            {
+                //Execute(builder.ConnectionString, sql);
+                if (sql.Length > 0)
+                {
+                    try
+                    {
+                        await DatabaseHelper.ExecuteSQLAsync(sql, builder.ConnectionString);
+                    }
+                    catch (Exception ex)
+                    {
+                        Common.MsgBox(ex.Message, MessageBoxIcon.Error);
+                        return;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Handles the "Extended properties" check box checked changed event:
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void ExtendedPropertiesCheckBox_CheckedChanged(object sender, EventArgs e)
+        {
+            Properties.Settings.Default.UseExtendedProperties = extendedPropertiesCheckBox.Checked;
+            Properties.Settings.Default.Save();
         }
 
         /// <summary>
@@ -416,29 +754,24 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Gets the table list.
+        /// Gets the table schemas.
         /// </summary>
-        private void GetTableList()
+        /// <returns>A list of string.</returns>
+        private List<string> GetTableSchemas()
         {
-            var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
-            try
+            // get the unique schema names from the _table
+            List<string> dtSchemas = [];
+            if (_tables != null)
             {
-                var cmd = new SqlCommand("SELECT * FROM INFORMATION_SCHEMA.TABLES ORDER BY TABLE_SCHEMA, TABLE_NAME", conn) { CommandType = CommandType.Text };
-                conn.Open();
-                var ds = new DataSet();
-                var dat = new SqlDataAdapter(cmd);
-                dat.Fill(ds);
-                if (ds.Tables.Count > 0)
-                { _tables = ds.Tables[0]; }
+                foreach (var table in _tables)
+                {
+                    if (!dtSchemas.Contains(table.Schema))
+                    {
+                        dtSchemas.Add(table.Schema);
+                    }
+                }
             }
-            catch (Exception ex)
-            {
-                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                conn.Close();
-            }
+            return dtSchemas;
         }
 
         /// <summary>
@@ -458,6 +791,85 @@ namespace SQL_Document_Builder
             //    }
             //}
             return result;
+        }
+
+        /// <summary>
+        /// Handles the "insert" tool strip button click:
+        ///     Build the INSERT statement for the selected object.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private async void InsertToolStripButton_Click(object sender, EventArgs e)
+        {
+            if (objectsListBox.SelectedItem is ObjectName objectName)
+            {
+                // return if object type is not a table or view
+                if (objectName.ObjectType == ObjectName.ObjectTypeEnums.Table || objectName.ObjectType == ObjectTypeEnums.View)
+                {
+                    // checks if the object is a table or view
+                    if (objectName.ObjectType != ObjectName.ObjectTypeEnums.Table)
+                    {
+                        // confirm if the user wants to continue
+                        if (Common.MsgBox("The object is not a table. Are you sure you want to continue?", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
+                        {
+                            return;
+                        }
+                    }
+
+                    // get the number of rows in the table
+                    var rowCount = await DatabaseHelper.GetRowCountAsync(objectName.FullName);
+
+                    // confirm if the user wants to continue when the number of rows is too much
+                    if (rowCount > 1000)
+                    {
+                        if (Common.MsgBox($"The table has {rowCount} rows. Are you sure you want to continue?", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
+                        {
+                            return;
+                        }
+                    }
+
+                    var sql = $"select * from {objectName.FullName}";
+                    var script = await DatabaseDocBuilder.QueryDataToInsertStatementAsync(sql, objectName.FullName);
+
+                    if (script == "Too much rows")
+                    {
+                        Common.MsgBox("Too much rows to insert", MessageBoxIcon.Error);
+                        return;
+                    }
+                    else if (!string.IsNullOrEmpty(script))
+                    {
+                        // append the insert statement to the script
+                        sqlTextBox.AppendText(script);
+                        sqlTextBox.AppendText("GO" + Environment.NewLine);
+                        if (!string.IsNullOrEmpty(sqlTextBox.Text))
+                        {
+                            Clipboard.SetText(sqlTextBox.Text);
+                        }
+                    }
+                    else
+                    {
+                        Common.MsgBox("No data found", MessageBoxIcon.Information);
+                        return;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Handles the Click event of the NewToolStripButton control.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void NewToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var oFile = new SaveFileDialog() { Filter = "SQL script(*.sql)|*.sql|Text file(*.txt)|*.txt|All files(*.*)|*.*" };
+            if (oFile.ShowDialog() == DialogResult.OK)
+            {
+                _fileName = oFile.FileName;
+                this.Text = $"SharePoint Script Builder - {_fileName}";
+                sqlTextBox.Text = string.Empty;
+                _changed = false;
+            }
         }
 
         /// <summary>
@@ -524,6 +936,59 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Handles the "ObjectType" combo box selected index changed event.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private async void ObjectTypeComboBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (objectTypeComboBox.SelectedIndex >= 0)
+            {
+                // get the database object by the selected object type
+                switch (objectTypeComboBox.SelectedIndex)
+                {
+                    case 0:
+                        _tables = await DatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.Table);
+                        break;
+
+                    case 1:
+                        _tables = await DatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.View);
+                        break;
+
+                    case 2:
+                        _tables = await DatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.StoredProcedure);
+                        break;
+
+                    case 3:
+                        _tables = await DatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.Function);
+                        break;
+
+                    default:
+                        break;
+                }
+
+                // keep the selected schema
+                string schemaName = schemaComboBox.Text;
+
+                PopulateSchema();
+                if (schemaComboBox.Items.Count > 0)
+                {
+                    int index = 0;
+                    for (int i = 0; i < schemaComboBox.Items.Count; i++)
+                    {
+                        if (schemaComboBox.Items[i].ToString().Equals(schemaName, StringComparison.CurrentCultureIgnoreCase))
+                        {
+                            index = i;
+                            break;
+                        }
+                    }
+
+                    schemaComboBox.SelectedIndex = index;
+                }
+            }
+        }
+
+        /// <summary>
         /// On connection tool strip menu item click.
         /// </summary>
         /// <param name="sender">The sender.</param>
@@ -545,13 +1010,73 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Handles the Click event of the execute on DEV button.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private async void OnDEVToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            await ExecuteScripts("csbc-reporting-prod-sqldb-prod");
+        }
+
+        /// <summary>
+        /// Handles the Click event of the execute on PROD button.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private async void OnPRODToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            await ExecuteScripts("csbc-reporting-prod-sqldb-dev");
+        }
+
+        /// <summary>
+        /// Handles the Click event of the OpenToolStripButton control.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void OpenToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var oFile = new OpenFileDialog() { Filter = "SQL script(*.sql)|*.sql|Text file(*.txt)|*.txt|All files(*.*)|*.*" };
+            if (oFile.ShowDialog() == DialogResult.OK)
+            {
+                _fileName = oFile.FileName;
+                this.Text = $"SharePoint Script Builder - {_fileName}";
+
+                sqlTextBox.Text = File.ReadAllText(_fileName);
+                _changed = false;
+            }
+        }
+
+        /// <summary>
+        /// Handles the "Panel2" resize event.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void Panel2_Resize(object sender, EventArgs e)
+        {
+            int width = panel2.Width - 6;
+            if (width > 0)
+            {
+                objectTypeComboBox.Width = width;
+                schemaComboBox.Width = width;
+                clearSerachButton.Left = panel2.Width - clearSerachButton.Width - 2;
+                searchTextBox.Width = panel2.Width - clearSerachButton.Width - 6;
+                panel2.Height = searchTextBox.Top + searchTextBox.Height + 2;
+            }
+        }
+
+        /// <summary>
         /// Handles the paste tool strip menu item click event.
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
         private void PasteToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            Control focusedControl = GetFocusedControl(this);
+            Control? focusedControl = GetFocusedControl(this);
+            if (focusedControl == null)
+            {
+                return;
+            }
 
             if (focusedControl is TextBox textBox)
             {
@@ -565,29 +1090,6 @@ namespace SQL_Document_Builder
             {
                 statusToolStripStatusLabe.Text = "No valid control is focused for pasting.";
             }
-        }
-
-        /// <summary>
-        /// Recursively gets the currently focused control within a container.
-        /// </summary>
-        /// <param name="container">The container control.</param>
-        /// <returns>The focused control, or null if none is focused.</returns>
-        private Control? GetFocusedControl(Control container)
-        {
-            if (container == null)
-                return null;
-
-            if (container.Focused)
-                return container;
-
-            foreach (Control child in container.Controls)
-            {
-                Control? focused = GetFocusedControl(child);
-                if (focused != null)
-                    return focused;
-            }
-
-            return null;
         }
 
         /// <summary>
@@ -605,52 +1107,33 @@ namespace SQL_Document_Builder
                 objectsListBox.Items.Clear();
                 string searchFor = searchTextBox.Text.Trim();
 
-                // Sort the tables by schema name and table name
-                _tables.DefaultView.Sort = "TABLE_SCHEMA ASC, TABLE_NAME ASC";
-
-                if (string.IsNullOrEmpty(searchFor))
+                foreach (var table in _tables)
                 {
-                    if (string.IsNullOrEmpty(schemaName))
+                    if (string.IsNullOrEmpty(searchFor))
                     {
-                        foreach (DataRowView rowView in _tables.DefaultView)
+                        if (string.IsNullOrEmpty(schemaName))
                         {
-                            DataRow row = rowView.Row;
-                            AddListItem((string)row["TABLE_TYPE"], (string)row["TABLE_SCHEMA"], (string)row["TABLE_NAME"]);
+                            AddListItem(table.ObjectType, table.Schema, table.Name);
+                        }
+                        else
+                        {
+                            if (schemaName.Equals(table.Schema, StringComparison.CurrentCultureIgnoreCase))
+                                AddListItem(table.ObjectType, table.Schema, table.Name);
                         }
                     }
                     else
                     {
-                        foreach (DataRowView rowView in _tables.DefaultView)
+                        if (string.IsNullOrEmpty(schemaName))
                         {
-                            DataRow row = rowView.Row;
-                            if (schemaName.Equals(row["TABLE_SCHEMA"].ToString(), StringComparison.CurrentCultureIgnoreCase))
-                                AddListItem((string)row["TABLE_TYPE"], (string)row["TABLE_SCHEMA"], (string)row["TABLE_NAME"]);
+                            // Use the LIKE operator to find tables that contain the search string
+                            if (table.Name.Contains(searchFor, StringComparison.CurrentCultureIgnoreCase))
+                                AddListItem(table.ObjectType, table.Schema, table.Name);
                         }
-                    }
-                }
-                else
-                {
-                    // Use the LIKE operator to find tables that contain the search string
-                    var matches = _tables.Select($"TABLE_NAME LIKE '%{searchFor}%'");
-
-                    // Sort the matches by schema name and table name
-                    var sortedMatches = matches
-                        .OrderBy(row => row["TABLE_SCHEMA"].ToString())
-                        .ThenBy(row => row["TABLE_NAME"].ToString());
-
-                    if (string.IsNullOrEmpty(schemaName))
-                    {
-                        foreach (DataRow row in sortedMatches)
+                        else
                         {
-                            AddListItem((string)row["TABLE_TYPE"], (string)row["TABLE_SCHEMA"], (string)row["TABLE_NAME"]);
-                        }
-                    }
-                    else
-                    {
-                        foreach (DataRow row in sortedMatches)
-                        {
-                            if (schemaName.Equals(row["TABLE_SCHEMA"].ToString(), StringComparison.CurrentCultureIgnoreCase))
-                                AddListItem((string)row["TABLE_TYPE"], (string)row["TABLE_SCHEMA"], (string)row["TABLE_NAME"]);
+                            if (schemaName.Equals(table.Schema, StringComparison.CurrentCultureIgnoreCase) &&
+                                table.Name.Contains(searchFor, StringComparison.CurrentCultureIgnoreCase))
+                                AddListItem(table.ObjectType, table.Schema, table.Name);
                         }
                     }
                 }
@@ -711,12 +1194,7 @@ namespace SQL_Document_Builder
             schemaComboBox.Items.Clear();
             schemaComboBox.Items.Add("(All)");
 
-            var dtSchemas = _tables.DefaultView.ToTable(true, "TABLE_SCHEMA");
-            var schemas = new List<string>();
-            foreach (DataRow dr in dtSchemas.Rows)
-            {
-                schemas.Add((string)dr[0]);
-            }
+            var schemas = GetTableSchemas();
             schemas.Sort();
             foreach (var item in schemas)
             {
@@ -769,6 +1247,25 @@ namespace SQL_Document_Builder
             _changed = false;
 
             statusToolStripStatusLabe.Text = "Complete";
+        }
+
+        /// <summary>
+        /// Saves the replace tool strip menu item_ click.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void SaveReplaceToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // save the text in the sqlTextBox to the file
+            if (string.IsNullOrEmpty(_fileName))
+            {
+                saveAsToolStripMenuItem.PerformClick();
+            }
+            else
+            {
+                File.WriteAllText(_fileName, sqlTextBox.Text);
+                _changed = false;
+            }
         }
 
         /// <summary>
@@ -859,6 +1356,17 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Handles the sql text box text changed event.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void SqlTextBox_TextChanged(object sender, EventArgs e)
+        {
+            _changed = true;
+            statusToolStripStatusLabe.Text = string.Empty;
+        }
+
+        /// <summary>
         /// Start build.
         /// </summary>
         private void StartBuild()
@@ -944,7 +1452,6 @@ namespace SQL_Document_Builder
             splitContainer1.SplitterDistance = 200;
             if (collapsibleSplitter1 != null)
                 collapsibleSplitter1.SplitterDistance = (int)(this.Width * 0.3F);
-
         }
 
         /// <summary>
@@ -1056,6 +1563,28 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Handles timer tick.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void Timer1_Tick(object sender, EventArgs e)
+        {
+            timer1.Stop();
+            Populate();
+        }
+
+        /// <summary>
+        /// Handles the "Create stored procedure" tool strip menu item click:
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void UspToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            sqlTextBox.Text = DatabaseDocBuilder.UspAddObjectDescription();
+            Clipboard.SetText(sqlTextBox.Text);
+        }
+
+        /// <summary>
         /// Value the list tool strip menu item click.
         /// </summary>
         /// <param name="sender">The sender.</param>
@@ -1116,14 +1645,6 @@ namespace SQL_Document_Builder
 
                 EndBuild();
             }
-            //sqlTextBox.Text = string.Empty;
-            //using var dlg = new Schemapicker();
-            //if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
-            //{
-            //    var builder = new SharePoint();
-            //    sqlTextBox.Text = builder.BuildViewList(dlg.Schema);
-            //}
-            //statusToolStripStatusLabe.Text = "Complete!";
         }
 
         /// <summary>
@@ -1158,477 +1679,33 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Handles the Click event of the OpenToolStripButton control.
+        /// Handles the "Objects description" tool strip menu item click:
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
-        private void OpenToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            var oFile = new OpenFileDialog() { Filter = "SQL script(*.sql)|*.sql|Text file(*.txt)|*.txt|All files(*.*)|*.*" };
-            if (oFile.ShowDialog() == DialogResult.OK)
-            {
-                _fileName = oFile.FileName;
-                this.Text = $"SharePoint Script Builder - {_fileName}";
-
-                sqlTextBox.Text = File.ReadAllText(_fileName);
-                _changed = false;
-            }
-        }
-
-        /// <summary>
-        /// Handles the Click event of the NewToolStripButton control.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void NewToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            var oFile = new SaveFileDialog() { Filter = "SQL script(*.sql)|*.sql|Text file(*.txt)|*.txt|All files(*.*)|*.*" };
-            if (oFile.ShowDialog() == DialogResult.OK)
-            {
-                _fileName = oFile.FileName;
-                this.Text = $"SharePoint Script Builder - {_fileName}";
-                sqlTextBox.Text = string.Empty;
-                _changed = false;
-            }
-        }
-
-        /// <summary>
-        /// Handles the Click event of the execute on DEV button.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void OnDEVToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            ExecuteScripts("csbc-reporting-prod-sqldb-prod");
-        }
-
-        /// <summary>
-        /// Handles the Click event of the execute on PROD button.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void OnPRODToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            ExecuteScripts("csbc-reporting-prod-sqldb-dev");
-        }
-
-        /// <summary>
-        /// Executes the scripts.
-        /// </summary>
-        private void ExecuteScripts(string initialCatalog)
-        {
-            string script = sqlTextBox.SelectedText;
-            if (script.Length == 0)
-            {
-                script = sqlTextBox.Text;
-            }
-
-            if (script.Length == 0)
-            {
-                Common.MsgBox("No SQL statements to execute", MessageBoxIcon.Information);
-                return;
-            }
-
-            // checks if there is a DROP statement in the script, ask for confirmation
-            if (script.Contains("DROP ", StringComparison.CurrentCultureIgnoreCase))
-            {
-                if (Common.MsgBox("The script contains a DROP statement. Are you sure you want to continue?", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
-                {
-                    return;
-                }
-            }
-
-            var builder = new SqlConnectionStringBuilder
-            {
-                Encrypt = true,
-                TrustServerCertificate = true,
-                DataSource = "csbc-reporting-prod-sql.database.windows.net",
-                InitialCatalog = initialCatalog,
-                Authentication = SqlAuthenticationMethod.ActiveDirectoryIntegrated,
-                UserID = $"{Environment.UserName}@phsa.ca"
-            };
-
-            // from the sqlTextBox.Text, break it into individual SQL statements by the GO keyword
-            //var sqlStatements = sqlTextBox.Text.Split(["GO"], StringSplitOptions.RemoveEmptyEntries);
-            var sqlStatements = Regex.Split(script, @"\bGO\b", RegexOptions.IgnoreCase | RegexOptions.Multiline);
-
-            // execute each statement
-            foreach (var sql in sqlStatements)
-            {
-                Execute(builder.ConnectionString, sql);
-            }
-        }
-
-        /// <summary>
-        /// Executes the.
-        /// </summary>
-        /// <param name="connectionString">The connection string.</param>
-        /// <param name="sql">The sql.</param>
-        private void Execute(string connectionString, string sql)
-        {
-            using var conn = new SqlConnection(connectionString);
-            try
-            {
-                conn.Open();
-                var cmd = new SqlCommand(sql, conn);
-                cmd.ExecuteNonQuery();
-                statusToolStripStatusLabe.Text = "Complete!";
-            }
-            catch (Exception ex)
-            {
-                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                conn.Close();
-            }
-        }
-
-        /// <summary>
-        /// Saves the replace tool strip menu item_ click.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void SaveReplaceToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            // save the text in the sqlTextBox to the file
-            if (string.IsNullOrEmpty(_fileName))
-            {
-                saveAsToolStripMenuItem.PerformClick();
-            }
-            else
-            {
-                File.WriteAllText(_fileName, sqlTextBox.Text);
-                _changed = false;
-            }
-        }
-
-        /// <summary>
-        /// Appends the save.
-        /// </summary>
-        private void AppendSave()
-        {
-            if (string.IsNullOrEmpty(_fileName))
-            {
-                return;
-            }
-
-            // append the script to the file
-            try
-            {
-                File.AppendAllText(_fileName, Environment.NewLine + sqlTextBox.Text);
-                _changed = false;
-
-                //var file = new System.IO.StreamWriter(_fileName, true);
-                //file.WriteLine(sql);
-                //file.Close();
-            }
-            catch (Exception)
-            {
-            }
-        }
-
-        /// <summary>
-        /// Handles the sql text box text changed event.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void SqlTextBox_TextChanged(object sender, EventArgs e)
-        {
-            _changed = true;
-            statusToolStripStatusLabe.Text = string.Empty;
-        }
-
-        /// <summary>
-        /// Handles the "create table" tool strip button click:
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private async void CreateTableToolStripButton_Click(object sender, EventArgs e)
+        private void ObjectsDescriptionToolStripMenuItem_Click(object sender, EventArgs e)
         {
             sqlTextBox.Text = string.Empty;
 
-            var createScript = await definitionPanel.GetCreateObjectScript();
-            if (createScript == null)
+            List<ObjectName>? selectedObjects = SelectObjects();
+
+            if (selectedObjects == null || selectedObjects.Count == 0)
             {
                 return;
             }
 
-            SetScript(createScript);
-
-            var objectName = objectsListBox.SelectedItem as ObjectName;
-            if (!string.IsNullOrEmpty(objectName?.Name))
+            foreach (ObjectName obj in selectedObjects)
             {
-                var description = ObjectDescription.BuildObjectDescription(objectName, Properties.Settings.Default.UseExtendedProperties);
-                if (description.Length > 0)
+                var script = ObjectDescription.BuildObjectDescription(obj, Properties.Settings.Default.UseExtendedProperties);
+
+                // add "GO" and new line after each object description if it is not empty
+                if (!string.IsNullOrEmpty(script))
                 {
-                    // append the description to the script
-                    sqlTextBox.AppendText(description);
-                    sqlTextBox.AppendText("GO" + Environment.NewLine);
+                    script += Environment.NewLine + "GO" + Environment.NewLine;
                 }
 
-                if (!string.IsNullOrEmpty(sqlTextBox.Text))
-                {
-                    Clipboard.SetText(sqlTextBox.Text);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Handles timer tick.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void Timer1_Tick(object sender, EventArgs e)
-        {
-            timer1.Stop();
-            Populate();
-        }
-
-        /// <summary>
-        /// Handles the "insert" tool strip button click:
-        ///     Build the INSERT statement for the selected object.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private async void InsertToolStripButton_Click(object sender, EventArgs e)
-        {
-            ObjectName? objectName = objectsListBox.SelectedItem as ObjectName;
-            if (objectName != null)
-            {
-                // checks if the object is a table or view
-                if (objectName.ObjectType != ObjectName.ObjectTypeEnums.Table)
-                {
-                    // confirm if the user wants to continue
-                    if (Common.MsgBox("The object is not a table. Are you sure you want to continue?", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
-                    {
-                        return;
-                    }
-                }
-
-                // get the number of rows in the table
-                var rowCount = await DatabaseHelper.GetRowCountAsync(objectName.FullName);
-
-                // confirm if the user wants to continue when the number of rows is too much
-                if (rowCount > 1000)
-                {
-                    if (Common.MsgBox($"The table has {rowCount} rows. Are you sure you want to continue?", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
-                    {
-                        return;
-                    }
-                }
-
-                var sql = $"select * from {objectName.FullName}";
-                var script = await Common.QueryDataToInsertStatementAsync(sql, objectName.FullName);
-
-                if (script == "Too much rows")
-                {
-                    Common.MsgBox("Too much rows to insert", MessageBoxIcon.Error);
-                    return;
-                }
-
-                // append the insert statement to the script
                 sqlTextBox.AppendText(script);
-                sqlTextBox.AppendText("GO" + Environment.NewLine);
-                if (!string.IsNullOrEmpty(sqlTextBox.Text))
-                {
-                    Clipboard.SetText(sqlTextBox.Text);
-                }
             }
-        }
-
-        /// <summary>
-        /// Handles the "execute on STG" tool strip menu item click:
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void ExecuteOnSTGToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            ExecuteScripts("csbc-reporting-prod-sqldb-stg");
-        }
-
-        /// <summary>
-        /// Handles the "Excel to INSERT" tool strip menu item click:
-        ///     Load Excel file and generate INSERT statements for the data in the file.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void ExcelToINSERTToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            // get the Excel file name
-            var openFileDialog = new OpenFileDialog
-            {
-                Filter = "Excel files (*.xls;*.xlsx)|*.xls;*.xlsx|All files (*.*)|*.*",
-                Multiselect = false
-            };
-            if (openFileDialog.ShowDialog() != DialogResult.OK)
-            {
-                return;
-            }
-
-            var fileName = openFileDialog.FileName;
-
-            using var form = new ExcelSheetsForm()
-            {
-                FileName = fileName
-            };
-            form.ShowDialog();
-            if (form.ResultDataTable != null)
-            {
-                var dataHelper = new ExcelDataHelper(form.ResultDataTable);
-                sqlTextBox.Text = dataHelper.GetInsertStatement();
-                //sqlTextBox.AppendText("GO" + Environment.NewLine);
-                if (!string.IsNullOrEmpty(sqlTextBox.Text))
-                {
-                    Clipboard.SetText(sqlTextBox.Text);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Handles the "Extended properties" check box checked changed event:
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void ExtendedPropertiesCheckBox_CheckedChanged(object sender, EventArgs e)
-        {
-            Properties.Settings.Default.UseExtendedProperties = extendedPropertiesCheckBox.Checked;
-            Properties.Settings.Default.Save();
-        }
-
-        /// <summary>
-        /// Handles the "Create stored procedure" tool strip menu item click:
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void UspToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            sqlTextBox.Text = $@"IF OBJECT_ID('dbo.usp_AddObjectDescription', 'P') IS NOT NULL
-	DROP PROCEDURE dbo.usp_AddObjectDescription;
-GO
-CREATE PROCEDURE usp_AddObjectDescription
-(
-	@TableName sysname,
-	@Description nvarchar(1024)
-)
-AS
-BEGIN
-    SET NOCOUNT ON
-
-	IF OBJECT_ID(@TableName) IS NOT NULL AND LEN(COALESCE(@Description, '')) > 0
-	BEGIN
-		DECLARE @Schema varchar(100) = OBJECT_SCHEMA_NAME(OBJECT_ID(@TableName));
-		DECLARE @ObjectName varchar(100) = OBJECT_NAME(OBJECT_ID(@TableName));
-		DECLARE @ObjectType varchar(100);
-		SELECT @ObjectType = CASE type_desc WHEN 'USER_TABLE' THEN 'TABLE' ELSE 'VIEW' END
-		  FROM sys.objects
-		 WHERE object_id = OBJECT_ID(@TableName);
-
-		IF EXISTS (	SELECT value
-					FROM sys.extended_properties
-					WHERE class = 1 AND major_id = OBJECT_ID(@TableName)
-						AND minor_id = 0
-						AND name = 'MS_Description')
-			EXEC sp_updateextendedproperty @name = N'MS_Description', @value = @Description, 
-				@level0type = N'SCHEMA', @level0name = @Schema, 
-				@level1type = @ObjectType, @level1name = @ObjectName;
-		ELSE
-			EXEC sp_addextendedproperty @name = N'MS_Description', @value = @Description, 
-				@level0type = N'SCHEMA', @level0name = @Schema, 
-				@level1type = @ObjectType, @level1name = @ObjectName;
-	
-	END
-END
-GO
-IF OBJECT_ID('dbo.usp_AddColumnDescription', 'P') IS NOT NULL
-	DROP PROCEDURE dbo.usp_AddColumnDescription;
-GO
-CREATE PROCEDURE usp_AddColumnDescription
-(
-	@TableName sysname,
-	@ColumnName varchar(200),
-	@Description nvarchar(1024)
-)
-AS
-BEGIN
-    SET NOCOUNT ON
-
-	IF OBJECT_ID(@TableName) IS NOT NULL AND LEN(COALESCE(@Description, '')) > 0
-		IF EXISTS (SELECT name
-					 FROM sys.columns 
-					WHERE object_id = OBJECT_ID(@TableName) 
-					  AND name = @ColumnName)
-		BEGIN 
-
-			DECLARE @Schema varchar(100) = OBJECT_SCHEMA_NAME(OBJECT_ID(@TableName));
-			DECLARE @ObjectName varchar(100) = OBJECT_NAME(OBJECT_ID(@TableName));
-			DECLARE @ObjectType varchar(100);
-			SELECT @ObjectType = CASE type_desc WHEN 'USER_TABLE' THEN 'TABLE' ELSE 'VIEW' END
-			  FROM sys.objects
-			 WHERE object_id = OBJECT_ID(@TableName);
-
-			IF EXISTS (	SELECT value
-						FROM sys.extended_properties
-						WHERE class = 1 AND major_id = OBJECT_ID(@TableName)
-							AND minor_id = (SELECT column_id FROM sys.columns WHERE name = @ColumnName AND object_id = OBJECT_ID(@TableName))
-							AND name = 'MS_Description')
-				EXEC sp_updateextendedproperty @name = N'MS_Description', @value = @Description, 
-					@level0type = N'SCHEMA', @level0name = @Schema, 
-					@level1type = @ObjectType, @level1name = @ObjectName, 
-					@level2type = N'COLUMN', @level2name = @ColumnName
-			ELSE
-				EXEC sp_addextendedproperty @name = N'MS_Description', @value = @Description, 
-					@level0type = N'SCHEMA', @level0name = @Schema, 
-					@level1type = @ObjectType, @level1name = @ObjectName, 
-					@level2type = N'COLUMN', @level2name = @ColumnName
-	
-		END
-END
-GO
-";
-            Clipboard.SetText(sqlTextBox.Text);
-        }
-
-        /// <summary>
-        /// Handles the "Panel1" resize event.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void Panel1_Resize(object sender, EventArgs e)
-        {
-            panel1.Height = searchTextBox.Height + 1;
-            clearSearchButton.Left = panel1.Width - clearSearchButton.Width - 1;
-            searchTextBox.Width = panel1.Width - clearSearchButton.Width - 2;
-        }
-
-        /// <summary>
-        /// Handles the "Clear search" button click event.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void ClearSearchButton_Click(object sender, EventArgs e)
-        {
-            searchTextBox.Text = string.Empty;
-            searchTextBox.Focus();
-        }
-
-        /// <summary>
-        /// Handles the "Create" tool strip menu item click event.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void CREATEToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            var form = new DBObjectsSelectForm("YourConnectionStringHere");
-            if (form.ShowDialog() == DialogResult.OK)
-            {
-                var selectedObjects = form.SelectedObjects;
-                foreach (var obj in selectedObjects)
-                {
-                    Console.WriteLine($"Schema: {obj.SchemaName}, Name: {obj.ObjectName}, Type: {obj.ObjectType}");
-                }
-            }
-
         }
     }
 }

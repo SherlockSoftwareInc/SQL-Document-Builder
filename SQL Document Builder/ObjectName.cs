@@ -1,4 +1,6 @@
-﻿namespace SQL_Document_Builder
+﻿using System;
+
+namespace SQL_Document_Builder
 {
     /// <summary>
     /// The object name.
@@ -23,9 +25,17 @@
         /// </summary>
         /// <param name="objectType">The object type.</param>
         /// <param name="objectName">The object name.</param>
-        public ObjectName(ObjectTypeEnums objectType, string objectName)
+        public ObjectName(ObjectTypeEnums objectType, string? objectName)
         {
-            if (objectName.IndexOf('.') >= 0)
+            if (string.IsNullOrEmpty(objectName))
+            {
+                ObjectType = ObjectTypeEnums.None;
+                Schema = string.Empty;
+                Name = string.Empty;
+                return;
+            }
+
+            if (objectName.Contains('.'))
             {
                 var names = objectName.Split('.');
                 Schema = names[0];
@@ -46,11 +56,18 @@
         /// <param name="objectType">The object type.</param>
         /// <param name="schemaName">The schema name.</param>
         /// <param name="tableName">The table name.</param>
-        public ObjectName(ObjectTypeEnums objectType, string schemaName, string tableName)
+        public ObjectName(ObjectTypeEnums objectType, string? schemaName, string? tableName)
         {
-            ObjectType = objectType;
-            Schema = schemaName;
-            Name = tableName;
+            Schema = schemaName ?? "";
+            Name = tableName ?? "";
+            if (string.IsNullOrEmpty(Name))
+            {
+                ObjectType = ObjectTypeEnums.None;
+            }
+            else
+            {
+                ObjectType = objectType;
+            }
         }
 
         /// <summary>
@@ -58,11 +75,11 @@
         /// </summary>
         /// <param name="schemaName">The schema name.</param>
         /// <param name="tableName">The table name.</param>
-        public ObjectName(string schemaName, string tableName)
+        public ObjectName(string? schemaName, string? tableName)
         {
             ObjectType = ObjectTypeEnums.None;
-            Schema = schemaName;
-            Name = tableName;
+            Schema = schemaName ?? "";
+            Name = tableName ?? "";
         }
 
         /// <summary>
@@ -72,7 +89,9 @@
         {
             None,
             Table,
-            View
+            View,
+            StoredProcedure,
+            Function
         }
 
         /// <summary>
@@ -84,7 +103,11 @@
             {
                 if (_schema.Length > 0)
                 {
-                    return string.Format("[{0}].[{1}]", _schema, _name);
+                    return $"[{_schema}].[{_name}]";
+                }
+                if (_name.Length > 0)
+                {
+                    return $"[{_name}]";
                 }
                 return string.Empty;
             }
@@ -114,6 +137,36 @@
         }
 
         /// <summary>
+        /// Equals the.
+        /// </summary>
+        /// <param name="obj">The obj.</param>
+        /// <returns>A bool.</returns>
+        public override bool Equals(object? obj)
+        {
+            // Check if the object is null
+            if (obj == null)
+                return false;
+
+            // Check if the object is of the same type
+            if (obj is not ObjectName other)
+                return false;
+
+            // Compare the properties
+            return string.Equals(Name, other.Name, StringComparison.OrdinalIgnoreCase) &&
+                   string.Equals(Schema, other.Schema, StringComparison.OrdinalIgnoreCase) &&
+                   ObjectType == other.ObjectType;
+        }
+
+        /// <summary>
+        /// Gets the hash code.
+        /// </summary>
+        /// <returns>An int.</returns>
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Name, Schema, ObjectType);
+        }
+
+        /// <summary>
         /// Are the empty.
         /// </summary>
         /// <returns>A bool.</returns>
@@ -136,20 +189,19 @@
         }
 
         /// <summary>
-        /// Remove quota from the object name
+        /// Removes surrounding quotes or brackets from the object name.
         /// </summary>
-        /// <param name="text"></param>
-        /// <returns></returns>
-        private string RemoveQuota(string text)
+        /// <param name="text">The text to process.</param>
+        /// <returns>The text without surrounding quotes or brackets.</returns>
+        private static string RemoveQuota(string text)
         {
-            if (text.StartsWith("[") && text.EndsWith("]"))
-            {
-                return text.Substring(1, text.Length - 2);
-            }
+            if (string.IsNullOrEmpty(text) || text.Length < 3)
+                return text;
 
-            if (text.StartsWith("'") && text.EndsWith("'"))
+            // Check for surrounding brackets [ ] or single quotes ' '
+            if ((text.StartsWith('[') && text.EndsWith(']')) || (text.StartsWith('\'') && text.EndsWith('\'')))
             {
-                return text.Substring(1, text.Length - 2);
+                return text[1..^1];
             }
 
             return text;

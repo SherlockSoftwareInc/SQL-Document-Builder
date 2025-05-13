@@ -51,12 +51,14 @@
             tabControl1 = new System.Windows.Forms.TabControl();
             tabPage1 = new System.Windows.Forms.TabPage();
             objectsListBox = new System.Windows.Forms.ListBox();
-            panel1 = new System.Windows.Forms.Panel();
+            panel2 = new System.Windows.Forms.Panel();
+            clearSerachButton = new System.Windows.Forms.Button();
             searchTextBox = new System.Windows.Forms.TextBox();
-            clearSearchButton = new System.Windows.Forms.Button();
-            searchLabel = new System.Windows.Forms.Label();
-            schemaComboBox = new System.Windows.Forms.ComboBox();
             schemaLabel = new System.Windows.Forms.Label();
+            searchLabel = new System.Windows.Forms.Label();
+            objectTypeComboBox = new System.Windows.Forms.ComboBox();
+            schemaComboBox = new System.Windows.Forms.ComboBox();
+            label1 = new System.Windows.Forms.Label();
             tabPage2 = new System.Windows.Forms.TabPage();
             checkBox10 = new System.Windows.Forms.CheckBox();
             indexesCheckBox = new System.Windows.Forms.CheckBox();
@@ -119,6 +121,7 @@
             uspToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             batchToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             cREATEToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            cREATEINSERTToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             objectsDescriptionToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             contentsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -139,7 +142,7 @@
             toolStrip1.SuspendLayout();
             tabControl1.SuspendLayout();
             tabPage1.SuspendLayout();
-            panel1.SuspendLayout();
+            panel2.SuspendLayout();
             tabPage2.SuspendLayout();
             menuStrip1.SuspendLayout();
             statusStrip1.SuspendLayout();
@@ -310,10 +313,7 @@
             // tabPage1
             // 
             tabPage1.Controls.Add(objectsListBox);
-            tabPage1.Controls.Add(panel1);
-            tabPage1.Controls.Add(searchLabel);
-            tabPage1.Controls.Add(schemaComboBox);
-            tabPage1.Controls.Add(schemaLabel);
+            tabPage1.Controls.Add(panel2);
             tabPage1.Location = new System.Drawing.Point(4, 24);
             tabPage1.Name = "tabPage1";
             tabPage1.Padding = new System.Windows.Forms.Padding(3);
@@ -327,73 +327,95 @@
             objectsListBox.Dock = System.Windows.Forms.DockStyle.Fill;
             objectsListBox.FormattingEnabled = true;
             objectsListBox.ItemHeight = 15;
-            objectsListBox.Location = new System.Drawing.Point(3, 81);
+            objectsListBox.Location = new System.Drawing.Point(3, 138);
             objectsListBox.Name = "objectsListBox";
-            objectsListBox.Size = new System.Drawing.Size(171, 559);
+            objectsListBox.Size = new System.Drawing.Size(171, 502);
             objectsListBox.TabIndex = 3;
             objectsListBox.SelectedIndexChanged += ObjectsListBox_SelectedIndexChanged;
             objectsListBox.DoubleClick += ObjectsListBox_DoubleClick;
             // 
-            // panel1
+            // panel2
             // 
-            panel1.Controls.Add(searchTextBox);
-            panel1.Controls.Add(clearSearchButton);
-            panel1.Dock = System.Windows.Forms.DockStyle.Top;
-            panel1.Location = new System.Drawing.Point(3, 56);
-            panel1.Name = "panel1";
-            panel1.Size = new System.Drawing.Size(171, 25);
-            panel1.TabIndex = 7;
-            panel1.Resize += Panel1_Resize;
+            panel2.Controls.Add(clearSerachButton);
+            panel2.Controls.Add(searchTextBox);
+            panel2.Controls.Add(schemaLabel);
+            panel2.Controls.Add(searchLabel);
+            panel2.Controls.Add(objectTypeComboBox);
+            panel2.Controls.Add(schemaComboBox);
+            panel2.Controls.Add(label1);
+            panel2.Dock = System.Windows.Forms.DockStyle.Top;
+            panel2.Location = new System.Drawing.Point(3, 3);
+            panel2.Name = "panel2";
+            panel2.Size = new System.Drawing.Size(171, 135);
+            panel2.TabIndex = 8;
+            panel2.Resize += Panel2_Resize;
+            // 
+            // clearSerachButton
+            // 
+            clearSerachButton.Location = new System.Drawing.Point(123, 107);
+            clearSerachButton.Name = "clearSerachButton";
+            clearSerachButton.Size = new System.Drawing.Size(23, 23);
+            clearSerachButton.TabIndex = 3;
+            clearSerachButton.Text = "X";
+            clearSerachButton.UseVisualStyleBackColor = true;
+            clearSerachButton.Click += ClearSerachButton_Click;
             // 
             // searchTextBox
             // 
-            searchTextBox.Location = new System.Drawing.Point(0, 0);
+            searchTextBox.Location = new System.Drawing.Point(3, 107);
             searchTextBox.Name = "searchTextBox";
-            searchTextBox.Size = new System.Drawing.Size(171, 23);
+            searchTextBox.Size = new System.Drawing.Size(114, 23);
             searchTextBox.TabIndex = 0;
             searchTextBox.TextChanged += SearchTextBox_TextChanged;
             // 
-            // clearSearchButton
+            // schemaLabel
             // 
-            clearSearchButton.Location = new System.Drawing.Point(177, 0);
-            clearSearchButton.Name = "clearSearchButton";
-            clearSearchButton.Size = new System.Drawing.Size(23, 23);
-            clearSearchButton.TabIndex = 1;
-            clearSearchButton.Text = "X";
-            clearSearchButton.UseVisualStyleBackColor = true;
-            clearSearchButton.Click += ClearSearchButton_Click;
+            schemaLabel.AutoSize = true;
+            schemaLabel.Location = new System.Drawing.Point(3, 47);
+            schemaLabel.Name = "schemaLabel";
+            schemaLabel.Size = new System.Drawing.Size(52, 15);
+            schemaLabel.TabIndex = 2;
+            schemaLabel.Text = "Schema:";
             // 
             // searchLabel
             // 
             searchLabel.AutoSize = true;
-            searchLabel.Dock = System.Windows.Forms.DockStyle.Top;
-            searchLabel.Location = new System.Drawing.Point(3, 41);
+            searchLabel.Location = new System.Drawing.Point(3, 89);
             searchLabel.Name = "searchLabel";
             searchLabel.Size = new System.Drawing.Size(60, 15);
             searchLabel.TabIndex = 2;
             searchLabel.Text = "Search for";
             // 
+            // objectTypeComboBox
+            // 
+            objectTypeComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            objectTypeComboBox.FormattingEnabled = true;
+            objectTypeComboBox.Items.AddRange(new object[] { "Table", "View", "Stored Procedure", "Function" });
+            objectTypeComboBox.Location = new System.Drawing.Point(3, 21);
+            objectTypeComboBox.Name = "objectTypeComboBox";
+            objectTypeComboBox.Size = new System.Drawing.Size(168, 23);
+            objectTypeComboBox.TabIndex = 1;
+            objectTypeComboBox.SelectedIndexChanged += ObjectTypeComboBox_SelectedIndexChanged;
+            // 
             // schemaComboBox
             // 
-            schemaComboBox.Dock = System.Windows.Forms.DockStyle.Top;
             schemaComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             schemaComboBox.FormattingEnabled = true;
-            schemaComboBox.Location = new System.Drawing.Point(3, 18);
+            schemaComboBox.Location = new System.Drawing.Point(3, 64);
             schemaComboBox.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             schemaComboBox.Name = "schemaComboBox";
             schemaComboBox.Size = new System.Drawing.Size(171, 23);
             schemaComboBox.TabIndex = 1;
             schemaComboBox.SelectedIndexChanged += SchemaComboBox_SelectedIndexChanged;
             // 
-            // schemaLabel
+            // label1
             // 
-            schemaLabel.AutoSize = true;
-            schemaLabel.Dock = System.Windows.Forms.DockStyle.Top;
-            schemaLabel.Location = new System.Drawing.Point(3, 3);
-            schemaLabel.Name = "schemaLabel";
-            schemaLabel.Size = new System.Drawing.Size(52, 15);
-            schemaLabel.TabIndex = 0;
-            schemaLabel.Text = "Schema:";
+            label1.AutoSize = true;
+            label1.Location = new System.Drawing.Point(3, 3);
+            label1.Name = "label1";
+            label1.Size = new System.Drawing.Size(71, 15);
+            label1.TabIndex = 0;
+            label1.Text = "Object type:";
             // 
             // tabPage2
             // 
@@ -865,7 +887,7 @@
             // 
             // batchToolStripMenuItem
             // 
-            batchToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { cREATEToolStripMenuItem, objectsDescriptionToolStripMenuItem });
+            batchToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { cREATEToolStripMenuItem, cREATEINSERTToolStripMenuItem, objectsDescriptionToolStripMenuItem });
             batchToolStripMenuItem.Name = "batchToolStripMenuItem";
             batchToolStripMenuItem.Size = new System.Drawing.Size(49, 20);
             batchToolStripMenuItem.Text = "Batch";
@@ -873,15 +895,23 @@
             // cREATEToolStripMenuItem
             // 
             cREATEToolStripMenuItem.Name = "cREATEToolStripMenuItem";
-            cREATEToolStripMenuItem.Size = new System.Drawing.Size(177, 22);
+            cREATEToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             cREATEToolStripMenuItem.Text = "CREATE";
             cREATEToolStripMenuItem.Click += CREATEToolStripMenuItem_Click;
+            // 
+            // cREATEINSERTToolStripMenuItem
+            // 
+            cREATEINSERTToolStripMenuItem.Name = "cREATEINSERTToolStripMenuItem";
+            cREATEINSERTToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            cREATEINSERTToolStripMenuItem.Text = "CREATE + INSERT";
+            cREATEINSERTToolStripMenuItem.Click += CREATEINSERTToolStripMenuItem_Click;
             // 
             // objectsDescriptionToolStripMenuItem
             // 
             objectsDescriptionToolStripMenuItem.Name = "objectsDescriptionToolStripMenuItem";
-            objectsDescriptionToolStripMenuItem.Size = new System.Drawing.Size(177, 22);
+            objectsDescriptionToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             objectsDescriptionToolStripMenuItem.Text = "Objects Description";
+            objectsDescriptionToolStripMenuItem.Click += ObjectsDescriptionToolStripMenuItem_Click;
             // 
             // helpToolStripMenuItem
             // 
@@ -1036,9 +1066,8 @@
             toolStrip1.PerformLayout();
             tabControl1.ResumeLayout(false);
             tabPage1.ResumeLayout(false);
-            tabPage1.PerformLayout();
-            panel1.ResumeLayout(false);
-            panel1.PerformLayout();
+            panel2.ResumeLayout(false);
+            panel2.PerformLayout();
             tabPage2.ResumeLayout(false);
             tabPage2.PerformLayout();
             menuStrip1.ResumeLayout(false);
@@ -1082,7 +1111,6 @@
         private System.Windows.Forms.ToolStripButton descEditToolStripButton;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator3;
         private System.Windows.Forms.ComboBox schemaComboBox;
-        private System.Windows.Forms.Label schemaLabel;
         private System.Windows.Forms.ToolStripDropDownButton toolStripDropDownButton1;
         private System.Windows.Forms.ToolStripMenuItem tableToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem valuesToolStripMenuItem;
@@ -1158,11 +1186,15 @@
         private System.Windows.Forms.ToolStripMenuItem excelToINSERTToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator14;
         private System.Windows.Forms.ToolStripMenuItem uspToolStripMenuItem;
-        private System.Windows.Forms.Panel panel1;
-        private System.Windows.Forms.Button clearSearchButton;
         private System.Windows.Forms.SplitContainer splitContainer1;
         private System.Windows.Forms.ToolStripMenuItem batchToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem cREATEToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem objectsDescriptionToolStripMenuItem;
+        private System.Windows.Forms.Panel panel2;
+        private System.Windows.Forms.ComboBox objectTypeComboBox;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Label schemaLabel;
+        private System.Windows.Forms.Button clearSerachButton;
+        private System.Windows.Forms.ToolStripMenuItem cREATEINSERTToolStripMenuItem;
     }
 }

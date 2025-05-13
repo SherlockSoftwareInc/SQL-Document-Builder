@@ -238,7 +238,8 @@
             MaximizeBox = false;
             MinimizeBox = false;
             Name = "DBObjectsSelectForm";
-            Text = "Database objects selector";
+            StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
+            Text = "Database Objects Selector";
             Load += DBObjectsSelectForm_Load;
             ResumeLayout(false);
             PerformLayout();

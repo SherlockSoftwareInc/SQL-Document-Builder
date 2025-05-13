@@ -1,9 +1,11 @@
 ﻿using Microsoft.Data.SqlClient;
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using static SQL_Document_Builder.ObjectName;
 
 namespace SQL_Document_Builder
 {
@@ -13,30 +15,36 @@ namespace SQL_Document_Builder
     internal class DatabaseHelper
     {
         /// <summary>
-        /// Executes the SQL statement
+        /// Executes the SQL statement asynchronously.
         /// </summary>
-        /// <param name="sql">The sql.</param>
-        public static void ExecuteSQL(string sql)
+        /// <param name="sql">The SQL statement to execute.</param>
+        /// <param name="connectionString">The connection string. If not provided, the default connection string is used.</param>
+        /// <returns>A Task representing the asynchronous operation.</returns>
+        public static async Task ExecuteSQLAsync(string sql, string connectionString = "")
         {
-            using var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+            if (string.IsNullOrEmpty(connectionString))
+                connectionString = Properties.Settings.Default.dbConnectionString;
+
+            using var conn = new SqlConnection(connectionString);
             try
             {
                 using var cmd = new SqlCommand(sql, conn)
                 {
-                    CommandType = System.Data.CommandType.Text,
+                    CommandType = CommandType.Text,
                     CommandTimeout = 50000
                 };
 
-                conn.Open();
-                cmd.ExecuteNonQuery();
+                await conn.OpenAsync();
+                await cmd.ExecuteNonQueryAsync();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                //ETLEvent.AddError("ExecuteSQL", sql);
+                // Handle or log the exception as needed
+                MessageBox.Show(ex.Message, "An Error Occurred", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally
             {
-                conn.Close();
+                await conn.CloseAsync();
             }
         }
 
@@ -69,6 +77,49 @@ namespace SQL_Document_Builder
                 conn.Close();
             }
         }
+
+        ///// <summary>
+        ///// Gets the database objects async.
+        ///// </summary>
+        ///// <returns>A Task.</returns>
+        //internal static async Task<List<ObjectName>> GetDatabaseObjectsAsync()
+        //{
+        //    // get tables and views and combine them
+        //    var tables = await GetTablesAsync();
+        //    var views = await GetViewsAsync();
+        //    var objects = new List<ObjectName>();
+        //    objects.AddRange(tables);
+        //    objects.AddRange(views);
+
+        //    return objects;
+        //}
+
+        /// <summary>
+        /// Gets the database objects asynchronously based on the specified object type.
+        /// </summary>
+        /// <param name="tableType">The type of database object (e.g., Table, View, StoredProcedure, Function).</param>
+        /// <returns>A Task containing a list of ObjectName objects.</returns>
+        internal static async Task<List<ObjectName>> GetDatabaseObjectsAsync(ObjectTypeEnums tableType)
+        {
+            try
+            {
+                return tableType switch
+                {
+                    ObjectTypeEnums.Table => await GetTablesAsync(),
+                    ObjectTypeEnums.View => await GetViewsAsync(),
+                    ObjectTypeEnums.StoredProcedure => await GetStoredProceduresAsync(),
+                    ObjectTypeEnums.Function => await GetFunctionsAsync(),
+                    _ => throw new NotSupportedException($"Unsupported object type: {tableType}.")
+                };
+            }
+            catch (Exception ex)
+            {
+                // Log or handle the exception as needed
+                MessageBox.Show($"Error retrieving database objects: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return new List<ObjectName>(); // Return an empty list in case of an error
+            }
+        }
+
 
         /// <summary>
         /// Gets the data table.
@@ -170,10 +221,35 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Gets the row count of a table or view.
+        /// Gets the functions async.
         /// </summary>
-        /// <param name="fullName">The full name of object.</param>
-        /// <returns>An int.</returns>
+        /// <returns>A Task.</returns>
+        internal static async Task<List<ObjectName>> GetFunctionsAsync()
+        {
+            var objects = new List<ObjectName>();
+
+            var query = @"SELECT
+    s.name AS SchemaName,
+    o.name AS FunctionName,
+    o.type_desc AS FunctionType
+FROM sys.objects o
+JOIN sys.schemas s ON o.schema_id = s.schema_id
+WHERE o.type IN ('FN', 'IF', 'TF')
+ORDER BY s.name, o.name;";
+
+            using var connection = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+            using var command = new SqlCommand(query, connection);
+            await connection.OpenAsync();
+
+            using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                objects.Add(new ObjectName(ObjectTypeEnums.Function, reader["SchemaName"].ToString(), reader["FunctionName"].ToString()));
+            }
+
+            return objects;
+        }
+
         /// <summary>
         /// Gets the row count of a table or view asynchronously.
         /// </summary>
@@ -227,8 +303,125 @@ namespace SQL_Document_Builder
                 MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 //throw;
             }
-
             return null;
+        }
+
+        /// <summary>
+        /// Gets the schemas async.
+        /// </summary>
+        /// <returns>A Task.</returns>
+        internal static async Task<List<string>> GetSchemasAsync()
+        {
+            var schemas = new List<string>();
+            var query = "SELECT name FROM sys.schemas ORDER BY name";
+            using var connection = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+            using var command = new SqlCommand(query, connection);
+
+            try
+            {
+                await connection.OpenAsync();
+                using var reader = await command.ExecuteReaderAsync();
+
+                while (await reader.ReadAsync())
+                {
+                    schemas.Add(reader["name"].ToString());
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error loading schemas: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                await connection.CloseAsync();
+            }
+            return schemas;
+        }
+
+        /// <summary>
+        /// Gets the stored procedures async.
+        /// </summary>
+        /// <returns>A Task.</returns>
+        internal static async Task<List<ObjectName>> GetStoredProceduresAsync()
+        {
+            var objects = new List<ObjectName>();
+
+            var query = @"SELECT
+    s.name AS SchemaName,
+    p.name AS SPName
+FROM sys.procedures p
+JOIN sys.schemas s ON p.schema_id = s.schema_id
+ORDER BY s.name, p.name;";
+
+            using var connection = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+            using var command = new SqlCommand(query, connection);
+            await connection.OpenAsync();
+
+            using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                objects.Add(new ObjectName(ObjectTypeEnums.StoredProcedure, reader["SchemaName"].ToString(), reader["SPName"].ToString()));
+            }
+
+            return objects;
+        }
+
+        /// <summary>
+        /// Gets the tables async.
+        /// </summary>
+        /// <returns>A Task.</returns>
+        internal static async Task<List<ObjectName>> GetTablesAsync()
+        {
+            var objects = new List<ObjectName>();
+
+            var query = @"
+                SELECT
+                    TABLE_SCHEMA,
+                    TABLE_NAME
+                FROM INFORMATION_SCHEMA.TABLES
+                WHERE TABLE_TYPE = 'BASE TABLE'
+                ORDER BY TABLE_SCHEMA, TABLE_NAME";
+
+            using var connection = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+            using var command = new SqlCommand(query, connection);
+            await connection.OpenAsync();
+
+            using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                objects.Add(new ObjectName(ObjectTypeEnums.Table, reader["TABLE_SCHEMA"].ToString(), reader["TABLE_NAME"].ToString()));
+            }
+
+            return objects;
+        }
+
+        /// <summary>
+        /// Gets the views async.
+        /// </summary>
+        /// <returns>A Task.</returns>
+        private static async Task<List<ObjectName>> GetViewsAsync()
+        {
+            var objects = new List<ObjectName>();
+
+            var query = @"
+                SELECT
+                    TABLE_SCHEMA,
+                    TABLE_NAME
+                FROM INFORMATION_SCHEMA.TABLES
+                WHERE TABLE_TYPE = 'View'
+                ORDER BY TABLE_SCHEMA, TABLE_NAME";
+
+            using var connection = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+            using var command = new SqlCommand(query, connection);
+            await connection.OpenAsync();
+
+            using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                objects.Add(new ObjectName(ObjectTypeEnums.View, reader["TABLE_SCHEMA"].ToString(), reader["TABLE_NAME"].ToString()));
+            }
+
+            return objects;
         }
 
         /// <summary>

@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -63,7 +64,7 @@ namespace SQL_Document_Builder
         /// Retrieves identity column details for the current table.
         /// </summary>
         /// <returns>A dictionary where the key is the column name and the value is a tuple containing seed and increment values.</returns>
-        public static Dictionary<string, (int SeedValue, int IncrementValue)> GetIdentityColumns(string? schemaName, string? tableName)
+        public Dictionary<string, (int SeedValue, int IncrementValue)> GetIdentityColumns()
         {
             var identityColumns = new Dictionary<string, (int SeedValue, int IncrementValue)>();
 
@@ -75,8 +76,8 @@ SELECT
 FROM sys.tables AS t
 INNER JOIN sys.schemas AS s ON t.schema_id = s.schema_id
 INNER JOIN sys.identity_columns AS ic ON t.object_id = ic.object_id
-WHERE t.name = '{tableName}'
-AND s.name = '{schemaName}';";
+WHERE t.name = '{TableName}'
+AND s.name = '{TableSchema}';";
 
             using (var connection = new SqlConnection(Properties.Settings.Default.dbConnectionString))
             {
@@ -174,8 +175,11 @@ WHERE
         /// </summary>
         /// <param name="fullTableName">The full table name in the format [Schema].[TableName].</param>
         /// <returns>A string containing the SQL script to recreate the indexes.</returns>
-        public string GetCreateIndexesScript(string fullTableName)
+        public string GetCreateIndexesScript()
         {
+            if(ObjectName.IsEmpty())
+                return string.Empty;
+
             StringBuilder indexScript = new();
 
             string query = $@"
@@ -184,7 +188,7 @@ SELECT
     CASE WHEN i.is_unique = 1 THEN 'UNIQUE ' ELSE '' END +
     i.type_desc COLLATE DATABASE_DEFAULT + ' INDEX ' +
     QUOTENAME(i.name) + ' ON ' +
-    '{fullTableName}' +
+    '{ObjectName.FullName}' +
     ' (' +
     (SELECT STRING_AGG(QUOTENAME(c.name) + CASE WHEN ic.is_descending_key = 1 THEN ' DESC' ELSE ' ASC' END, ', ') WITHIN GROUP (ORDER BY ic.key_ordinal)
      FROM sys.index_columns ic
@@ -200,7 +204,7 @@ SELECT
 FROM
     sys.indexes i
 WHERE
-    i.object_id = OBJECT_ID('{fullTableName}')
+    i.object_id = OBJECT_ID('{ObjectName.FullName}')
     AND i.is_primary_key = 0
     AND i.is_unique_constraint = 0
     AND i.is_hypothetical = 0
@@ -224,73 +228,6 @@ ORDER BY
         }
 
         /// <summary>
-        /// Retrieves the T-SQL definition script for a specific view using its fully qualified name.
-        /// </summary>
-        /// <param name="connectionString">The SQL Server connection string.</param>
-        /// <param name="fullViewName">The fully qualified name of the view (e.g., "[dbo].[vGetAllCategories]", "sales.CustomersView"). Should be in a format recognizable by OBJECT_ID.</param>
-        /// <returns>A string containing the view's definition, or null if not found or an error occurs.</returns>
-        /// <exception cref="ArgumentNullException">Thrown if connectionString or fullViewName is null or empty.</exception>
-        /// <remarks>
-        /// This function executes SQL targeting sys.sql_modules for objects identifiable via OBJECT_ID.
-        /// It assumes the object corresponding to fullViewName is a view or other SQL module.
-        /// It does NOT generate CREATE INDEX scripts.
-        /// </remarks>
-        public async Task<string?> GetViewDefinitionAsync()
-        {
-            string fullViewName = ObjectName.FullName;
-
-            // Validate the single full name parameter
-            if (string.IsNullOrWhiteSpace(fullViewName))
-                throw new ArgumentNullException(nameof(fullViewName));
-
-            // The SQL query remains the same, using OBJECT_ID which handles schema-qualified names
-            const string query = @"SELECT sm.definition
-FROM sys.sql_modules sm
-WHERE sm.object_id = OBJECT_ID(@SchemaQualifiedName);";
-            // Optional: Add explicit type check if necessary
-            // AND EXISTS (SELECT 1 FROM sys.objects o WHERE o.object_id = sm.object_id AND o.type = 'V');";
-
-            string? viewDefinition = null;
-
-            try
-            {
-                // Use 'await using' for automatic disposal
-                await using var connection = new SqlConnection(Properties.Settings.Default.dbConnectionString);
-                await using var command = new SqlCommand(query, connection);
-                // Use the provided fullViewName directly as the parameter value
-                command.Parameters.AddWithValue("@SchemaQualifiedName", fullViewName);
-
-                await connection.OpenAsync();
-
-                // ExecuteScalarAsync is efficient for retrieving a single value
-                object? result = await command.ExecuteScalarAsync();
-
-                // Check if a result was returned and it's not DBNull
-                if (result != null && result != DBNull.Value)
-                {
-                    viewDefinition = result.ToString();
-                }
-                // Command is disposed here
-                // Connection is disposed here
-            }
-            catch (SqlException ex)
-            {
-                // Log the exception (replace Console.WriteLine with your logging framework)
-                Console.WriteLine($"SQL Error getting view definition for {fullViewName}: {ex.Message}");
-                // Depending on requirements, you might re-throw, return null, or handle differently
-                // throw; // Uncomment to propagate the exception
-            }
-            catch (Exception ex)
-            {
-                // Handle other potential exceptions
-                Console.WriteLine($"Error getting view definition for {fullViewName}: {ex.Message}");
-                // throw; // Uncomment to propagate the exception
-            }
-
-            return viewDefinition;
-        }
-
-        /// <summary>
         /// Opens the data object.
         /// </summary>
         /// <param name="objectName">The object name.</param>
@@ -298,6 +235,8 @@ WHERE sm.object_id = OBJECT_ID(@SchemaQualifiedName);";
         /// <returns>A bool.</returns>
         public bool Open(ObjectName objectName, string connectionString)
         {
+            this.ObjectName = objectName;
+
             var objectType = objectName.ObjectType;
             if (objectType == ObjectTypeEnums.None)
             {
@@ -465,7 +404,7 @@ END";
         /// Updates the table desc.
         /// </summary>
         /// <param name="newDescription">The description.</param>
-        public void UpdateTableDesc(string newDescription)
+        public async void UpdateTableDesc(string newDescription)
         {
             Description = newDescription;
 
@@ -494,7 +433,7 @@ ELSE
 		@level0type = N'SCHEMA', @level0name = '{ObjectName.Schema}',
 		@level1type = @ObjectType, @level1name = '{ObjectName.Name}';";
 
-                DatabaseHelper.ExecuteSQL(sql);
+                await DatabaseHelper.ExecuteSQLAsync(sql);
             }
         }
 
@@ -596,6 +535,12 @@ AND t.name = '{tableName}'";
         }
 
         /// <summary>
+        /// Gets or sets the primary key columns.
+        /// </summary>
+        public string PrimaryKeyColumns { get; set; } = string.Empty;
+
+
+        /// <summary>
         /// Primaries the keys.
         /// </summary>
         /// <param name="schemaName">The schema name.</param>
@@ -603,6 +548,8 @@ AND t.name = '{tableName}'";
         /// <returns>A list of string.</returns>
         private void GetPrimaryKeys(string schemaName, string tableName)
         {
+            PrimaryKeyColumns = string.Empty;
+
             var sql = $"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE WHERE OBJECTPROPERTY(OBJECT_ID(CONSTRAINT_SCHEMA + '.' + CONSTRAINT_NAME), 'IsPrimaryKey') = 1 AND TABLE_NAME = '{tableName}' AND TABLE_SCHEMA = '{schemaName}'";
             var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
             try
@@ -624,6 +571,11 @@ AND t.name = '{tableName}'";
                         if (column.ColumnName.Equals(columnName, StringComparison.CurrentCultureIgnoreCase))
                         {
                             column.ColID += "🗝";
+
+                            if (PrimaryKeyColumns.Length > 0)
+                                PrimaryKeyColumns += ", ";
+                            PrimaryKeyColumns += $"[{column.ColumnName}]";
+
                             break;
                         }
                     }
@@ -683,5 +635,6 @@ AND t.name = '{tableName}'";
 
             return result;
         }
-    }
+
+     }
 }

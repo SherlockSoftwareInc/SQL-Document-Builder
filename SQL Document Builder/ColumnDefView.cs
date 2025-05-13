@@ -169,26 +169,43 @@ namespace SQL_Document_Builder
             Clear();
             SelectedColumnChanged?.Invoke(this, EventArgs.Empty);
 
+            if (columnDefDataGridView.DataSource != null)
+            {
+                columnDefDataGridView.DataSource = null;
+            }
+            columnDefDataGridView.Visible = false;
+            tableDescTextBox.Visible = false;
+            openButton.Visible = false;
+
             if (objectName == null)
             {
                 return;
             }
             else
             {
-                _dbObject = new DBObject();
-                if (!_dbObject.Open(objectName, Properties.Settings.Default.dbConnectionString))
+                tablenameLabel.Text = objectName.FullName;
+
+                if (objectName.ObjectType == ObjectName.ObjectTypeEnums.Table ||
+                    objectName.ObjectType == ObjectName.ObjectTypeEnums.View)
                 {
-                    if (columnDefDataGridView.DataSource != null)
+                    _dbObject = new DBObject();
+                    if (!_dbObject.Open(objectName, Properties.Settings.Default.dbConnectionString))
                     {
-                        columnDefDataGridView.DataSource = null;
+                        return;
                     }
+                }
+                else
+                {
                     return;
                 }
             }
 
-            tablenameLabel.Text = objectName.FullName;
             TableDescription = _dbObject.Description;
             columnDefDataGridView.DataSource = _dbObject.Columns;
+            columnDefDataGridView.Visible = true;
+            tableDescTextBox.Visible = true;
+            openButton.Visible = true;
+
             columnDefDataGridView.AutoResizeColumns();
 
             columnDefDataGridView.Visible = true;
@@ -428,230 +445,104 @@ GO
             return sql;
         }
 
-        /// <summary>
-        /// Gets the create object script.
-        /// </summary>
-        /// <returns>A string.</returns>
-        public async Task<string?> GetCreateObjectScript()
-        {
-            if (string.IsNullOrEmpty(TableName))
-            {
-                throw new InvalidOperationException("Table name cannot be null or empty.");
-            }
 
-            // if the table is a view, return the create view script
-            if (TableType == ObjectName.ObjectTypeEnums.View)
-            {
-                StringBuilder createViewScript = new();
+        ///// <summary>
+        ///// Gets the create table script.
+        ///// </summary>
+        ///// <returns>A string.</returns>
+        //public string GetCreateTableScript()
+        //{
+        //    StringBuilder createTableScript = new();
 
-                // Add the header
-                createViewScript.AppendLine($"/****** Object:  View [{Schema}].[{TableName}] ******/");
+        //    // Add the header
+        //    createTableScript.AppendLine($"/****** Object:  Table [{Schema}].[{TableName}] ******/");
 
-                // Add drop table statement
-                createViewScript.AppendLine($"IF OBJECT_ID('[{Schema}].[{TableName}]', 'V') IS NOT NULL");
-                createViewScript.AppendLine($"\tDROP VIEW [{Schema}].[{TableName}];");
-                createViewScript.AppendLine($"GO");
+        //    // Add drop table statement
+        //    createTableScript.AppendLine($"IF OBJECT_ID('[{Schema}].[{TableName}]', 'U') IS NOT NULL");
+        //    createTableScript.AppendLine($"\tDROP TABLE [{Schema}].[{TableName}];");
+        //    createTableScript.AppendLine($"GO");
 
-                var script = await _dbObject.GetViewDefinitionAsync();
-                createViewScript.Append(script);
-                createViewScript.AppendLine($"GO");
-                return createViewScript.ToString();
-            }
-            else
-            {
-                return GetCreateTableScript();
-            }
-        }
+        //    // Get the primary key column names that the ColID ends with "🗝"
+        //    string primaryKeyColumns = string.Empty;
+        //    for (int i = 0; i < columnDefDataGridView.Rows.Count; i++)
+        //    {
+        //        DataGridViewRow row = columnDefDataGridView.Rows[i];
+        //        if (row.IsNewRow) continue; // Skip the new row placeholder
+        //        string colId = row.Cells["ColID"].Value?.ToString() ?? string.Empty;
+        //        if (colId.EndsWith("🗝"))
+        //        {
+        //            string columnName = row.Cells["ColumnName"].Value?.ToString() ?? throw new InvalidOperationException("Column name cannot be null.");
+        //            primaryKeyColumns += $"[{columnName}], ";
+        //        }
+        //    }
+        //    if (primaryKeyColumns.Length > 0)
+        //    {
+        //        primaryKeyColumns = primaryKeyColumns.TrimEnd(',', ' ');
+        //    }
 
-        /*
-                /// <summary>
-                /// Gets the create table script.
-                /// </summary>
-                /// <param name="connectionString">The connection string.</param>
-                /// <param name="tableName">The table name.</param>
-                /// <returns>A string.</returns>
-                public string GetCreateTableScript()
-                {
-                    StringBuilder createTableScript = new();
+        //    // Retrieve identity column details
+        //    var identityColumns = DBObject.GetIdentityColumns(Schema, TableName);
 
-                    // Add the header
-                    createTableScript.AppendLine($"--****** Object:  Table [{Schema}].[{TableName}] ******");
+        //    // Add the CREATE TABLE statement
+        //    createTableScript.AppendLine($"CREATE TABLE [{Schema}].[{TableName}] (");
 
-                    // Add drop table statement
-                    createTableScript.AppendLine($"IF OBJECT_ID('[{Schema}].[{TableName}]', 'U') IS NOT NULL");
-                    createTableScript.AppendLine($"\tDROP TABLE [{Schema}].[{TableName}];");
-                    createTableScript.AppendLine($"GO");
+        //    // Iterate through the rows in the DataGridView
+        //    for (int i = 0; i < columnDefDataGridView.Rows.Count; i++)
+        //    {
+        //        DataGridViewRow row = columnDefDataGridView.Rows[i];
+        //        if (row.IsNewRow) continue; // Skip the new row placeholder
 
-                    // Get the primary key column names that the ColID ends with "🗝"
-                    string primaryKeyColumns = string.Empty;
-                    for (int i = 0; i < columnDefDataGridView.Rows.Count; i++)
-                    {
-                        DataGridViewRow row = columnDefDataGridView.Rows[i];
-                        if (row.IsNewRow) continue; // Skip the new row placeholder
-                        string colId = row.Cells["ColID"].Value?.ToString() ?? string.Empty;
-                        if (colId.EndsWith("🗝"))
-                        {
-                            string columnName = row.Cells["ColumnName"].Value?.ToString() ?? throw new InvalidOperationException("Column name cannot be null.");
-                            primaryKeyColumns += $"[{columnName}], ";
-                        }
-                    }
-                    if (primaryKeyColumns.Length > 0)
-                    {
-                        primaryKeyColumns = primaryKeyColumns.TrimEnd(',', ' ');
-                    }
+        //        // Safely retrieve column values
+        //        string columnName = row.Cells["ColumnName"].Value?.ToString() ?? throw new InvalidOperationException("Column name cannot be null.");
+        //        string dataType = row.Cells["DataType"].Value?.ToString() ?? throw new InvalidOperationException($"Data type for column '{columnName}' cannot be null.");
+        //        string isNullable = Convert.ToBoolean(row.Cells["Nullable"].Value) ? "NULL" : "NOT NULL";
 
-                    // Add the CREATE TABLE statement
-                    createTableScript.AppendLine($"CREATE TABLE [{Schema}].[{TableName}] (");
+        //        // Check if the column is an identity column
+        //        if (identityColumns.TryGetValue(columnName, out var identityInfo))
+        //        {
+        //            createTableScript.Append($"\t[{columnName}] {dataType} IDENTITY({identityInfo.SeedValue}, {identityInfo.IncrementValue}) {isNullable}");
+        //        }
+        //        else
+        //        {
+        //            createTableScript.Append($"\t[{columnName}] {dataType} {isNullable}");
+        //        }
 
-                    // Iterate through the rows in the DataGridView
-                    for (int i = 0; i < columnDefDataGridView.Rows.Count; i++)
-                    {
-                        DataGridViewRow row = columnDefDataGridView.Rows[i];
-                        if (row.IsNewRow) continue; // Skip the new row placeholder
+        //        // Add a comma if it's not the last valid row
+        //        if (i < columnDefDataGridView.Rows.Count - 1 && !columnDefDataGridView.Rows[i + 1].IsNewRow)
+        //        {
+        //            createTableScript.AppendLine(",");
+        //        }
+        //        else if (string.IsNullOrEmpty(primaryKeyColumns))
+        //        {
+        //            createTableScript.AppendLine(); // No primary key, just end the line
+        //        }
+        //        else
+        //        {
+        //            createTableScript.AppendLine(","); // Add a comma if primary key exists
+        //        }
+        //    }
 
-                        // Safely retrieve column values
-                        string columnName = row.Cells["ColumnName"].Value?.ToString() ?? throw new InvalidOperationException("Column name cannot be null.");
-                        string dataType = row.Cells["DataType"].Value?.ToString() ?? throw new InvalidOperationException($"Data type for column '{columnName}' cannot be null.");
-                        string isNullable = Convert.ToBoolean(row.Cells["Nullable"].Value) ? "NULL" : "NOT NULL";
+        //    // Add the primary key constraint if it exists
+        //    if (!string.IsNullOrEmpty(primaryKeyColumns))
+        //    {
+        //        createTableScript.AppendLine($"\tCONSTRAINT PK_{Schema}_{TableName} PRIMARY KEY ({primaryKeyColumns})");
+        //    }
 
-                        // Append the column definition
-                        createTableScript.Append($"\t[{columnName}] {dataType} {isNullable}");
+        //    createTableScript.AppendLine(");");
+        //    createTableScript.AppendLine($"GO");
 
-                        // Add a comma if it's not the last valid row
-                        if (i < columnDefDataGridView.Rows.Count - 1 && !columnDefDataGridView.Rows[i + 1].IsNewRow)
-                        {
-                            createTableScript.AppendLine(",");
-                        }
-                        else if (string.IsNullOrEmpty(primaryKeyColumns))
-                        {
-                            createTableScript.AppendLine(); // No primary key, just end the line
-                        }
-                        else
-                        {
-                            createTableScript.AppendLine(","); // Add a comma if primary key exists
-                        }
-                    }
+        //    var indexScript = _dbObject.GetCreateIndexesScript($"[{Schema}].[{TableName}]");
+        //    if (!string.IsNullOrEmpty(indexScript))
+        //    {
+        //        // remove the new line at the end of the script
+        //        indexScript = indexScript.TrimEnd('\r', '\n');
 
-                    // Add the primary key constraint if it exists
-                    if (!string.IsNullOrEmpty(primaryKeyColumns))
-                    {
-                        createTableScript.AppendLine($"\tCONSTRAINT PK_{Schema}_{TableName} PRIMARY KEY ({primaryKeyColumns})");
-                    }
+        //        createTableScript.AppendLine(indexScript);
+        //        createTableScript.AppendLine($"GO");
+        //    }
 
-                    createTableScript.AppendLine(");");
-                    createTableScript.AppendLine($"GO");
-
-                    var indexScript = _dbObject.GetCreateIndexesScript($"[{Schema}].[{TableName}]");
-                    if (!string.IsNullOrEmpty(indexScript))
-                    {
-                        // remove the new line at the end of the script
-                        indexScript = indexScript.TrimEnd('\r', '\n');
-
-                        createTableScript.AppendLine(indexScript);
-                        createTableScript.AppendLine($"GO");
-                    }
-
-                    return createTableScript.ToString();
-                }
-        */
-
-        /// <summary>
-        /// Gets the create table script.
-        /// </summary>
-        /// <returns>A string.</returns>
-        public string GetCreateTableScript()
-        {
-            StringBuilder createTableScript = new();
-
-            // Add the header
-            createTableScript.AppendLine($"/****** Object:  Table [{Schema}].[{TableName}] ******/");
-
-            // Add drop table statement
-            createTableScript.AppendLine($"IF OBJECT_ID('[{Schema}].[{TableName}]', 'U') IS NOT NULL");
-            createTableScript.AppendLine($"\tDROP TABLE [{Schema}].[{TableName}];");
-            createTableScript.AppendLine($"GO");
-
-            // Get the primary key column names that the ColID ends with "🗝"
-            string primaryKeyColumns = string.Empty;
-            for (int i = 0; i < columnDefDataGridView.Rows.Count; i++)
-            {
-                DataGridViewRow row = columnDefDataGridView.Rows[i];
-                if (row.IsNewRow) continue; // Skip the new row placeholder
-                string colId = row.Cells["ColID"].Value?.ToString() ?? string.Empty;
-                if (colId.EndsWith("🗝"))
-                {
-                    string columnName = row.Cells["ColumnName"].Value?.ToString() ?? throw new InvalidOperationException("Column name cannot be null.");
-                    primaryKeyColumns += $"[{columnName}], ";
-                }
-            }
-            if (primaryKeyColumns.Length > 0)
-            {
-                primaryKeyColumns = primaryKeyColumns.TrimEnd(',', ' ');
-            }
-
-            // Retrieve identity column details
-            var identityColumns = DBObject.GetIdentityColumns(Schema, TableName);
-
-            // Add the CREATE TABLE statement
-            createTableScript.AppendLine($"CREATE TABLE [{Schema}].[{TableName}] (");
-
-            // Iterate through the rows in the DataGridView
-            for (int i = 0; i < columnDefDataGridView.Rows.Count; i++)
-            {
-                DataGridViewRow row = columnDefDataGridView.Rows[i];
-                if (row.IsNewRow) continue; // Skip the new row placeholder
-
-                // Safely retrieve column values
-                string columnName = row.Cells["ColumnName"].Value?.ToString() ?? throw new InvalidOperationException("Column name cannot be null.");
-                string dataType = row.Cells["DataType"].Value?.ToString() ?? throw new InvalidOperationException($"Data type for column '{columnName}' cannot be null.");
-                string isNullable = Convert.ToBoolean(row.Cells["Nullable"].Value) ? "NULL" : "NOT NULL";
-
-                // Check if the column is an identity column
-                if (identityColumns.TryGetValue(columnName, out var identityInfo))
-                {
-                    createTableScript.Append($"\t[{columnName}] {dataType} IDENTITY({identityInfo.SeedValue}, {identityInfo.IncrementValue}) {isNullable}");
-                }
-                else
-                {
-                    createTableScript.Append($"\t[{columnName}] {dataType} {isNullable}");
-                }
-
-                // Add a comma if it's not the last valid row
-                if (i < columnDefDataGridView.Rows.Count - 1 && !columnDefDataGridView.Rows[i + 1].IsNewRow)
-                {
-                    createTableScript.AppendLine(",");
-                }
-                else if (string.IsNullOrEmpty(primaryKeyColumns))
-                {
-                    createTableScript.AppendLine(); // No primary key, just end the line
-                }
-                else
-                {
-                    createTableScript.AppendLine(","); // Add a comma if primary key exists
-                }
-            }
-
-            // Add the primary key constraint if it exists
-            if (!string.IsNullOrEmpty(primaryKeyColumns))
-            {
-                createTableScript.AppendLine($"\tCONSTRAINT PK_{Schema}_{TableName} PRIMARY KEY ({primaryKeyColumns})");
-            }
-
-            createTableScript.AppendLine(");");
-            createTableScript.AppendLine($"GO");
-
-            var indexScript = _dbObject.GetCreateIndexesScript($"[{Schema}].[{TableName}]");
-            if (!string.IsNullOrEmpty(indexScript))
-            {
-                // remove the new line at the end of the script
-                indexScript = indexScript.TrimEnd('\r', '\n');
-
-                createTableScript.AppendLine(indexScript);
-                createTableScript.AppendLine($"GO");
-            }
-
-            return createTableScript.ToString();
-        }
+        //    return createTableScript.ToString();
+        //}
 
         /// <summary>
         /// Gets the table dependency script.

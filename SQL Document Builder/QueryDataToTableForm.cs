@@ -47,7 +47,7 @@ namespace SQL_Document_Builder
                 {
                     if (InsertStatement)
                     {
-                        htmlTextBox.Text = await Common.QueryDataToInsertStatementAsync(sqlTextBox.Text);
+                        htmlTextBox.Text = await DatabaseDocBuilder.QueryDataToInsertStatementAsync(sqlTextBox.Text);
                     }
                     else
                     {
