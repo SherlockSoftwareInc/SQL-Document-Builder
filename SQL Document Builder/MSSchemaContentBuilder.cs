@@ -1,11 +1,7 @@
 ﻿using Microsoft.Data.SqlClient;
 using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using static System.ComponentModel.Design.ObjectSelectorEditor;
 
 namespace SQL_Document_Builder
 {
@@ -87,28 +83,6 @@ namespace SQL_Document_Builder
                         BuildTableContent(schemaName, tableName, tableType, i + 1);
                     }
                 }
-
-                //var dr = cmd.ExecuteReader();
-                //int i = 1;
-                //// go through each table and view
-                //while (dr.Read())
-                //{
-                //    // get the schema name
-                //    string schemaName = dr.GetString(0);
-                //    // get the table name
-                //    string tableName = dr.GetString(1);
-                //    // get the table type
-                //    string tableType = dr.GetString(2);
-                //    // build the content for the table or view
-                //    BuildTableContent(schemaName, tableName, tableType, i);
-
-                //    i++;
-                //    //sbSchemaContent.AppendLine($"-- {schemaName}.{tableName} {tableType}");
-                //    //sbSchemaContent.AppendLine($"-- {GetTableContent(schemaName, tableName)}");
-                //    //sbSchemaContent.AppendLine();
-                //}
-                //// close the data reader
-                //dr.Close();
             }
             catch (SqlException)
             {

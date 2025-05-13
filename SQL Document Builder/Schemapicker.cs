@@ -1,28 +1,44 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Data;
-using Microsoft.Data.SqlClient;
-using System.Windows.Forms;
 using System.ComponentModel;
+using System.Windows.Forms;
 
 namespace SQL_Document_Builder
 {
+    /// <summary>
+    /// The schemapicker.
+    /// </summary>
     public partial class Schemapicker : Form
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Schemapicker"/> class.
+        /// </summary>
         public Schemapicker()
         {
             InitializeComponent();
         }
 
+        /// <summary>
+        /// Gets or sets the schema.
+        /// </summary>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string? Schema { get; set; }
 
+        /// <summary>
+        /// Handles the click event of the cancel button.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
         private void CancelButton_Click(object sender, EventArgs e)
         {
             DialogResult = DialogResult.Cancel;
             Close();
         }
 
+        /// <summary>
+        /// Handles the click event of the ok button.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
         private void OkButton_Click(object sender, EventArgs e)
         {
             if (schemaListBox.SelectedIndex >= 0)
@@ -36,39 +52,28 @@ namespace SQL_Document_Builder
             }
         }
 
-        private void PopulateSchemas()
+        /// <summary>
+        /// Populates the schemas.
+        /// </summary>
+        private async void PopulateSchemas()
         {
             schemaListBox.Items.Clear();
             schemaListBox.Items.Add("(All)");
 
-            try
-            {
-                using var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
-                conn.Open();
-                DataTable schemaTable = conn.GetSchema("Tables");   //System.Data.OleDb.OleDbMetaDataCollectionNames.Tables
-                if (schemaTable.Rows.Count > 0)
-                {
-                    var dtSchemas = schemaTable.DefaultView.ToTable(true, "TABLE_SCHEMA");
-                    var schemas = new List<string>();
-                    foreach (DataRow dr in dtSchemas.Rows)
-                    {
-                        schemas.Add((string)dr[0]);
-                    }
-                    schemas.Sort();
-                    foreach (var schema in schemas)
-                    {
-                        schemaListBox.Items.Add(schema);
-                    }
-                }
+            var schemas = await DatabaseHelper.GetSchemasAsync();
 
-                conn.Close();
-            }
-            catch (Exception)
+            // Add schemas to the combo box
+            foreach (var schema in schemas)
             {
-                throw;
+                schemaListBox.Items.Add(schema);
             }
         }
 
+        /// <summary>
+        /// Handles the load event of the schema picker form.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
         private void Schemapicker_Load(object sender, EventArgs e)
         {
             PopulateSchemas();

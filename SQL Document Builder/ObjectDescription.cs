@@ -1,5 +1,4 @@
-﻿using SQL_Document_Builder.Properties;
-using System;
+﻿using System;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -17,7 +16,7 @@ namespace SQL_Document_Builder
         /// <param name="schemaName">The schema name.</param>
         /// <param name="progress">The progress.</param>
         /// <returns>A string.</returns>
-        public static string BuildObjectDescriptions(ObjectName.ObjectTypeEnums objType, string schemaName, IProgress<int> progress)
+        public static async Task<string> BuildObjectDescriptionsAsync(ObjectName.ObjectTypeEnums objType, string schemaName, IProgress<int> progress)
         {
             var sb = new StringBuilder();
 
@@ -39,7 +38,7 @@ namespace SQL_Document_Builder
                 if (generate)
                 {
                     var dbTable = new DBObject();
-                    if (dbTable.Open(table, Properties.Settings.Default.dbConnectionString))
+                    if (await dbTable.OpenAsync(table, Properties.Settings.Default.dbConnectionString))
                     {
                         var tableDesc = dbTable.Description;
                         if (tableDesc.Length > 0)
@@ -76,13 +75,13 @@ namespace SQL_Document_Builder
         /// <param name="schemaName">The schema name.</param>
         /// <param name="tableName">The table name.</param>
         /// <returns>A string.</returns>
-        public static string BuildObjectDescription(ObjectName objectName, bool useExtendedProperties)
+        public static async Task<string> BuildObjectDescription(ObjectName objectName, bool useExtendedProperties)
         {
             bool spaceAdded = false;
             var sb = new StringBuilder();
 
             var dbTable = new DBObject();
-            if (dbTable.Open(objectName, Properties.Settings.Default.dbConnectionString))
+            if (await dbTable.OpenAsync(objectName, Properties.Settings.Default.dbConnectionString))
             {
                 var tableDesc = dbTable.Description;
                 if (tableDesc.Length > 0)
@@ -169,7 +168,7 @@ namespace SQL_Document_Builder
             var sb = new StringBuilder();
 
             var dbTable = new DBObject();
-            if (dbTable.Open(objectName, Properties.Settings.Default.dbConnectionString))
+            if (await dbTable.OpenAsync(objectName, Properties.Settings.Default.dbConnectionString))
             {
                 var tableDesc = dbTable.Description;
                 if (!string.IsNullOrEmpty(tableDesc))
@@ -231,6 +230,5 @@ namespace SQL_Document_Builder
 
             return script;
         }
-
     }
 }

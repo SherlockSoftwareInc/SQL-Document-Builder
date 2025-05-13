@@ -1,12 +1,10 @@
 ﻿using DarkModeForms;
 using Microsoft.Data.SqlClient;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -172,7 +170,7 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="data"></param>
         /// <returns></returns>
-        private static DataTable MergeValueColumns(DataTable data)
+        private static DataTable? MergeValueColumns(DataTable data)
         {
             if (data != null)
             {
@@ -202,7 +200,7 @@ namespace SQL_Document_Builder
         /// Builds the column frequency.
         /// </summary>
         /// <returns>A DataTable.</returns>
-        private DataTable BuildColumnFrequency(string colName)
+        private DataTable? BuildColumnFrequency(string colName)
         {
             DataTable? dt = (DataTable)dataGridView.DataSource;
 
@@ -286,7 +284,6 @@ namespace SQL_Document_Builder
                 var columnName = dataGridView.Columns[e.ColumnIndex].DataPropertyName;
                 switch (columnName.ToLower())
                 {
-
                     default:
                         break;
                 }
@@ -345,67 +342,12 @@ namespace SQL_Document_Builder
             this.Close();
         }
 
-        ///// <summary>
-        ///// Output a data grid to a csv file
-        ///// </summary>
-        ///// <param name="dgv"></param>
-        //private void ExportToCSV(DataGridView dgv)
-        //{
-        //    if (dgv != null)
-        //    {
-        //        if (dgv.Rows.Count > 0)
-        //        {
-        //            using var frm = new SaveFileDialog()
-        //            {
-        //                Filter = "CSV files(*.csv)|*.csv"
-        //            };
-        //            if (frm.ShowDialog() == DialogResult.OK)
-        //            {
-        //                Cursor = Cursors.WaitCursor;
-        //                try
-        //                {
-        //                    dgv.ExportCsv(frm.FileName, Properties.Settings.Default.csvQuota, Properties.Settings.Default.csvDelimiter);
-
-        //                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo()
-        //                    {
-        //                        FileName = frm.FileName,
-        //                        UseShellExecute = true
-        //                    });
-        //                }
-        //                catch (Exception ex)
-        //                {
-        //                    MessageBox.Show(ex.Message, "Failed to export the data",
-        //                        MessageBoxButtons.OK, MessageBoxIcon.Error);
-        //                }
-        //                Cursor = Cursors.Default;
-        //            }
-        //            return;
-        //        }
-        //        else
-        //        {
-        //            MessageBox.Show("There is no data to export", "Failed to export the data",
-        //                MessageBoxButtons.OK, MessageBoxIcon.Information);
-        //            return;
-        //        }
-        //    }
-        //    Console.Beep();
-        //}
-
-        /// <summary>
-        /// Fetches the data.
-        /// </summary>
-        /// <param name="sql">The sql.</param>
-        private void FetchData(string sql)
-        {
-            throw new NotImplementedException();
-        }
-
         /// <summary>
         /// Gets the data.
         /// </summary>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>A Task.</returns>
-        private async Task<DataTable> GetData(string sql, CancellationToken cancellationToken)
+        private async Task<DataTable> GetDataAsync(string sql, CancellationToken cancellationToken)
         {
             DataTable dt = new();
 
@@ -447,7 +389,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Fetch the data and populates the data grid view
         /// </summary>
-        private async Task Open()
+        private async Task OpenAsync()
         {
             if (SQL.Length > 0 && connectionString.Length > 0)
             {
@@ -479,7 +421,7 @@ namespace SQL_Document_Builder
                 try
                 {
                     cancellationTokenSource = new CancellationTokenSource();
-                    getDataTask = Task.Run(() => GetData(sql, cancellationTokenSource.Token));
+                    getDataTask = Task.Run(() => GetDataAsync(sql, cancellationTokenSource.Token));
 
                     var dt = await getDataTask;
                     this.Invoke((MethodInvoker)delegate
@@ -535,7 +477,6 @@ namespace SQL_Document_Builder
                     dataGridView.ContextMenuStrip = contextMenuStrip1;
                 }
             }
-
         }
 
         /// <summary>
@@ -586,7 +527,7 @@ namespace SQL_Document_Builder
             //dataGridView.DataSource = null;
             dataGridView.Visible = false;
 
-            await Open();
+            await OpenAsync();
             Cursor.Current = Cursors.Default;
         }
 

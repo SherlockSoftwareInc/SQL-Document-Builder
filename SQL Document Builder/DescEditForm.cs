@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace SQL_Document_Builder
@@ -26,9 +27,9 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void ColumnDefView1_SelectedColumnChanged(object sender, EventArgs e)
+        private async void ColumnDefView1_SelectedColumnChanged(object sender, EventArgs e)
         {
-            SaveChange();
+            await SaveChangeAsync();
 
             string? selectedColumn = columnView.SelectedColumn;
             if (selectedColumn != null)
@@ -52,9 +53,9 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void DescEditForm_FormClosing(object sender, FormClosingEventArgs e)
+        private async void DescEditForm_FormClosing(object sender, FormClosingEventArgs e)
         {
-            SaveChange();
+            await SaveChangeAsync();
         }
 
         /// <summary>
@@ -62,10 +63,10 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void DescEditForm_Load(object sender, EventArgs e)
+        private async void DescEditForm_Load(object sender, EventArgs e)
         {
             columnView.ConnectionString = Properties.Settings.Default.dbConnectionString;
-            columnView.Open(TableName);
+            await columnView.OpenAsync(TableName);
         }
 
         /// <summary>
@@ -83,25 +84,25 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void DescTextBox_Validated(object sender, EventArgs e)
+        private async void DescTextBox_Validated(object sender, EventArgs e)
         {
-            SaveChange();
+            await SaveChangeAsync();
         }
 
         /// <summary>
         /// Save the change
         /// </summary>
-        private void SaveChange()
+        private async Task SaveChangeAsync()
         {
             if (_descChanged && columnView?.TableName?.Length > 0)
             {
                 if (columnNameLabel.Text.Length > 0)
                 {
-                    columnView.UpdateColumnDesc(columnNameLabel.Text, descTextBox.Text, columnView.TableType == ObjectName.ObjectTypeEnums.View);
+                    await columnView.UpdateColumnDescAsync(columnNameLabel.Text, descTextBox.Text, columnView.TableType == ObjectName.ObjectTypeEnums.View);
                 }
                 else
                 {
-                    columnView.UpdateTableDescription(descTextBox.Text);
+                    await columnView.UpdateTableDescriptionAsync(descTextBox.Text);
                 }
                 _descChanged = false;
             }

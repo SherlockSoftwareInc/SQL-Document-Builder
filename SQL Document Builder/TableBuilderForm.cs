@@ -207,7 +207,7 @@ namespace SQL_Document_Builder
         /// Change DB connection.
         /// </summary>
         /// <param name="connection">The connection.</param>
-        private async void ChangeDBConnection(SQLDatabaseConnectionItem connection)
+        private async Task ChangeDBConnectionAsync(SQLDatabaseConnectionItem connection)
         {
             if (connection != null)
             {
@@ -354,7 +354,7 @@ namespace SQL_Document_Builder
             foreach (ObjectName obj in selectedObjects)
             {
                 // get the object create script
-                var script = await GetObjectCreateScript(obj);
+                var script = await GetObjectCreateScriptAsync(obj);
                 sqlTextBox.AppendText(script);
 
                 // get the insert statement for the object
@@ -417,36 +417,12 @@ namespace SQL_Document_Builder
                 return;
             }
 
-            var script = await GetObjectCreateScript(objectName);
+            var script = await GetObjectCreateScriptAsync(objectName);
 
             if (!string.IsNullOrEmpty(script))
             {
                 SetScript(script);
             }
-
-            //var createScript = await DatabaseDocBuilder.GetCreateObjectScript(objectName);
-            //if (createScript == null)
-            //{
-            //    return;
-            //}
-
-            //SetScript(createScript);
-
-            //if (!string.IsNullOrEmpty(objectName?.Name))
-            //{
-            //    var description = ObjectDescription.BuildObjectDescription(objectName, Properties.Settings.Default.UseExtendedProperties);
-            //    if (description.Length > 0)
-            //    {
-            //        // append the description to the script
-            //        sqlTextBox.AppendText(description);
-            //        sqlTextBox.AppendText("GO" + Environment.NewLine);
-            //    }
-
-            //    if (!string.IsNullOrEmpty(sqlTextBox.Text))
-            //    {
-            //        Clipboard.SetText(sqlTextBox.Text);
-            //    }
-            //}
         }
 
         /// <summary>
@@ -454,12 +430,12 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="objectName">The object name.</param>
         /// <returns>A Task.</returns>
-        private static async Task<string> GetObjectCreateScript(ObjectName objectName)
+        private static async Task<string> GetObjectCreateScriptAsync(ObjectName objectName)
         {
-            string createScript = string.Empty;
+            string? createScript = string.Empty;
             if (objectName != null)
             {
-                createScript = await DatabaseDocBuilder.GetCreateObjectScript(objectName);
+                createScript = await DatabaseDocBuilder.GetCreateObjectScriptAsync(objectName);
             }
 
             if (string.IsNullOrEmpty(createScript))
@@ -483,7 +459,7 @@ namespace SQL_Document_Builder
             // get the object description for table and view
             if (objectName?.ObjectType == ObjectName.ObjectTypeEnums.Table || objectName?.ObjectType == ObjectName.ObjectTypeEnums.View)
             {
-                var description = ObjectDescription.BuildObjectDescription(objectName, Properties.Settings.Default.UseExtendedProperties);
+                var description = await ObjectDescription.BuildObjectDescription(objectName, Properties.Settings.Default.UseExtendedProperties);
                 if (description.Length > 0)
                 {
                     // append the description to the script
@@ -513,7 +489,7 @@ namespace SQL_Document_Builder
 
             foreach (ObjectName obj in selectedObjects)
             {
-                var script = await GetObjectCreateScript(obj);
+                var script = await GetObjectCreateScriptAsync(obj);
 
                 sqlTextBox.AppendText(script);
             }
@@ -621,13 +597,13 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void ExecuteOnSTGToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            await ExecuteScripts("csbc-reporting-prod-sqldb-stg");
+            await ExecuteScriptsAsync("csbc-reporting-prod-sqldb-stg");
         }
 
         /// <summary>
         /// Executes the scripts.
         /// </summary>
-        private async Task ExecuteScripts(string initialCatalog)
+        private async Task ExecuteScriptsAsync(string initialCatalog)
         {
             string script = sqlTextBox.SelectedText;
             if (script.Length == 0)
@@ -895,9 +871,9 @@ namespace SQL_Document_Builder
                 });
 
                 string scripts = String.Empty;
-                await Task.Run(() =>
+                await Task.Run(async () =>
                 {
-                    scripts = ObjectDescription.BuildObjectDescriptions(ObjectName.ObjectTypeEnums.Table, dlg.Schema, progress);
+                    scripts = await ObjectDescription.BuildObjectDescriptionsAsync(ObjectName.ObjectTypeEnums.Table, dlg.Schema, progress);
                 });
 
                 if (scripts != null)
@@ -924,17 +900,17 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The E.</param>
-        private void ObjectsListBox_SelectedIndexChanged(object sender, EventArgs e)
+        private async void ObjectsListBox_SelectedIndexChanged(object sender, EventArgs e)
         {
             statusToolStripStatusLabe.Text = string.Empty;
             if (objectsListBox.SelectedItem != null)
             {
                 var objectName = (ObjectName)objectsListBox.SelectedItem;
-                definitionPanel?.Open(objectName);
+                await definitionPanel.OpenAsync(objectName);
             }
             else
             {
-                definitionPanel.Open(null);
+                await definitionPanel.OpenAsync(null);
             }
         }
 
@@ -996,7 +972,7 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The E.</param>
-        private void OnConnectionToolStripMenuItem_Click(object? sender, EventArgs e)
+        private async void OnConnectionToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             if (sender?.GetType() == typeof(ConnectionMenuItem))
             {
@@ -1005,7 +981,7 @@ namespace SQL_Document_Builder
                 statusToolStripStatusLabe.Text = string.Format("Connect to {0}...", menuItem.ToString());
                 Cursor = Cursors.WaitCursor;
 
-                ChangeDBConnection(menuItem.Connection);
+                await ChangeDBConnectionAsync(menuItem.Connection);
 
                 ObjectTypeComboBox_SelectedIndexChanged(sender, e);
 
@@ -1021,7 +997,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void OnDEVToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            await ExecuteScripts("csbc-reporting-prod-sqldb-prod");
+            await ExecuteScriptsAsync("csbc-reporting-prod-sqldb-prod");
         }
 
         /// <summary>
@@ -1031,7 +1007,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void OnPRODToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            await ExecuteScripts("csbc-reporting-prod-sqldb-dev");
+            await ExecuteScriptsAsync("csbc-reporting-prod-sqldb-dev");
         }
 
         /// <summary>
@@ -1100,9 +1076,9 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Populates the objects list box with tables, ordered by schema name and table name.
         /// </summary>
-        private void Populate()
+        private async Task PopulateAsync()
         {
-            definitionPanel?.Open(null);
+            await definitionPanel.OpenAsync(null);
             string schemaName = string.Empty;
             if (schemaComboBox.SelectedIndex > 0)
                 schemaName = schemaComboBox.Items[schemaComboBox.SelectedIndex].ToString();
@@ -1305,9 +1281,9 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The E.</param>
-        private void SchemaComboBox_SelectedIndexChanged(object sender, EventArgs e)
+        private async void SchemaComboBox_SelectedIndexChanged(object sender, EventArgs e)
         {
-            Populate();
+            await PopulateAsync();
         }
 
         /// <summary>
@@ -1420,7 +1396,7 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The E.</param>
-        private void TableBuilderForm_Load(object sender, EventArgs e)
+        private async void TableBuilderForm_Load(object sender, EventArgs e)
         {
             WindowState = FormWindowState.Maximized;
 
@@ -1444,7 +1420,7 @@ namespace SQL_Document_Builder
             }
             if (selectedItem != null)
             {
-                ChangeDBConnection(selectedItem.Connection);
+                await ChangeDBConnectionAsync(selectedItem.Connection);
             }
             else
             {
@@ -1479,7 +1455,7 @@ namespace SQL_Document_Builder
                     sqlTextBox.Text = String.Empty;
                 }
                 var builder = new SharePoint();
-                sqlTextBox.AppendText(builder.GetTableDef(objectName));
+                sqlTextBox.AppendText(await builder.GetTableDef(objectName));
 
                 if ((objectName.Name.StartsWith("LT_")) || (objectName.Name.StartsWith("AT_")))
                 {
@@ -1498,12 +1474,12 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
-        private void TableDescriptionToolStripMenuItem_Click(object sender, EventArgs e)
+        private async void TableDescriptionToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var objectName = objectsListBox.SelectedItem as ObjectName;
             if (!string.IsNullOrEmpty(objectName?.Name))
             {
-                SetScript(ObjectDescription.BuildObjectDescription(objectName, Properties.Settings.Default.UseExtendedProperties));
+                SetScript(await ObjectDescription.BuildObjectDescription(objectName, Properties.Settings.Default.UseExtendedProperties));
                 if (!string.IsNullOrEmpty(sqlTextBox.Text))
                 {
                     Clipboard.SetText(sqlTextBox.Text);
@@ -1531,9 +1507,9 @@ namespace SQL_Document_Builder
 
                 string scripts = String.Empty;
                 var builder = new SharePoint();
-                await Task.Run(() =>
+                await Task.Run(async () =>
                 {
-                    scripts = builder.BuildTableList(dlg.Schema, progress);
+                    scripts = await builder.BuildTableList(dlg.Schema, progress);
                 });
 
                 SetScript(scripts);
@@ -1572,10 +1548,10 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
-        private void Timer1_Tick(object sender, EventArgs e)
+        private async void Timer1_Tick(object sender, EventArgs e)
         {
             timer1.Stop();
-            Populate();
+            await PopulateAsync();
         }
 
         /// <summary>
@@ -1641,9 +1617,9 @@ namespace SQL_Document_Builder
 
                 string scripts = String.Empty;
                 var builder = new SharePoint();
-                await Task.Run(() =>
+                await Task.Run(async () =>
                 {
-                    scripts = builder.BuildViewList(dlg.Schema, progress);
+                    scripts = await builder.BuildViewList(dlg.Schema, progress);
                 });
 
                 SetScript(scripts);
@@ -1672,9 +1648,9 @@ namespace SQL_Document_Builder
                 });
 
                 string scripts = String.Empty;
-                await Task.Run(() =>
+                await Task.Run(async () =>
                 {
-                    scripts = ObjectDescription.BuildObjectDescriptions(ObjectName.ObjectTypeEnums.View, dlg.Schema, progress);
+                    scripts = await ObjectDescription.BuildObjectDescriptionsAsync(ObjectName.ObjectTypeEnums.View, dlg.Schema, progress);
                 });
 
                 SetScript(scripts);
@@ -1688,7 +1664,7 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
-        private void ObjectsDescriptionToolStripMenuItem_Click(object sender, EventArgs e)
+        private async void ObjectsDescriptionToolStripMenuItem_Click(object sender, EventArgs e)
         {
             sqlTextBox.Text = string.Empty;
 
@@ -1701,7 +1677,7 @@ namespace SQL_Document_Builder
 
             foreach (ObjectName obj in selectedObjects)
             {
-                var script = ObjectDescription.BuildObjectDescription(obj, Properties.Settings.Default.UseExtendedProperties);
+                var script = await ObjectDescription.BuildObjectDescription(obj, Properties.Settings.Default.UseExtendedProperties);
 
                 // add "GO" and new line after each object description if it is not empty
                 if (!string.IsNullOrEmpty(script))

@@ -1,30 +1,64 @@
-﻿using System;
-using Microsoft.Data.SqlClient;
-using System.Windows.Forms;
+﻿using Microsoft.Data.SqlClient;
+using System;
 using System.ComponentModel;
+using System.Windows.Forms;
 
 namespace SQL_Document_Builder
 {
+    /// <summary>
+    /// The s q l server login dialog.
+    /// </summary>
     public partial class SQLServerLoginDialog : Form
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SQLServerLoginDialog"/> class.
+        /// </summary>
         public SQLServerLoginDialog()
         {
             InitializeComponent();
         }
 
+        /// <summary>
+        /// Gets or sets the authentication.
+        /// </summary>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public short Authentication { get; set; }
+
+        /// <summary>
+        /// Gets or sets the connection string.
+        /// </summary>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string? ConnectionString { get; set; }
+
+        /// <summary>
+        /// Gets or sets the database name.
+        /// </summary>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string? DatabaseName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the password.
+        /// </summary>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string? Password { get; set; }
+
+        /// <summary>
+        /// Gets or sets the server name.
+        /// </summary>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string? ServerName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the user name.
+        /// </summary>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string? UserName { get; set; }
 
+        /// <summary>
+        /// Handles the selected index changed event of the authentication combo box.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
         private void AuthenticationComboBox_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (authenticationComboBox.SelectedIndex == 0)
@@ -42,6 +76,10 @@ namespace SQL_Document_Builder
             EnableOKButton();
         }
 
+        /// <summary>
+        /// Builds the connection string.
+        /// </summary>
+        /// <returns>A bool.</returns>
         private bool BuildConnectionString()
         {
             var result = default(bool);
@@ -49,49 +87,41 @@ namespace SQL_Document_Builder
             string dbName = databaseComboBox.Text;
             if (serverName.Length > 0 && dbName.Length > 0)
             {
-                //bool integratedSecurity = authenticationComboBox.SelectedIndex == 0;
-                //var builder = new System.Data.SqlClient.SqlConnectionStringBuilder()
-                //{
-                //DataSource = serverName,
-                //InitialCatalog = dbName,
-                //IntegratedSecurity = integratedSecurity
-                //};
-                //if (!integratedSecurity)
-                //{
-                //builder.UserID = userNameTextBox.Text;
-                //builder.Password = passwordTextBox.Text;
-                //}
-
                 SqlConnectionStringBuilder builder = new()
                 {
-                    //Driver = "Sql Driver 17 for SQL Server"
+                    //builder.Add("Server", "phsa-csbc-pcr-prod-sql-server.database.windows.net");
+                    //builder.Add("Database", "pcr_analytic");
+                    //builder.Add("Authentication", "ActiveDirectoryInteractive");
+                    //builder.Add("UID", userNameTextBox.Text);
+                    //builder.Add("PWD", passwordTextBox.Text);
+                    { "Server", serverName },
+                    { "Database", dbName }
                 };
-                //builder.Add("Server", "phsa-csbc-pcr-prod-sql-server.database.windows.net");
-                //builder.Add("Database", "pcr_analytic");
-                //builder.Add("Authentication", "ActiveDirectoryInteractive");
-                //builder.Add("UID", userNameTextBox.Text);
-                //builder.Add("PWD", passwordTextBox.Text);
-                builder.Add("Server", serverName);
-                builder.Add("Database", dbName);
                 switch (authenticationComboBox.SelectedIndex)
                 {
                     case 0:     //Windows Authentication
                         builder.Add("Trusted_Connection", "yes");
                         break;
+
                     case 1:     //SQL Server Authentication
                         break;
+
                     case 2:     //Active Directory - Interactive
                         builder.Add("Authentication", "ActiveDirectoryInteractive");
                         break;
+
                     case 3:     //Active Directory - Integrated
                         builder.Add("Authentication", "ActiveDirectoryIntegrated");
                         break;
+
                     case 4:     //Active Directory - Password
                         builder.Add("Authentication", "ActiveDirectoryPassword");
                         break;
+
                     case 5:     //Active Directory -Service Principal
                         builder.Add("Authentication", "ActiveDirectoryServicePrincipal");
                         break;
+
                     default:
                         break;
                 }
@@ -108,6 +138,11 @@ namespace SQL_Document_Builder
             return result;
         }
 
+        /// <summary>
+        /// Handles the cancel button click event of the cancel button.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
         private void CancelButton_Click(object sender, EventArgs e)
         {
             ConnectionString = string.Empty;
@@ -115,6 +150,11 @@ namespace SQL_Document_Builder
             Close();
         }
 
+        /// <summary>
+        /// Handles the load event of the connection string dialog.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
         private void ConnectionStringDialog_Load(object sender, EventArgs e)
         {
             serverNameTextBox.Text = ServerName;
@@ -126,6 +166,9 @@ namespace SQL_Document_Builder
                 passwordTextBox.Focus();
         }
 
+        /// <summary>
+        /// Enables the ok button.
+        /// </summary>
         private void EnableOKButton()
         {
             bool enabled = (serverNameTextBox.Text.Trim().Length > 1 && databaseComboBox.Text.Trim().Length > 1);
@@ -140,6 +183,11 @@ namespace SQL_Document_Builder
             okButton.Enabled = enabled;
         }
 
+        /// <summary>
+        /// Handles the OK button click event of the OK button.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
         private void OkButton_Click(object sender, EventArgs e)
         {
             if (BuildConnectionString())
@@ -158,6 +206,11 @@ namespace SQL_Document_Builder
             }
         }
 
+        /// <summary>
+        /// Handles the text changed event of the server name text box.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
         private void ServerNameTextBox_TextChanged(object sender, EventArgs e)
         {
             BuildConnectionString();

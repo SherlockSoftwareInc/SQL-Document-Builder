@@ -22,7 +22,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Scan user tables in the database and generate the creation script for them
         /// </summary>
-        public string BuildTableList(string schemaName, IProgress<int> progress)
+        public async Task<string> BuildTableList(string schemaName, IProgress<int> progress)
         {
             _script.Clear();
 
@@ -67,7 +67,7 @@ namespace SQL_Document_Builder
                         AppendLine("\t\t<tr>");
                         AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + tableSchema + "</td>");
                         AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + string.Format("[[{0}.{1}|{1}]]", tableSchema, tableName) + "</td>");
-                        AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + Common.GetTableDescription(new ObjectName() { Schema = tableSchema, Name = tableName }) + "</td>");
+                        AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + await DatabaseHelper.GetTableDescriptionAsync(new ObjectName() { Schema = tableSchema, Name = tableName }) + "</td>");
                         //AppendLine(string.Format("| {0} || [[DW Table: {0}.{1}|{1}]] || {2}", tableSchema, tableName, Common.GetTableDescription(new ObjectName() { Schema = tableSchema, Name = tableName })));
                         AppendLine("\t\t</tr>");
                     }
@@ -91,7 +91,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Scan user view in the database and generate the creation script for them
         /// </summary>
-        public string BuildViewList(string schemaName, IProgress<int> progress)
+        public async Task<string> BuildViewList(string schemaName, IProgress<int> progress)
         {
             _script.Clear();
 
@@ -133,7 +133,7 @@ namespace SQL_Document_Builder
                         AppendLine("\t\t<tr>");
                         AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + tableSchema + "</td>");
                         AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + string.Format("[[{0}.{1}|{1}]]", tableSchema, tableName) + "</td>");
-                        AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + Common.GetTableDescription(new ObjectName() { Schema = tableSchema, Name = tableName, ObjectType = ObjectName.ObjectTypeEnums.View }) + "</td>");
+                        AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + await DatabaseHelper.GetTableDescriptionAsync(new ObjectName() { Schema = tableSchema, Name = tableName, ObjectType = ObjectName.ObjectTypeEnums.View }) + "</td>");
                         AppendLine("\t\t</tr>");
                     }
                 }
@@ -310,7 +310,7 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="tableSchema"></param>
         /// <param name="tableName"></param>
-        public string GetTableDef(ObjectName objectName)
+        public async Task<string> GetTableDef(ObjectName objectName)
         {
             if (objectName.ObjectType == ObjectName.ObjectTypeEnums.Table)
             {
@@ -320,7 +320,7 @@ namespace SQL_Document_Builder
             {
                 AppendLine(string.Format("<h1>VIEW NAME: {0}.{1}</h1>", objectName.Schema, objectName.Name));
             }
-            var objectDesc = Common.GetTableDescription(objectName);
+            var objectDesc = await DatabaseHelper.GetTableDescriptionAsync(objectName);
             if (objectDesc.Length > 0)
             {
                 AppendLine("<p>" + objectDesc + "</p>");
@@ -806,7 +806,7 @@ namespace SQL_Document_Builder
         /// <param name="TableSchema">Schame name</param>
         /// <param name="TableName">Table name</param>
         /// <returns></returns>
-        private void GetTableDefinition(ObjectName objectName)
+        private async Task GetTableDefinition(ObjectName objectName)
         {
             string sql = string.Format("SELECT ORDINAL_POSITION, COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = N'{0}' AND TABLE_NAME = N'{1}' ORDER BY ORDINAL_POSITION", objectName.Schema, objectName.Name);
             var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
@@ -828,7 +828,7 @@ namespace SQL_Document_Builder
                     AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + colID + "</td>");
                     AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + colName + "</td>");
                     AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + dataType + "</td>");
-                    AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + Common.GetColumnDescription(objectName, colName) + "</td>");
+                    AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + await DatabaseHelper.GetColumnDescriptionAsync(objectName, colName) + "</td>");
                     AppendLine("\t\t</tr>");
                 }
 

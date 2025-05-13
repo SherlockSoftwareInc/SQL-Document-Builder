@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using static SQL_Document_Builder.ObjectName;
+using static System.ComponentModel.Design.ObjectSelectorEditor;
 
 namespace SQL_Document_Builder
 {
@@ -20,7 +21,7 @@ namespace SQL_Document_Builder
         /// <param name="sql">The SQL statement to execute.</param>
         /// <param name="connectionString">The connection string. If not provided, the default connection string is used.</param>
         /// <returns>A Task representing the asynchronous operation.</returns>
-        public static async Task ExecuteSQLAsync(string sql, string connectionString = "")
+        internal static async Task ExecuteSQLAsync(string sql, string connectionString = "")
         {
             if (string.IsNullOrEmpty(connectionString))
                 connectionString = Properties.Settings.Default.dbConnectionString;
@@ -28,7 +29,7 @@ namespace SQL_Document_Builder
             using var conn = new SqlConnection(connectionString);
             try
             {
-                using var cmd = new SqlCommand(sql, conn)
+                await using var cmd = new SqlCommand(sql, conn)
                 {
                     CommandType = CommandType.Text,
                     CommandTimeout = 50000
@@ -52,21 +53,21 @@ namespace SQL_Document_Builder
         /// Executes the non query.
         /// </summary>
         /// <param name="sql">The sql.</param>
-        internal static void ExecuteNonQuery(string sql, string? connectionString)
+        internal static async Task ExecuteNonQueryAsync(string sql, string? connectionString)
         {
             if (string.IsNullOrEmpty(connectionString)) return;
 
             using var conn = new SqlConnection(connectionString);
             try
             {
-                using var cmd = new SqlCommand(sql, conn)
+                await using var cmd = new SqlCommand(sql, conn)
                 {
                     CommandType = System.Data.CommandType.Text,
                     CommandTimeout = 50000
                 };
 
-                conn.Open();
-                cmd.ExecuteNonQuery();
+                await conn.OpenAsync();
+                await cmd.ExecuteNonQueryAsync();
             }
             catch (Exception ex)
             {
@@ -74,25 +75,9 @@ namespace SQL_Document_Builder
             }
             finally
             {
-                conn.Close();
+                await conn.CloseAsync();
             }
         }
-
-        ///// <summary>
-        ///// Gets the database objects async.
-        ///// </summary>
-        ///// <returns>A Task.</returns>
-        //internal static async Task<List<ObjectName>> GetDatabaseObjectsAsync()
-        //{
-        //    // get tables and views and combine them
-        //    var tables = await GetTablesAsync();
-        //    var views = await GetViewsAsync();
-        //    var objects = new List<ObjectName>();
-        //    objects.AddRange(tables);
-        //    objects.AddRange(views);
-
-        //    return objects;
-        //}
 
         /// <summary>
         /// Gets the database objects asynchronously based on the specified object type.
@@ -120,26 +105,27 @@ namespace SQL_Document_Builder
             }
         }
 
-
         /// <summary>
         /// Gets the data table.
         /// </summary>
         /// <param name="sql">The sql.</param>
         /// <returns>A DataTable? .</returns>
-        internal static DataTable? GetDataTable(string sql)
+        internal static async Task<DataTable?> GetDataTableAsync(string sql)
         {
+            var tables = new DataTable();
+            using var connection = new SqlConnection(Properties.Settings.Default.dbConnectionString);
             try
             {
-                using var connection = new SqlConnection(Properties.Settings.Default.dbConnectionString);
-                using var command = new SqlCommand(sql, connection)
+                await using var command = new SqlCommand(sql, connection)
                 {
                     CommandType = System.Data.CommandType.Text,
                     CommandTimeout = 50000
                 };
-                using var adapter = new SqlDataAdapter(command);
-                var dataTable = new DataTable();
-                adapter.Fill(dataTable);
-                return dataTable;
+
+                await connection.OpenAsync(); // Ensure the connection is opened before executing commands
+                await using var reader = await command.ExecuteReaderAsync();
+
+                tables.Load(reader);
             }
             catch (Exception ex)
             {
@@ -147,7 +133,11 @@ namespace SQL_Document_Builder
                 MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 //throw;
             }
-            return null;
+            finally
+            {
+                await connection.CloseAsync();
+            }
+            return tables;
         }
 
         /// <summary>
@@ -367,6 +357,82 @@ ORDER BY s.name, p.name;";
         }
 
         /// <summary>
+        /// Gets the table description asynchronously.
+        /// </summary>
+        /// <param name="objectName">The object name.</param>
+        /// <returns>A Task<string> containing the description.</returns>
+        internal static async Task<string> GetTableDescriptionAsync(ObjectName objectName)
+        {
+            string result = string.Empty;
+            string sql = $"SELECT value FROM fn_listextendedproperty (NULL, 'schema', N'{objectName.Schema}', '{(objectName.ObjectType == ObjectName.ObjectTypeEnums.View ? "view" : "table")}', N'{objectName.Name}', default, default) WHERE name = N'MS_Description'";
+
+            await using var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+            try
+            {
+                await conn.OpenAsync();
+                await using var cmd = new SqlCommand(sql, conn) { CommandType = CommandType.Text };
+                await using var dr = await cmd.ExecuteReaderAsync();
+                if (await dr.ReadAsync())
+                {
+                    result = dr.GetString(0);
+                }
+            }
+            catch (Exception ex)
+            {
+                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                await conn.CloseAsync();
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Gets the column description.
+        /// </summary>
+        /// <param name="objectName">The object name.</param>
+        /// <param name="column">The column.</param>
+        /// <returns>A string.</returns>
+        internal static async Task<string> GetColumnDescriptionAsync(ObjectName objectName, string column)
+        {
+            string result = string.Empty;
+            string sql;
+            if (objectName.ObjectType == ObjectName.ObjectTypeEnums.View)
+            {
+                sql = $"SELECT E.value Description FROM sys.schemas S INNER JOIN sys.views T ON S.schema_id = T.schema_id INNER JOIN sys.columns C ON T.object_id = C.object_id INNER JOIN sys.extended_properties E ON T.object_id = E.major_id AND C.column_id = E.minor_id AND E.name = 'MS_Description' AND S.name = '{objectName.Schema}' AND T.name = '{objectName.Name}' AND C.name = '{column}'";
+            }
+            else
+            {
+                sql = $"SELECT E.value Description FROM sys.schemas S INNER JOIN sys.tables T ON S.schema_id = T.schema_id INNER JOIN sys.columns C ON T.object_id = C.object_id INNER JOIN sys.extended_properties E ON T.object_id = E.major_id AND C.column_id = E.minor_id AND E.name = 'MS_Description' AND S.name = '{objectName.Schema}' AND T.name = '{objectName.Name}' AND C.name = '{column}'";
+            }
+            var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+            try
+            {
+                await conn.OpenAsync();
+                await using var cmd = new SqlCommand(sql, conn) { CommandType = CommandType.Text };
+                await using var dr = await cmd.ExecuteReaderAsync();
+                if (await dr.ReadAsync())
+                {
+                    result = dr.GetString(0);   // dr[0].ToString();
+                }
+
+                dr.Close();
+            }
+            catch (Exception ex)
+            {
+                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                await conn.CloseAsync();
+            }
+
+            return result;
+        }
+
+        /// <summary>
         /// Gets the tables async.
         /// </summary>
         /// <returns>A Task.</returns>
@@ -400,7 +466,7 @@ ORDER BY s.name, p.name;";
         /// </summary>
         /// <param name="connectionString">The connection string.</param>
         /// <returns><![CDATA[Task<bool>]]></returns>
-        internal static async Task<bool> TestConnection(string connectionString)
+        internal static async Task<bool> TestConnectionAsync(string connectionString)
         {
             using SqlConnection connection = new(connectionString);
             try
@@ -414,7 +480,6 @@ ORDER BY s.name, p.name;";
                 return false;
             }
         }
-
 
         /// <summary>
         /// Gets the views async.
@@ -484,6 +549,11 @@ ORDER BY s.name, p.name;";
                 }
                 dataTable.Rows.Add(row);
             }
+        }
+
+        internal static async Task<DataTable> GetTablesAsync(string v)
+        {
+            throw new NotImplementedException();
         }
     }
 }

@@ -350,7 +350,7 @@ namespace SQL_Document_Builder
                 }
             }
 
-            bool testResult = await DatabaseHelper.TestConnection(connectionString);
+            bool testResult = await DatabaseHelper.TestConnectionAsync(connectionString);
             if (!testResult)
             {
                 return string.Empty;

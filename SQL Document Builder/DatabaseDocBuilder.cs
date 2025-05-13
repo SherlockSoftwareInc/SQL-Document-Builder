@@ -1,7 +1,6 @@
 ﻿using Microsoft.Data.SqlClient;
 using System;
 using System.Data;
-using System.Security.AccessControl;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -18,7 +17,7 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="dbObject">The database object for which the creation script is to be generated.</param>
         /// <returns>A Task<string?> containing the creation script, or null if the object type is unsupported.</returns>
-        public static async Task<string?> GetCreateObjectScript(ObjectName dbObject)
+        public static async Task<string?> GetCreateObjectScriptAsync(ObjectName dbObject)
         {
             if (dbObject == null)
             {
@@ -127,7 +126,7 @@ WHERE sm.object_id = OBJECT_ID(@SchemaQualifiedName);";
 
             try
             {
-                var cmd = new SqlCommand(sql, conn) { CommandType = CommandType.Text };
+                await using var cmd = new SqlCommand(sql, conn) { CommandType = CommandType.Text };
                 await conn.OpenAsync();
 
                 // Execute the query and read the data asynchronously
@@ -410,7 +409,7 @@ GO";
 
             // open the table object
             var table = new DBObject();
-            if (!table.Open(objectName, Properties.Settings.Default.dbConnectionString))
+            if (!await table.OpenAsync(objectName, Properties.Settings.Default.dbConnectionString))
             {
                 return string.Empty;
             }
@@ -436,7 +435,7 @@ GO";
 
                 // Safely retrieve column values
                 string columnName = column.ColumnName;
-                string dataType = column.DataType; 
+                string dataType = column.DataType;
                 string isNullable = column.Nullable ? "NULL" : "NOT NULL";
 
                 // Check if the column is an identity column
@@ -450,7 +449,7 @@ GO";
                 }
 
                 // Add a comma if it's not the last valid row
-                if (i < table.Columns.Count - 1 )
+                if (i < table.Columns.Count - 1)
                 {
                     createScript.AppendLine(",");
                 }
@@ -473,7 +472,7 @@ GO";
             createScript.AppendLine(");");
             createScript.AppendLine($"GO");
 
-            var indexScript =table. GetCreateIndexesScript();
+            var indexScript = table.GetCreateIndexesScript();
             if (!string.IsNullOrEmpty(indexScript))
             {
                 // remove the new line at the end of the script
@@ -484,7 +483,6 @@ GO";
             }
 
             return createScript.ToString();
-
         }
 
         /// <summary>

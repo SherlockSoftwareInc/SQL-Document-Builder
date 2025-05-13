@@ -12,7 +12,7 @@ namespace SQL_Document_Builder
     /// </summary>
     public partial class BatchColumnDesc : Form
     {
-        private DataTable _tables = new();
+        private DataTable? _tables = new();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="BatchColumnDesc"/> class.
@@ -23,101 +23,21 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Gets the table typ.
-        /// </summary>
-        /// <param name="schema">The schema.</param>
-        /// <param name="tableName">The table name.</param>
-        /// <returns>A string.</returns>
-        private static string GetTableTyp(string schema, string tableName)
-        {
-            string result = "table";
-            using (SqlConnection conn = new(Properties.Settings.Default.dbConnectionString))
-            {
-                try
-                {
-                    using SqlCommand cmd = new() { Connection = conn };
-                    cmd.Parameters.Add(new SqlParameter("@schema", schema));
-                    cmd.Parameters.Add(new SqlParameter("@tableName", tableName));
-                    cmd.CommandText = "SELECT TABLE_TYPE FROM information_schema.TABLES WHERE TABLE_SCHEMA = @schema AND TABLE_NAME = @tableName";
-                    conn.Open();
-                    var dr = cmd.ExecuteReader();
-                    if (dr.Read())
-                    {
-                        if (string.Compare(dr["TABLE_TYPE"].ToString(), "View", true) == 0)
-                        {
-                            result = "view";
-                        }
-                    }
-                    dr.Close();
-                }
-                catch (SqlException)
-                {
-                    throw;
-                }
-                finally
-                {
-                    if (conn.State == ConnectionState.Open)
-                    {
-                        conn.Close();
-                    }
-                }
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        /// Checks if column description exists
-        /// </summary>
-        /// <param name="schema"></param>
-        /// <param name="table"></param>
-        /// <param name="column"></param>
-        /// <returns></returns>
-        private static bool IsColumnDescExists(string schema, string table, string column)
-        {
-            bool result = false;
-            string sql = string.Format("SELECT E.value Description FROM sys.schemas S INNER JOIN sys.{3}s T ON S.schema_id = T.schema_id INNER JOIN sys.columns C ON T.object_id = C.object_id INNER JOIN sys.extended_properties E ON T.object_id = E.major_id AND C.column_id = E.minor_id AND E.name = 'MS_Description' AND S.name = '{0}' AND T.name = '{1}' AND C.name = '{2}'", schema, table, column, GetTableTyp(schema, table));
-            var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
-            try
-            {
-                var cmd = new SqlCommand(sql, conn) { CommandType = CommandType.Text };
-                conn.Open();
-                var dr = cmd.ExecuteReader();
-                if (dr.Read())
-                {
-                    result = true;
-                }
-
-                dr.Close();
-            }
-            catch (Exception ex)
-            {
-                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                conn.Close();
-            }
-
-            return result;
-        }
-
-        /// <summary>
         /// Save the description of the selected column
         /// </summary>
-        private static void SaveColumnDesc(string? objectName, string columnName, string desc)
+        private static async Task SaveColumnDescAsync(string? objectName, string columnName, string desc)
         {
             SqlConnection? conn = new(Properties.Settings.Default.dbConnectionString);
             try
             {
-                var cmd = new SqlCommand("usp_AddColumnDescription", conn) { CommandType = CommandType.StoredProcedure };
+                await using var cmd = new SqlCommand("usp_AddColumnDescription", conn) { CommandType = CommandType.StoredProcedure };
 
                 cmd.Parameters.Add(new SqlParameter("@TableName", objectName));
                 cmd.Parameters.Add(new SqlParameter("@ColumnName", columnName));
                 cmd.Parameters.Add(new SqlParameter("@Description", desc));
 
-                conn.Open();
-                cmd.ExecuteNonQuery();
+                await conn.OpenAsync();
+                await cmd.ExecuteNonQueryAsync();
             }
             catch (Exception ex)
             {
@@ -125,7 +45,7 @@ namespace SQL_Document_Builder
             }
             finally
             {
-                conn.Close();
+                await conn.CloseAsync();
             }
         }
 
@@ -152,7 +72,7 @@ namespace SQL_Document_Builder
                     var progress = new Progress<int>(value => progressBar.Value = value);
 
                     // DoProcessing is run on the thread pool.
-                    await Task.Run(() => ApplyDescriptons(columnName, desc, progress));
+                    await Task.Run(() => ApplyDescriptonsAsync(columnName, desc, progress));
 
                     progressBar.Visible = false;
                     Cursor = Cursors.Default;
@@ -167,7 +87,7 @@ namespace SQL_Document_Builder
         /// <param name="columnName"></param>
         /// <param name="desc"></param>
         /// <param name="progress"></param>
-        private void ApplyDescriptons(string columnName, string desc, IProgress<int> progress)
+        private async Task ApplyDescriptonsAsync(string columnName, string desc, IProgress<int> progress)
         {
             for (int i = 0; i < objectsListBox.CheckedItems.Count; i++)
             {
@@ -180,7 +100,7 @@ namespace SQL_Document_Builder
                 if (item != null)
                 {
                     var objectName = item.ToString();
-                    SaveColumnDesc(objectName, columnName, desc);
+                    await SaveColumnDescAsync(objectName, columnName, desc);
                 }
             }
         }
@@ -190,42 +110,16 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
-        private void BatchColumnDesc_Load(object sender, EventArgs e)
+        private async void BatchColumnDesc_Load(object sender, EventArgs e)
         {
-            GetTableList();
+            _tables = await DatabaseHelper.GetDataTableAsync($"SELECT * FROM INFORMATION_SCHEMA.TABLES ORDER BY TABLE_SCHEMA, TABLE_NAME");
             PopulateSchema();
-        }
-
-        /// <summary>
-        /// Get table list from the database
-        /// </summary>
-        private void GetTableList()
-        {
-            var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
-            try
-            {
-                var cmd = new SqlCommand("SELECT * FROM INFORMATION_SCHEMA.TABLES ORDER BY TABLE_SCHEMA, TABLE_NAME", conn) { CommandType = CommandType.Text };
-                conn.Open();
-                var ds = new DataSet();
-                var dat = new SqlDataAdapter(cmd);
-                dat.Fill(ds);
-                if (ds.Tables.Count > 0)
-                { _tables = ds.Tables[0]; }
-            }
-            catch (Exception ex)
-            {
-                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                conn.Close();
-            }
         }
 
         /// <summary>
         /// Performs the search.
         /// </summary>
-        private void PerformSearch()
+        private async Task PerformSearchAsync()
         {
             objectsListBox.Items.Clear();
 
@@ -238,16 +132,16 @@ namespace SQL_Document_Builder
             using SqlConnection conn = new(Properties.Settings.Default.dbConnectionString);
             try
             {
-                using SqlCommand cmd = new() { Connection = conn };
+                await using var cmd = new SqlCommand() { Connection = conn };
                 cmd.Parameters.Add(new SqlParameter("@searchFor", searchFor));
                 cmd.CommandText = "SELECT DISTINCT TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, 'BASE TABLE' TABLE_TYPE, COLUMN_NAME FROM information_schema.columns WHERE column_name = @SearchFor ORDER BY TABLE_NAME";
 
-                conn.Open();
-                var dr = cmd.ExecuteReader();
+                await conn.OpenAsync();
+                var dr = await cmd.ExecuteReaderAsync();
                 string schemaName = string.Empty;
                 if (schemaComboBox.SelectedIndex > 0) schemaName = (string)schemaComboBox.Items[schemaComboBox.SelectedIndex];
 
-                while (dr.Read())
+                while (await dr.ReadAsync())
                 {
                     if (schemaName.Length > 0)
                     {
@@ -272,7 +166,7 @@ namespace SQL_Document_Builder
             {
                 if (conn.State == ConnectionState.Open)
                 {
-                    conn.Close();
+                    await conn.CloseAsync();
                 }
             }
             messageToolStripStatusLabel.Text = objectsListBox.Items.Count switch
@@ -292,6 +186,11 @@ namespace SQL_Document_Builder
             schemaComboBox.Items.Clear();
             schemaComboBox.Items.Add("(All)");
 
+            if (_tables == null)
+            {
+                return;
+            }
+
             var dtSchemas = _tables.DefaultView.ToTable(true, "TABLE_SCHEMA");
             var schemas = new List<string>();
             foreach (DataRow dr in dtSchemas.Rows)
@@ -310,9 +209,9 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
-        private void SchemaComboBox_SelectedIndexChanged(object sender, EventArgs e)
+        private async void SchemaComboBox_SelectedIndexChanged(object sender, EventArgs e)
         {
-            PerformSearch();
+            await PerformSearchAsync();
         }
 
         /// <summary>
@@ -320,9 +219,9 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
-        private void SearchToolStripButton_Click(object sender, EventArgs e)
+        private async void SearchToolStripButton_Click(object sender, EventArgs e)
         {
-            PerformSearch();
+            await PerformSearchAsync();
         }
 
         /// <summary>
@@ -330,11 +229,11 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
-        private void SearchToolStripTextBox_KeyUp(object sender, KeyEventArgs e)
+        private async void SearchToolStripTextBox_KeyUp(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Enter)
             {
-                PerformSearch();
+                await PerformSearchAsync();
             }
         }
 

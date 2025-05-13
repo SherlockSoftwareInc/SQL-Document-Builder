@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -103,7 +102,7 @@ AND s.name = '{TableSchema}';";
         /// <param name="tableName">The name of the table to check.</param>
         /// <param name="schemaName">The schema name of the table.</param>
         /// <returns>A list of tuples containing the view name and schema name.</returns>
-        public static List<(string ViewName, string SchemaName)> GetViewsUsingTable(string? schemaName, string? tableName)
+        public static async Task<List<(string ViewName, string SchemaName)>> GetViewsUsingTableAsync(string? schemaName, string? tableName)
         {
             var views = new List<(string ViewName, string SchemaName)>();
             if (string.IsNullOrEmpty(tableName))
@@ -131,13 +130,13 @@ WHERE
             {
                 try
                 {
-                    connection.Open();
-                    using var command = new SqlCommand(query, connection);
+                    await connection.OpenAsync();
+                    await using var command = new SqlCommand(query, connection);
                     command.Parameters.AddWithValue("@TableName", tableName);
                     command.Parameters.AddWithValue("@SchemaName", schemaName);
 
-                    using var reader = command.ExecuteReader();
-                    while (reader.Read())
+                    using var reader = await command.ExecuteReaderAsync();
+                    while (await reader.ReadAsync())
                     {
                         string viewName = reader.GetString(0);
                         string schema = reader.GetString(1);
@@ -147,6 +146,10 @@ WHERE
                 catch (Exception ex)
                 {
                     Common.MsgBox($"Error retrieving views: {ex.Message}", MessageBoxIcon.Error);
+                }
+                finally
+                {
+                    await connection.CloseAsync();
                 }
             }
 
@@ -177,7 +180,7 @@ WHERE
         /// <returns>A string containing the SQL script to recreate the indexes.</returns>
         public string GetCreateIndexesScript()
         {
-            if(ObjectName.IsEmpty())
+            if (ObjectName.IsEmpty())
                 return string.Empty;
 
             StringBuilder indexScript = new();
@@ -233,7 +236,7 @@ ORDER BY
         /// <param name="objectName">The object name.</param>
         /// <param name="connectionString">The connection string.</param>
         /// <returns>A bool.</returns>
-        public bool Open(ObjectName objectName, string connectionString)
+        internal async Task<bool> OpenAsync(ObjectName objectName, string connectionString)
         {
             this.ObjectName = objectName;
 
@@ -245,8 +248,9 @@ ORDER BY
                 using SqlConnection conn = new(connectionString);
                 try
                 {
-                    using SqlCommand cmd = new(sql, conn);
-                    conn.Open();
+                    await conn.OpenAsync();
+                    await using var cmd = new SqlCommand(sql, conn) { CommandType = CommandType.Text };
+
                     string? objType = (string)cmd.ExecuteScalar();
                     if (objType != null)
                     {
@@ -259,10 +263,10 @@ ORDER BY
                 }
                 finally
                 {
-                    conn.Close();
+                    await conn.CloseAsync();
                 }
             }
-            return Open(objectName.Schema, objectName.Name, objectType, connectionString);
+            return await OpenAsync(objectName.Schema, objectName.Name, objectType, connectionString);
         }
 
         /// <summary>
@@ -273,7 +277,7 @@ ORDER BY
         /// <param name="objectType">The object type.</param>
         /// <param name="connectionString">The connection string.</param>
         /// <returns>A bool.</returns>
-        public bool Open(string schemaName, string tableName, ObjectTypeEnums objectType, string connectionString)
+        internal async Task<bool> OpenAsync(string schemaName, string tableName, ObjectTypeEnums objectType, string connectionString)
         {
             bool result = false;
 
@@ -289,7 +293,8 @@ ORDER BY
                 using SqlConnection conn = new(ConnectionString);
                 try
                 {
-                    using SqlCommand cmd = new()
+                    await conn.OpenAsync();
+                    await using var cmd = new SqlCommand()
                     {
                         CommandText = "SELECT ORDINAL_POSITION,COLUMN_NAME,DATA_TYPE,CHARACTER_MAXIMUM_LENGTH,NUMERIC_PRECISION,IS_NULLABLE,COLUMN_DEFAULT FROM information_schema.columns WHERE TABLE_SCHEMA = @Schema AND TABLE_NAME = @TableName ORDER BY ORDINAL_POSITION",
                         Connection = conn,
@@ -298,10 +303,8 @@ ORDER BY
                     cmd.Parameters.Add(new SqlParameter("@Schema", schemaName));
                     cmd.Parameters.Add(new SqlParameter("@TableName", tableName));
 
-                    conn.Open();
-
-                    SqlDataReader dr = cmd.ExecuteReader();
-                    while (dr.Read())
+                    SqlDataReader dr = await cmd.ExecuteReaderAsync();
+                    while (await dr.ReadAsync())
                     {
                         Columns.Add(new DBColumn(dr));
                     }
@@ -309,9 +312,9 @@ ORDER BY
 
                     if (objectType == ObjectTypeEnums.Table)
                     {
-                        GetPrimaryKeys(TableSchema, TableName);
+                        await GetPrimaryKeysAsync(TableSchema, TableName);
 
-                        GetIndexes(TableSchema, TableName);
+                        await GetIndexesAsync(TableSchema, TableName);
                     }
 
                     result = true;
@@ -322,10 +325,10 @@ ORDER BY
                 }
                 finally
                 {
-                    conn.Close();
+                    await conn.CloseAsync();
                 }
-                Description = GetTableDesc();
-                GetColumnDesc();
+                Description = await GetTableDescAsync();
+                await GetColumnDescAsync();
             }
 
             return result;
@@ -336,7 +339,7 @@ ORDER BY
         /// </summary>
         /// <param name="columnName">The column name.</param>
         /// <param name="newDescription">The new description.</param>
-        public void UpdateColumnDescription(string columnName, string newDescription, bool isView)
+        public async Task UpdateColumnDescriptionAsync(string columnName, string newDescription, bool isView)
         {
             if (ConnectionString.Length == 0 || newDescription.Length == 0) return;
 
@@ -348,10 +351,11 @@ ORDER BY
                 string newDesc = newDescription.Replace("'", "''");
                 string tableType = isView ? "VIEW" : "TABLE";
 
+                using SqlConnection connection = new(ConnectionString);
+
                 try
                 {
-                    using SqlConnection connection = new(ConnectionString);
-                    connection.Open();
+                    await connection.OpenAsync();
 
                     string query = $@"
 IF EXISTS (
@@ -391,11 +395,15 @@ BEGIN
         @level2name = '{columnName}';
 END";
 
-                    using SqlCommand command = new(query, connection);
-                    command.ExecuteNonQuery();
+                    await using SqlCommand command = new(query, connection);
+                    await command.ExecuteNonQueryAsync();
                 }
                 catch (Exception)
                 {
+                }
+                finally
+                {
+                    await connection.CloseAsync();
                 }
             }
         }
@@ -404,7 +412,7 @@ END";
         /// Updates the table desc.
         /// </summary>
         /// <param name="newDescription">The description.</param>
-        public async void UpdateTableDesc(string newDescription)
+        public async Task UpdateTableDescAsync(string newDescription)
         {
             Description = newDescription;
 
@@ -440,23 +448,23 @@ ELSE
         /// <summary>
         /// Gets the column desc.
         /// </summary>
-        private void GetColumnDesc()
+        private async Task GetColumnDescAsync()
         {
             var conn = new SqlConnection(ConnectionString);
             try
             {
-                var cmd = new SqlCommand()
+                await using var cmd = new SqlCommand()
                 {
                     Connection = conn,
                     CommandType = CommandType.Text,
-                    CommandText = string.Format("SELECT C.Name, E.value Description FROM sys.schemas S INNER JOIN sys.{0} T ON S.schema_id = T.schema_id INNER JOIN sys.columns C ON T.object_id = C.object_id INNER JOIN sys.extended_properties E ON T.object_id = E.major_id AND C.column_id = E.minor_id WHERE E.name = N'MS_Description' AND S.name = @Schema AND T.name = @TableName", TableType == ObjectTypeEnums.Table ? "tables" : "views"),
+                    CommandText = $"SELECT C.Name, E.value Description FROM sys.schemas S INNER JOIN sys.{(TableType == ObjectTypeEnums.Table ? "tables" : "views")} T ON S.schema_id = T.schema_id INNER JOIN sys.columns C ON T.object_id = C.object_id INNER JOIN sys.extended_properties E ON T.object_id = E.major_id AND C.column_id = E.minor_id WHERE E.name = N'MS_Description' AND S.name = @Schema AND T.name = @TableName",
                 };
                 cmd.Parameters.Add(new SqlParameter("@Schema", TableSchema));
                 cmd.Parameters.Add(new SqlParameter("@TableName", TableName));
-                conn.Open();
+                await conn.OpenAsync();
 
-                using var dr = cmd.ExecuteReader();
-                while (dr.Read())
+                using var dr = await cmd.ExecuteReaderAsync();
+                while (await dr.ReadAsync())
                 {
                     if (dr[1] != DBNull.Value)
                     {
@@ -476,7 +484,7 @@ ELSE
             }
             finally
             {
-                conn.Close();
+                await conn.CloseAsync();
             }
         }
 
@@ -485,7 +493,7 @@ ELSE
         /// </summary>
         /// <param name="tableSchema">The table schema.</param>
         /// <param name="tableName">The table name.</param>
-        private void GetIndexes(string tableSchema, string tableName)
+        private async Task GetIndexesAsync(string tableSchema, string tableName)
         {
             var sql = $@"SELECT distinct col.name AS ColumnName
 FROM sys.indexes ind
@@ -499,16 +507,16 @@ AND t.name = '{tableName}'";
             var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
             try
             {
-                var cmd = new SqlCommand()
+                await using var cmd = new SqlCommand()
                 {
                     Connection = conn,
                     CommandText = sql,
                     CommandType = CommandType.Text
                 };
-                conn.Open();
-                var dr = cmd.ExecuteReader();
+                await conn.OpenAsync();
+                var dr = await cmd.ExecuteReaderAsync();
 
-                while (dr.Read())
+                while (await dr.ReadAsync())
                 {
                     string? columnName = dr.GetString(0);
                     // find the column in the Columns
@@ -530,7 +538,7 @@ AND t.name = '{tableName}'";
             }
             finally
             {
-                conn.Close();
+                await conn.CloseAsync();
             }
         }
 
@@ -539,14 +547,13 @@ AND t.name = '{tableName}'";
         /// </summary>
         public string PrimaryKeyColumns { get; set; } = string.Empty;
 
-
         /// <summary>
         /// Primaries the keys.
         /// </summary>
         /// <param name="schemaName">The schema name.</param>
         /// <param name="tableName">The table name.</param>
         /// <returns>A list of string.</returns>
-        private void GetPrimaryKeys(string schemaName, string tableName)
+        private async Task GetPrimaryKeysAsync(string schemaName, string tableName)
         {
             PrimaryKeyColumns = string.Empty;
 
@@ -554,15 +561,15 @@ AND t.name = '{tableName}'";
             var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
             try
             {
-                var cmd = new SqlCommand()
+                await using var cmd = new SqlCommand()
                 {
                     Connection = conn,
                     CommandText = sql,
                     CommandType = CommandType.Text
                 };
-                conn.Open();
-                var dr = cmd.ExecuteReader();
-                while (dr.Read())
+                await conn.OpenAsync();
+                var dr = await cmd.ExecuteReaderAsync();
+                while (await dr.ReadAsync())
                 {
                     var columnName = dr.GetString(0);
                     // find the column in the Columns
@@ -589,7 +596,7 @@ AND t.name = '{tableName}'";
             }
             finally
             {
-                conn.Close();
+                await conn.CloseAsync();
             }
         }
 
@@ -597,7 +604,7 @@ AND t.name = '{tableName}'";
         /// Gets the table desc.
         /// </summary>
         /// <returns>A string.</returns>
-        private string GetTableDesc()
+        private async Task<string> GetTableDescAsync()
         {
             string result = string.Empty;
             if (ObjectName != null)
@@ -607,15 +614,15 @@ AND t.name = '{tableName}'";
                 var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
                 try
                 {
-                    var cmd = new SqlCommand()
+                    await using var cmd = new SqlCommand()
                     {
                         Connection = conn,
                         CommandText = sql,
                         CommandType = CommandType.Text
                     };
-                    conn.Open();
-                    var dr = cmd.ExecuteReader();
-                    if (dr.Read())
+                    await conn.OpenAsync();
+                    var dr = await cmd.ExecuteReaderAsync();
+                    if (await dr.ReadAsync())
                     {
                         if (dr[0] != DBNull.Value)
                             result = dr.GetString(0);   // dr[0].ToString();
@@ -629,12 +636,11 @@ AND t.name = '{tableName}'";
                 }
                 finally
                 {
-                    conn.Close();
+                    await conn.CloseAsync();
                 }
             }
 
             return result;
         }
-
-     }
+    }
 }

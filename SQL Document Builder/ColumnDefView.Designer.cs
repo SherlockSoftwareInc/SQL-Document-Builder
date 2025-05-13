@@ -157,7 +157,6 @@
             columnDefDataGridView.Size = new System.Drawing.Size(529, 524);
             columnDefDataGridView.TabIndex = 1;
             columnDefDataGridView.CellClick += ColumnDefDataGridView_CellClick;
-            columnDefDataGridView.CellDoubleClick += ColumnDefDataGridView_CellDoubleClick;
             columnDefDataGridView.CellValidated += ColumnDefDataGridView_CellValidated;
             // 
             // columnContextMenuStrip

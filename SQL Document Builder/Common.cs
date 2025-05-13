@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Drawing;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -13,162 +12,7 @@ namespace SQL_Document_Builder
     /// The common class.
     /// </summary>
     internal class Common
-    {
-        /// <summary>
-        /// Get the database object type.
-        /// </summary>
-        /// <param name="connectionString">The connection string.</param>
-        /// <param name="objectSchema">The object schema.</param>
-        /// <param name="objectName">The object name.</param>
-        /// <returns>A string.</returns>
-        static string GetObjectType(string connectionString, ObjectName objectName)
-        {
-            using SqlConnection connection = new(connectionString);
-            connection.Open();
-
-            string query = $@"
-                SELECT TABLE_TYPE
-                FROM INFORMATION_SCHEMA.TABLES
-                WHERE TABLE_SCHEMA = '{objectName.Schema}' AND TABLE_NAME = '{objectName.Name}';";
-
-            using (SqlCommand command = new(query, connection))
-            {
-                string? objectType = command.ExecuteScalar() as string;
-
-                if (string.IsNullOrEmpty(objectType))
-                {
-                    return "Unknown"; // Object not found or not a table/view
-                }
-                else if (objectType == "BASE TABLE")
-                {
-                    return "Table";
-                }
-                else if (objectType == "VIEW")
-                {
-                    return "View";
-                }
-                else
-                {
-                    return "Other"; // Handle other object types as needed
-                }
-            }
-        }
-
-
-        /// <summary>
-        /// Gets the table description.
-        /// </summary>
-        /// <param name="objectName">The object name.</param>
-        /// <returns>A string.</returns>
-        public static string GetTableDescription(ObjectName objectName)
-        {
-            string result = string.Empty;
-            string sql = string.Format(String.Format("SELECT value FROM fn_listextendedproperty (NULL, 'schema', N'{0}', '{2}', N'{1}', default, default) WHERE name = N'MS_Description'", objectName.Schema, objectName.Name, (objectName.ObjectType == ObjectName.ObjectTypeEnums.View ? "view" : "table")));
-
-            var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
-            try
-            {
-                var cmd = new SqlCommand(sql, conn) { CommandType = CommandType.Text };
-                conn.Open();
-                var dr = cmd.ExecuteReader();
-                if (dr.Read())
-                {
-                    result = dr.GetString(0);   // dr[0].ToString();
-                }
-
-                dr.Close();
-            }
-            catch (Exception ex)
-            {
-                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                conn.Close();
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        /// Gets the column description.
-        /// </summary>
-        /// <param name="objectName">The object name.</param>
-        /// <param name="column">The column.</param>
-        /// <returns>A string.</returns>
-        public static string GetColumnDescription(ObjectName objectName, string column)
-        {
-            string result = string.Empty;
-            string sql;
-            if (objectName.ObjectType == ObjectName.ObjectTypeEnums.View)
-            {
-                sql = string.Format("SELECT E.value Description FROM sys.schemas S INNER JOIN sys.views T ON S.schema_id = T.schema_id INNER JOIN sys.columns C ON T.object_id = C.object_id INNER JOIN sys.extended_properties E ON T.object_id = E.major_id AND C.column_id = E.minor_id AND E.name = 'MS_Description' AND S.name = '{0}' AND T.name = '{1}' AND C.name = '{2}'", objectName.Schema, objectName.Name, column);
-            }
-            else
-            {
-                sql = string.Format("SELECT E.value Description FROM sys.schemas S INNER JOIN sys.tables T ON S.schema_id = T.schema_id INNER JOIN sys.columns C ON T.object_id = C.object_id INNER JOIN sys.extended_properties E ON T.object_id = E.major_id AND C.column_id = E.minor_id AND E.name = 'MS_Description' AND S.name = '{0}' AND T.name = '{1}' AND C.name = '{2}'", objectName.Schema, objectName.Name, column);
-            }
-            var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
-            try
-            {
-                var cmd = new SqlCommand(sql, conn) { CommandType = CommandType.Text };
-                conn.Open();
-                var dr = cmd.ExecuteReader();
-                if (dr.Read())
-                {
-                    result = dr.GetString(0);   // dr[0].ToString();
-                }
-
-                dr.Close();
-            }
-            catch (Exception ex)
-            {
-                MsgBox(ex.Message, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                conn.Close();
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        /// Gets the column desc.
-        /// </summary>
-        /// <param name="schema">The schema.</param>
-        /// <param name="table">The table.</param>
-        /// <param name="column">The column.</param>
-        /// <returns>A string.</returns>
-        public static string GetColumnDesc(string schema, string table, string column)
-        {
-            string result = string.Empty;
-            string sql = string.Format("SELECT E.value Description FROM sys.schemas S INNER JOIN sys.tables T ON S.schema_id = T.schema_id INNER JOIN sys.columns C ON T.object_id = C.object_id INNER JOIN sys.extended_properties E ON T.object_id = E.major_id AND C.column_id = E.minor_id AND E.name = 'MS_Description' AND S.name = '{0}' AND T.name = '{1}' AND C.name = '{2}'", schema, table, column);
-            var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
-            try
-            {
-                var cmd = new SqlCommand(sql, conn) { CommandType = CommandType.Text };
-                conn.Open();
-                var dr = cmd.ExecuteReader();
-                if (dr.Read())
-                {
-                    result = dr.GetString(0);   // dr[0].ToString();
-                }
-
-                dr.Close();
-            }
-            catch (Exception ex)
-            {
-                MsgBox(ex.Message, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                conn.Close();
-            }
-
-            return result;
-        }
-
+    {       
         /// <summary>
         /// Input the box.
         /// </summary>
@@ -200,24 +44,7 @@ namespace SQL_Document_Builder
         /// <param name="icon">The icon.</param>
         public static DialogResult MsgBox(string message, MessageBoxIcon icon)
         {
-           return MessageBox.Show(message, "Message", MessageBoxButtons.OK, icon);
-        }
-
-        /// <summary>
-        /// Remove quota.
-        /// </summary>
-        /// <param name="text">The text.</param>
-        /// <returns>A string.</returns>
-        public static string RemoveQuota(string text)
-        {
-            if (text.StartsWith("[") && text.EndsWith("]"))
-            {
-                return text[1..^1];
-            }
-            else
-            {
-                return text;
-            }
+            return MessageBox.Show(message, "Message", MessageBoxButtons.OK, icon);
         }
 
         /// <summary>
@@ -344,72 +171,6 @@ namespace SQL_Document_Builder
                 conn.Close();
             }
             return tables;
-        }
-
-        ///// <summary>
-        ///// Get table list from the database
-        ///// </summary>
-        //public static List<ObjectName> GetViewList()
-        //{
-        //    var tables = new List<ObjectName>();
-        //    var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
-        //    try
-        //    {
-        //        var cmd = new SqlCommand("SELECT TABLE_SCHEMA, TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'View' ORDER BY TABLE_SCHEMA, TABLE_NAME", conn) { CommandType = CommandType.Text };
-        //        conn.Open();
-        //        var reader = cmd.ExecuteReader();
-        //        while (reader.Read())
-        //        {
-        //            tables.Add(new ObjectName()
-        //            {
-        //                ObjectType = ObjectName.ObjectTypeEnums.View,
-        //                Schema = reader.GetString(0),
-        //                Name = reader.GetString(1)
-        //            });
-        //        }
-
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        Common.MsgBox(ex.Message, MessageBoxIcon.Error);
-        //    }
-        //    finally
-        //    {
-        //        conn.Close();
-        //    }
-        //    return tables;
-        //}
-
-        /// <summary>
-        /// Gets the table columns.
-        /// </summary>
-        /// <param name="tableName">The table name.</param>
-        /// <returns><![CDATA[List<string>]]></returns>
-        public static List<string> GetTableColumns(ObjectName tableName)
-        {
-            var columns = new List<string>();
-
-            var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
-            try
-            {
-                var cmd = new SqlCommand(string.Format("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '{0}' AND TABLE_NAME = '{1}'", tableName.Schema, tableName.Name), conn) { CommandType = CommandType.Text };
-                conn.Open();
-                var reader = cmd.ExecuteReader();
-                while (reader.Read())
-                {
-                    columns.Add(reader.GetString(0));
-                }
-            }
-            catch (Exception ex)
-            {
-                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                conn.Close();
-            }
-
-            return columns;
         }
 
         /// <summary>
