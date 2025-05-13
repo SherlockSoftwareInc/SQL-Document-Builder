@@ -396,6 +396,27 @@ ORDER BY s.name, p.name;";
         }
 
         /// <summary>
+        /// Test connection.
+        /// </summary>
+        /// <param name="connectionString">The connection string.</param>
+        /// <returns><![CDATA[Task<bool>]]></returns>
+        internal static async Task<bool> TestConnection(string connectionString)
+        {
+            using SqlConnection connection = new(connectionString);
+            try
+            {
+                await connection.OpenAsync();
+                connection.Close();
+                return true;
+            }
+            catch (SqlException)
+            {
+                return false;
+            }
+        }
+
+
+        /// <summary>
         /// Gets the views async.
         /// </summary>
         /// <returns>A Task.</returns>

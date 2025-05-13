@@ -1,11 +1,18 @@
 ﻿using System;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml;
 
 namespace SQL_Document_Builder
 {
+    /// <summary>
+    /// The sql database connection item.
+    /// </summary>
     public class SQLDatabaseConnectionItem
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SQLDatabaseConnectionItem"/> class.
+        /// </summary>
         public SQLDatabaseConnectionItem()
         {
             DBMSType = 0;
@@ -16,9 +23,14 @@ namespace SQL_Document_Builder
             Password = "";
             AuthenticationType = 1;
             ConnectionString = "";
+            ConnectionType = "SQL Server";
             GUID = Guid.NewGuid().ToString();
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="SQLDatabaseConnectionItem"/> class.
+        /// </summary>
+        /// <param name="xNode">The x node.</param>
         public SQLDatabaseConnectionItem(XmlNode xNode)
             : this()
         {
@@ -103,6 +115,9 @@ namespace SQL_Document_Builder
             }
         }
 
+        /// <summary>
+        /// Gets or sets the connection type.
+        /// </summary>
         public string ConnectionType { get; set; }
 
         /// <summary>
@@ -115,10 +130,19 @@ namespace SQL_Document_Builder
         /// </summary>
         public bool TrustServerCertificate { get; set; } = true;
 
+        /// <summary>
+        /// Gets or sets the authentication type.
+        /// </summary>
         public short AuthenticationType { get; set; }
 
+        /// <summary>
+        /// Gets or sets the connection string.
+        /// </summary>
         public string? ConnectionString { get; set; }
 
+        /// <summary>
+        /// Gets or sets the database.
+        /// </summary>
         public string? Database { get; set; }
 
         /// <summary>
@@ -127,14 +151,29 @@ namespace SQL_Document_Builder
         /// </summary>
         public int DBMSType { get; set; } = 0;
 
+        /// <summary>
+        /// Gets the g u i d.
+        /// </summary>
         public string? GUID { get; private set; }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether is custom.
+        /// </summary>
         public bool IsCustom { get; set; }
 
+        /// <summary>
+        /// Gets or sets the name.
+        /// </summary>
         public string? Name { get; set; }
 
+        /// <summary>
+        /// Gets or sets the password.
+        /// </summary>
         public string? Password { get; set; }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether remember password.
+        /// </summary>
         public bool RememberPassword { get; set; }
 
         /// <summary>
@@ -153,10 +192,19 @@ namespace SQL_Document_Builder
             }
         }
 
+        /// <summary>
+        /// Gets or sets the server name.
+        /// </summary>
         public string? ServerName { get; set; }
 
+        /// <summary>
+        /// Gets or sets the user name.
+        /// </summary>
         public string? UserName { get; set; }
 
+        /// <summary>
+        /// Builds the connection string.
+        /// </summary>
         public void BuildConnectionString()
         {
             var builder = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder()
@@ -205,6 +253,11 @@ namespace SQL_Document_Builder
             ConnectionString = builder.ConnectionString;
         }
 
+        /// <summary>
+        /// Checks if the specified object is equal to this instance.
+        /// </summary>
+        /// <param name="obj">The obj.</param>
+        /// <returns>A bool.</returns>
         public override bool Equals(object? obj)
         {
             if ((obj == null) || !this.GetType().Equals(obj.GetType()))
@@ -218,6 +271,10 @@ namespace SQL_Document_Builder
             }
         }
 
+        /// <summary>
+        /// Gets the hash code.
+        /// </summary>
+        /// <returns>An int.</returns>
         public override int GetHashCode()
         {
             if (GUID != null)
@@ -226,8 +283,14 @@ namespace SQL_Document_Builder
                 return 0;
         }
 
-        public string? Login()
+        /// <summary>
+        /// Performs the login operation.
+        /// </summary>
+        /// <returns>A Task.</returns>
+        public async Task<string?> Login()
         {
+            string connectionString = string.Empty;
+
             using (var dlg = new SQLServerLoginDialog()
             {
                 ServerName = ServerName,
@@ -238,57 +301,6 @@ namespace SQL_Document_Builder
             {
                 if (dlg.ShowDialog() == DialogResult.OK)
                 {
-                    //bool integratedSecurity = (dlg.Authentication == 0);
-                    //var builder = new System.Data.SqlClient.SqlConnectionStringBuilder()
-                    //{
-                    //    DataSource = dlg.ServerName,
-                    //    InitialCatalog = dlg.DatabaseName,
-                    //    IntegratedSecurity = integratedSecurity
-                    //};
-                    //if (!integratedSecurity)
-                    //{
-                    //    builder.UserID = dlg.UserName;
-                    //    builder.Password = dlg.Password;
-                    //}
-                    //SqlConnectionStringBuilder builder = new()
-                    //{
-                    //    //Driver = "Sql Driver 17 for SQL Server"
-                    //};
-                    //builder.Add("Server", "phsa-csbc-pcr-prod-sql-server.database.windows.net");
-                    //builder.Add("Database", "pcr_analytic");
-                    //builder.Add("Authentication", "ActiveDirectoryInteractive");
-                    //builder.Add("UID", dlg.UserName);
-                    //builder.Add("PWD", dlg.Password);
-                    //builder.Add("Server", dlg.ServerName);
-                    //builder.Add("Database", dlg.DatabaseName);
-                    //switch (dlg.Authentication)
-                    //{
-                    //    case 0:     //Windows Authentication
-                    //        builder.Add("Trusted_Connection", "yes");
-                    //        break;
-                    //    case 1:     //SQL Server Authentication
-                    //        break;
-                    //    case 2:     //Active Directory - Interactive
-                    //        builder.Add("Authentication", "ActiveDirectoryInteractive");
-                    //        break;
-                    //    case 3:     //Active Directory - Integrated
-                    //        builder.Add("Authentication", "ActiveDirectoryIntegrated");
-                    //        break;
-                    //    case 4:     //Active Directory - Password
-                    //        builder.Add("Authentication", "ActiveDirectoryPassword");
-                    //        break;
-                    //    case 5:     //Active Directory -Service Principal
-                    //        builder.Add("Authentication", "ActiveDirectoryServicePrincipal");
-                    //        break;
-                    //    default:
-                    //        break;
-                    //}
-
-                    //if (dlg.UserName?.Trim().Length > 0)
-                    //    builder.Add("UID", dlg.UserName);
-                    //if (dlg.Password?.Trim().Length > 0)
-                    //    builder.Add("PWD", dlg.Password);
-
                     var builder = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder()
                     {
                         DataSource = dlg.ServerName,
@@ -334,107 +346,27 @@ namespace SQL_Document_Builder
                     if (Password?.Trim().Length > 0)
                         builder.Password = dlg.Password;
 
-                    ConnectionString = builder.ConnectionString;
+                    connectionString = builder.ConnectionString;
                 }
             }
+
+            bool testResult = await DatabaseHelper.TestConnection(connectionString);
+            if (!testResult)
+            {
+                return string.Empty;
+            }
+            ConnectionString = connectionString;
             return ConnectionString;
         }
 
-        public bool RequireMannualLogin()
-        {
-            bool result;
-
-            if (AuthenticationType == 1)
-            {
-                result = true;
-            }
-            else
-            {
-                result = (ConnectionString?.Length == 0);
-            }
-
-            return result;
-        }
-
+        /// <summary>
+        /// Overrides the ToString method to return the name of the connection item.
+        /// </summary>
+        /// <returns>A string? .</returns>
         public override string? ToString()
         {
             return Name;
         }
-
-        //public void Write(XmlWriter writer)
-        //{
-        //    writer.WriteStartElement("ConnectionItem");
-
-        //    writer.WriteStartElement("DBMS");
-        //    writer.WriteValue(DBMSType);
-        //    writer.WriteEndElement();
-
-        //    writer.WriteStartElement("Name");
-        //    writer.WriteValue(Name);
-        //    writer.WriteEndElement();
-
-        //    if (IsCustom)
-        //    {
-        //        if (ConnectionString != null)
-        //        {
-        //            writer.WriteStartElement("CustomConnection");
-        //            writer.WriteValue("True");
-        //            writer.WriteEndElement();
-
-        //            writer.WriteStartElement("ConnectionString");
-        //            writer.WriteValue(BuildSecureConnectionString(ConnectionString));
-        //            writer.WriteEndElement();
-        //        }
-        //    }
-        //    else
-        //    {
-        //        writer.WriteStartElement("Server");
-        //        writer.WriteValue(ServerName);
-        //        writer.WriteEndElement();
-
-        //        writer.WriteStartElement("Database");
-        //        writer.WriteValue(Database);
-        //        writer.WriteEndElement();
-
-        //        writer.WriteStartElement("Authentication");
-        //        writer.WriteValue(AuthenticationType.ToString());
-        //        writer.WriteEndElement();
-
-        //        if (AuthenticationType == 1)
-        //        {
-        //            writer.WriteStartElement("User");
-        //            writer.WriteValue(UserName);
-        //            writer.WriteEndElement();
-
-        //            writer.WriteStartElement("RememberPwd");
-        //            writer.WriteValue(RememberPassword.ToString());
-        //            writer.WriteEndElement();
-
-        //            if (RememberPassword && Password != null && ConnectionString != null)
-        //            {
-        //                writer.WriteStartElement("Pwd");
-        //                writer.WriteValue(EncryptPwd(Password));
-        //                writer.WriteEndElement();
-
-        //                BuildConnectionString();
-        //                writer.WriteStartElement("ConnectionString");
-        //                writer.WriteValue(BuildSecureConnectionString(ConnectionString));
-        //                writer.WriteEndElement();
-        //            }
-        //        }
-        //        else
-        //        {
-        //            if (ConnectionString != null)
-        //            {
-        //                writer.WriteStartElement("ConnectionString");
-        //                writer.WriteValue(BuildSecureConnectionString(ConnectionString));
-        //                writer.WriteEndElement();
-        //            }
-        //        }
-        //    }
-
-        //    writer.WriteEndElement();
-        //}
 
         /// <summary>
         /// Build xml string
@@ -520,6 +452,11 @@ namespace SQL_Document_Builder
             writer.WriteEndElement();
         }
 
+        /// <summary>
+        /// Builds the secure connection string.
+        /// </summary>
+        /// <param name="connectionString">The connection string.</param>
+        /// <returns>A string.</returns>
         private static string BuildSecureConnectionString(string connectionString)
         {
             if (connectionString.Length > 0)
@@ -536,6 +473,11 @@ namespace SQL_Document_Builder
             return "";
         }
 
+        /// <summary>
+        /// Encrypts the password.
+        /// </summary>
+        /// <param name="pwd">The pwd.</param>
+        /// <returns>A string.</returns>
         private static string EncryptPwd(string pwd)
         {
             if (pwd != null)
@@ -557,6 +499,11 @@ namespace SQL_Document_Builder
             return "";
         }
 
+        /// <summary>
+        /// Parses the password.
+        /// </summary>
+        /// <param name="pwd">The pwd.</param>
+        /// <returns>A string.</returns>
         private static string ParsePwd(string pwd)
         {
             if (pwd.Length > 1)
@@ -574,6 +521,11 @@ namespace SQL_Document_Builder
             return "";
         }
 
+        /// <summary>
+        /// Parses the secure connection string.
+        /// </summary>
+        /// <param name="connString">The conn string.</param>
+        /// <returns>A string.</returns>
         private static string ParseSecureConnectionString(string connString)
         {
             if (connString.Length > 0)

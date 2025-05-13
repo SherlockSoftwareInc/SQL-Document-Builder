@@ -218,8 +218,11 @@ namespace SQL_Document_Builder
                     _selectedConnection = connection;
                     serverToolStripStatusLabel.Text = "";
                     databaseToolStripStatusLabel.Text = "";
+                    schemaComboBox.Items.Clear();
+                    searchTextBox.Text = string.Empty;
+                    objectsListBox.Items.Clear();
 
-                    string? connectionString = connection?.ConnectionString?.Length == 0 ? connection.Login() : connection?.ConnectionString;
+                    string? connectionString = connection?.ConnectionString?.Length == 0 ? await connection.Login() : connection?.ConnectionString;
 
                     if (connectionString?.Length > 0)
                     {
@@ -1004,6 +1007,8 @@ namespace SQL_Document_Builder
 
                 ChangeDBConnection(menuItem.Connection);
 
+                ObjectTypeComboBox_SelectedIndexChanged(sender, e);
+
                 Cursor = Cursors.Default;
                 statusToolStripStatusLabe.Text = "";
             }
@@ -1451,7 +1456,7 @@ namespace SQL_Document_Builder
             WindowState = FormWindowState.Maximized;
             splitContainer1.SplitterDistance = 200;
             if (collapsibleSplitter1 != null)
-                collapsibleSplitter1.SplitterDistance = (int)(this.Width * 0.3F);
+                collapsibleSplitter1.SplitterDistance = (int)(this.Width * 0.4F);
         }
 
         /// <summary>
