@@ -52,6 +52,7 @@
     <Compile Include="SourceFiles\FlatTabControl.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="SourceFiles\IconDarkModeConverter.cs" />
     <Compile Include="SourceFiles\Messenger.cs" />
     <Compile Include="UserControl1.cs">
       <SubType>UserControl</SubType>
