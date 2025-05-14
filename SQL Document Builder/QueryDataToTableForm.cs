@@ -18,7 +18,12 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Gets or sets a value indicating whether insert statement.
+        /// Gets or sets the INSERT statement.
+        /// </summary>
+        public string DocumentBody { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the generated document is a insert statement or not.
         /// </summary>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool InsertStatement { get; set; } = false;
@@ -30,8 +35,13 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void CopyToolStripButton_Click(object sender, EventArgs e)
         {
-            htmlTextBox.SelectAll();
-            htmlTextBox.Copy();
+            // if active control is a text box, copy the text to clipboard
+            if (ActiveControl is TextBoxBase textBox)
+            {
+                textBox.SelectAll();
+                textBox.Copy();
+                return;
+            }
         }
 
         /// <summary>
@@ -43,6 +53,8 @@ namespace SQL_Document_Builder
         {
             if (sqlTextBox.Text.StartsWith("select ", StringComparison.CurrentCultureIgnoreCase))
             {
+                DocumentBody = string.Empty;
+
                 try
                 {
                     if (InsertStatement)
@@ -54,7 +66,13 @@ namespace SQL_Document_Builder
                         htmlTextBox.Text = await Common.QueryDataToHTMLTableAsync(sqlTextBox.Text);
                     }
 
-                    Clipboard.SetText(htmlTextBox.Text);
+                    DocumentBody = htmlTextBox.Text;
+
+                    if (!string.IsNullOrEmpty(htmlTextBox.Text))
+                    {
+                        DialogResult = DialogResult.OK;
+                        Close();
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -101,13 +119,34 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Handles the Load event of the QueryDataToTableForm.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void QueryDataToTableForm_Load(object sender, EventArgs e)
+        {
+            if (InsertStatement)
+            {
+                Text = "Query to INSERT Statement";
+            }
+            else
+            {
+                Text = "Query to HTML";
+            }
+        }
+
+        /// <summary>
         /// Selects the all tool strip menu item_ click.
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
         private void SelectAllToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            htmlTextBox.SelectAll();
+            if (ActiveControl is TextBoxBase textBox)
+            {
+                textBox.SelectAll();
+                return;
+            }
         }
 
         /// <summary>

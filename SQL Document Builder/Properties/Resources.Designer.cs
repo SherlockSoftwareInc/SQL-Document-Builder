@@ -63,6 +63,16 @@ namespace SQL_Document_Builder.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap _8242997 {
+            get {
+                object obj = ResourceManager.GetObject("8242997", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap database {
             get {
                 object obj = ResourceManager.GetObject("database", resourceCulture);
@@ -76,6 +86,16 @@ namespace SQL_Document_Builder.Properties {
         internal static System.Drawing.Bitmap function_16 {
             get {
                 object obj = ResourceManager.GetObject("function_16", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap page_blank {
+            get {
+                object obj = ResourceManager.GetObject("page-blank", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

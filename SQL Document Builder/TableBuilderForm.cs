@@ -73,6 +73,66 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Gets the object create script.
+        /// </summary>
+        /// <param name="objectName">The object name.</param>
+        /// <returns>A Task.</returns>
+        private static async Task<string> GetObjectCreateScriptAsync(ObjectName objectName)
+        {
+            string? createScript = string.Empty;
+            if (objectName != null)
+            {
+                createScript = await DatabaseDocBuilder.GetCreateObjectScriptAsync(objectName);
+            }
+
+            if (string.IsNullOrEmpty(createScript))
+            {
+                return string.Empty;
+            }
+
+            // remove the space and new line at the end of the script
+            createScript = createScript.TrimEnd([' ', '\r', '\n', '\t']);
+
+            // add "GO" at the end of the script if it doesn't exist
+            if (!createScript.EndsWith("GO", StringComparison.CurrentCultureIgnoreCase))
+            {
+                createScript += Environment.NewLine + "GO" + Environment.NewLine;
+            }
+            else
+            {
+                createScript += Environment.NewLine;
+            }
+
+            // get the object description for table and view
+            if (objectName?.ObjectType == ObjectName.ObjectTypeEnums.Table || objectName?.ObjectType == ObjectName.ObjectTypeEnums.View)
+            {
+                var description = await ObjectDescription.BuildObjectDescription(objectName, Properties.Settings.Default.UseExtendedProperties);
+                if (description.Length > 0)
+                {
+                    // append the description to the script
+                    createScript += description;
+                    createScript += Environment.NewLine + "GO" + Environment.NewLine;
+                }
+            }
+
+            return createScript;
+        }
+
+        /// <summary>
+        /// Selects the objects.
+        /// </summary>
+        /// <returns>A List&lt;ObjectName&gt;? .</returns>
+        private static List<ObjectName>? SelectObjects()
+        {
+            var form = new DBObjectsSelectForm();
+            if (form.ShowDialog() == DialogResult.OK)
+            {
+                return form.SelectedObjects;
+            }
+            return null;
+        }
+
+        /// <summary>
         /// Abouts the tool strip menu item_ click.
         /// </summary>
         /// <param name="sender">The sender.</param>
@@ -376,20 +436,6 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Selects the objects.
-        /// </summary>
-        /// <returns>A List&lt;ObjectName&gt;? .</returns>
-        private static List<ObjectName>? SelectObjects()
-        {
-            var form = new DBObjectsSelectForm();
-            if (form.ShowDialog() == DialogResult.OK)
-            {
-                return form.SelectedObjects;
-            }
-            return null;
-        }
-
-        /// <summary>
         /// handles the "create primary key" tool strip menu item click:
         /// </summary>
         /// <param name="sender">The sender.</param>
@@ -423,52 +469,6 @@ namespace SQL_Document_Builder
             {
                 SetScript(script);
             }
-        }
-
-        /// <summary>
-        /// Gets the object create script.
-        /// </summary>
-        /// <param name="objectName">The object name.</param>
-        /// <returns>A Task.</returns>
-        private static async Task<string> GetObjectCreateScriptAsync(ObjectName objectName)
-        {
-            string? createScript = string.Empty;
-            if (objectName != null)
-            {
-                createScript = await DatabaseDocBuilder.GetCreateObjectScriptAsync(objectName);
-            }
-
-            if (string.IsNullOrEmpty(createScript))
-            {
-                return string.Empty;
-            }
-
-            // remove the space and new line at the end of the script
-            createScript = createScript.TrimEnd([' ', '\r', '\n', '\t']);
-
-            // add "GO" at the end of the script if it doesn't exist
-            if (!createScript.EndsWith("GO", StringComparison.CurrentCultureIgnoreCase))
-            {
-                createScript += Environment.NewLine + "GO" + Environment.NewLine;
-            }
-            else
-            {
-                createScript += Environment.NewLine;
-            }
-
-            // get the object description for table and view
-            if (objectName?.ObjectType == ObjectName.ObjectTypeEnums.Table || objectName?.ObjectType == ObjectName.ObjectTypeEnums.View)
-            {
-                var description = await ObjectDescription.BuildObjectDescription(objectName, Properties.Settings.Default.UseExtendedProperties);
-                if (description.Length > 0)
-                {
-                    // append the description to the script
-                    createScript += description;
-                    createScript += Environment.NewLine + "GO" + Environment.NewLine;
-                }
-            }
-
-            return createScript;
         }
 
         /// <summary>
@@ -511,28 +511,6 @@ namespace SQL_Document_Builder
             {
                 DBObjectDefPanel dBObjectDefPanel = (DBObjectDefPanel)ActiveControl;
                 dBObjectDefPanel.Cut();
-            }
-        }
-
-        /// <summary>
-        /// Descs the edit tool strip button click.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The E.</param>
-        private void DescEditToolStripButton_Click(object sender, EventArgs e)
-        {
-            if (objectsListBox.SelectedItem != null)
-            {
-                var objectName = (ObjectName)objectsListBox.SelectedItem;
-                using var dlg = new DescEditForm()
-                {
-                    TableName = objectName
-                };
-                dlg.ShowDialog();
-            }
-            else
-            {
-                statusToolStripStatusLabe.Text = "No object selected";
             }
         }
 
@@ -835,6 +813,18 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Handles the "New" tool strip button click event.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void NewToolStripButton_Click(object sender, EventArgs e)
+        {
+            // clear the sqlTextBox
+            sqlTextBox.Text = string.Empty;
+            sqlTextBox.Focus();
+        }
+
+        /// <summary>
         /// Handles the Click event of the NewToolStripButton control.
         /// </summary>
         /// <param name="sender">The sender.</param>
@@ -882,6 +872,36 @@ namespace SQL_Document_Builder
                 }
 
                 EndBuild();
+            }
+        }
+
+        /// <summary>
+        /// Handles the "Objects description" tool strip menu item click:
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private async void ObjectsDescriptionToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            sqlTextBox.Text = string.Empty;
+
+            List<ObjectName>? selectedObjects = SelectObjects();
+
+            if (selectedObjects == null || selectedObjects.Count == 0)
+            {
+                return;
+            }
+
+            foreach (ObjectName obj in selectedObjects)
+            {
+                var script = await ObjectDescription.BuildObjectDescription(obj, Properties.Settings.Default.UseExtendedProperties);
+
+                // add "GO" and new line after each object description if it is not empty
+                if (!string.IsNullOrEmpty(script))
+                {
+                    script += Environment.NewLine + "GO" + Environment.NewLine;
+                }
+
+                sqlTextBox.AppendText(script);
             }
         }
 
@@ -1192,6 +1212,10 @@ namespace SQL_Document_Builder
         {
             using var form = new QueryDataToTableForm();
             form.ShowDialog();
+            if (!string.IsNullOrEmpty(form.DocumentBody))
+            {
+                sqlTextBox.Text = form.DocumentBody;
+            }
         }
 
         /// <summary>
@@ -1206,6 +1230,11 @@ namespace SQL_Document_Builder
                 InsertStatement = true
             };
             form.ShowDialog();
+
+            if (!string.IsNullOrEmpty(form.DocumentBody))
+            {
+                sqlTextBox.Text = form.DocumentBody;
+            }
         }
 
         /// <summary>
@@ -1656,36 +1685,6 @@ namespace SQL_Document_Builder
                 SetScript(scripts);
 
                 EndBuild();
-            }
-        }
-
-        /// <summary>
-        /// Handles the "Objects description" tool strip menu item click:
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private async void ObjectsDescriptionToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            sqlTextBox.Text = string.Empty;
-
-            List<ObjectName>? selectedObjects = SelectObjects();
-
-            if (selectedObjects == null || selectedObjects.Count == 0)
-            {
-                return;
-            }
-
-            foreach (ObjectName obj in selectedObjects)
-            {
-                var script = await ObjectDescription.BuildObjectDescription(obj, Properties.Settings.Default.UseExtendedProperties);
-
-                // add "GO" and new line after each object description if it is not empty
-                if (!string.IsNullOrEmpty(script))
-                {
-                    script += Environment.NewLine + "GO" + Environment.NewLine;
-                }
-
-                sqlTextBox.AppendText(script);
             }
         }
     }
