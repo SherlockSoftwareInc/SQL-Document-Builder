@@ -411,8 +411,19 @@ namespace SQL_Document_Builder
                 return;
             }
 
-            foreach (ObjectName obj in selectedObjects)
+            StartBuild();
+
+            for (int i = 0; i < selectedObjects.Count; i++)
             {
+                int percentComplete = (i * 100) / selectedObjects.Count;
+                if (percentComplete > 0 && percentComplete % 2 == 0)
+                {
+                    progressBar.Value = percentComplete;
+                }
+                statusToolStripStatusLabe.Text = $"Processing {percentComplete}%...";
+
+                var obj = selectedObjects[i];
+
                 // get the object create script
                 var script = await GetObjectCreateScriptAsync(obj);
                 sqlTextBox.AppendText(script);
@@ -433,6 +444,8 @@ namespace SQL_Document_Builder
                     sqlTextBox.AppendText(insertScript + "GO" + Environment.NewLine);
                 }
             }
+
+            EndBuild();
         }
 
         /// <summary>
@@ -487,12 +500,23 @@ namespace SQL_Document_Builder
                 return;
             }
 
-            foreach (ObjectName obj in selectedObjects)
+            StartBuild();
+
+            for (int i = 0; i < selectedObjects.Count; i++)
             {
-                var script = await GetObjectCreateScriptAsync(obj);
+                int percentComplete = (i * 100) / selectedObjects.Count;
+                if (percentComplete > 0 && percentComplete % 2 == 0)
+                {
+                    progressBar.Value = percentComplete;
+                }
+                statusToolStripStatusLabe.Text = $"Processing {percentComplete}%...";
+
+                var script = await GetObjectCreateScriptAsync(selectedObjects[i]);
 
                 sqlTextBox.AppendText(script);
             }
+
+            EndBuild();
         }
 
         /// <summary>
@@ -891,8 +915,18 @@ namespace SQL_Document_Builder
                 return;
             }
 
-            foreach (ObjectName obj in selectedObjects)
+            StartBuild();
+
+            for (int i = 0; i < selectedObjects.Count; i++)
             {
+                int percentComplete = (i * 100) / selectedObjects.Count;
+                if (percentComplete > 0 && percentComplete % 2 == 0)
+                {
+                    progressBar.Value = percentComplete;
+                }
+                statusToolStripStatusLabe.Text = $"Processing {percentComplete}%...";
+
+                var obj = selectedObjects[i];
                 var script = await ObjectDescription.BuildObjectDescription(obj, Properties.Settings.Default.UseExtendedProperties);
 
                 // add "GO" and new line after each object description if it is not empty
@@ -903,6 +937,8 @@ namespace SQL_Document_Builder
 
                 sqlTextBox.AppendText(script);
             }
+
+            EndBuild();
         }
 
         /// <summary>
