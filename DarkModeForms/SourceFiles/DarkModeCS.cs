@@ -569,25 +569,63 @@ namespace DarkModeForms
                     pGrid.CategorySplitterColor = OScolors.ControlLight;
                     break;
 
-                case "TreeView":
-                    control.GetType().GetProperty("BorderStyle")?.SetValue(control, BorderStyle.None);
-                    //tree.DrawNode += (object? sender, DrawTreeNodeEventArgs e) =>
-                    //{
-                    //  if (e.Node.ImageIndex != -1)
-                    //  {
-                    //	Image image = tree.ImageList.Images[e.Node.ImageIndex];
-                    //	using (Graphics g = Graphics.FromImage(image))
-                    //	{
-                    //	  g.InterpolationMode = InterpolationMode.HighQualityBilinear;
-                    //	  g.CompositingQuality = CompositingQuality.HighQuality;
-                    //	  g.SmoothingMode = SmoothingMode.HighQuality;
+                //case "TreeView":
+                //    control.GetType().GetProperty("BorderStyle")?.SetValue(control, BorderStyle.None);
+                //    var tree = control as TreeView;
+                //    tree.DrawNode += (object sender, DrawTreeNodeEventArgs e) =>
+                //    {
+                //        if (e.Node.ImageIndex != -1)
+                //        {
+                //            Image image = tree.ImageList.Images[e.Node.ImageIndex];
+                //            using (Graphics g = Graphics.FromImage(image))
+                //            {
+                //                g.InterpolationMode = InterpolationMode.HighQualityBilinear;
+                //                g.CompositingQuality = CompositingQuality.HighQuality;
+                //                g.SmoothingMode = SmoothingMode.HighQuality;
 
-                    //	  g.DrawImage(DarkModeCS.ChangeToColor(image, OScolors.TextInactive), new Point(0,0));
-                    //	}
-                    //	tree.ImageList.Images[e.Node.ImageIndex] = image;
-                    //  }
-                    //  tree.Invalidate();
-                    //};
+                //                g.DrawImage(DarkModeCS.ChangeToColor(image, OScolors.TextInactive), new Point(0, 0));
+                //            }
+                //            tree.ImageList.Images[e.Node.ImageIndex] = image;
+                //        }
+                //        tree.Invalidate();
+                //    };
+                //    break;
+
+                case "TreeView":
+                    var tree = control as TreeView;
+                    tree.GetType().GetProperty("BorderStyle")?.SetValue(tree, BorderStyle.None);
+                    tree.DrawMode = TreeViewDrawMode.OwnerDrawAll;
+                    tree.DrawNode += (object sender, DrawTreeNodeEventArgs e) =>
+                    {
+                        // Draw background
+                        Color backColor = e.Node.IsSelected ? OScolors.Accent : tree.BackColor;
+                        using (Brush backBrush = new SolidBrush(backColor))
+                        {
+                            e.Graphics.FillRectangle(backBrush, e.Bounds);
+                        }
+
+                        // Draw image if present
+                        if (tree.ImageList != null && e.Node.ImageIndex >= 0 && e.Node.ImageIndex < tree.ImageList.Images.Count)
+                        {
+                            Image origImage = tree.ImageList.Images[e.Node.ImageIndex];
+                            Color imageColor = e.Node.IsSelected ? OScolors.TextInAccent : OScolors.TextActive;
+                            using (Image img = DarkModeCS.ChangeToColor(origImage, imageColor))
+                            {
+                                int imgY = e.Bounds.Y + (e.Bounds.Height - img.Height) / 2;
+                                e.Graphics.DrawImage(img, e.Bounds.X, imgY, img.Width, img.Height);
+                            }
+                            // Offset text to the right of the image
+                            int textOffset = tree.ImageList.ImageSize.Width + 3;
+                            Rectangle textRect = new Rectangle(e.Bounds.X + textOffset, e.Bounds.Y, e.Bounds.Width - textOffset, e.Bounds.Height);
+                            TextRenderer.DrawText(e.Graphics, e.Node.Text, tree.Font, textRect, OScolors.TextActive, TextFormatFlags.VerticalCenter | TextFormatFlags.Left);
+                        }
+                        else
+                        {
+                            // Draw text only
+                            TextRenderer.DrawText(e.Graphics, e.Node.Text, tree.Font, e.Bounds, OScolors.TextActive, TextFormatFlags.VerticalCenter | TextFormatFlags.Left);
+                        }
+                        e.DrawDefault = false;
+                    };
                     break;
 
                 case "DataGridView":
@@ -634,6 +672,12 @@ namespace DarkModeForms
                     grid.RowHeadersDefaultCellStyle.ForeColor = OScolors.TextActive;
                     grid.RowHeadersDefaultCellStyle.SelectionBackColor = OScolors.AccentOpaque;
                     grid.RowHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
+                    break;
+
+                case "StatusStrip":
+                    var statusStrip = control as StatusStrip;
+                    statusStrip.RenderMode = ToolStripRenderMode.Professional;
+                    statusStrip.Renderer = new MyRenderer(new CustomColorTable(OScolors), ColorizeIcons) { MyColors = OScolors };
                     break;
 
                 default:
@@ -1283,20 +1327,68 @@ namespace DarkModeForms
             #endregion Chevron
         }
 
-        // For the Text Color of all Items:
+        //// For the Text Color of all Items:
+        //protected override void OnRenderItemText(ToolStripItemTextRenderEventArgs e)
+        //{
+        //    if (e.Item.Enabled)
+        //    {
+        //        e.TextColor = MyColors.TextActive;
+        //    }
+        //    else
+        //    {
+        //        e.TextColor = MyColors.TextInactive;
+        //    }
+        //    base.OnRenderItemText(e);
+        //}
+
+        /// <summary>
+        /// For the Text Color of all Items:
+        /// </summary>
+        /// <param name="e">The e.</param>
         protected override void OnRenderItemText(ToolStripItemTextRenderEventArgs e)
         {
-            if (e.Item.Enabled)
+            if (e.Item is ToolStripStatusLabel)
             {
-                e.TextColor = MyColors.TextActive;
+                e.TextColor = e.Item.Enabled ? MyColors.TextActive : MyColors.TextInactive;
+            }
+            else if (e.Item is ToolStripMenuItem)
+            {
+                // Use accent color for selected, otherwise normal
+                if (e.Item.Selected)
+                    e.TextColor = MyColors.TextInAccent;
+                else
+                    e.TextColor = e.Item.Enabled ? MyColors.TextActive : MyColors.TextInactive;
             }
             else
             {
-                e.TextColor = MyColors.TextInactive;
+                e.TextColor = e.Item.Enabled ? MyColors.TextActive : MyColors.TextInactive;
             }
             base.OnRenderItemText(e);
         }
 
+        /// <summary>
+        /// draws the background of the label.
+        /// </summary>
+        /// <param name="e">The e.</param>
+        protected override void OnRenderLabelBackground(ToolStripItemRenderEventArgs e)
+        {
+            if (e.Item is ToolStripStatusLabel)
+            {
+                using (SolidBrush backBrush = new SolidBrush(MyColors.Control))
+                {
+                    e.Graphics.FillRectangle(backBrush, e.Item.Bounds);
+                }
+            }
+            else
+            {
+                base.OnRenderLabelBackground(e);
+            }
+        }
+
+        /// <summary>
+        /// overrides the OnRenderItemBackground method to draw a border around ComboBox items.
+        /// </summary>
+        /// <param name="e">The e.</param>
         protected override void OnRenderItemBackground(ToolStripItemRenderEventArgs e)
         {
             base.OnRenderItemBackground(e);
@@ -1309,7 +1401,10 @@ namespace DarkModeForms
             }
         }
 
-        // For Menu Items BackColor:
+        /// <summary>
+        /// For Menu Items BackColor:
+        /// </summary>
+        /// <param name="e">The e.</param>
         protected override void OnRenderMenuItemBackground(ToolStripItemRenderEventArgs e)
         {
             Graphics g = e.Graphics;
@@ -1346,50 +1441,75 @@ namespace DarkModeForms
             }
         }
 
-        // Re-Colors the Icon Images to a Clear color:
+        //// Re-Colors the Icon Images to a Clear color:
+        //protected override void OnRenderItemImage(ToolStripItemImageRenderEventArgs e)
+        //{
+        //    if (e.Item.GetType().FullName == "System.Windows.Forms.MdiControlStrip+ControlBoxMenuItem")
+        //    {
+        //        //Window Controls - Minimize, Maximize, Close button of a maximized MDI child windows
+        //        //are realized as ControlBoxMenuItem contained in the MenuStrip
+        //        //by default they would be painted black on a dark surface
+        //        //so to make them more visible, we paint them ourselves:
+        //        Image image = e.Image;
+        //        Color _ClearColor = e.Item.Enabled ? MyColors.TextActive : MyColors.SurfaceDark;
+
+        //        using (Image adjustedImage = DarkModeCS.ChangeToColor(image, _ClearColor))
+        //        {
+        //            e.Graphics.InterpolationMode = InterpolationMode.HighQualityBilinear;
+        //            e.Graphics.CompositingQuality =
+        //                CompositingQuality.AssumeLinear; //looks thinner and less fuzzy than HighQuality
+        //            e.Graphics.SmoothingMode = SmoothingMode.HighQuality;
+        //            e.Graphics.DrawImage(adjustedImage, e.ImageRectangle);
+        //        }
+
+        //        return;
+        //    }
+
+        //    if (ColorizeIcons && e.Image != null)
+        //    {
+        //        // Get the current icon
+        //        Image image = e.Image;
+        //        Color _ClearColor = e.Item.Enabled ? MyColors.TextInactive : MyColors.SurfaceDark;
+
+        //        // Create a new image with the desired color adjustments
+        //        using (Image adjustedImage = DarkModeCS.ChangeToColor(image, _ClearColor))
+        //        {
+        //            e.Graphics.InterpolationMode = InterpolationMode.HighQualityBilinear;
+        //            e.Graphics.CompositingQuality = CompositingQuality.HighQuality;
+        //            e.Graphics.SmoothingMode = SmoothingMode.HighQuality;
+        //            e.Graphics.DrawImage(adjustedImage, e.ImageRectangle);
+        //        }
+        //    }
+        //    else
+        //    {
+        //        base.OnRenderItemImage(e);
+        //    }
+        //}
+
+        /// <summary>
+        /// Ons the render item image.
+        /// </summary>
+        /// <param name="e">The e.</param>
         protected override void OnRenderItemImage(ToolStripItemImageRenderEventArgs e)
         {
-            if (e.Item.GetType().FullName == "System.Windows.Forms.MdiControlStrip+ControlBoxMenuItem")
+            if (e.Item is ToolStripStatusLabel && e.Image != null)
             {
-                //Window Controls - Minimize, Maximize, Close button of a maximized MDI child windows
-                //are realized as ControlBoxMenuItem contained in the MenuStrip
-                //by default they would be painted black on a dark surface
-                //so to make them more visible, we paint them ourselves:
-                Image image = e.Image;
-                Color _ClearColor = e.Item.Enabled ? MyColors.TextActive : MyColors.SurfaceDark;
-
-                using (Image adjustedImage = DarkModeCS.ChangeToColor(image, _ClearColor))
-                {
-                    e.Graphics.InterpolationMode = InterpolationMode.HighQualityBilinear;
-                    e.Graphics.CompositingQuality =
-                        CompositingQuality.AssumeLinear; //looks thinner and less fuzzy than HighQuality
-                    e.Graphics.SmoothingMode = SmoothingMode.HighQuality;
-                    e.Graphics.DrawImage(adjustedImage, e.ImageRectangle);
-                }
-
-                return;
-            }
-
-            if (ColorizeIcons && e.Image != null)
-            {
-                // Get the current icon
-                Image image = e.Image;
-                Color _ClearColor = e.Item.Enabled ? MyColors.TextInactive : MyColors.SurfaceDark;
-
-                // Create a new image with the desired color adjustments
-                using (Image adjustedImage = DarkModeCS.ChangeToColor(image, _ClearColor))
+                // Use TextActive for enabled, TextInactive for disabled
+                Color imageColor = e.Item.Enabled ? MyColors.TextActive : MyColors.TextInactive;
+                using (Image adjustedImage = DarkModeCS.ChangeToColor(e.Image, imageColor))
                 {
                     e.Graphics.InterpolationMode = InterpolationMode.HighQualityBilinear;
                     e.Graphics.CompositingQuality = CompositingQuality.HighQuality;
                     e.Graphics.SmoothingMode = SmoothingMode.HighQuality;
                     e.Graphics.DrawImage(adjustedImage, e.ImageRectangle);
                 }
+                return;
             }
-            else
-            {
-                base.OnRenderItemImage(e);
-            }
+
+            // Existing logic for other items
+            base.OnRenderItemImage(e);
         }
+
     }
 
     public class CustomColorTable : ProfessionalColorTable

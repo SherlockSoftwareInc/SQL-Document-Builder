@@ -127,9 +127,6 @@
   <data name="server" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\server.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="8242997" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\8242997.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
   <data name="function_16" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\function_16.ico;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
@@ -162,5 +159,8 @@
   </data>
   <data name="page-blank" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\page-blank.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="doc_html" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\doc_html.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
 </root>
