@@ -809,6 +809,9 @@ namespace SQL_Document_Builder
                         }
                     }
 
+                    // checks if the table has identify column
+                    var hasIdentityColumn = await DatabaseHelper.HasIdentityColumnAsync(objectName);
+
                     var sql = $"select * from {objectName.FullName}";
                     var script = await DatabaseDocBuilder.QueryDataToInsertStatementAsync(sql, objectName.FullName);
 
@@ -819,8 +822,22 @@ namespace SQL_Document_Builder
                     }
                     else if (!string.IsNullOrEmpty(script))
                     {
+                        // add SET IDENTITY_INSERT ON if the table has identity column
+                        if (hasIdentityColumn)
+                        {
+                            sqlTextBox.AppendText("SET IDENTITY_INSERT " + objectName.FullName + " ON;" + Environment.NewLine + "GO" + Environment.NewLine);
+                        }
+
                         // append the insert statement to the script
                         sqlTextBox.AppendText(script);
+
+                        // add SET IDENTITY_INSERT OFF if the table has identity column
+                        if (hasIdentityColumn)
+                        {
+                            sqlTextBox.AppendText("GO" + Environment.NewLine);
+                            sqlTextBox.AppendText("SET IDENTITY_INSERT " + objectName.FullName + " OFF;" + Environment.NewLine);
+                        }
+
                         sqlTextBox.AppendText("GO" + Environment.NewLine);
                         if (!string.IsNullOrEmpty(sqlTextBox.Text))
                         {

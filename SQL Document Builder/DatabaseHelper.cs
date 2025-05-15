@@ -6,7 +6,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using static SQL_Document_Builder.ObjectName;
-using static System.ComponentModel.Design.ObjectSelectorEditor;
 
 namespace SQL_Document_Builder
 {
@@ -551,9 +550,47 @@ ORDER BY s.name, p.name;";
             }
         }
 
-        internal static async Task<DataTable> GetTablesAsync(string v)
+        /// <summary>
+        /// Gets the identity column name for the specified table asynchronously, or null if none exists.
+        /// </summary>
+        /// <param name="objectName">The object name.</param>
+        /// <returns>The identity column name, or null.</returns>
+        internal static async Task<bool> HasIdentityColumnAsync(ObjectName objectName)
         {
-            throw new NotImplementedException();
+            bool result = false;
+            string sql = @"
+SELECT
+    ic.name AS identity_column_name
+FROM sys.tables AS t
+INNER JOIN sys.schemas AS s ON t.schema_id = s.schema_id
+INNER JOIN sys.identity_columns AS ic ON t.object_id = ic.object_id
+WHERE t.name = @TableName
+AND s.name = @SchemaName;";
+
+            await using var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+            try
+            {
+                await conn.OpenAsync();
+                await using var cmd = new SqlCommand(sql, conn);
+                cmd.Parameters.AddWithValue("@TableName", objectName.Name);
+                cmd.Parameters.AddWithValue("@SchemaName", objectName.Schema);
+
+                await using var reader = await cmd.ExecuteReaderAsync();
+                if (await reader.ReadAsync())
+                {
+                    result = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                await conn.CloseAsync();
+            }
+
+            return result;
         }
     }
 }

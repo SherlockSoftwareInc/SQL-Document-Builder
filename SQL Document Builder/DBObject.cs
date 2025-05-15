@@ -86,14 +86,10 @@ AND s.name = '{TableSchema}';";
                 while (reader.Read())
                 {
                     string columnName = reader.GetString(0);
-
-                    // Handle sql_variant: get as object, then convert to int
-                    object seedObj = reader.GetValue(1);
-                    object incrementObj = reader.GetValue(2);
-
-                    int seedValue = Convert.ToInt32(seedObj);
-                    int incrementValue = Convert.ToInt32(incrementObj);
-
+                    object? seedValueObj = reader.GetValue(1);
+                    object? incrementValueObj = reader.GetValue(2);
+                    int seedValue = seedValueObj != DBNull.Value ? Convert.ToInt32(seedValueObj) : 0;
+                    int incrementValue = incrementValueObj != DBNull.Value ? Convert.ToInt32(incrementValueObj) : 0;
                     identityColumns[columnName] = (seedValue, incrementValue);
                 }
             }

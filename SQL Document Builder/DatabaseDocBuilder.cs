@@ -1,5 +1,6 @@
 ﻿using Microsoft.Data.SqlClient;
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Text;
 using System.Threading.Tasks;
@@ -32,7 +33,7 @@ namespace SQL_Document_Builder
             // Determine the object type and retrieve the corresponding creation script
             return dbObject.ObjectType switch
             {
-                ObjectName.ObjectTypeEnums.Table => await GetcreateScriptAsync(dbObject),
+                ObjectName.ObjectTypeEnums.Table => await GetCreateTableScriptAsync(dbObject),
                 ObjectName.ObjectTypeEnums.View => await GetCreateViewScriptAsync(dbObject),
                 ObjectName.ObjectTypeEnums.StoredProcedure => await GetCreateStoredProcedureScriptAsync(dbObject),
                 ObjectName.ObjectTypeEnums.Function => await GetCreateFunctionScriptAsync(dbObject),
@@ -144,6 +145,9 @@ WHERE sm.object_id = OBJECT_ID(@SchemaQualifiedName);";
                     int rowCount = 0;
                     int batchCount = 0;
 
+                    // add SET IDENTITY_INSERT  ON;
+                    sb.AppendLine($"--SET IDENTITY_INSERT {tableName} ON;");
+
                     while (await reader.ReadAsync())
                     {
                         // Check if row count exceeds 5000
@@ -230,6 +234,8 @@ WHERE sm.object_id = OBJECT_ID(@SchemaQualifiedName);";
                         sb.Length -= 3; // Remove ",\n"
                         sb.AppendLine(";"); // Close the last batch
                     }
+
+                    sb.AppendLine($"--SET IDENTITY_INSERT {tableName} OFF;");
                 }
             }
             catch (Exception ex)
@@ -400,7 +406,7 @@ GO";
         /// </summary>
         /// <param name="dbObject">The db object.</param>
         /// <returns>A Task.</returns>
-        private static async Task<string?> GetcreateScriptAsync(ObjectName objectName)
+        private static async Task<string?> GetCreateTableScriptAsync(ObjectName objectName)
         {
             StringBuilder createScript = new();
 
