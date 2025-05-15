@@ -126,7 +126,7 @@
             testToolStripButton.Image = Properties.Resources.checkmark;
             testToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             testToolStripButton.Name = "testToolStripButton";
-            testToolStripButton.Size = new System.Drawing.Size(48, 22);
+            testToolStripButton.Size = new System.Drawing.Size(47, 22);
             testToolStripButton.Text = "Test";
             testToolStripButton.Click += TestButton_Click;
             // 
@@ -223,10 +223,11 @@
             trustCertificateCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
             trustCertificateCheckBox.Location = new System.Drawing.Point(101, 160);
             trustCertificateCheckBox.Name = "trustCertificateCheckBox";
-            trustCertificateCheckBox.Size = new System.Drawing.Size(141, 19);
+            trustCertificateCheckBox.Size = new System.Drawing.Size(140, 19);
             trustCertificateCheckBox.TabIndex = 8;
             trustCertificateCheckBox.Text = "Trust server certificate";
             trustCertificateCheckBox.UseVisualStyleBackColor = true;
+            trustCertificateCheckBox.CheckedChanged += SettingsChanged;
             // 
             // encrptyCheckBox
             // 
@@ -239,6 +240,7 @@
             encrptyCheckBox.TabIndex = 7;
             encrptyCheckBox.Text = "Encrypt connection";
             encrptyCheckBox.UseVisualStyleBackColor = true;
+            encrptyCheckBox.CheckedChanged += SettingsChanged;
             // 
             // rememberPasswordCheckBox
             // 
@@ -249,6 +251,7 @@
             rememberPasswordCheckBox.TabIndex = 6;
             rememberPasswordCheckBox.Text = "Remember password";
             rememberPasswordCheckBox.UseVisualStyleBackColor = true;
+            rememberPasswordCheckBox.CheckedChanged += SettingsChanged;
             // 
             // authenticationComboBox
             // 
@@ -258,6 +261,7 @@
             authenticationComboBox.Name = "authenticationComboBox";
             authenticationComboBox.Size = new System.Drawing.Size(247, 23);
             authenticationComboBox.TabIndex = 1;
+            authenticationComboBox.SelectedIndexChanged += AuthenticationComboBox_SelectedIndexChanged;
             // 
             // passwordTextBox
             // 
@@ -266,6 +270,7 @@
             passwordTextBox.PasswordChar = '*';
             passwordTextBox.Size = new System.Drawing.Size(247, 23);
             passwordTextBox.TabIndex = 5;
+            passwordTextBox.TextChanged += SettingsChanged;
             // 
             // userNameTextBox
             // 
@@ -273,6 +278,7 @@
             userNameTextBox.Name = "userNameTextBox";
             userNameTextBox.Size = new System.Drawing.Size(247, 23);
             userNameTextBox.TabIndex = 3;
+            userNameTextBox.TextChanged += SettingsChanged;
             // 
             // passwordLabel
             // 
@@ -307,6 +313,7 @@
             serverNameTextBox.Name = "serverNameTextBox";
             serverNameTextBox.Size = new System.Drawing.Size(247, 23);
             serverNameTextBox.TabIndex = 3;
+            serverNameTextBox.TextChanged += SettingsChanged;
             // 
             // connectionNameTextBox
             // 
@@ -333,6 +340,8 @@
             databaseComboBox.Name = "databaseComboBox";
             databaseComboBox.Size = new System.Drawing.Size(247, 23);
             databaseComboBox.TabIndex = 5;
+            databaseComboBox.SelectedIndexChanged += SettingsChanged;
+            databaseComboBox.TextChanged += SettingsChanged;
             // 
             // databaseNameLabel
             // 

@@ -55,7 +55,7 @@ namespace SQL_Document_Builder
                             switch (elementValue)
                             {
                                 case "1":
-                                    this.AuthenticationType = SqlAuthenticationMethod.ActiveDirectoryIntegrated;
+                                    this.AuthenticationType = SqlAuthenticationMethod.ActiveDirectoryDefault;
                                     break;
 
                                 case "2":
@@ -63,7 +63,8 @@ namespace SQL_Document_Builder
                                     break;
 
                                 case "3":
-                                    this.AuthenticationType = SqlAuthenticationMethod.ActiveDirectoryPassword;
+                                    this.AuthenticationType = SqlAuthenticationMethod.ActiveDirectoryIntegrated;
+                                    //this.AuthenticationType = SqlAuthenticationMethod.ActiveDirectoryPassword;
                                     break;
 
                                 case "4":

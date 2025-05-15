@@ -77,21 +77,55 @@ namespace SQL_Document_Builder
         /// <param name="e"></param>
         private void AuthenticationComboBox_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (authenticationComboBox.SelectedIndex == 0)
+            var selectedItem = authenticationComboBox.SelectedItem as KeyValuePair<string, SqlAuthenticationMethod>?;
+
+            if (selectedItem.HasValue) // Fix for CS8629: Ensure the nullable value type is not null
             {
-                userNameTextBox.Enabled = false;
-                passwordTextBox.Enabled = false;
-                rememberPasswordCheckBox.Enabled = false;
-            }
-            else
-            {
-                userNameTextBox.Enabled = true;
-                passwordTextBox.Enabled = true;
-                rememberPasswordCheckBox.Enabled = true;
+                var authenticationMethod = selectedItem.Value.Value; // Fix for CS0029: Access the 'Value' property of the KeyValuePair to get the SqlAuthenticationMethod
+
+                switch (authenticationMethod) // Fix for CS0077: Directly use the value without 'as' since it's a non-nullable value type
+                {
+                    case SqlAuthenticationMethod.NotSpecified:
+                        break;
+
+                    case SqlAuthenticationMethod.SqlPassword:
+                    case SqlAuthenticationMethod.ActiveDirectoryPassword:
+                    case SqlAuthenticationMethod.ActiveDirectoryServicePrincipal:
+                    case SqlAuthenticationMethod.ActiveDirectoryManagedIdentity:
+                        userNameTextBox.Enabled = true;
+                        passwordTextBox.Enabled = true;
+                        rememberPasswordCheckBox.Enabled = true;
+                        break;
+
+                    case SqlAuthenticationMethod.ActiveDirectoryIntegrated:
+                    case SqlAuthenticationMethod.ActiveDirectoryInteractive:
+                        userNameTextBox.Enabled = true;
+                        passwordTextBox.Text = String.Empty;
+                        passwordTextBox.Enabled = false;
+                        rememberPasswordCheckBox.Enabled = false;
+                        break;
+
+                    default:
+                        userNameTextBox.Enabled = false;
+                        passwordTextBox.Text = String.Empty;
+                        passwordTextBox.Enabled = false;
+                        rememberPasswordCheckBox.Enabled = false;
+                        break;
+                }
             }
 
             BuildConnectionString();
             EnableOKButton();
+        }
+
+        /// <summary>
+        /// Gets the authentication.
+        /// </summary>
+        /// <returns>A SqlAuthenticationMethod.</returns>
+        private SqlAuthenticationMethod GetAuthentication()
+        {
+            var selectedItem = authenticationComboBox.SelectedItem as KeyValuePair<string, SqlAuthenticationMethod>?;
+            return selectedItem?.Value ?? SqlAuthenticationMethod.ActiveDirectoryIntegrated;
         }
 
         /// <summary>
@@ -111,14 +145,8 @@ namespace SQL_Document_Builder
                     InitialCatalog = dbName,
                     Encrypt = encrptyCheckBox.Checked,
                     TrustServerCertificate = trustCertificateCheckBox.Checked,
+                    Authentication = GetAuthentication()
                 };
-
-                var selectedItem = authenticationComboBox.SelectedItem as KeyValuePair<string, SqlAuthenticationMethod>?;
-
-                if (selectedItem.HasValue)
-                    builder.Authentication = selectedItem.Value.Value;
-                else
-                    builder.Authentication = SqlAuthenticationMethod.NotSpecified;
 
                 if (!string.IsNullOrEmpty(userNameTextBox.Text.Trim()))
                     builder.UserID = userNameTextBox.Text.Trim();
@@ -184,8 +212,8 @@ namespace SQL_Document_Builder
             // Creating a dictionary mapping authentication method names to SqlAuthenticationMethod values
             Dictionary<string, SqlAuthenticationMethod> authMethods = new()
             {
-                { "Windows Authentication", SqlAuthenticationMethod.ActiveDirectoryIntegrated },
                 { "SQL Server Authentication", SqlAuthenticationMethod.SqlPassword },
+                { "Microsoft Entra Integrated", SqlAuthenticationMethod.ActiveDirectoryIntegrated },
                 { "Microsoft Entra MFA", SqlAuthenticationMethod.ActiveDirectoryInteractive },
                 { "Microsoft Entra Password", Microsoft.Data.SqlClient.SqlAuthenticationMethod.ActiveDirectoryPassword },
                 { "Microsoft Entra Managed Identity", SqlAuthenticationMethod.ActiveDirectoryManagedIdentity },
@@ -231,8 +259,7 @@ namespace SQL_Document_Builder
                 DatabaseName = databaseComboBox.Text.Trim();
                 ConnectionName = $"{DatabaseName} @ {ServerName}";
                 UserName = userNameTextBox.Text.Trim();
-                var selectedItem = authenticationComboBox.SelectedItem as KeyValuePair<string, SqlAuthenticationMethod>?;
-                Authentication = selectedItem?.Value ?? SqlAuthenticationMethod.NotSpecified;
+                Authentication = GetAuthentication();
                 Password = passwordTextBox.Text;
                 RememberPassword = rememberPasswordCheckBox.Checked;
                 DialogResult = DialogResult.OK;
@@ -309,5 +336,15 @@ namespace SQL_Document_Builder
                 Cursor = Cursors.Default;
             }
         }
+
+        /// <summary>
+        /// Handles the selected index changed event of the authentication combo box.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void AuthenticationComboBox_SelectedIndexChanged1(object sender, EventArgs e)
+        {
+        }
+
     }
 }
