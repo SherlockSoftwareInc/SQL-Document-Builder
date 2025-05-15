@@ -1,14 +1,22 @@
-﻿using System;
+﻿using Microsoft.Data.SqlClient;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Threading;
 using System.Windows.Forms;
 
 namespace SQL_Document_Builder
 {
+    /// <summary>
+    /// The new sql server connection dialog.
+    /// </summary>
     public partial class NewSQLServerConnectionDialog : Form
     {
         private string _serverName = "";
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="NewSQLServerConnectionDialog"/> class.
+        /// </summary>
         public NewSQLServerConnectionDialog()
         {
             InitializeComponent();
@@ -18,7 +26,7 @@ namespace SQL_Document_Builder
         /// Authentication type
         /// </summary>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public short Authentication { get; set; }
+        public SqlAuthenticationMethod Authentication { get; set; }
 
         /// <summary>
         /// Connection name
@@ -63,7 +71,7 @@ namespace SQL_Document_Builder
         public string? UserName { get; set; }
 
         /// <summary>
-        ///
+        /// Handle authentication type selected index change event:
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -87,72 +95,17 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        ///
+        /// Build connection string:
         /// </summary>
         /// <returns></returns>
         private bool BuildConnectionString()
         {
-            var result = default(bool);
+            var result = false;
             string serverName = serverNameTextBox.Text.Trim();
-            string dbName = databaseComboBox.Text;
-            if (serverName.Length > 0 && dbName.Length > 0)
+            string dbName = databaseComboBox.Text.Trim();
+            if (!string.IsNullOrEmpty(serverName) && !string.IsNullOrEmpty(dbName))
             {
-                //https://docs.microsoft.com/en-us/dotnet/framework/data/adonet/connection-string-syntax
-                //bool integratedSecurity = (authenticationComboBox.SelectedIndex == 0);
-                //var builder = new System.Data.SqlClient.SqlConnectionStringBuilder()
-                //{
-                //    DataSource = serverName,
-                //    InitialCatalog = dbName,
-                //    IntegratedSecurity = integratedSecurity
-                //};
-                //if (!integratedSecurity)
-                //{
-                //    builder.UserID = userNameTextBox.Text;
-                //    builder.Password = passwordTextBox.Text;
-                //}
-                //SqlConnectionStringBuilder builder = new()
-                //{
-                //    //Driver = "Sql Driver 17 for SQL Server"
-                //};
-                //builder.Add("Server", serverName);
-                //builder.Add("Database", dbName);
-                //switch (authenticationComboBox.SelectedIndex)
-                //{
-                //    case 0:     //Windows Authentication
-                //        builder.Add("Trusted_Connection", "yes");
-                //        break;
-
-                //    case 1:     //SQL Server Authentication
-                //        break;
-
-                //    case 2:     //Active Directory - Interactive
-                //        builder.Add("Authentication", "ActiveDirectoryInteractive");
-                //        break;
-
-                //    case 3:     //Active Directory - Integrated
-                //        builder.Add("Authentication", "ActiveDirectoryIntegrated");
-                //        break;
-
-                //    case 4:     //Active Directory - Password
-                //        builder.Add("Authentication", "ActiveDirectoryPassword");
-                //        break;
-
-                //    case 5:     //Active Directory -Service Principal
-                //        builder.Add("Authentication", "ActiveDirectoryServicePrincipal");
-                //        break;
-
-                //    default:
-                //        break;
-                //}
-
-                //if (userNameTextBox.Enabled && userNameTextBox.Text.Trim().Length > 0)
-                //    builder.Add("UID", userNameTextBox.Text);
-                //if (passwordTextBox.Enabled && passwordTextBox.Text.Trim().Length > 0)
-                //    builder.Add("PWD", passwordTextBox.Text);
-
-                //Driver={Sql Driver 17 for SQL Server};Server=svmsq06;Database=AFDataMart_DEV;Trusted_Connection=Yes;
-
-                var builder = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder()
+                var builder = new SqlConnectionStringBuilder()
                 {
                     DataSource = serverName,
                     InitialCatalog = dbName,
@@ -160,49 +113,26 @@ namespace SQL_Document_Builder
                     TrustServerCertificate = trustCertificateCheckBox.Checked,
                 };
 
-                switch (authenticationComboBox.SelectedIndex)
-                {
-                    case 0:     //Windows Authentication
-                        builder.IntegratedSecurity = true;
-                        break;
+                var selectedItem = authenticationComboBox.SelectedItem as KeyValuePair<string, SqlAuthenticationMethod>?;
 
-                    case 1:     //SQL Server Authentication
-                        break;
+                if (selectedItem.HasValue)
+                    builder.Authentication = selectedItem.Value.Value;
+                else
+                    builder.Authentication = SqlAuthenticationMethod.NotSpecified;
 
-                    //case 2:     //Active Directory - Interactive
-                    //    builder.Authentication = SqlAuthenticationMethod.ActiveDirectoryInteractive;
-                    //    break;
-
-                    //case 3:     //Active Directory - Integrated
-                    //    builder.Authentication = SqlAuthenticationMethod.ActiveDirectoryIntegrated;
-                    //    break;
-
-                    //case 4:     //Active Directory - Password
-                    //    builder.Authentication = SqlAuthenticationMethod.ActiveDirectoryPassword;
-                    //    break;
-
-                    //case 5:     //Active Directory -Service Principal
-                    //    builder.Authentication = SqlAuthenticationMethod.ActiveDirectoryServicePrincipal;
-                    //    break;
-
-                    default:
-                        break;
-                }
-
-                if (userNameTextBox.Text.Trim().Length > 0)
-                    builder.UserID = userNameTextBox.Text;
-                if (passwordTextBox.Text.Trim().Length > 0)
-                    builder.Password = passwordTextBox.Text;
+                if (!string.IsNullOrEmpty(userNameTextBox.Text.Trim()))
+                    builder.UserID = userNameTextBox.Text.Trim();
+                if (!string.IsNullOrEmpty(passwordTextBox.Text.Trim()))
+                    builder.Password = passwordTextBox.Text.Trim();
 
                 ConnectionString = builder.ConnectionString;
                 result = true;
             }
-
             return result;
         }
 
         /// <summary>
-        ///
+        /// Handle cancel button click event:
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -211,33 +141,6 @@ namespace SQL_Document_Builder
             ConnectionString = string.Empty;
             DialogResult = DialogResult.Cancel;
             Close();
-        }
-
-        /// <summary>
-        ///
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void ConnectionStringDialog_Load(object sender, EventArgs e)
-        {
-            int x = serverNameTextBox.Left - 4;
-            serverNameLabel.Left = x - serverNameLabel.Width;
-            databaseNameLabel.Left = x - databaseNameLabel.Width;
-
-            x = authenticationComboBox.Left - 4;
-            authenticationLabel.Left = x - authenticationLabel.Width;
-            userNameLabel.Left = x - userNameLabel.Width;
-            passwordLabel.Left = x - passwordLabel.Width;
-
-            serverNameTextBox.Text = ServerName;
-            databaseComboBox.Text = DatabaseName;
-            userNameTextBox.Text = UserName;
-            authenticationComboBox.SelectedIndex = Authentication;
-            EnableOKButton();
-            if (Authentication == 1)
-            {
-                passwordTextBox.Focus();
-            }
         }
 
         /// <summary>
@@ -261,60 +164,62 @@ namespace SQL_Document_Builder
         /// </summary>
         private void EnableOKButton()
         {
-            bool enabled = (serverNameTextBox.Text.Trim().Length > 1 &&
-                databaseComboBox.Text.Trim().Length > 1);
-            if (enabled)
+            var selectedItem = authenticationComboBox.SelectedItem as KeyValuePair<string, SqlAuthenticationMethod>?;
+            bool enabled = (!string.IsNullOrEmpty(serverNameTextBox.Text.Trim()) &&
+                            !string.IsNullOrEmpty(databaseComboBox.Text.Trim()));
+            if (enabled && selectedItem?.Value == SqlAuthenticationMethod.SqlPassword)
             {
-                if (authenticationComboBox.SelectedIndex == 1)
-                {
-                    enabled = (userNameTextBox.Text.Trim().Length > 1 && passwordTextBox.Text.Trim().Length > 1);
-                }
+                enabled = (userNameTextBox.Text.Trim().Length > 1 && passwordTextBox.Text.Trim().Length > 1);
             }
-
             okButton.Enabled = enabled;
         }
 
         /// <summary>
-        /// Get database list of a sql server
+        /// Handle form load event:
         /// </summary>
-        /// <param name="serverName"></param>
-        /// <returns></returns>
-        private List<string> GetDatabases(string serverName)
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void NewSQLServerConnectionDialog_Load(object sender, EventArgs e)
         {
-            List<String> databases = new();
-            //try
-            //{
-            //    SqlConnectionStringBuilder connection = new()
-            //    {
-            //        //DataSource = serverName,
-            //        //IntegratedSecurity = true
-            //    };
+            // Creating a dictionary mapping authentication method names to SqlAuthenticationMethod values
+            Dictionary<string, SqlAuthenticationMethod> authMethods = new()
+            {
+                { "Windows Authentication", SqlAuthenticationMethod.ActiveDirectoryIntegrated },
+                { "SQL Server Authentication", SqlAuthenticationMethod.SqlPassword },
+                { "Microsoft Entra MFA", SqlAuthenticationMethod.ActiveDirectoryInteractive },
+                { "Microsoft Entra Password", Microsoft.Data.SqlClient.SqlAuthenticationMethod.ActiveDirectoryPassword },
+                { "Microsoft Entra Managed Identity", SqlAuthenticationMethod.ActiveDirectoryManagedIdentity },
+                { "Microsoft Entra Service Principal", SqlAuthenticationMethod.ActiveDirectoryServicePrincipal }
+            };
 
-            //    String strConn = connection.ToString();
-            //    SqlConnection sqlConn = new(strConn);
-            //    sqlConn.Open();
+            // Adding authentication methods to the combo box using data binding
+            authenticationComboBox.DataSource = new BindingSource(authMethods, null);
+            authenticationComboBox.DisplayMember = "Key"; // Display the name of the authentication method
+            authenticationComboBox.ValueMember = "Value"; // Use the SqlAuthenticationMethod as the value
+            //authenticationComboBox.SelectedIndex = 0;
 
-            //    //get databases
-            //    DataTable tblDatabases = sqlConn.GetSchema("Databases");
+            int x = serverNameTextBox.Left - 4;
+            serverNameLabel.Left = x - serverNameLabel.Width;
+            databaseNameLabel.Left = x - databaseNameLabel.Width;
 
-            //    sqlConn.Close();
+            x = authenticationComboBox.Left - 4;
+            authenticationLabel.Left = x - authenticationLabel.Width;
+            userNameLabel.Left = x - userNameLabel.Width;
+            passwordLabel.Left = x - passwordLabel.Width;
 
-            //    foreach (DataRow row in tblDatabases.Rows)
-            //    {
-            //        String? strDatabaseName = row["database_name"].ToString();
-            //        if (strDatabaseName != null) databases.Add(strDatabaseName);
-            //    }
-            //}
-            //catch (SqlException)
-            //{
-            //    //Ignore the error
-            //}
-            //databases.Sort();
-            return databases;
+            serverNameTextBox.Text = ServerName;
+            databaseComboBox.Text = DatabaseName;
+            userNameTextBox.Text = UserName;
+            authenticationComboBox.SelectedValue = Authentication;
+            EnableOKButton();
+            if (Authentication == SqlAuthenticationMethod.SqlPassword || Authentication == SqlAuthenticationMethod.ActiveDirectoryPassword)
+            {
+                passwordTextBox.Focus();
+            }
         }
 
         /// <summary>
-        ///
+        /// Handle OK button click event:
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -322,11 +227,12 @@ namespace SQL_Document_Builder
         {
             if (BuildConnectionString())
             {
-                ServerName = serverNameTextBox.Text;
-                DatabaseName = databaseComboBox.Text;
-                ConnectionName = string.Format("{0} @ {1}", DatabaseName, ServerName);
-                UserName = userNameTextBox.Text;
-                Authentication = (short)authenticationComboBox.SelectedIndex;
+                ServerName = serverNameTextBox.Text.Trim();
+                DatabaseName = databaseComboBox.Text.Trim();
+                ConnectionName = $"{DatabaseName} @ {ServerName}";
+                UserName = userNameTextBox.Text.Trim();
+                var selectedItem = authenticationComboBox.SelectedItem as KeyValuePair<string, SqlAuthenticationMethod>?;
+                Authentication = selectedItem?.Value ?? SqlAuthenticationMethod.NotSpecified;
                 Password = passwordTextBox.Text;
                 RememberPassword = rememberPasswordCheckBox.Checked;
                 DialogResult = DialogResult.OK;
@@ -339,7 +245,7 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        ///
+        /// Handle password text box text changed event:
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -350,7 +256,7 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        ///
+        /// Handle server name text box text changed event:
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -375,7 +281,7 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void ServerNameTextBox_Validated(object sender, EventArgs e)
+        private async void ServerNameTextBox_Validated(object sender, EventArgs e)
         {
             string server = serverNameTextBox.Text.Trim();
             if (server != _serverName && server.Length > 1)
@@ -384,10 +290,20 @@ namespace SQL_Document_Builder
 
                 _serverName = server;
                 Cursor = Cursors.WaitCursor;
-                var databases = GetDatabases(server);
-                if (databases.Count > 0)
+
+                using (var cancellationTokenSource = new CancellationTokenSource())
                 {
-                    databaseComboBox.Items.AddRange(databases.ToArray());
+                    var databases = await DatabaseHelper.GetDatabases(server, cancellationTokenSource.Token);
+
+                    if (databases.Count > 0 && !cancellationTokenSource.Token.IsCancellationRequested)
+                    {
+                        databaseComboBox.Items.AddRange(databases.ToArray());
+                    }
+
+                    if (databaseComboBox.Items.Count > 0)
+                    {
+                        databaseComboBox.SelectedIndex = 0;
+                    }
                 }
 
                 Cursor = Cursors.Default;

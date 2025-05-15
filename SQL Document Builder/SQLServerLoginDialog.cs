@@ -1,5 +1,6 @@
 ﻿using Microsoft.Data.SqlClient;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Windows.Forms;
 
@@ -22,7 +23,7 @@ namespace SQL_Document_Builder
         /// Gets or sets the authentication.
         /// </summary>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public short Authentication { get; set; }
+        public SqlAuthenticationMethod Authentication { get; set; }
 
         /// <summary>
         /// Gets or sets the connection string.
@@ -160,9 +161,9 @@ namespace SQL_Document_Builder
             serverNameTextBox.Text = ServerName;
             databaseComboBox.Text = DatabaseName;
             userNameTextBox.Text = UserName;
-            authenticationComboBox.SelectedIndex = Authentication;
+            authenticationComboBox.SelectedValue = Authentication;
             EnableOKButton();
-            if (Authentication == 1)
+            if (Authentication == SqlAuthenticationMethod.SqlPassword)
                 passwordTextBox.Focus();
         }
 
@@ -196,7 +197,8 @@ namespace SQL_Document_Builder
                 DatabaseName = databaseComboBox.Text;
                 UserName = userNameTextBox.Text;
                 Password = passwordTextBox.Text;
-                Authentication = (short)authenticationComboBox.SelectedIndex;
+                var selectedItem = authenticationComboBox.SelectedItem as KeyValuePair<string, SqlAuthenticationMethod>?;
+                Authentication = selectedItem?.Value ?? SqlAuthenticationMethod.NotSpecified;
                 DialogResult = DialogResult.OK;
                 Close();
             }

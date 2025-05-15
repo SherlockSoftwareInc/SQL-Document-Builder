@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Data.SqlClient;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -36,10 +37,10 @@ namespace SQL_Document_Builder
         /// <param name="password">password</param>
         /// <param name="connectionString">connection string</param>
         /// <param name="rememberPassword">remember password indicator</param>
-        public void Add(string? name,
+        public SQLDatabaseConnectionItem? Add(string? name,
             string? server,
             string? database,
-            short authenticationType,
+            SqlAuthenticationMethod authenticationType,
             string? userName,
             string? password,
             string? connectionString,
@@ -60,7 +61,9 @@ namespace SQL_Document_Builder
                 };
                 connItem.BuildConnectionString();
                 _connections.Add(connItem);
+                return connItem;
             }
+            return null;
         }
 
         /// <summary>
@@ -69,6 +72,9 @@ namespace SQL_Document_Builder
         public void Load()
         {
             string fileName = FilePath();
+
+            if (!File.Exists(fileName)) CopyOctofySetting(fileName);
+
             if (File.Exists(fileName))
             {
                 using var fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
@@ -81,6 +87,24 @@ namespace SQL_Document_Builder
                 }
             }
             _tmpFile = Path.GetTempFileName();
+        }
+
+        /// <summary>
+        /// Copies the connection settings from octofy.
+        /// </summary>
+        private static void CopyOctofySetting(string targetFile)
+        {
+            string dataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Sherlock Software Inc");
+            dataPath = Path.Combine(dataPath, "Octofy");
+            if (Directory.Exists(dataPath))
+            {
+                var source = Path.Combine(dataPath, "Connections2.dat");
+                // copy the file to the new location if it exists
+                if (File.Exists(source))
+                {
+                    File.Copy(source, targetFile, true);
+                }
+            }
         }
 
         /// <summary>
@@ -110,19 +134,62 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Adds a connection item to the list
+        /// </summary>
+        /// <param name="connection">The connection.</param>
+        internal void Add(SQLDatabaseConnectionItem connection)
+        {
+            // add a connection item to the list
+            if (connection != null && connection.Name != null && connection.Name.Length > 0)
+            {
+                _connections.Add(connection);
+            }
+        }
+
+        /// <summary>
+        /// Moves the down.
+        /// </summary>
+        /// <param name="item">The item.</param>
+        internal void MoveDown(SQLDatabaseConnectionItem item)
+        {
+            // move selected item down
+            int index = _connections.IndexOf(item);
+            if (index >= 0 && index < _connections.Count - 1)
+            {
+                _connections.RemoveAt(index);
+                _connections.Insert(index + 1, item);
+            }
+        }
+
+        /// <summary>
+        /// Moves the up.
+        /// </summary>
+        /// <param name="item">The item.</param>
+        internal void MoveUp(SQLDatabaseConnectionItem item)
+        {
+            // move selected item up
+            int index = _connections.IndexOf(item);
+            if (index > 0)
+            {
+                _connections.RemoveAt(index);
+                _connections.Insert(index - 1, item);
+            }
+        }
+
+        /// <summary>
         /// Returns the local where to store the connections data
         /// </summary>
         /// <returns></returns>
         private static string FilePath()
         {
             string dataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Sherlock Software Inc");
-            dataPath = Path.Combine(dataPath, "Octofy");
+            dataPath = Path.Combine(dataPath, "SQLDocBuilder");
             if (!Directory.Exists(dataPath))
             {
                 Directory.CreateDirectory(dataPath);
             }
 
-            return Path.Combine(dataPath, "Connections2.dat");
+            return Path.Combine(dataPath, "Connections.dat");
         }
 
         /// <summary>

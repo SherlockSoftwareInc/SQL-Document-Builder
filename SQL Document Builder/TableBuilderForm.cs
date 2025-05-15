@@ -148,7 +148,7 @@ namespace SQL_Document_Builder
         /// Add connection.
         /// </summary>
         /// <returns>A bool.</returns>
-        private bool AddConnection()
+        private async Task<bool> AddConnection()
         {
             using var dlg = new NewSQLServerConnectionDialog();
             if (dlg.ShowDialog() == DialogResult.OK)
@@ -178,6 +178,8 @@ namespace SQL_Document_Builder
                 };
                 submenuitem.Click += new System.EventHandler(this.OnConnectionToolStripMenuItem_Click);
                 connectToToolStripMenuItem.DropDown.Items.Add(submenuitem);
+
+                await ChangeDBConnectionAsync(connection);
 
                 return true;
             }
@@ -1202,7 +1204,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Populates the connections.
         /// </summary>
-        private void PopulateConnections()
+        private async Task PopulateConnections()
         {
             _selectedConnection = null;
 
@@ -1217,7 +1219,7 @@ namespace SQL_Document_Builder
             var connections = _connections.Connections;
             if (connections.Count == 0)
             {
-                AddConnection();
+                await AddConnection();
             }
             else
             {
@@ -1739,6 +1741,58 @@ namespace SQL_Document_Builder
 
                 EndBuild();
             }
+        }
+
+        /// <summary>
+        /// Handles the "New connection" tool strip menu item click event.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private async void NewConnectionToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            await AddConnection();
+        }
+
+        /// <summary>
+        /// Handles the "Manage connections" tool strip menu item click event.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private async void ManageConnectionsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                using var frm = new ConnectionManageForm() { DataConnections = _connections };
+                string currentSelection = "";
+                //if (dataSourcesToolStripComboBox.SelectedItem != null)
+                //{
+                //    var selectedItem = (DatabaseConnectionItem)(dataSourcesToolStripComboBox.SelectedItem);
+                //    currentSelection = selectedItem.Name;
+                //}
+                frm.ShowDialog();
+
+               await PopulateConnections();
+
+                //if (dataSourcesToolStripComboBox.Items.Count > 0)
+                //{
+                //    int index = 0;
+                //    for (int i = 0; i < dataSourcesToolStripComboBox.Items.Count; i++)
+                //    {
+                //        var item = (DatabaseConnectionItem)(dataSourcesToolStripComboBox.Items[i]);
+                //        if (item.Name == currentSelection)
+                //        {
+                //            index = i;
+                //            break;
+                //        }
+                //    }
+                //    dataSourcesToolStripComboBox.SelectedIndex = index;
+                //}
+            }
+            catch (Exception)
+            {
+                // ignore the exception
+            }
+
         }
     }
 }
