@@ -1,5 +1,4 @@
 ﻿using DarkModeForms;
-using Microsoft.Data.SqlClient;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -47,6 +46,31 @@ namespace SQL_Document_Builder
         {
             InitializeComponent();
             _ = new DarkModeCS(this);
+        }
+
+        /// <summary>
+        /// Executes the scripts.
+        /// </summary>
+        private static async Task<string> ExecuteScriptsAsync(SQLDatabaseConnectionItem connection, string script)
+        {
+            // from the sqlTextBox.Text, break it into individual SQL statements by the GO keyword
+            //var sqlStatements = sqlTextBox.Text.Split(["GO"], StringSplitOptions.RemoveEmptyEntries);
+            var sqlStatements = Regex.Split(script, @"\bGO\b", RegexOptions.IgnoreCase | RegexOptions.Multiline);
+
+            // execute each statement
+            foreach (var sql in sqlStatements)
+            {
+                //Execute(builder.ConnectionString, sql);
+                if (sql.Length > 0)
+                {
+                    var result = await DatabaseHelper.ExecuteSQLAsync(sql, connection.ConnectionString);
+                    if (result != string.Empty)
+                    {
+                        return result;
+                    }
+                }
+            }
+            return string.Empty;
         }
 
         /// <summary>
@@ -198,23 +222,25 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Appends the save.
+        /// Appends the current text in the sqlTextBox to the file.
         /// </summary>
         private void AppendSave()
         {
             if (string.IsNullOrEmpty(_fileName))
             {
-                return;
+                saveAsToolStripMenuItem.PerformClick();
             }
-
-            // append the script to the file
-            try
+            else
             {
-                File.AppendAllText(_fileName, Environment.NewLine + sqlTextBox.Text);
-                _changed = false;
-            }
-            catch (Exception)
-            {
+                // append the script to the file
+                try
+                {
+                    File.AppendAllText(_fileName, Environment.NewLine + sqlTextBox.Text);
+                    _changed = false;
+                }
+                catch (Exception)
+                {
+                }
             }
         }
 
@@ -357,6 +383,19 @@ namespace SQL_Document_Builder
         /// <param name="e">The E.</param>
         private void CloseToolStripButton_Click(object sender, EventArgs e)
         {
+            if (_changed)
+            {
+                var result = Common.MsgBox("Do you want to save the changes?", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
+                if (result == DialogResult.Yes)
+                {
+                    AppendSave();
+                }
+                else if (result == DialogResult.Cancel)
+                {
+                    return;
+                }
+            }
+
             Close();
         }
 
@@ -595,75 +634,6 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Handles the "execute on STG" tool strip menu item click:
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private async void ExecuteOnSTGToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            await ExecuteScriptsAsync("csbc-reporting-prod-sqldb-stg");
-        }
-
-        /// <summary>
-        /// Executes the scripts.
-        /// </summary>
-        private async Task ExecuteScriptsAsync(string initialCatalog)
-        {
-            string script = sqlTextBox.SelectedText;
-            if (script.Length == 0)
-            {
-                script = sqlTextBox.Text;
-            }
-
-            if (script.Length == 0)
-            {
-                Common.MsgBox("No SQL statements to execute", MessageBoxIcon.Information);
-                return;
-            }
-
-            // checks if there is a DROP statement in the script, ask for confirmation
-            if (script.Contains("DROP ", StringComparison.CurrentCultureIgnoreCase))
-            {
-                if (Common.MsgBox("The script contains a DROP statement. Are you sure you want to continue?", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
-                {
-                    return;
-                }
-            }
-
-            var builder = new SqlConnectionStringBuilder
-            {
-                Encrypt = true,
-                TrustServerCertificate = true,
-                DataSource = "csbc-reporting-prod-sql.database.windows.net",
-                InitialCatalog = initialCatalog,
-                Authentication = SqlAuthenticationMethod.ActiveDirectoryIntegrated,
-                UserID = $"{Environment.UserName}@phsa.ca"
-            };
-
-            // from the sqlTextBox.Text, break it into individual SQL statements by the GO keyword
-            //var sqlStatements = sqlTextBox.Text.Split(["GO"], StringSplitOptions.RemoveEmptyEntries);
-            var sqlStatements = Regex.Split(script, @"\bGO\b", RegexOptions.IgnoreCase | RegexOptions.Multiline);
-
-            // execute each statement
-            foreach (var sql in sqlStatements)
-            {
-                //Execute(builder.ConnectionString, sql);
-                if (sql.Length > 0)
-                {
-                    try
-                    {
-                        await DatabaseHelper.ExecuteSQLAsync(sql, builder.ConnectionString);
-                    }
-                    catch (Exception ex)
-                    {
-                        Common.MsgBox(ex.Message, MessageBoxIcon.Error);
-                        return;
-                    }
-                }
-            }
-        }
-
-        /// <summary>
         /// Handles the "Extended properties" check box checked changed event:
         /// </summary>
         /// <param name="sender">The sender.</param>
@@ -856,15 +826,33 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Handles the "New" tool strip button click event.
+        /// Handles the "Manage connections" tool strip menu item click event.
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
-        private void NewToolStripButton_Click(object sender, EventArgs e)
+        private async void ManageConnectionsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            // clear the sqlTextBox
-            sqlTextBox.Text = string.Empty;
-            sqlTextBox.Focus();
+            try
+            {
+                using var frm = new ConnectionManageForm() { DataConnections = _connections };
+                frm.ShowDialog();
+
+                await PopulateConnections();
+            }
+            catch (Exception)
+            {
+                // ignore the exception
+            }
+        }
+
+        /// <summary>
+        /// Handles the "New connection" tool strip menu item click event.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private async void NewConnectionToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            await AddConnection();
         }
 
         /// <summary>
@@ -874,14 +862,22 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void NewToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var oFile = new SaveFileDialog() { Filter = "SQL script(*.sql)|*.sql|Text file(*.txt)|*.txt|All files(*.*)|*.*" };
-            if (oFile.ShowDialog() == DialogResult.OK)
+            if (_changed)
             {
-                _fileName = oFile.FileName;
-                this.Text = $"SharePoint Script Builder - {_fileName}";
-                sqlTextBox.Text = string.Empty;
-                _changed = false;
+                if (Common.MsgBox("Do you want to save the changes?", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                {
+                    SaveToolStripMenuItem_Click(sender, e);
+                }
             }
+
+            _fileName = string.Empty;
+            this.Text = $"SharePoint Script Builder - (New)";
+
+            // clear the sqlTextBox
+            sqlTextBox.Text = string.Empty;
+            sqlTextBox.Focus();
+
+            _changed = false;
         }
 
         /// <summary>
@@ -958,16 +954,6 @@ namespace SQL_Document_Builder
             }
 
             EndBuild();
-        }
-
-        /// <summary>
-        /// Objects the list box double click.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The E.</param>
-        private void ObjectsListBox_DoubleClick(object sender, EventArgs e)
-        {
-            //BuildScript();
         }
 
         /// <summary>
@@ -1066,23 +1052,67 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Handles the Click event of the execute on DEV button.
+        /// Handles the "Execute " tool strip menu item click:
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
-        private async void OnDEVToolStripMenuItem_Click(object sender, EventArgs e)
+        private async void OnExecuteToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            await ExecuteScriptsAsync("csbc-reporting-prod-sqldb-prod");
-        }
+            // get the selected text from the sqlTextBox
+            string script = sqlTextBox.SelectedText;
+            if (script.Length == 0)
+            {
+                // if no text is selected, get the whole text from the sqlTextBox
+                script = sqlTextBox.Text;
+            }
 
-        /// <summary>
-        /// Handles the Click event of the execute on PROD button.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private async void OnPRODToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            await ExecuteScriptsAsync("csbc-reporting-prod-sqldb-dev");
+            // if the script is empty, show a message box and return
+            if (script.Length == 0)
+            {
+                Common.MsgBox("No SQL statements to execute", MessageBoxIcon.Information);
+                return;
+            }
+
+            // checks if there is a DROP statement in the script, ask for confirmation
+            if (script.Contains("DROP ", StringComparison.CurrentCultureIgnoreCase))
+            {
+                if (Common.MsgBox("The script contains a DROP statement. Are you sure you want to continue?", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
+                {
+                    return;
+                }
+            }
+
+            if (sender?.GetType() == typeof(ConnectionMenuItem))
+            {
+                // get the connection from the sender
+                ConnectionMenuItem menuItem = (ConnectionMenuItem)sender;
+
+                // get the connection string from the menu item
+                var connection = menuItem.Connection;
+                if (connection == null || string.IsNullOrEmpty(connection?.ConnectionString))
+                {
+                    // show a message box if the connection string is empty
+                    Common.MsgBox("Database connection not available", MessageBoxIcon.Error);
+                    return;
+                }
+
+                statusToolStripStatusLabe.Text = string.Format("Execute on {0}...", menuItem.ToString());
+                Cursor = Cursors.WaitCursor;
+
+                var executeResults = await ExecuteScriptsAsync(connection, script);
+
+                if (executeResults.Length > 0)
+                {
+                    Common.MsgBox(executeResults, MessageBoxIcon.Error);
+                }
+                else
+                {
+                    Common.MsgBox("Execute completed successfully", MessageBoxIcon.Information);
+                }
+
+                Cursor = Cursors.Default;
+                statusToolStripStatusLabe.Text = "";
+            }
         }
 
         /// <summary>
@@ -1216,6 +1246,13 @@ namespace SQL_Document_Builder
                 connectToToolStripMenuItem.DropDownItems.RemoveAt(i);
             }
 
+            for (int i = exeToolStripDropDownButton.DropDown.Items.Count - 1; i >= 0; i--)
+            {
+                var submenuitem = exeToolStripDropDownButton.DropDown.Items[i];
+                submenuitem.Click -= OnExecuteToolStripMenuItem_Click;
+                exeToolStripDropDownButton.DropDownItems.RemoveAt(i);
+            }
+
             var connections = _connections.Connections;
             if (connections.Count == 0)
             {
@@ -1237,6 +1274,15 @@ namespace SQL_Document_Builder
                         };
                         submenuitem.Click += OnConnectionToolStripMenuItem_Click;
                         connectToToolStripMenuItem.DropDown.Items.Add(submenuitem);
+
+                        // add ToolStripMenuItem for the DropDown menu
+                        var executeMenuItem = new ConnectionMenuItem(item)
+                        {
+                            Name = string.Format("ExecuteMenuItem{0}", i + 1),
+                            Size = new Size(300, 26),
+                        };
+                        executeMenuItem.Click += OnExecuteToolStripMenuItem_Click;
+                        exeToolStripDropDownButton.DropDown.Items.Add(executeMenuItem);
                     }
                 }
             }
@@ -1344,14 +1390,8 @@ namespace SQL_Document_Builder
 
             if (string.IsNullOrEmpty(_fileName))
             {
-                var oFile = new SaveFileDialog() { Filter = "SQL script(*.sql)|*.sql|Text file(*.txt)|*.txt|All files(*.*)|*.*" };
-                if (oFile.ShowDialog() == DialogResult.OK)
-                {
-                    _fileName = oFile.FileName;
-                    this.Text = $"SharePoint Script Builder - {_fileName}";
-
-                    saveAsToolStripMenuItem.PerformClick();
-                }
+                saveAsToolStripMenuItem.PerformClick();
+                return;
             }
             else
             {
@@ -1485,7 +1525,7 @@ namespace SQL_Document_Builder
             WindowState = FormWindowState.Maximized;
 
             _connections.Load();
-            PopulateConnections();
+            await PopulateConnections();
 
             var lastConnection = Properties.Settings.Default.LastAccessConnectionIndex;
             // set lastConnection to 0 if it is not set or out of range
@@ -1741,58 +1781,6 @@ namespace SQL_Document_Builder
 
                 EndBuild();
             }
-        }
-
-        /// <summary>
-        /// Handles the "New connection" tool strip menu item click event.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private async void NewConnectionToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            await AddConnection();
-        }
-
-        /// <summary>
-        /// Handles the "Manage connections" tool strip menu item click event.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private async void ManageConnectionsToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                using var frm = new ConnectionManageForm() { DataConnections = _connections };
-                string currentSelection = "";
-                //if (dataSourcesToolStripComboBox.SelectedItem != null)
-                //{
-                //    var selectedItem = (DatabaseConnectionItem)(dataSourcesToolStripComboBox.SelectedItem);
-                //    currentSelection = selectedItem.Name;
-                //}
-                frm.ShowDialog();
-
-               await PopulateConnections();
-
-                //if (dataSourcesToolStripComboBox.Items.Count > 0)
-                //{
-                //    int index = 0;
-                //    for (int i = 0; i < dataSourcesToolStripComboBox.Items.Count; i++)
-                //    {
-                //        var item = (DatabaseConnectionItem)(dataSourcesToolStripComboBox.Items[i]);
-                //        if (item.Name == currentSelection)
-                //        {
-                //            index = i;
-                //            break;
-                //        }
-                //    }
-                //    dataSourcesToolStripComboBox.SelectedIndex = index;
-                //}
-            }
-            catch (Exception)
-            {
-                // ignore the exception
-            }
-
         }
     }
 }

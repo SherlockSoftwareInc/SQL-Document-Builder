@@ -177,7 +177,7 @@
             newToolStripButton1.Name = "newToolStripButton1";
             newToolStripButton1.Size = new System.Drawing.Size(24, 24);
             newToolStripButton1.Text = "&New";
-            newToolStripButton1.Click += NewToolStripButton_Click;
+            newToolStripButton1.Click += NewToolStripMenuItem_Click;
             // 
             // openToolStripButton
             // 
@@ -350,21 +350,18 @@
             onDEVToolStripMenuItem.Name = "onDEVToolStripMenuItem";
             onDEVToolStripMenuItem.Size = new System.Drawing.Size(165, 22);
             onDEVToolStripMenuItem.Text = "Execute on DEV";
-            onDEVToolStripMenuItem.Click += OnDEVToolStripMenuItem_Click;
             // 
             // onPRODToolStripMenuItem
             // 
             onPRODToolStripMenuItem.Name = "onPRODToolStripMenuItem";
             onPRODToolStripMenuItem.Size = new System.Drawing.Size(165, 22);
             onPRODToolStripMenuItem.Text = "Execute on PROD";
-            onPRODToolStripMenuItem.Click += OnPRODToolStripMenuItem_Click;
             // 
             // executeOnSTGToolStripMenuItem
             // 
             executeOnSTGToolStripMenuItem.Name = "executeOnSTGToolStripMenuItem";
             executeOnSTGToolStripMenuItem.Size = new System.Drawing.Size(165, 22);
             executeOnSTGToolStripMenuItem.Text = "Execute on STG";
-            executeOnSTGToolStripMenuItem.Click += ExecuteOnSTGToolStripMenuItem_Click;
             // 
             // tabControl1
             // 
@@ -399,7 +396,6 @@
             objectsListBox.Size = new System.Drawing.Size(171, 502);
             objectsListBox.TabIndex = 3;
             objectsListBox.SelectedIndexChanged += ObjectsListBox_SelectedIndexChanged;
-            objectsListBox.DoubleClick += ObjectsListBox_DoubleClick;
             // 
             // panel2
             // 

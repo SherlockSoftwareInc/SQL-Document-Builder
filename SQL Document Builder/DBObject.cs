@@ -443,7 +443,11 @@ ELSE
 		@level0type = N'SCHEMA', @level0name = '{ObjectName.Schema}',
 		@level1type = @ObjectType, @level1name = '{ObjectName.Name}';";
 
-                await DatabaseHelper.ExecuteSQLAsync(sql);
+                var result = await DatabaseHelper.ExecuteSQLAsync(sql);
+                if (result != string.Empty)
+                {
+                    Common.MsgBox("Failed to update table description." + Environment.NewLine + result, MessageBoxIcon.Error);
+                }
             }
         }
 

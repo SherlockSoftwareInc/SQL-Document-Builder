@@ -50,7 +50,7 @@ namespace SQL_Document_Builder
         /// <param name="sql">The SQL statement to execute.</param>
         /// <param name="connectionString">The connection string. If not provided, the default connection string is used.</param>
         /// <returns>A Task representing the asynchronous operation.</returns>
-        internal static async Task ExecuteSQLAsync(string sql, string connectionString = "")
+        internal static async Task<string> ExecuteSQLAsync(string sql, string connectionString = "")
         {
             if (string.IsNullOrEmpty(connectionString))
                 connectionString = Properties.Settings.Default.dbConnectionString;
@@ -70,12 +70,15 @@ namespace SQL_Document_Builder
             catch (Exception ex)
             {
                 // Handle or log the exception as needed
-                MessageBox.Show(ex.Message, "An Error Occurred", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                //MessageBox.Show(ex.Message, "An Error Occurred", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return ex.Message;
             }
             finally
             {
                 await conn.CloseAsync();
             }
+
+            return string.Empty; // Return an empty string if no error occurred
         }
 
         /// <summary>
