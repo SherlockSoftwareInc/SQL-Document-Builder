@@ -108,6 +108,19 @@ WHERE sm.object_id = OBJECT_ID(@SchemaQualifiedName);";
             return viewDefinition;
         }
 
+
+        /// <summary>
+        /// Queries the data to insert statement async.
+        /// </summary>
+        /// <param name="tableName">The table name.</param>
+        /// <returns>A Task.</returns>
+        public static async Task<string> TableToInsertStatementAsync(ObjectName tableName)
+        {
+            var sql = $"select * from {tableName.FullName}";
+            var hasIdentity = await DatabaseHelper.HasIdentityColumnAsync(tableName);
+            return await QueryDataToInsertStatementAsync(sql, tableName.FullName, hasIdentity);
+        }
+
         /// <summary>
         /// Queries the data and generates the insert statements.
         /// </summary>
@@ -120,7 +133,7 @@ WHERE sm.object_id = OBJECT_ID(@SchemaQualifiedName);";
         /// <param name="sql">The SQL query to fetch data.</param>
         /// <param name="tableName">The table name for the insert statements.</param>
         /// <returns>A Task<string> containing the generated insert statements or a warning if rows exceed 500.</returns>
-        public static async Task<string> QueryDataToInsertStatementAsync(string sql, string tableName = "YourTableName")
+        public static async Task<string> QueryDataToInsertStatementAsync(string sql, string tableName = "YourTableName", bool hasIdentity = false)
         {
             var sb = new StringBuilder();
             var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
@@ -145,88 +158,95 @@ WHERE sm.object_id = OBJECT_ID(@SchemaQualifiedName);";
                     int rowCount = 0;
                     int batchCount = 0;
 
-                    // add SET IDENTITY_INSERT  ON;
-                    sb.AppendLine($"--SET IDENTITY_INSERT {tableName} ON;");
+                    if(hasIdentity)
+                    {
+                        // add SET IDENTITY_INSERT  ON;
+                        sb.AppendLine($"SET IDENTITY_INSERT {tableName} ON;");
+                    }
+                    //else
+                    //{
+                    //    sb.AppendLine($"--SET IDENTITY_INSERT {tableName} ON;");
+                    //}
 
                     while (await reader.ReadAsync())
-                    {
-                        // Check if row count exceeds 5000
-                        if (rowCount >= 5000)
                         {
-                            return "Too much rows";
-                        }
-
-                        // Start a new batch every 50 rows
-                        if (rowCount % 50 == 0)
-                        {
-                            if (batchCount > 0)
+                            // Check if row count exceeds 5000
+                            if (rowCount >= 5000)
                             {
-                                // Remove the trailing comma from the previous batch
-                                sb.Length -= 3; // Remove ",\n"
-                                sb.AppendLine(";"); // Close the previous batch
+                                return "Too much rows";
                             }
-                            sb.AppendLine($"INSERT INTO {tableName} ({columnNames}) VALUES");
-                            batchCount++;
-                        }
 
-                        // Generate the values for the current row
-                        sb.Append("\t(");
-                        for (int i = 0; i < reader.FieldCount; i++)
-                        {
-                            if (reader.IsDBNull(i))
+                            // Start a new batch every 50 rows
+                            if (rowCount % 50 == 0)
                             {
-                                sb.Append("NULL");
-                            }
-                            else
-                            {
-                                switch (reader.GetFieldType(i).Name)
+                                if (batchCount > 0)
                                 {
-                                    case "String":
-                                        sb.Append("'" + reader.GetString(i).Replace("'", "''") + "'");
-                                        break;
+                                    // Remove the trailing comma from the previous batch
+                                    sb.Length -= 3; // Remove ",\n"
+                                    sb.AppendLine(";"); // Close the previous batch
+                                }
+                                sb.AppendLine($"INSERT INTO {tableName} ({columnNames}) VALUES");
+                                batchCount++;
+                            }
 
-                                    case "DateTime":
-                                        sb.Append("'" + reader.GetDateTime(i).ToString("yyyy-MM-dd HH:mm:ss") + "'");
-                                        break;
+                            // Generate the values for the current row
+                            sb.Append("\t(");
+                            for (int i = 0; i < reader.FieldCount; i++)
+                            {
+                                if (reader.IsDBNull(i))
+                                {
+                                    sb.Append("NULL");
+                                }
+                                else
+                                {
+                                    switch (reader.GetFieldType(i).Name)
+                                    {
+                                        case "String":
+                                            sb.Append("'" + reader.GetString(i).Replace("'", "''") + "'");
+                                            break;
 
-                                    case "Int32":
-                                        sb.Append(reader.GetInt32(i));
-                                        break;
+                                        case "DateTime":
+                                            sb.Append("'" + reader.GetDateTime(i).ToString("yyyy-MM-dd HH:mm:ss") + "'");
+                                            break;
 
-                                    case "Int64":
-                                        sb.Append(reader.GetInt64(i));
-                                        break;
+                                        case "Int32":
+                                            sb.Append(reader.GetInt32(i));
+                                            break;
 
-                                    case "Decimal":
-                                        sb.Append(reader.GetDecimal(i));
-                                        break;
+                                        case "Int64":
+                                            sb.Append(reader.GetInt64(i));
+                                            break;
 
-                                    case "Double":
-                                        sb.Append(reader.GetDouble(i));
-                                        break;
+                                        case "Decimal":
+                                            sb.Append(reader.GetDecimal(i));
+                                            break;
 
-                                    case "Single":
-                                        sb.Append(reader.GetFloat(i));
-                                        break;
+                                        case "Double":
+                                            sb.Append(reader.GetDouble(i));
+                                            break;
 
-                                    case "Boolean":
-                                        sb.Append(reader.GetBoolean(i) ? "1" : "0");
-                                        break;
+                                        case "Single":
+                                            sb.Append(reader.GetFloat(i));
+                                            break;
 
-                                    default:
-                                        sb.Append("'" + reader.GetValue(i).ToString().Replace("'", "''") + "'");
-                                        break;
+                                        case "Boolean":
+                                            sb.Append(reader.GetBoolean(i) ? "1" : "0");
+                                            break;
+
+                                        default:
+                                            sb.Append("'" + reader.GetValue(i).ToString().Replace("'", "''") + "'");
+                                            break;
+                                    }
+                                }
+                                if (i < reader.FieldCount - 1)
+                                {
+                                    sb.Append(", ");
                                 }
                             }
-                            if (i < reader.FieldCount - 1)
-                            {
-                                sb.Append(", ");
-                            }
-                        }
-                        sb.AppendLine("),");
+                            sb.AppendLine("),");
 
-                        rowCount++;
-                    }
+                            rowCount++;
+                        }
 
                     // Remove the trailing comma from the last row in the last batch
                     if (sb.Length > 0)
@@ -235,7 +255,14 @@ WHERE sm.object_id = OBJECT_ID(@SchemaQualifiedName);";
                         sb.AppendLine(";"); // Close the last batch
                     }
 
-                    sb.AppendLine($"--SET IDENTITY_INSERT {tableName} OFF;");
+                    if (hasIdentity)
+                    {
+                        sb.AppendLine($"SET IDENTITY_INSERT {tableName} OFF;");
+                    }
+                    //else
+                    //{
+                    //    sb.AppendLine($"--SET IDENTITY_INSERT {tableName} OFF;");
+                    //}
                 }
             }
             catch (Exception ex)

@@ -480,8 +480,7 @@ namespace SQL_Document_Builder
                 }
                 else
                 {
-                    var sql = $"select * from {obj.FullName}";
-                    var insertScript = await DatabaseDocBuilder.QueryDataToInsertStatementAsync(sql, obj.FullName);
+                    var insertScript = await DatabaseDocBuilder.TableToInsertStatementAsync(obj);
                     sqlTextBox.AppendText(insertScript + "GO" + Environment.NewLine);
                 }
             }
@@ -784,8 +783,7 @@ namespace SQL_Document_Builder
                     // checks if the table has identify column
                     var hasIdentityColumn = await DatabaseHelper.HasIdentityColumnAsync(objectName);
 
-                    var sql = $"select * from {objectName.FullName}";
-                    var script = await DatabaseDocBuilder.QueryDataToInsertStatementAsync(sql, objectName.FullName);
+                    var script = await DatabaseDocBuilder.TableToInsertStatementAsync(objectName);
 
                     if (script == "Too much rows")
                     {
