@@ -28,88 +28,94 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.label1 = new System.Windows.Forms.Label();
-            this.schemaListBox = new System.Windows.Forms.ListBox();
-            this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
-            this.okButton = new System.Windows.Forms.Button();
-            this.cancelButton = new System.Windows.Forms.Button();
-            this.tableLayoutPanel1.SuspendLayout();
-            this.SuspendLayout();
+            label1 = new System.Windows.Forms.Label();
+            schemaListBox = new System.Windows.Forms.ListBox();
+            tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
+            okButton = new System.Windows.Forms.Button();
+            cancelButton = new System.Windows.Forms.Button();
+            tableLayoutPanel1.SuspendLayout();
+            SuspendLayout();
             // 
             // label1
             // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(12, 9);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(118, 20);
-            this.label1.TabIndex = 0;
-            this.label1.Text = "Select a schema:";
+            label1.AutoSize = true;
+            label1.Location = new System.Drawing.Point(10, 7);
+            label1.Name = "label1";
+            label1.Size = new System.Drawing.Size(94, 15);
+            label1.TabIndex = 0;
+            label1.Text = "Select a schema:";
             // 
             // schemaListBox
             // 
-            this.schemaListBox.FormattingEnabled = true;
-            this.schemaListBox.ItemHeight = 20;
-            this.schemaListBox.Location = new System.Drawing.Point(12, 32);
-            this.schemaListBox.Name = "schemaListBox";
-            this.schemaListBox.Size = new System.Drawing.Size(244, 404);
-            this.schemaListBox.TabIndex = 1;
+            schemaListBox.FormattingEnabled = true;
+            schemaListBox.ItemHeight = 15;
+            schemaListBox.Location = new System.Drawing.Point(10, 24);
+            schemaListBox.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            schemaListBox.Name = "schemaListBox";
+            schemaListBox.Size = new System.Drawing.Size(214, 304);
+            schemaListBox.TabIndex = 1;
             // 
             // tableLayoutPanel1
             // 
-            this.tableLayoutPanel1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.tableLayoutPanel1.ColumnCount = 1;
-            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tableLayoutPanel1.Controls.Add(this.okButton, 0, 0);
-            this.tableLayoutPanel1.Controls.Add(this.cancelButton, 0, 1);
-            this.tableLayoutPanel1.Location = new System.Drawing.Point(262, 32);
-            this.tableLayoutPanel1.Name = "tableLayoutPanel1";
-            this.tableLayoutPanel1.RowCount = 2;
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tableLayoutPanel1.Size = new System.Drawing.Size(110, 70);
-            this.tableLayoutPanel1.TabIndex = 2;
+            tableLayoutPanel1.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            tableLayoutPanel1.ColumnCount = 1;
+            tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            tableLayoutPanel1.Controls.Add(okButton, 0, 0);
+            tableLayoutPanel1.Controls.Add(cancelButton, 0, 1);
+            tableLayoutPanel1.Location = new System.Drawing.Point(229, 24);
+            tableLayoutPanel1.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            tableLayoutPanel1.Name = "tableLayoutPanel1";
+            tableLayoutPanel1.RowCount = 2;
+            tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            tableLayoutPanel1.Size = new System.Drawing.Size(96, 52);
+            tableLayoutPanel1.TabIndex = 2;
             // 
             // okButton
             // 
-            this.okButton.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.okButton.Location = new System.Drawing.Point(3, 3);
-            this.okButton.Name = "okButton";
-            this.okButton.Size = new System.Drawing.Size(104, 29);
-            this.okButton.TabIndex = 0;
-            this.okButton.Text = "&OK";
-            this.okButton.UseVisualStyleBackColor = true;
-            this.okButton.Click += new System.EventHandler(this.OkButton_Click);
+            okButton.Dock = System.Windows.Forms.DockStyle.Fill;
+            okButton.Location = new System.Drawing.Point(3, 2);
+            okButton.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            okButton.Name = "okButton";
+            okButton.Size = new System.Drawing.Size(90, 22);
+            okButton.TabIndex = 0;
+            okButton.Text = "&OK";
+            okButton.UseVisualStyleBackColor = true;
+            okButton.Click += OkButton_Click;
             // 
             // cancelButton
             // 
-            this.cancelButton.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.cancelButton.Location = new System.Drawing.Point(3, 38);
-            this.cancelButton.Name = "cancelButton";
-            this.cancelButton.Size = new System.Drawing.Size(104, 29);
-            this.cancelButton.TabIndex = 0;
-            this.cancelButton.Text = "&Cancel";
-            this.cancelButton.UseVisualStyleBackColor = true;
-            this.cancelButton.Click += new System.EventHandler(this.CancelButton_Click);
+            cancelButton.Dock = System.Windows.Forms.DockStyle.Fill;
+            cancelButton.Location = new System.Drawing.Point(3, 28);
+            cancelButton.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            cancelButton.Name = "cancelButton";
+            cancelButton.Size = new System.Drawing.Size(90, 22);
+            cancelButton.TabIndex = 0;
+            cancelButton.Text = "&Cancel";
+            cancelButton.UseVisualStyleBackColor = true;
+            cancelButton.Click += CancelButton_Click;
             // 
             // Schemapicker
             // 
-            this.AcceptButton = this.okButton;
-            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.CancelButton = this.cancelButton;
-            this.ClientSize = new System.Drawing.Size(384, 450);
-            this.Controls.Add(this.tableLayoutPanel1);
-            this.Controls.Add(this.schemaListBox);
-            this.Controls.Add(this.label1);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
-            this.MaximizeBox = false;
-            this.MinimizeBox = false;
-            this.Name = "Schemapicker";
-            this.Text = "Schema picker";
-            this.Load += new System.EventHandler(this.Schemapicker_Load);
-            this.tableLayoutPanel1.ResumeLayout(false);
-            this.ResumeLayout(false);
-            this.PerformLayout();
+            AcceptButton = okButton;
+            AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
+            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            CancelButton = cancelButton;
+            ClientSize = new System.Drawing.Size(336, 338);
+            Controls.Add(tableLayoutPanel1);
+            Controls.Add(schemaListBox);
+            Controls.Add(label1);
+            FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
+            Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            MaximizeBox = false;
+            MinimizeBox = false;
+            Name = "Schemapicker";
+            StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
+            Text = "Schema picker";
+            Load += Schemapicker_Load;
+            tableLayoutPanel1.ResumeLayout(false);
+            ResumeLayout(false);
+            PerformLayout();
 
         }
 

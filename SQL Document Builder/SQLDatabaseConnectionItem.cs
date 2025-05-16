@@ -37,12 +37,13 @@ namespace SQL_Document_Builder
         {
             if (xNode.HasChildNodes)
             {
+                ConnectionType = "SQL Server";
+
                 this.IsCustom = false;
                 foreach (XmlNode node in xNode.ChildNodes)
                 {
                     string elementName = node.Name.ToLower();
                     string elementValue = node.InnerText;
-                    ConnectionType = "SQL Server";
 
                     switch (elementName)
                     {
@@ -54,32 +55,28 @@ namespace SQL_Document_Builder
                         case "authentication":
                             switch (elementValue)
                             {
-                                case "1":
-                                    this.AuthenticationType = SqlAuthenticationMethod.ActiveDirectoryDefault;
+                                case "0":
+                                case "3":
+                                    this.AuthenticationType = SqlAuthenticationMethod.ActiveDirectoryIntegrated;
                                     break;
 
-                                case "2":
+                                case "1":
                                     this.AuthenticationType = SqlAuthenticationMethod.SqlPassword;
                                     break;
 
-                                case "3":
-                                    this.AuthenticationType = SqlAuthenticationMethod.ActiveDirectoryIntegrated;
-                                    //this.AuthenticationType = SqlAuthenticationMethod.ActiveDirectoryPassword;
+                                case "2":
+                                    this.AuthenticationType = SqlAuthenticationMethod.ActiveDirectoryPassword;
                                     break;
 
                                 case "4":
-                                    this.AuthenticationType = SqlAuthenticationMethod.ActiveDirectoryIntegrated;
-                                    break;
-
-                                case "5":
                                     this.AuthenticationType = SqlAuthenticationMethod.ActiveDirectoryInteractive;
                                     break;
 
-                                case "6":
+                                case "5":
                                     this.AuthenticationType = SqlAuthenticationMethod.ActiveDirectoryServicePrincipal;
                                     break;
 
-                                case "7":
+                                case "6":
                                     this.AuthenticationType = SqlAuthenticationMethod.ActiveDirectoryManagedIdentity;
                                     break;
 

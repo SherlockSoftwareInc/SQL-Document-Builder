@@ -259,7 +259,7 @@ namespace SQL_Document_Builder
             {
                 foreach (var item in _connections.Connections)
                 {
-                    if (item.ConnectionType.Equals("SQL Server", StringComparison.OrdinalIgnoreCase))
+                    if (!item.ConnectionType.Equals("ODBC", StringComparison.OrdinalIgnoreCase))
                     {
                         connectionsListBox.Items.Add(item);
                     }

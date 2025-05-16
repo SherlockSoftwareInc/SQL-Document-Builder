@@ -126,7 +126,7 @@
             testToolStripButton.Image = Properties.Resources.checkmark;
             testToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             testToolStripButton.Name = "testToolStripButton";
-            testToolStripButton.Size = new System.Drawing.Size(47, 22);
+            testToolStripButton.Size = new System.Drawing.Size(48, 22);
             testToolStripButton.Text = "Test";
             testToolStripButton.Click += TestButton_Click;
             // 
@@ -223,7 +223,7 @@
             trustCertificateCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
             trustCertificateCheckBox.Location = new System.Drawing.Point(101, 160);
             trustCertificateCheckBox.Name = "trustCertificateCheckBox";
-            trustCertificateCheckBox.Size = new System.Drawing.Size(140, 19);
+            trustCertificateCheckBox.Size = new System.Drawing.Size(141, 19);
             trustCertificateCheckBox.TabIndex = 8;
             trustCertificateCheckBox.Text = "Trust server certificate";
             trustCertificateCheckBox.UseVisualStyleBackColor = true;
@@ -374,6 +374,7 @@
             MaximizeBox = false;
             MinimizeBox = false;
             Name = "ConnectionManageForm";
+            StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             Text = "Connection Manager";
             Load += ConnectionManageForm_Load;
             toolStrip1.ResumeLayout(false);

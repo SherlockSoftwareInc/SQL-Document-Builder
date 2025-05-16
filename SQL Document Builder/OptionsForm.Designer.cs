@@ -28,56 +28,61 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.useIfExistsCheckBox = new System.Windows.Forms.CheckBox();
-            this.okButton = new System.Windows.Forms.Button();
-            this.cancelButton = new System.Windows.Forms.Button();
-            this.SuspendLayout();
+            useIfExistsCheckBox = new System.Windows.Forms.CheckBox();
+            okButton = new System.Windows.Forms.Button();
+            cancelButton = new System.Windows.Forms.Button();
+            SuspendLayout();
             // 
             // useIfExistsCheckBox
             // 
-            this.useIfExistsCheckBox.AutoSize = true;
-            this.useIfExistsCheckBox.Location = new System.Drawing.Point(44, 35);
-            this.useIfExistsCheckBox.Name = "useIfExistsCheckBox";
-            this.useIfExistsCheckBox.Size = new System.Drawing.Size(188, 36);
-            this.useIfExistsCheckBox.TabIndex = 0;
-            this.useIfExistsCheckBox.Text = "Use IF EXISTS";
-            this.useIfExistsCheckBox.UseVisualStyleBackColor = true;
+            useIfExistsCheckBox.AutoSize = true;
+            useIfExistsCheckBox.Location = new System.Drawing.Point(24, 16);
+            useIfExistsCheckBox.Margin = new System.Windows.Forms.Padding(2, 1, 2, 1);
+            useIfExistsCheckBox.Name = "useIfExistsCheckBox";
+            useIfExistsCheckBox.Size = new System.Drawing.Size(95, 19);
+            useIfExistsCheckBox.TabIndex = 0;
+            useIfExistsCheckBox.Text = "Use IF EXISTS";
+            useIfExistsCheckBox.UseVisualStyleBackColor = true;
             // 
             // okButton
             // 
-            this.okButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.okButton.Location = new System.Drawing.Point(455, 366);
-            this.okButton.Name = "okButton";
-            this.okButton.Size = new System.Drawing.Size(150, 46);
-            this.okButton.TabIndex = 1;
-            this.okButton.Text = "&Ok";
-            this.okButton.UseVisualStyleBackColor = true;
-            this.okButton.Click += new System.EventHandler(this.OkButton_Click);
+            okButton.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
+            okButton.Location = new System.Drawing.Point(245, 172);
+            okButton.Margin = new System.Windows.Forms.Padding(2, 1, 2, 1);
+            okButton.Name = "okButton";
+            okButton.Size = new System.Drawing.Size(81, 22);
+            okButton.TabIndex = 1;
+            okButton.Text = "&Ok";
+            okButton.UseVisualStyleBackColor = true;
+            okButton.Click += OkButton_Click;
             // 
             // cancelButton
             // 
-            this.cancelButton.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.cancelButton.Location = new System.Drawing.Point(611, 366);
-            this.cancelButton.Name = "cancelButton";
-            this.cancelButton.Size = new System.Drawing.Size(150, 46);
-            this.cancelButton.TabIndex = 2;
-            this.cancelButton.Text = "&Cancel";
-            this.cancelButton.UseVisualStyleBackColor = true;
-            this.cancelButton.Click += new System.EventHandler(this.CancelButton_Click);
+            cancelButton.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
+            cancelButton.Location = new System.Drawing.Point(329, 172);
+            cancelButton.Margin = new System.Windows.Forms.Padding(2, 1, 2, 1);
+            cancelButton.Name = "cancelButton";
+            cancelButton.Size = new System.Drawing.Size(81, 22);
+            cancelButton.TabIndex = 2;
+            cancelButton.Text = "&Cancel";
+            cancelButton.UseVisualStyleBackColor = true;
+            cancelButton.Click += CancelButton_Click;
             // 
             // OptionsForm
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(13F, 32F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(800, 450);
-            this.Controls.Add(this.cancelButton);
-            this.Controls.Add(this.okButton);
-            this.Controls.Add(this.useIfExistsCheckBox);
-            this.Name = "OptionsForm";
-            this.Text = "Options";
-            this.Load += new System.EventHandler(this.OptionsForm_Load);
-            this.ResumeLayout(false);
-            this.PerformLayout();
+            AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
+            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            ClientSize = new System.Drawing.Size(431, 211);
+            Controls.Add(cancelButton);
+            Controls.Add(okButton);
+            Controls.Add(useIfExistsCheckBox);
+            Margin = new System.Windows.Forms.Padding(2, 1, 2, 1);
+            Name = "OptionsForm";
+            StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
+            Text = "Options";
+            Load += OptionsForm_Load;
+            ResumeLayout(false);
+            PerformLayout();
 
         }
 

@@ -209,6 +209,7 @@
             Controls.Add(statusStrip1);
             Controls.Add(toolStrip1);
             Name = "BatchColumnDesc";
+            StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             Text = "BatchColumnDesc";
             Load += BatchColumnDesc_Load;
             toolStrip1.ResumeLayout(false);

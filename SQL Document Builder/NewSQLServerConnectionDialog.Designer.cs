@@ -229,6 +229,7 @@
             MaximizeBox = false;
             MinimizeBox = false;
             Name = "NewSQLServerConnectionDialog";
+            StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             Text = "New SQL Server Connection Dialog";
             Load += NewSQLServerConnectionDialog_Load;
             logonGroupBox.ResumeLayout(false);
