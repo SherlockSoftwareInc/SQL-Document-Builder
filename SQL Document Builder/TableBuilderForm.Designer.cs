@@ -102,6 +102,11 @@
             selectAllToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             toolStripSeparator8 = new System.Windows.Forms.ToolStripSeparator();
             saveTempleteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            quickFindToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            findToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            findAndReplaceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            toolStripSeparator16 = new System.Windows.Forms.ToolStripSeparator();
+            goToLineToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             sharePointToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             tableListToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             viewListToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
@@ -148,6 +153,11 @@
             serverToolStripStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             databaseToolStripStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             scriptPanel = new System.Windows.Forms.Panel();
+            searchPanel = new System.Windows.Forms.Panel();
+            closeSearchButton = new System.Windows.Forms.Button();
+            nextSearchButton = new System.Windows.Forms.Button();
+            prevSearchButton = new System.Windows.Forms.Button();
+            searchSQLTextBox = new System.Windows.Forms.TextBox();
             sqlTextBox = new ScintillaNET.Scintilla();
             definitionPanel = new ColumnDefView();
             collapsibleSplitter1 = new CollapsibleSplitter();
@@ -161,6 +171,7 @@
             menuStrip1.SuspendLayout();
             statusStrip1.SuspendLayout();
             scriptPanel.SuspendLayout();
+            searchPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
             splitContainer1.Panel1.SuspendLayout();
             splitContainer1.Panel2.SuspendLayout();
@@ -652,6 +663,7 @@
             // 
             // newConnectionToolStripMenuItem
             // 
+            newConnectionToolStripMenuItem.Image = Properties.Resources.add;
             newConnectionToolStripMenuItem.Name = "newConnectionToolStripMenuItem";
             newConnectionToolStripMenuItem.Size = new System.Drawing.Size(191, 22);
             newConnectionToolStripMenuItem.Text = "New connection";
@@ -741,8 +753,9 @@
             // 
             // editToolStripMenuItem
             // 
-            editToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { cutToolStripMenuItem, copyToolStripMenuItem, pasteToolStripMenuItem, toolStripSeparator6, selectAllToolStripMenuItem, toolStripSeparator8, saveTempleteToolStripMenuItem });
+            editToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { cutToolStripMenuItem, copyToolStripMenuItem, pasteToolStripMenuItem, toolStripSeparator6, selectAllToolStripMenuItem, toolStripSeparator8, saveTempleteToolStripMenuItem, quickFindToolStripMenuItem, findToolStripMenuItem, findAndReplaceToolStripMenuItem, toolStripSeparator16, goToLineToolStripMenuItem });
             editToolStripMenuItem.Name = "editToolStripMenuItem";
+            editToolStripMenuItem.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.F;
             editToolStripMenuItem.Size = new System.Drawing.Size(39, 20);
             editToolStripMenuItem.Text = "&Edit";
             // 
@@ -752,7 +765,7 @@
             cutToolStripMenuItem.ImageTransparentColor = System.Drawing.Color.Magenta;
             cutToolStripMenuItem.Name = "cutToolStripMenuItem";
             cutToolStripMenuItem.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.X;
-            cutToolStripMenuItem.Size = new System.Drawing.Size(148, 22);
+            cutToolStripMenuItem.Size = new System.Drawing.Size(216, 22);
             cutToolStripMenuItem.Text = "Cu&t";
             cutToolStripMenuItem.Click += CutToolStripMenuItem_Click;
             // 
@@ -762,7 +775,7 @@
             copyToolStripMenuItem.ImageTransparentColor = System.Drawing.Color.Magenta;
             copyToolStripMenuItem.Name = "copyToolStripMenuItem";
             copyToolStripMenuItem.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.C;
-            copyToolStripMenuItem.Size = new System.Drawing.Size(148, 22);
+            copyToolStripMenuItem.Size = new System.Drawing.Size(216, 22);
             copyToolStripMenuItem.Text = "&Copy";
             copyToolStripMenuItem.Click += CopyToolStripMenuItem_Click;
             // 
@@ -772,32 +785,75 @@
             pasteToolStripMenuItem.ImageTransparentColor = System.Drawing.Color.Magenta;
             pasteToolStripMenuItem.Name = "pasteToolStripMenuItem";
             pasteToolStripMenuItem.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.V;
-            pasteToolStripMenuItem.Size = new System.Drawing.Size(148, 22);
+            pasteToolStripMenuItem.Size = new System.Drawing.Size(216, 22);
             pasteToolStripMenuItem.Text = "&Paste";
             pasteToolStripMenuItem.Click += PasteToolStripMenuItem_Click;
             // 
             // toolStripSeparator6
             // 
             toolStripSeparator6.Name = "toolStripSeparator6";
-            toolStripSeparator6.Size = new System.Drawing.Size(145, 6);
+            toolStripSeparator6.Size = new System.Drawing.Size(213, 6);
             // 
             // selectAllToolStripMenuItem
             // 
             selectAllToolStripMenuItem.Name = "selectAllToolStripMenuItem";
-            selectAllToolStripMenuItem.Size = new System.Drawing.Size(148, 22);
+            selectAllToolStripMenuItem.Size = new System.Drawing.Size(216, 22);
             selectAllToolStripMenuItem.Text = "Select &All";
             selectAllToolStripMenuItem.Click += SelectAllToolStripMenuItem_Click;
             // 
             // toolStripSeparator8
             // 
             toolStripSeparator8.Name = "toolStripSeparator8";
-            toolStripSeparator8.Size = new System.Drawing.Size(145, 6);
+            toolStripSeparator8.Size = new System.Drawing.Size(213, 6);
             // 
             // saveTempleteToolStripMenuItem
             // 
             saveTempleteToolStripMenuItem.Name = "saveTempleteToolStripMenuItem";
-            saveTempleteToolStripMenuItem.Size = new System.Drawing.Size(148, 22);
+            saveTempleteToolStripMenuItem.Size = new System.Drawing.Size(216, 22);
             saveTempleteToolStripMenuItem.Text = "Save templete";
+            saveTempleteToolStripMenuItem.Visible = false;
+            // 
+            // quickFindToolStripMenuItem
+            // 
+            quickFindToolStripMenuItem.Name = "quickFindToolStripMenuItem";
+            quickFindToolStripMenuItem.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.F;
+            quickFindToolStripMenuItem.Size = new System.Drawing.Size(216, 22);
+            quickFindToolStripMenuItem.Text = "Quick Find...";
+            quickFindToolStripMenuItem.Click += QuickFindToolStripMenuItem_Click;
+            // 
+            // findToolStripMenuItem
+            // 
+            findToolStripMenuItem.Image = Properties.Resources.search;
+            findToolStripMenuItem.Name = "findToolStripMenuItem";
+            findToolStripMenuItem.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Alt | System.Windows.Forms.Keys.F;
+            findToolStripMenuItem.Size = new System.Drawing.Size(216, 22);
+            findToolStripMenuItem.Text = "Find...";
+            findToolStripMenuItem.Visible = false;
+            findToolStripMenuItem.Click += FindDialogToolStripMenuItem_Click;
+            // 
+            // findAndReplaceToolStripMenuItem
+            // 
+            findAndReplaceToolStripMenuItem.Name = "findAndReplaceToolStripMenuItem";
+            findAndReplaceToolStripMenuItem.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.H;
+            findAndReplaceToolStripMenuItem.Size = new System.Drawing.Size(216, 22);
+            findAndReplaceToolStripMenuItem.Text = "Find and Replace...";
+            findAndReplaceToolStripMenuItem.Visible = false;
+            findAndReplaceToolStripMenuItem.Click += FindAndReplaceToolStripMenuItem_Click;
+            // 
+            // toolStripSeparator16
+            // 
+            toolStripSeparator16.Name = "toolStripSeparator16";
+            toolStripSeparator16.Size = new System.Drawing.Size(213, 6);
+            toolStripSeparator16.Visible = false;
+            // 
+            // goToLineToolStripMenuItem
+            // 
+            goToLineToolStripMenuItem.Name = "goToLineToolStripMenuItem";
+            goToLineToolStripMenuItem.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.G;
+            goToLineToolStripMenuItem.Size = new System.Drawing.Size(216, 22);
+            goToLineToolStripMenuItem.Text = "Go To Line...";
+            goToLineToolStripMenuItem.Visible = false;
+            goToLineToolStripMenuItem.Click += GoToLineToolStripMenuItem_Click;
             // 
             // sharePointToolStripMenuItem
             // 
@@ -1098,12 +1154,76 @@
             // 
             // scriptPanel
             // 
+            scriptPanel.Controls.Add(searchPanel);
             scriptPanel.Controls.Add(sqlTextBox);
             scriptPanel.Dock = System.Windows.Forms.DockStyle.Fill;
             scriptPanel.Location = new System.Drawing.Point(0, 0);
             scriptPanel.Name = "scriptPanel";
             scriptPanel.Size = new System.Drawing.Size(586, 671);
             scriptPanel.TabIndex = 17;
+            // 
+            // searchPanel
+            // 
+            searchPanel.Controls.Add(closeSearchButton);
+            searchPanel.Controls.Add(nextSearchButton);
+            searchPanel.Controls.Add(prevSearchButton);
+            searchPanel.Controls.Add(searchSQLTextBox);
+            searchPanel.Location = new System.Drawing.Point(340, 9);
+            searchPanel.Name = "searchPanel";
+            searchPanel.Size = new System.Drawing.Size(240, 29);
+            searchPanel.TabIndex = 2;
+            searchPanel.Visible = false;
+            // 
+            // closeSearchButton
+            // 
+            closeSearchButton.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            closeSearchButton.BackColor = System.Drawing.Color.White;
+            closeSearchButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            closeSearchButton.ForeColor = System.Drawing.Color.Black;
+            closeSearchButton.Location = new System.Drawing.Point(214, 3);
+            closeSearchButton.Name = "closeSearchButton";
+            closeSearchButton.Size = new System.Drawing.Size(23, 23);
+            closeSearchButton.TabIndex = 3;
+            closeSearchButton.Text = "❌";
+            closeSearchButton.UseVisualStyleBackColor = false;
+            closeSearchButton.Click += BtnClearSearch_Click;
+            // 
+            // nextSearchButton
+            // 
+            nextSearchButton.BackColor = System.Drawing.Color.White;
+            nextSearchButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            nextSearchButton.ForeColor = System.Drawing.SystemColors.ControlText;
+            nextSearchButton.Location = new System.Drawing.Point(188, 3);
+            nextSearchButton.Name = "nextSearchButton";
+            nextSearchButton.Size = new System.Drawing.Size(23, 23);
+            nextSearchButton.TabIndex = 2;
+            nextSearchButton.Tag = "Find next (Enter)";
+            nextSearchButton.Text = "⮟";
+            nextSearchButton.UseVisualStyleBackColor = false;
+            nextSearchButton.Click += BtnNextSearch_Click;
+            // 
+            // prevSearchButton
+            // 
+            prevSearchButton.BackColor = System.Drawing.Color.White;
+            prevSearchButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            prevSearchButton.ForeColor = System.Drawing.SystemColors.ControlText;
+            prevSearchButton.Location = new System.Drawing.Point(162, 2);
+            prevSearchButton.Name = "prevSearchButton";
+            prevSearchButton.Size = new System.Drawing.Size(23, 23);
+            prevSearchButton.TabIndex = 1;
+            prevSearchButton.Tag = "Find previous (Shift+Enter)";
+            prevSearchButton.Text = "⮝";
+            prevSearchButton.UseVisualStyleBackColor = false;
+            prevSearchButton.Click += BtnPrevSearch_Click;
+            // 
+            // searchSQLTextBox
+            // 
+            searchSQLTextBox.Location = new System.Drawing.Point(3, 3);
+            searchSQLTextBox.Name = "searchSQLTextBox";
+            searchSQLTextBox.Size = new System.Drawing.Size(156, 23);
+            searchSQLTextBox.TabIndex = 0;
+            searchSQLTextBox.TextChanged += TxtSearch_TextChanged;
+            searchSQLTextBox.KeyDown += TxtSearch_KeyDown;
             // 
             // sqlTextBox
             // 
@@ -1115,6 +1235,8 @@
             sqlTextBox.ScrollWidth = 49;
             sqlTextBox.Size = new System.Drawing.Size(586, 671);
             sqlTextBox.TabIndex = 1;
+            sqlTextBox.TextChanged += OnTextChanged;
+            sqlTextBox.Resize += SqlTextBox_Resize;
             // 
             // definitionPanel
             // 
@@ -1194,6 +1316,8 @@
             statusStrip1.ResumeLayout(false);
             statusStrip1.PerformLayout();
             scriptPanel.ResumeLayout(false);
+            searchPanel.ResumeLayout(false);
+            searchPanel.PerformLayout();
             splitContainer1.Panel1.ResumeLayout(false);
             splitContainer1.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)splitContainer1).EndInit();
@@ -1327,5 +1451,15 @@
         private System.Windows.Forms.ToolStripMenuItem clipboardToTableToolStripMenuItem1;
         private System.Windows.Forms.ToolStripMenuItem queryDataToTableToolStripMenuItem1;
         private ScintillaNET.Scintilla sqlTextBox;
+        private System.Windows.Forms.ToolStripMenuItem quickFindToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem findToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem findAndReplaceToolStripMenuItem;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator16;
+        private System.Windows.Forms.ToolStripMenuItem goToLineToolStripMenuItem;
+        private System.Windows.Forms.Panel searchPanel;
+        private System.Windows.Forms.Button prevSearchButton;
+        private System.Windows.Forms.TextBox searchSQLTextBox;
+        private System.Windows.Forms.Button closeSearchButton;
+        private System.Windows.Forms.Button nextSearchButton;
     }
 }

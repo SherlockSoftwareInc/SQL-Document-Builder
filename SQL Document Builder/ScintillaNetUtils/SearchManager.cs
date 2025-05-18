@@ -1,16 +1,13 @@
 ﻿using ScintillaNET;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace SQL_Document_Builder.ScintillaNetUtils
 {
+    /// <summary>
+    /// The search manager.
+    /// </summary>
     internal class SearchManager
     {
-
         public static ScintillaNET.Scintilla TextArea;
         public static TextBox SearchBox;
 
@@ -18,6 +15,11 @@ namespace SQL_Document_Builder.ScintillaNetUtils
 
         public static int LastSearchIndex;
 
+        /// <summary>
+        /// Finds the.
+        /// </summary>
+        /// <param name="next">If true, next.</param>
+        /// <param name="incremental">If true, incremental.</param>
         public static void Find(bool next, bool incremental)
         {
             bool first = LastSearch != SearchBox.Text;
@@ -25,10 +27,8 @@ namespace SQL_Document_Builder.ScintillaNetUtils
             LastSearch = SearchBox.Text;
             if (LastSearch.Length > 0)
             {
-
                 if (next)
                 {
-
                     // SEARCH FOR THE NEXT OCCURANCE
 
                     // Search the document at the last search index
@@ -39,7 +39,6 @@ namespace SQL_Document_Builder.ScintillaNetUtils
                     // Search, and if not found..
                     if (!incremental || TextArea.SearchInTarget(LastSearch) == -1)
                     {
-
                         // Search the document from the caret onwards
                         TextArea.TargetStart = TextArea.CurrentPosition;
                         TextArea.TargetEnd = TextArea.TextLength;
@@ -48,7 +47,6 @@ namespace SQL_Document_Builder.ScintillaNetUtils
                         // Search, and if not found..
                         if (TextArea.SearchInTarget(LastSearch) == -1)
                         {
-
                             // Search again from top
                             TextArea.TargetStart = 0;
                             TextArea.TargetEnd = TextArea.TextLength;
@@ -56,19 +54,15 @@ namespace SQL_Document_Builder.ScintillaNetUtils
                             // Search, and if not found..
                             if (TextArea.SearchInTarget(LastSearch) == -1)
                             {
-
                                 // clear selection and exit
                                 TextArea.ClearSelections();
                                 return;
                             }
                         }
-
                     }
-
                 }
                 else
                 {
-
                     // SEARCH FOR THE PREVIOUS OCCURANCE
 
                     // Search the document from the beginning to the caret
@@ -79,7 +73,6 @@ namespace SQL_Document_Builder.ScintillaNetUtils
                     // Search, and if not found..
                     if (TextArea.SearchInTarget(LastSearch) == -1)
                     {
-
                         // Search again from the caret onwards
                         TextArea.TargetStart = TextArea.CurrentPosition;
                         TextArea.TargetEnd = TextArea.TextLength;
@@ -87,25 +80,20 @@ namespace SQL_Document_Builder.ScintillaNetUtils
                         // Search, and if not found..
                         if (TextArea.SearchInTarget(LastSearch) == -1)
                         {
-
                             // clear selection and exit
                             TextArea.ClearSelections();
                             return;
                         }
                     }
-
                 }
 
                 // Select the occurance
                 LastSearchIndex = TextArea.TargetStart;
                 TextArea.SetSelection(TextArea.TargetEnd, TextArea.TargetStart);
                 TextArea.ScrollCaret();
-
             }
 
             SearchBox.Focus();
         }
-
-
     }
 }

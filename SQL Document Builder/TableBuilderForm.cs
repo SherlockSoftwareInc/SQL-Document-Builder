@@ -1,15 +1,16 @@
 ﻿using DarkModeForms;
 using ScintillaNET;
+using SQL_Document_Builder.ScintillaNetUtils;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using static SQL_Document_Builder.ObjectName;
 using static System.Net.Mime.MediaTypeNames;
-using SQL_Document_Builder.ScintillaNetUtils;
 
 namespace SQL_Document_Builder
 {
@@ -425,6 +426,14 @@ namespace SQL_Document_Builder
             {
                 dBObjectDefPanel.Copy();
             }
+            else if (focusedControl is Scintilla scintilla)
+            {
+                scintilla.Copy();
+            }
+            else if (focusedControl is ColumnDefView columnDefView)
+            {
+                columnDefView.Copy();
+            }
             else
             {
                 statusToolStripStatusLabe.Text = "No valid control is focused for copying.";
@@ -571,15 +580,31 @@ namespace SQL_Document_Builder
         /// <param name="e">The E.</param>
         private void CutToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (ActiveControl?.GetType() == typeof(TextBox))
+            Control? focusedControl = GetFocusedControl(this);
+            if (focusedControl == null)
             {
-                TextBox textBox = (TextBox)ActiveControl;
+                return;
+            }
+
+            if (focusedControl is TextBox textBox)
+            {
                 textBox.Cut();
             }
-            else if (ActiveControl?.GetType() == typeof(DBObjectDefPanel))
+            else if (focusedControl is DBObjectDefPanel dBObjectDefPanel)
             {
-                DBObjectDefPanel dBObjectDefPanel = (DBObjectDefPanel)ActiveControl;
                 dBObjectDefPanel.Cut();
+            }
+            else if (focusedControl is Scintilla scintilla)
+            {
+                scintilla.Cut();
+            }
+            else if (focusedControl is ColumnDefView columnDefView)
+            {
+                columnDefView.Cut();
+            }
+            else
+            {
+                statusToolStripStatusLabe.Text = "No valid control is focused for cutting.";
             }
         }
 
@@ -1141,6 +1166,14 @@ namespace SQL_Document_Builder
             {
                 dBObjectDefPanel.Paste();
             }
+            else if (focusedControl is Scintilla scintilla)
+            {
+                scintilla.Paste();
+            }
+            else if (focusedControl is ColumnDefView columnDefView)
+            {
+                columnDefView.Paste();
+            }
             else
             {
                 statusToolStripStatusLabe.Text = "No valid control is focused for pasting.";
@@ -1402,15 +1435,31 @@ namespace SQL_Document_Builder
         /// <param name="e">The E.</param>
         private void SelectAllToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (ActiveControl?.GetType() == typeof(TextBox))
+            Control? focusedControl = GetFocusedControl(this);
+            if (focusedControl == null)
             {
-                TextBox textBox = (TextBox)ActiveControl;
+                return;
+            }
+
+            if (focusedControl is TextBox textBox)
+            {
                 textBox.SelectAll();
             }
-            else if (ActiveControl?.GetType() == typeof(DBObjectDefPanel))
+            else if (focusedControl is DBObjectDefPanel dBObjectDefPanel)
             {
-                DBObjectDefPanel dBObjectDefPanel = (DBObjectDefPanel)ActiveControl;
                 dBObjectDefPanel.SelectAll();
+            }
+            else if (focusedControl is Scintilla scintilla)
+            {
+                scintilla.SelectAll();
+            }
+            else if (focusedControl is ColumnDefView columnDefView)
+            {
+                columnDefView.SelectAll();
+            }
+            else
+            {
+                statusToolStripStatusLabe.Text = "No valid control is focused for select.";
             }
         }
 
@@ -1756,14 +1805,13 @@ namespace SQL_Document_Builder
         }
 
         #region ScintillaNET
+
         /// <summary>
         /// Inits the colors.
         /// </summary>
         private void InitColors()
         {
-
             sqlTextBox.SetSelectionBackColor(true, IntToColor(0x114D9C));
-
         }
 
         /// <summary>
@@ -1771,7 +1819,6 @@ namespace SQL_Document_Builder
         /// </summary>
         private void InitHotkeys()
         {
-
             // register the hotkeys with the form
             HotKeyManager.AddHotKey(this, OpenSearch, Keys.F, true);
             HotKeyManager.AddHotKey(this, OpenFindDialog, Keys.F, true, false, true);
@@ -1790,7 +1837,6 @@ namespace SQL_Document_Builder
             sqlTextBox.ClearCmdKey(Keys.Control | Keys.H);
             sqlTextBox.ClearCmdKey(Keys.Control | Keys.L);
             sqlTextBox.ClearCmdKey(Keys.Control | Keys.U);
-
         }
 
         /// <summary>
@@ -1798,7 +1844,6 @@ namespace SQL_Document_Builder
         /// </summary>
         private void InitSyntaxColoring()
         {
-
             // Configure the default style
             sqlTextBox.StyleResetDefault();
             sqlTextBox.Styles[Style.Default].Font = "Consolas";
@@ -1828,26 +1873,49 @@ namespace SQL_Document_Builder
             //sqlTextBox.Lexer = Lexer.Sql;
             sqlTextBox.LexerName = "sql";
 
-            //scintilla1.SetKeywords(0, "class extends implements import interface new case do while else if for in switch throw get set function var try catch finally while with default break continue delete return each const namespace package include use is as instanceof typeof author copy default deprecated eventType example exampleText exception haxe inheritDoc internal link mtasc mxmlc param private return see serial serialData serialField since throws usage version langversion playerversion productversion dynamic private public partial static intrinsic internal native override protected AS3 final super this arguments null Infinity NaN undefined true false abstract as base bool break by byte case catch char checked class const continue decimal default delegate do double descending explicit event extern else enum false finally fixed float for foreach from goto group if implicit in int interface internal into is lock long new null namespace object operator out override orderby params private protected public readonly ref return switch struct sbyte sealed short sizeof stackalloc static string select this throw true try typeof uint ulong unchecked unsafe ushort using var virtual volatile void while where yield");
-            //scintilla1.SetKeywords(1, "void Null ArgumentError arguments Array Boolean Class Date DefinitionError Error EvalError Function int Math Namespace Number Object RangeError ReferenceError RegExp SecurityError String SyntaxError TypeError uint XML XMLList Boolean Byte Char DateTime Decimal Double Int16 Int32 Int64 IntPtr SByte Single UInt16 UInt32 UInt64 UIntPtr Void Path File System Windows Forms ScintillaNET");
-            sqlTextBox.SetKeywords(0, "select from where and or not in is null like between exists all any " +
-                   "insert into values update set delete truncate create alter drop table view index procedure function trigger " +
-                   "begin end commit rollback declare case when then else union group by order by having limit " +
-                   "join inner left right outer on as distinct count avg sum min max cast convert " +
-                   "go exec sp_ execute"); // Add GO, EXEC, sp_ for T-SQL like dialects
+            //sqlTextBox.SetKeywords(0, "select from where and or not in is null like between exists all any " +
+            //       "insert into values update set delete truncate create alter drop table view index procedure function trigger " +
+            //       "begin end commit rollback declare case when then else union group by order by having limit " +
+            //       "join inner left right outer on as distinct count avg sum min max cast convert " +
+            //       "go exec sp_ execute"); // Add GO, EXEC, sp_ for T-SQL like dialects
+
+            sqlTextBox.SetKeywords(0, SQL_KeyWords); // Add your custom keywords here
 
             // Secondary keywords (Data Types, Functions - adjust as needed)
-            sqlTextBox.SetKeywords(1, "int varchar nvarchar char text datetime date time smallint bigint bit decimal numeric float real " +
-                               "primary key foreign references constraint unique default check " +
-                               "getdate() current_timestamp system_user session_user user " +
-                               "isnull coalesce nullif");
+            //sqlTextBox.SetKeywords(1, "int varchar nvarchar char text datetime date time smallint bigint bit decimal numeric float real " +
+            //                   "primary key foreign references constraint unique default check " +
+            //                   "getdate() current_timestamp system_user session_user user " +
+            //                   "isnull coalesce nullif");
+
+            // Word2 = 1
+            sqlTextBox.SetKeywords(1, "ascii cast char charindex ceiling coalesce collate contains convert current_date current_time current_timestamp current_user floor isnull max min nullif object_id session_user substring system_user tsequal ");
+            // User1 = 4
+            sqlTextBox.SetKeywords(4, "all and any between cross exists in inner is join left like not null or outer pivot right some unpivot ( ) * ");
+            // User2 = 5
+            sqlTextBox.SetKeywords(5, "sys objects sysobjects ");
 
         }
 
+        /// <summary>
+        /// Ons the text changed.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
         private void OnTextChanged(object sender, EventArgs e)
         {
-
+            SetColumnMargins();
         }
+
+        /// <summary>
+        /// Sets the column margins.
+        /// </summary>
+        private void SetColumnMargins()
+        {
+            int maxLineNumber = sqlTextBox.Lines.Count.ToString().Length;
+            //int numberWidth = TextRenderer.MeasureText(maxLineNumber.ToString(), sqlTextBox.Font).Width;
+            sqlTextBox.Margins[NUMBER_MARGIN].Width = sqlTextBox.TextWidth(Style.LineNumber, new string('9', maxLineNumber + 1)) + 5;
+        }
+
 
         #region Numbers, Bookmarks, Code Folding
 
@@ -1870,6 +1938,7 @@ namespace SQL_Document_Builder
         /// change this to whatever margin you want the bookmarks/breakpoints to show in
         /// </summary>
         private const int BOOKMARK_MARGIN = 2;
+
         private const int BOOKMARK_MARKER = 2;
 
         /// <summary>
@@ -1887,14 +1956,13 @@ namespace SQL_Document_Builder
         /// </summary>
         private void InitNumberMargin()
         {
-
             sqlTextBox.Styles[Style.LineNumber].BackColor = IntToColor(BACK_COLOR);
             sqlTextBox.Styles[Style.LineNumber].ForeColor = IntToColor(FORE_COLOR);
             sqlTextBox.Styles[Style.IndentGuide].ForeColor = IntToColor(FORE_COLOR);
             sqlTextBox.Styles[Style.IndentGuide].BackColor = IntToColor(BACK_COLOR);
 
             var nums = sqlTextBox.Margins[NUMBER_MARGIN];
-            nums.Width = 30;
+            nums.Width = 20;
             nums.Type = MarginType.Number;
             nums.Sensitive = true;
             nums.Mask = 0;
@@ -1907,7 +1975,6 @@ namespace SQL_Document_Builder
         /// </summary>
         private void InitBookmarkMargin()
         {
-
             //scintilla1.SetFoldMarginColor(true, IntToColor(BACK_COLOR));
 
             var margin = sqlTextBox.Margins[BOOKMARK_MARGIN];
@@ -1922,7 +1989,6 @@ namespace SQL_Document_Builder
             marker.SetBackColor(IntToColor(0xFF003B));
             marker.SetForeColor(IntToColor(0x000000));
             marker.SetAlpha(100);
-
         }
 
         /// <summary>
@@ -1930,7 +1996,6 @@ namespace SQL_Document_Builder
         /// </summary>
         private void InitCodeFolding()
         {
-
             sqlTextBox.SetFoldMarginColor(true, IntToColor(BACK_COLOR));
             sqlTextBox.SetFoldMarginHighlightColor(true, IntToColor(BACK_COLOR));
 
@@ -1962,7 +2027,6 @@ namespace SQL_Document_Builder
 
             // Enable automatic folding
             sqlTextBox.AutomaticFold = (AutomaticFold.Show | AutomaticFold.Click | AutomaticFold.Change);
-
         }
 
         /// <summary>
@@ -1990,7 +2054,7 @@ namespace SQL_Document_Builder
             }
         }
 
-        #endregion
+        #endregion Numbers, Bookmarks, Code Folding
 
         #region Drag & Drop File
 
@@ -2059,135 +2123,108 @@ namespace SQL_Document_Builder
             };
         }
 
-        #endregion
+        #endregion Drag & Drop File
 
         #region Main Menu Commands
 
-        private void openToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            //if (openFileDialog.ShowDialog() == DialogResult.OK)
-            //{
-            //    LoadDataFromFile(openFileDialog.FileName);
-            //}
-        }
-
-        private void findToolStripMenuItem_Click(object sender, EventArgs e)
+        /// <summary>
+        /// Handles the click event of the quick find tool strip menu item.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void QuickFindToolStripMenuItem_Click(object sender, EventArgs e)
         {
             OpenSearch();
         }
 
-        private void findDialogToolStripMenuItem_Click(object sender, EventArgs e)
+        private void FindDialogToolStripMenuItem_Click(object sender, EventArgs e)
         {
             OpenFindDialog();
         }
 
-        private void findAndReplaceToolStripMenuItem_Click(object sender, EventArgs e)
+        private void FindAndReplaceToolStripMenuItem_Click(object sender, EventArgs e)
         {
             OpenReplaceDialog();
         }
 
-        private void cutToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            sqlTextBox.Cut();
-        }
-
-        private void copyToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            sqlTextBox.Copy();
-        }
-
-        private void pasteToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            sqlTextBox.Paste();
-        }
-
-        private void selectAllToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            sqlTextBox.SelectAll();
-        }
-
-        private void selectLineToolStripMenuItem_Click(object sender, EventArgs e)
+        private void SelectLineToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Line line = sqlTextBox.Lines[sqlTextBox.CurrentLine];
             sqlTextBox.SetSelection(line.Position + line.Length, line.Position);
         }
 
-        private void clearSelectionToolStripMenuItem_Click(object sender, EventArgs e)
+        private void ClearSelectionToolStripMenuItem_Click(object sender, EventArgs e)
         {
             sqlTextBox.SetEmptySelection(0);
         }
 
-        private void indentSelectionToolStripMenuItem_Click(object sender, EventArgs e)
+        private void IndentSelectionToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Indent();
         }
 
-        private void outdentSelectionToolStripMenuItem_Click(object sender, EventArgs e)
+        private void OutdentSelectionToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Outdent();
         }
 
-        private void uppercaseSelectionToolStripMenuItem_Click(object sender, EventArgs e)
+        private void UppercaseSelectionToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Uppercase();
         }
 
-        private void lowercaseSelectionToolStripMenuItem_Click(object sender, EventArgs e)
+        private void LowercaseSelectionToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Lowercase();
         }
 
-        private void wordWrapToolStripMenuItem1_Click(object sender, EventArgs e)
+        private void WordWrapToolStripMenuItem1_Click(object sender, EventArgs e)
         {
-
             //// toggle word wrap
             //wordWrapItem.Checked = !wordWrapItem.Checked;
             //sqlTextBox.WrapMode = wordWrapItem.Checked ? WrapMode.Word : WrapMode.None;
         }
 
-        private void indentGuidesToolStripMenuItem_Click(object sender, EventArgs e)
+        private void IndentGuidesToolStripMenuItem_Click(object sender, EventArgs e)
         {
-
             //// toggle indent guides
             //indentGuidesItem.Checked = !indentGuidesItem.Checked;
             //sqlTextBox.IndentationGuides = indentGuidesItem.Checked ? IndentView.LookBoth : IndentView.None;
         }
 
-        private void hiddenCharactersToolStripMenuItem_Click(object sender, EventArgs e)
+        private void HiddenCharactersToolStripMenuItem_Click(object sender, EventArgs e)
         {
-
             //// toggle view whitespace
             //hiddenCharactersItem.Checked = !hiddenCharactersItem.Checked;
             //sqlTextBox.ViewWhitespace = hiddenCharactersItem.Checked ? WhitespaceMode.VisibleAlways : WhitespaceMode.Invisible;
         }
 
-        private void zoomInToolStripMenuItem_Click(object sender, EventArgs e)
+        private void ZoomInToolStripMenuItem_Click(object sender, EventArgs e)
         {
             ZoomIn();
         }
 
-        private void zoomOutToolStripMenuItem_Click(object sender, EventArgs e)
+        private void ZoomOutToolStripMenuItem_Click(object sender, EventArgs e)
         {
             ZoomOut();
         }
 
-        private void zoom100ToolStripMenuItem_Click(object sender, EventArgs e)
+        private void Zoom100ToolStripMenuItem_Click(object sender, EventArgs e)
         {
             ZoomDefault();
         }
 
-        private void collapseAllToolStripMenuItem_Click(object sender, EventArgs e)
+        private void CollapseAllToolStripMenuItem_Click(object sender, EventArgs e)
         {
             sqlTextBox.FoldAll(FoldAction.Contract);
         }
 
-        private void expandAllToolStripMenuItem_Click(object sender, EventArgs e)
+        private void ExpandAllToolStripMenuItem_Click(object sender, EventArgs e)
         {
             sqlTextBox.FoldAll(FoldAction.Expand);
         }
 
-
-        #endregion
+        #endregion Main Menu Commands
 
         #region Uppercase / Lowercase
 
@@ -2196,7 +2233,6 @@ namespace SQL_Document_Builder
         /// </summary>
         private void Lowercase()
         {
-
             // save the selection
             int start = sqlTextBox.SelectionStart;
             int end = sqlTextBox.SelectionEnd;
@@ -2213,7 +2249,6 @@ namespace SQL_Document_Builder
         /// </summary>
         private void Uppercase()
         {
-
             // save the selection
             int start = sqlTextBox.SelectionStart;
             int end = sqlTextBox.SelectionEnd;
@@ -2225,7 +2260,7 @@ namespace SQL_Document_Builder
             sqlTextBox.SetSelection(start, end);
         }
 
-        #endregion
+        #endregion Uppercase / Lowercase
 
         #region Indent / Outdent
 
@@ -2261,7 +2296,7 @@ namespace SQL_Document_Builder
             HotKeyManager.Enable = true;
         }
 
-        #endregion
+        #endregion Indent / Outdent
 
         #region Zoom
 
@@ -2289,54 +2324,59 @@ namespace SQL_Document_Builder
             sqlTextBox.Zoom = 0;
         }
 
+        #endregion Zoom
 
-        #endregion
-        #endregion 
+        #endregion ScintillaNET
+
+
 
         #region Quick Search Bar
 
-        bool SearchIsOpen = false;
+        private bool SearchIsOpen = false;
 
         /// <summary>
         /// Opens the search.
         /// </summary>
         private void OpenSearch()
         {
+            SearchManager.SearchBox = searchSQLTextBox;
+            SearchManager.TextArea = sqlTextBox;
 
-            //SearchManager.SearchBox = TxtSearch;
-            //SearchManager.TextArea = sqlTextBox;
-
-            //if (!SearchIsOpen)
-            //{
-            //    SearchIsOpen = true;
-            //    InvokeIfNeeded(delegate () {
-            //        PanelSearch.Visible = true;
-            //        TxtSearch.Text = SearchManager.LastSearch;
-            //        TxtSearch.Focus();
-            //        TxtSearch.SelectAll();
-            //    });
-            //}
-            //else
-            //{
-            //    InvokeIfNeeded(delegate () {
-            //        TxtSearch.Focus();
-            //        TxtSearch.SelectAll();
-            //    });
-            //}
+            if (!SearchIsOpen)
+            {
+                SearchIsOpen = true;
+                InvokeIfNeeded(delegate ()
+                {
+                    searchPanel.Visible = true;
+                    searchSQLTextBox.Text = SearchManager.LastSearch;
+                    searchSQLTextBox.Focus();
+                    searchSQLTextBox.SelectAll();
+                });
+            }
+            else
+            {
+                InvokeIfNeeded(delegate ()
+                {
+                    searchSQLTextBox.Focus();
+                    searchSQLTextBox.SelectAll();
+                });
+            }
         }
+
         /// <summary>
         /// Closes the search.
         /// </summary>
         private void CloseSearch()
         {
-            //if (SearchIsOpen)
-            //{
-            //    SearchIsOpen = false;
-            //    InvokeIfNeeded(delegate () {
-            //        PanelSearch.Visible = false;
-            //        //CurBrowser.GetBrowser().StopFinding(true);
-            //    });
-            //}
+            if (SearchIsOpen)
+            {
+                SearchIsOpen = false;
+                InvokeIfNeeded(delegate ()
+                {
+                    searchPanel.Visible = false;
+                    //CurBrowser.GetBrowser().StopFinding(true);
+                });
+            }
         }
 
         /// <summary>
@@ -2358,6 +2398,7 @@ namespace SQL_Document_Builder
         {
             SearchManager.Find(false, false);
         }
+
         /// <summary>
         /// Btns the next search_ click.
         /// </summary>
@@ -2367,6 +2408,7 @@ namespace SQL_Document_Builder
         {
             SearchManager.Find(true, false);
         }
+
         /// <summary>
         /// Txts the search_ text changed.
         /// </summary>
@@ -2394,7 +2436,7 @@ namespace SQL_Document_Builder
             }
         }
 
-        #endregion
+        #endregion Quick Search Bar
 
         #region Find & Replace Dialog
 
@@ -2403,22 +2445,21 @@ namespace SQL_Document_Builder
         /// </summary>
         private void OpenFindDialog()
         {
-            // open the find dialog
+            //open the find dialog
             //FindDialog dlg = new FindDialog(sqlTextBox, this);
             //dlg.Show(this);
             //dlg.BringToFront();
             //dlg.Focus();
         }
+
         /// <summary>
         /// Opens the replace dialog.
         /// </summary>
         private void OpenReplaceDialog()
         {
-
-
         }
 
-        #endregion
+        #endregion Find & Replace Dialog
 
         #region Utils
 
@@ -2448,7 +2489,38 @@ namespace SQL_Document_Builder
             }
         }
 
-        #endregion
+        #endregion Utils
 
+        /// <summary>
+        /// Handles the click event of the quick find tool strip menu item.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void GoToLineToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // go to line in scintilla
+            //var lineNumber = sqlTextBox.LineFromPosition(sqlTextBox.CurrentPosition) + 1;
+
+            //int lineNumber = 1;
+            //using (var dlg = new GoToLineForm(lineNumber))
+            //{
+            //    if (dlg.ShowDialog() == DialogResult.OK)
+            //    {
+            //        lineNumber = dlg.LineNumber - 1;
+            //        sqlTextBox.GotoLine(lineNumber);
+            //        sqlTextBox.SetEmptySelection(sqlTextBox.Lines[lineNumber].Position);
+            //    }
+            //}
+        }
+
+        /// <summary>
+        /// Handles the resize event of the SQL text box.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void SqlTextBox_Resize(object sender, EventArgs e)
+        {
+            searchPanel.Left = sqlTextBox.Left + sqlTextBox.Width - searchPanel.Width - 5;
+        }
     }
 }
