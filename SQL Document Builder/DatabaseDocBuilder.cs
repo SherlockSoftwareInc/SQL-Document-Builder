@@ -379,9 +379,10 @@ GO";
             // Add the header
             createScript.AppendLine($"/****** Object:  Function {objectName.FullName} ******/");
 
-            // Add drop table statement
-            createScript.AppendLine($"IF OBJECT_ID('{objectName.FullName}', 'V') IS NOT NULL");
-            createScript.AppendLine($"\tDROP VIEW {objectName.FullName};");
+            // Use IF EXISTS with sys.objects and type IN ('FN','IF','TF')
+            createScript.AppendLine(
+                $"IF EXISTS (SELECT 1 FROM sys.objects WHERE object_id = OBJECT_ID('{objectName.FullName}') AND type IN ('FN','IF','TF'))");
+            createScript.AppendLine($"\tDROP FUNCTION {objectName.FullName};");
             createScript.AppendLine($"GO");
 
             var script = await GetFunctionDefinitionAsync(objectName);
@@ -403,8 +404,8 @@ GO";
             createScript.AppendLine($"/****** Object:  Stored Procedure {objectName.FullName} ******/");
 
             // Add drop table statement
-            createScript.AppendLine($"IF OBJECT_ID('{objectName.FullName}', 'V') IS NOT NULL");
-            createScript.AppendLine($"\tDROP VIEW {objectName.FullName};");
+            createScript.AppendLine($"IF OBJECT_ID('{objectName.FullName}', 'P') IS NOT NULL");
+            createScript.AppendLine($"\tDROP PROCEDURE {objectName.FullName};");
             createScript.AppendLine($"GO");
 
             var script = await GetStoredProcedureDefinitionAsync(objectName);
