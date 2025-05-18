@@ -1,4 +1,5 @@
 ﻿using DarkModeForms;
+using ScintillaNET;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -7,6 +8,8 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using static SQL_Document_Builder.ObjectName;
+using static System.Net.Mime.MediaTypeNames;
+using SQL_Document_Builder.ScintillaNetUtils;
 
 namespace SQL_Document_Builder
 {
@@ -15,6 +18,8 @@ namespace SQL_Document_Builder
     /// </summary>
     public partial class TableBuilderForm : Form
     {
+        private const string SQL_KeyWords = "add alter as authorization backup begin bigint binary bit break browse bulk by cascade case catch check checkpoint close clustered column commit compute constraint containstable continue create current cursor cursor database date datetime datetime2 datetimeoffset dbcc deallocate decimal declare default delete deny desc disk distinct distributed double drop dump else end errlvl escape except exec execute exit external fetch file fillfactor float for foreign freetext freetexttable from full function goto grant group having hierarchyid holdlock identity identity_insert identitycol if image index insert int intersect into key kill lineno load merge money national nchar nocheck nocount nolock nonclustered ntext numeric nvarchar of off offsets on open opendatasource openquery openrowset openxml option order over percent plan precision primary print proc procedure public raiserror read readtext real reconfigure references replication restore restrict return revert revoke rollback rowcount rowguidcol rule save schema securityaudit select set setuser shutdown smalldatetime smallint smallmoney sql_variant statistics table table tablesample text textsize then time timestamp tinyint to top tran transaction trigger truncate try union unique uniqueidentifier update updatetext use user values varbinary varchar varying view waitfor when where while with writetext xml go ";
+
         /// <summary>
         /// The database connections.
         /// </summary>
@@ -879,40 +884,6 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Object descriptions tool strip menu item click.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The E.</param>
-        private async void ObjectDescriptionsToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            sqlTextBox.Text = String.Empty;
-
-            using var dlg = new Schemapicker();
-            if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
-            {
-                StartBuild();
-
-                var progress = new Progress<int>(value =>
-                {
-                    progressBar.Value = value;
-                });
-
-                string scripts = String.Empty;
-                await Task.Run(async () =>
-                {
-                    scripts = await ObjectDescription.BuildObjectDescriptionsAsync(ObjectName.ObjectTypeEnums.Table, dlg.Schema, progress);
-                });
-
-                if (scripts != null)
-                {
-                    SetScript(scripts);
-                }
-
-                EndBuild();
-            }
-        }
-
-        /// <summary>
         /// Handles the "Objects description" tool strip menu item click:
         /// </summary>
         /// <param name="sender">The sender.</param>
@@ -1135,7 +1106,7 @@ namespace SQL_Document_Builder
         /// Handles the "Panel2" resize event.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param {e">The e.</param>
         private void Panel2_Resize(object sender, EventArgs e)
         {
             int width = panel2.Width - 6;
@@ -1522,6 +1493,8 @@ namespace SQL_Document_Builder
         {
             WindowState = FormWindowState.Maximized;
 
+            SetupScintillaBox();
+
             _connections.Load();
             await PopulateConnections();
 
@@ -1555,6 +1528,38 @@ namespace SQL_Document_Builder
             splitContainer1.SplitterDistance = 200;
             if (collapsibleSplitter1 != null)
                 collapsibleSplitter1.SplitterDistance = (int)(this.Width * 0.4F);
+        }
+
+        /// <summary>
+        /// Setups the scintilla edit box.
+        /// </summary>
+        private void SetupScintillaBox()
+        {
+            // INITIAL VIEW CONFIG
+            sqlTextBox.WrapMode = WrapMode.None;
+            sqlTextBox.IndentationGuides = IndentView.LookBoth;
+
+            // STYLING
+            InitColors();
+            InitSyntaxColoring();
+
+            // NUMBER MARGIN
+            InitNumberMargin();
+
+            // BOOKMARK MARGIN
+            InitBookmarkMargin();
+
+            // CODE FOLDING MARGIN
+            InitCodeFolding();
+
+            // DRAG DROP
+            InitDragDropFile();
+
+            // DEFAULT FILE
+            //LoadDataFromFile("../../MainForm.cs");
+
+            // INIT HOTKEYS
+            InitHotkeys();
         }
 
         /// <summary>
@@ -1750,35 +1755,700 @@ namespace SQL_Document_Builder
             }
         }
 
+        #region ScintillaNET
         /// <summary>
-        /// Views the descriptions tool strip menu item click.
+        /// Inits the colors.
+        /// </summary>
+        private void InitColors()
+        {
+
+            sqlTextBox.SetSelectionBackColor(true, IntToColor(0x114D9C));
+
+        }
+
+        /// <summary>
+        /// Inits the hotkeys.
+        /// </summary>
+        private void InitHotkeys()
+        {
+
+            // register the hotkeys with the form
+            HotKeyManager.AddHotKey(this, OpenSearch, Keys.F, true);
+            HotKeyManager.AddHotKey(this, OpenFindDialog, Keys.F, true, false, true);
+            HotKeyManager.AddHotKey(this, OpenReplaceDialog, Keys.R, true);
+            HotKeyManager.AddHotKey(this, OpenReplaceDialog, Keys.H, true);
+            HotKeyManager.AddHotKey(this, Uppercase, Keys.U, true);
+            HotKeyManager.AddHotKey(this, Lowercase, Keys.L, true);
+            HotKeyManager.AddHotKey(this, ZoomIn, Keys.Oemplus, true);
+            HotKeyManager.AddHotKey(this, ZoomOut, Keys.OemMinus, true);
+            HotKeyManager.AddHotKey(this, ZoomDefault, Keys.D0, true);
+            HotKeyManager.AddHotKey(this, CloseSearch, Keys.Escape);
+
+            // remove conflicting hotkeys from scintilla
+            sqlTextBox.ClearCmdKey(Keys.Control | Keys.F);
+            sqlTextBox.ClearCmdKey(Keys.Control | Keys.R);
+            sqlTextBox.ClearCmdKey(Keys.Control | Keys.H);
+            sqlTextBox.ClearCmdKey(Keys.Control | Keys.L);
+            sqlTextBox.ClearCmdKey(Keys.Control | Keys.U);
+
+        }
+
+        /// <summary>
+        /// Inits the syntax coloring.
+        /// </summary>
+        private void InitSyntaxColoring()
+        {
+
+            // Configure the default style
+            sqlTextBox.StyleResetDefault();
+            sqlTextBox.Styles[Style.Default].Font = "Consolas";
+            sqlTextBox.Styles[Style.Default].Size = 10;
+            sqlTextBox.Styles[Style.Default].BackColor = IntToColor(0x212121);
+            sqlTextBox.Styles[Style.Default].ForeColor = IntToColor(0xFFFFFF);
+            sqlTextBox.StyleClearAll();
+
+            // Configure the CPP (C#) lexer styles
+            sqlTextBox.Styles[Style.Cpp.Identifier].ForeColor = IntToColor(0xD0DAE2);
+            sqlTextBox.Styles[Style.Cpp.Comment].ForeColor = IntToColor(0xBD758B);
+            sqlTextBox.Styles[Style.Cpp.CommentLine].ForeColor = IntToColor(0x40BF57);
+            sqlTextBox.Styles[Style.Cpp.CommentDoc].ForeColor = IntToColor(0x2FAE35);
+            sqlTextBox.Styles[Style.Cpp.Number].ForeColor = IntToColor(0xFFFF00);
+            sqlTextBox.Styles[Style.Cpp.String].ForeColor = IntToColor(0xFFFF00);
+            sqlTextBox.Styles[Style.Cpp.Character].ForeColor = IntToColor(0xE95454);
+            sqlTextBox.Styles[Style.Cpp.Preprocessor].ForeColor = IntToColor(0x8AAFEE);
+            sqlTextBox.Styles[Style.Cpp.Operator].ForeColor = IntToColor(0xE0E0E0);
+            sqlTextBox.Styles[Style.Cpp.Regex].ForeColor = IntToColor(0xff00ff);
+            sqlTextBox.Styles[Style.Cpp.CommentLineDoc].ForeColor = IntToColor(0x77A7DB);
+            sqlTextBox.Styles[Style.Cpp.Word].ForeColor = IntToColor(0x48A8EE);
+            sqlTextBox.Styles[Style.Cpp.Word2].ForeColor = IntToColor(0xF98906);
+            sqlTextBox.Styles[Style.Cpp.CommentDocKeyword].ForeColor = IntToColor(0xB3D991);
+            sqlTextBox.Styles[Style.Cpp.CommentDocKeywordError].ForeColor = IntToColor(0xFF0000);
+            sqlTextBox.Styles[Style.Cpp.GlobalClass].ForeColor = IntToColor(0x48A8EE);
+
+            //sqlTextBox.Lexer = Lexer.Sql;
+            sqlTextBox.LexerName = "sql";
+
+            //scintilla1.SetKeywords(0, "class extends implements import interface new case do while else if for in switch throw get set function var try catch finally while with default break continue delete return each const namespace package include use is as instanceof typeof author copy default deprecated eventType example exampleText exception haxe inheritDoc internal link mtasc mxmlc param private return see serial serialData serialField since throws usage version langversion playerversion productversion dynamic private public partial static intrinsic internal native override protected AS3 final super this arguments null Infinity NaN undefined true false abstract as base bool break by byte case catch char checked class const continue decimal default delegate do double descending explicit event extern else enum false finally fixed float for foreach from goto group if implicit in int interface internal into is lock long new null namespace object operator out override orderby params private protected public readonly ref return switch struct sbyte sealed short sizeof stackalloc static string select this throw true try typeof uint ulong unchecked unsafe ushort using var virtual volatile void while where yield");
+            //scintilla1.SetKeywords(1, "void Null ArgumentError arguments Array Boolean Class Date DefinitionError Error EvalError Function int Math Namespace Number Object RangeError ReferenceError RegExp SecurityError String SyntaxError TypeError uint XML XMLList Boolean Byte Char DateTime Decimal Double Int16 Int32 Int64 IntPtr SByte Single UInt16 UInt32 UInt64 UIntPtr Void Path File System Windows Forms ScintillaNET");
+            sqlTextBox.SetKeywords(0, "select from where and or not in is null like between exists all any " +
+                   "insert into values update set delete truncate create alter drop table view index procedure function trigger " +
+                   "begin end commit rollback declare case when then else union group by order by having limit " +
+                   "join inner left right outer on as distinct count avg sum min max cast convert " +
+                   "go exec sp_ execute"); // Add GO, EXEC, sp_ for T-SQL like dialects
+
+            // Secondary keywords (Data Types, Functions - adjust as needed)
+            sqlTextBox.SetKeywords(1, "int varchar nvarchar char text datetime date time smallint bigint bit decimal numeric float real " +
+                               "primary key foreign references constraint unique default check " +
+                               "getdate() current_timestamp system_user session_user user " +
+                               "isnull coalesce nullif");
+
+        }
+
+        private void OnTextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        #region Numbers, Bookmarks, Code Folding
+
+        /// <summary>
+        /// the background color of the text area
+        /// </summary>
+        private const int BACK_COLOR = 0x2A211C;
+
+        /// <summary>
+        /// default text color of the text area
+        /// </summary>
+        private const int FORE_COLOR = 0xB7B7B7;
+
+        /// <summary>
+        /// change this to whatever margin you want the line numbers to show in
+        /// </summary>
+        private const int NUMBER_MARGIN = 1;
+
+        /// <summary>
+        /// change this to whatever margin you want the bookmarks/breakpoints to show in
+        /// </summary>
+        private const int BOOKMARK_MARGIN = 2;
+        private const int BOOKMARK_MARKER = 2;
+
+        /// <summary>
+        /// change this to whatever margin you want the code folding tree (+/-) to show in
+        /// </summary>
+        private const int FOLDING_MARGIN = 3;
+
+        /// <summary>
+        /// set this true to show circular buttons for code folding (the [+] and [-] buttons on the margin)
+        /// </summary>
+        private const bool CODEFOLDING_CIRCULAR = true;
+
+        /// <summary>
+        /// Inits the number margin.
+        /// </summary>
+        private void InitNumberMargin()
+        {
+
+            sqlTextBox.Styles[Style.LineNumber].BackColor = IntToColor(BACK_COLOR);
+            sqlTextBox.Styles[Style.LineNumber].ForeColor = IntToColor(FORE_COLOR);
+            sqlTextBox.Styles[Style.IndentGuide].ForeColor = IntToColor(FORE_COLOR);
+            sqlTextBox.Styles[Style.IndentGuide].BackColor = IntToColor(BACK_COLOR);
+
+            var nums = sqlTextBox.Margins[NUMBER_MARGIN];
+            nums.Width = 30;
+            nums.Type = MarginType.Number;
+            nums.Sensitive = true;
+            nums.Mask = 0;
+
+            sqlTextBox.MarginClick += Scintilla1_MarginClick;
+        }
+
+        /// <summary>
+        /// Inits the bookmark margin.
+        /// </summary>
+        private void InitBookmarkMargin()
+        {
+
+            //scintilla1.SetFoldMarginColor(true, IntToColor(BACK_COLOR));
+
+            var margin = sqlTextBox.Margins[BOOKMARK_MARGIN];
+            margin.Width = 20;
+            margin.Sensitive = true;
+            margin.Type = MarginType.Symbol;
+            margin.Mask = (1 << BOOKMARK_MARKER);
+            //margin.Cursor = MarginCursor.Arrow;
+
+            var marker = sqlTextBox.Markers[BOOKMARK_MARKER];
+            marker.Symbol = MarkerSymbol.Circle;
+            marker.SetBackColor(IntToColor(0xFF003B));
+            marker.SetForeColor(IntToColor(0x000000));
+            marker.SetAlpha(100);
+
+        }
+
+        /// <summary>
+        /// Inits the code folding.
+        /// </summary>
+        private void InitCodeFolding()
+        {
+
+            sqlTextBox.SetFoldMarginColor(true, IntToColor(BACK_COLOR));
+            sqlTextBox.SetFoldMarginHighlightColor(true, IntToColor(BACK_COLOR));
+
+            // Enable code folding
+            sqlTextBox.SetProperty("fold", "1");
+            sqlTextBox.SetProperty("fold.compact", "1");
+
+            // Configure a margin to display folding symbols
+            sqlTextBox.Margins[FOLDING_MARGIN].Type = MarginType.Symbol;
+            sqlTextBox.Margins[FOLDING_MARGIN].Mask = Marker.MaskFolders;
+            sqlTextBox.Margins[FOLDING_MARGIN].Sensitive = true;
+            sqlTextBox.Margins[FOLDING_MARGIN].Width = 20;
+
+            // Set colors for all folding markers
+            for (int i = 25; i <= 31; i++)
+            {
+                sqlTextBox.Markers[i].SetForeColor(IntToColor(BACK_COLOR)); // styles for [+] and [-]
+                sqlTextBox.Markers[i].SetBackColor(IntToColor(FORE_COLOR)); // styles for [+] and [-]
+            }
+
+            // Configure folding markers with respective symbols
+            sqlTextBox.Markers[Marker.Folder].Symbol = CODEFOLDING_CIRCULAR ? MarkerSymbol.CirclePlus : MarkerSymbol.BoxPlus;
+            sqlTextBox.Markers[Marker.FolderOpen].Symbol = CODEFOLDING_CIRCULAR ? MarkerSymbol.CircleMinus : MarkerSymbol.BoxMinus;
+            sqlTextBox.Markers[Marker.FolderEnd].Symbol = CODEFOLDING_CIRCULAR ? MarkerSymbol.CirclePlusConnected : MarkerSymbol.BoxPlusConnected;
+            sqlTextBox.Markers[Marker.FolderMidTail].Symbol = MarkerSymbol.TCorner;
+            sqlTextBox.Markers[Marker.FolderOpenMid].Symbol = CODEFOLDING_CIRCULAR ? MarkerSymbol.CircleMinusConnected : MarkerSymbol.BoxMinusConnected;
+            sqlTextBox.Markers[Marker.FolderSub].Symbol = MarkerSymbol.VLine;
+            sqlTextBox.Markers[Marker.FolderTail].Symbol = MarkerSymbol.LCorner;
+
+            // Enable automatic folding
+            sqlTextBox.AutomaticFold = (AutomaticFold.Show | AutomaticFold.Click | AutomaticFold.Change);
+
+        }
+
+        /// <summary>
+        /// Handles the scintilla1 margin click event.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The E.</param>
-        private async void ViewsDescriptionsToolStripMenuItem_Click(object sender, EventArgs e)
+        /// <param name="e">The e.</param>
+        private void Scintilla1_MarginClick(object sender, MarginClickEventArgs e)
         {
-            sqlTextBox.Text = String.Empty;
-
-            using var dlg = new Schemapicker();
-            if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
+            if (e.Margin == BOOKMARK_MARGIN)
             {
-                StartBuild();
-
-                var progress = new Progress<int>(value =>
+                // Do we have a marker for this line?
+                const uint mask = (1 << BOOKMARK_MARKER);
+                var line = sqlTextBox.Lines[sqlTextBox.LineFromPosition(e.Position)];
+                if ((line.MarkerGet() & mask) > 0)
                 {
-                    progressBar.Value = value;
-                });
-
-                string scripts = String.Empty;
-                await Task.Run(async () =>
+                    // Remove existing bookmark
+                    line.MarkerDelete(BOOKMARK_MARKER);
+                }
+                else
                 {
-                    scripts = await ObjectDescription.BuildObjectDescriptionsAsync(ObjectName.ObjectTypeEnums.View, dlg.Schema, progress);
-                });
-
-                SetScript(scripts);
-
-                EndBuild();
+                    // Add bookmark
+                    line.MarkerAdd(BOOKMARK_MARKER);
+                }
             }
         }
+
+        #endregion
+
+        #region Drag & Drop File
+
+        /// <summary>
+        /// Inits the drag drop file.
+        /// </summary>
+        public void InitDragDropFile()
+        {
+            sqlTextBox.AllowDrop = true;
+            sqlTextBox.DragEnter += (sender, e) =>
+            {
+                if (e.Data.GetDataPresent(DataFormats.FileDrop))
+                {
+                    var files = (string[])e.Data.GetData(DataFormats.FileDrop);
+                    if (files != null && files.Length > 0)
+                    {
+                        string ext = Path.GetExtension(files[0]).ToLowerInvariant();
+                        if (ext == ".sql" || ext == ".txt")
+                            e.Effect = DragDropEffects.Copy;
+                        else
+                            e.Effect = DragDropEffects.None;
+                    }
+                    else
+                    {
+                        e.Effect = DragDropEffects.None;
+                    }
+                }
+                else
+                {
+                    e.Effect = DragDropEffects.None;
+                }
+            };
+
+            sqlTextBox.DragDrop += (sender, e) =>
+            {
+                if (e.Data.GetDataPresent(DataFormats.FileDrop))
+                {
+                    var files = (string[])e.Data.GetData(DataFormats.FileDrop);
+                    if (files != null && files.Length > 0)
+                    {
+                        string path = files[0];
+                        string ext = Path.GetExtension(path).ToLowerInvariant();
+                        if (ext == ".sql" || ext == ".txt")
+                        {
+                            try
+                            {
+                                if (File.Exists(path))
+                                {
+                                    _fileName = path;
+                                    this.Text = $"SharePoint Script Builder - {Path.GetFileName(_fileName)}";
+                                    sqlTextBox.Text = File.ReadAllText(_fileName);
+                                    _changed = false;
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                MessageBox.Show($"Failed to load file: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            }
+                        }
+                        else
+                        {
+                            MessageBox.Show("Only .sql and .txt files are supported.", "Unsupported File", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        }
+                    }
+                }
+            };
+        }
+
+        #endregion
+
+        #region Main Menu Commands
+
+        private void openToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            //if (openFileDialog.ShowDialog() == DialogResult.OK)
+            //{
+            //    LoadDataFromFile(openFileDialog.FileName);
+            //}
+        }
+
+        private void findToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            OpenSearch();
+        }
+
+        private void findDialogToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            OpenFindDialog();
+        }
+
+        private void findAndReplaceToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            OpenReplaceDialog();
+        }
+
+        private void cutToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            sqlTextBox.Cut();
+        }
+
+        private void copyToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            sqlTextBox.Copy();
+        }
+
+        private void pasteToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            sqlTextBox.Paste();
+        }
+
+        private void selectAllToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            sqlTextBox.SelectAll();
+        }
+
+        private void selectLineToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Line line = sqlTextBox.Lines[sqlTextBox.CurrentLine];
+            sqlTextBox.SetSelection(line.Position + line.Length, line.Position);
+        }
+
+        private void clearSelectionToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            sqlTextBox.SetEmptySelection(0);
+        }
+
+        private void indentSelectionToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Indent();
+        }
+
+        private void outdentSelectionToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Outdent();
+        }
+
+        private void uppercaseSelectionToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Uppercase();
+        }
+
+        private void lowercaseSelectionToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Lowercase();
+        }
+
+        private void wordWrapToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+
+            //// toggle word wrap
+            //wordWrapItem.Checked = !wordWrapItem.Checked;
+            //sqlTextBox.WrapMode = wordWrapItem.Checked ? WrapMode.Word : WrapMode.None;
+        }
+
+        private void indentGuidesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+            //// toggle indent guides
+            //indentGuidesItem.Checked = !indentGuidesItem.Checked;
+            //sqlTextBox.IndentationGuides = indentGuidesItem.Checked ? IndentView.LookBoth : IndentView.None;
+        }
+
+        private void hiddenCharactersToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+            //// toggle view whitespace
+            //hiddenCharactersItem.Checked = !hiddenCharactersItem.Checked;
+            //sqlTextBox.ViewWhitespace = hiddenCharactersItem.Checked ? WhitespaceMode.VisibleAlways : WhitespaceMode.Invisible;
+        }
+
+        private void zoomInToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ZoomIn();
+        }
+
+        private void zoomOutToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ZoomOut();
+        }
+
+        private void zoom100ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ZoomDefault();
+        }
+
+        private void collapseAllToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            sqlTextBox.FoldAll(FoldAction.Contract);
+        }
+
+        private void expandAllToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            sqlTextBox.FoldAll(FoldAction.Expand);
+        }
+
+
+        #endregion
+
+        #region Uppercase / Lowercase
+
+        /// <summary>
+        /// Lowercases the.
+        /// </summary>
+        private void Lowercase()
+        {
+
+            // save the selection
+            int start = sqlTextBox.SelectionStart;
+            int end = sqlTextBox.SelectionEnd;
+
+            // modify the selected text
+            sqlTextBox.ReplaceSelection(sqlTextBox.GetTextRange(start, end - start).ToLower());
+
+            // preserve the original selection
+            sqlTextBox.SetSelection(start, end);
+        }
+
+        /// <summary>
+        /// Uppercases the.
+        /// </summary>
+        private void Uppercase()
+        {
+
+            // save the selection
+            int start = sqlTextBox.SelectionStart;
+            int end = sqlTextBox.SelectionEnd;
+
+            // modify the selected text
+            sqlTextBox.ReplaceSelection(sqlTextBox.GetTextRange(start, end - start).ToUpper());
+
+            // preserve the original selection
+            sqlTextBox.SetSelection(start, end);
+        }
+
+        #endregion
+
+        #region Indent / Outdent
+
+        /// <summary>
+        /// Indents the.
+        /// </summary>
+        private void Indent()
+        {
+            // we use this hack to send "Shift+Tab" to scintilla, since there is no known API to indent,
+            // although the indentation function exists. Pressing TAB with the editor focused confirms this.
+            GenerateKeystrokes("{TAB}");
+        }
+
+        /// <summary>
+        /// Outdents the.
+        /// </summary>
+        private void Outdent()
+        {
+            // we use this hack to send "Shift+Tab" to scintilla, since there is no known API to outdent,
+            // although the indentation function exists. Pressing Shift+Tab with the editor focused confirms this.
+            GenerateKeystrokes("+{TAB}");
+        }
+
+        /// <summary>
+        /// Generates the keystrokes.
+        /// </summary>
+        /// <param name="keys">The keys.</param>
+        private void GenerateKeystrokes(string keys)
+        {
+            HotKeyManager.Enable = false;
+            sqlTextBox.Focus();
+            SendKeys.Send(keys);
+            HotKeyManager.Enable = true;
+        }
+
+        #endregion
+
+        #region Zoom
+
+        /// <summary>
+        /// Zooms the in.
+        /// </summary>
+        private void ZoomIn()
+        {
+            sqlTextBox.ZoomIn();
+        }
+
+        /// <summary>
+        /// Zooms the out.
+        /// </summary>
+        private void ZoomOut()
+        {
+            sqlTextBox.ZoomOut();
+        }
+
+        /// <summary>
+        /// Zooms the default.
+        /// </summary>
+        private void ZoomDefault()
+        {
+            sqlTextBox.Zoom = 0;
+        }
+
+
+        #endregion
+        #endregion 
+
+        #region Quick Search Bar
+
+        bool SearchIsOpen = false;
+
+        /// <summary>
+        /// Opens the search.
+        /// </summary>
+        private void OpenSearch()
+        {
+
+            //SearchManager.SearchBox = TxtSearch;
+            //SearchManager.TextArea = sqlTextBox;
+
+            //if (!SearchIsOpen)
+            //{
+            //    SearchIsOpen = true;
+            //    InvokeIfNeeded(delegate () {
+            //        PanelSearch.Visible = true;
+            //        TxtSearch.Text = SearchManager.LastSearch;
+            //        TxtSearch.Focus();
+            //        TxtSearch.SelectAll();
+            //    });
+            //}
+            //else
+            //{
+            //    InvokeIfNeeded(delegate () {
+            //        TxtSearch.Focus();
+            //        TxtSearch.SelectAll();
+            //    });
+            //}
+        }
+        /// <summary>
+        /// Closes the search.
+        /// </summary>
+        private void CloseSearch()
+        {
+            //if (SearchIsOpen)
+            //{
+            //    SearchIsOpen = false;
+            //    InvokeIfNeeded(delegate () {
+            //        PanelSearch.Visible = false;
+            //        //CurBrowser.GetBrowser().StopFinding(true);
+            //    });
+            //}
+        }
+
+        /// <summary>
+        /// Btns the clear search_ click.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void BtnClearSearch_Click(object sender, EventArgs e)
+        {
+            CloseSearch();
+        }
+
+        /// <summary>
+        /// Btns the prev search_ click.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void BtnPrevSearch_Click(object sender, EventArgs e)
+        {
+            SearchManager.Find(false, false);
+        }
+        /// <summary>
+        /// Btns the next search_ click.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void BtnNextSearch_Click(object sender, EventArgs e)
+        {
+            SearchManager.Find(true, false);
+        }
+        /// <summary>
+        /// Txts the search_ text changed.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void TxtSearch_TextChanged(object sender, EventArgs e)
+        {
+            SearchManager.Find(true, true);
+        }
+
+        /// <summary>
+        /// Txts the search_ key down.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void TxtSearch_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (HotKeyManager.IsHotkey(e, Keys.Enter))
+            {
+                SearchManager.Find(true, false);
+            }
+            if (HotKeyManager.IsHotkey(e, Keys.Enter, true) || HotKeyManager.IsHotkey(e, Keys.Enter, false, true))
+            {
+                SearchManager.Find(false, false);
+            }
+        }
+
+        #endregion
+
+        #region Find & Replace Dialog
+
+        /// <summary>
+        /// Opens the find dialog.
+        /// </summary>
+        private void OpenFindDialog()
+        {
+            // open the find dialog
+            //FindDialog dlg = new FindDialog(sqlTextBox, this);
+            //dlg.Show(this);
+            //dlg.BringToFront();
+            //dlg.Focus();
+        }
+        /// <summary>
+        /// Opens the replace dialog.
+        /// </summary>
+        private void OpenReplaceDialog()
+        {
+
+
+        }
+
+        #endregion
+
+        #region Utils
+
+        /// <summary>
+        /// Ints the to color.
+        /// </summary>
+        /// <param name="rgb">The rgb.</param>
+        /// <returns>A Color.</returns>
+        public static Color IntToColor(int rgb)
+        {
+            return Color.FromArgb(255, (byte)(rgb >> 16), (byte)(rgb >> 8), (byte)rgb);
+        }
+
+        /// <summary>
+        /// Invokes the if needed.
+        /// </summary>
+        /// <param name="action">The action.</param>
+        public void InvokeIfNeeded(Action action)
+        {
+            if (this.InvokeRequired)
+            {
+                this.BeginInvoke(action);
+            }
+            else
+            {
+                action.Invoke();
+            }
+        }
+
+        #endregion
+
     }
 }
