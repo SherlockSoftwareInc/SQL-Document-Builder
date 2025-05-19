@@ -371,7 +371,7 @@ namespace SQL_Document_Builder
 
                 if (metaData.Length > 1)
                 {
-                    var builder = new SharePoint();
+                    var builder = new SharePointBuilder();
                     SetScript(builder.TextToTable(metaData));
                     EndBuild();
                 }
@@ -727,7 +727,7 @@ namespace SQL_Document_Builder
             using var dlg = new Schemapicker();
             if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
             {
-                var builder = new SharePoint();
+                var builder = new SharePointBuilder();
                 SetScript(builder.BuildFunctionList(dlg.Schema));
                 EndBuild();
             }
@@ -752,6 +752,28 @@ namespace SQL_Document_Builder
                 }
             }
             return dtSchemas;
+        }
+
+        /// <summary>
+        /// Handles the click event of the quick find tool strip menu item.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void GoToLineToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // go to line in scintilla
+            //var lineNumber = sqlTextBox.LineFromPosition(sqlTextBox.CurrentPosition) + 1;
+
+            //int lineNumber = 1;
+            //using (var dlg = new GoToLineForm(lineNumber))
+            //{
+            //    if (dlg.ShowDialog() == DialogResult.OK)
+            //    {
+            //        lineNumber = dlg.LineNumber - 1;
+            //        sqlTextBox.GotoLine(lineNumber);
+            //        sqlTextBox.SetEmptySelection(sqlTextBox.Lines[lineNumber].Position);
+            //    }
+            //}
         }
 
         /// <summary>
@@ -1114,6 +1136,14 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void OpenToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if(_changed)
+            {
+                if (Common.MsgBox("Do you want to save the changes?", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                {
+                    SaveToolStripMenuItem_Click(sender, e);
+                }
+            }
+
             var oFile = new OpenFileDialog() { Filter = "SQL script(*.sql)|*.sql|Text file(*.txt)|*.txt|All files(*.*)|*.*" };
             if (oFile.ShowDialog() == DialogResult.OK)
             {
@@ -1477,14 +1507,45 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Handles the sql text box text changed event.
+        /// Setups the scintilla edit box.
+        /// </summary>
+        private void SetupScintillaBox()
+        {
+            // INITIAL VIEW CONFIG
+            sqlTextBox.WrapMode = WrapMode.None;
+            sqlTextBox.IndentationGuides = IndentView.LookBoth;
+
+            // STYLING
+            InitColors();
+            InitSyntaxColoring();
+
+            // NUMBER MARGIN
+            InitNumberMargin();
+
+            // BOOKMARK MARGIN
+            InitBookmarkMargin();
+
+            // CODE FOLDING MARGIN
+            InitCodeFolding();
+
+            // DRAG DROP
+            InitDragDropFile();
+
+            // DEFAULT FILE
+            //LoadDataFromFile("../../MainForm.cs");
+
+            // INIT HOTKEYS
+            InitHotkeys();
+        }
+
+        /// <summary>
+        /// Handles the resize event of the SQL text box.
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
-        private void SqlTextBox_TextChanged(object sender, EventArgs e)
+        private void SqlTextBox_Resize(object sender, EventArgs e)
         {
-            _changed = true;
-            statusToolStripStatusLabe.Text = string.Empty;
+            searchPanel.Left = sqlTextBox.Left + sqlTextBox.Width - searchPanel.Width - 5;
         }
 
         /// <summary>
@@ -1513,7 +1574,7 @@ namespace SQL_Document_Builder
             using var dlg = new Schemapicker();
             if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
             {
-                var builder = new SharePoint();
+                var builder = new SharePointBuilder();
                 SetScript(builder.BuildSPList(dlg.Schema));
                 EndBuild();
             }
@@ -1526,6 +1587,13 @@ namespace SQL_Document_Builder
         /// <param name="e">The E.</param>
         private void TableBuilderForm_FormClosing(object sender, FormClosingEventArgs e)
         {
+            if(_changed)
+            {
+                if (Common.MsgBox("Do you want to save the changes?", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                {
+                    SaveToolStripMenuItem_Click(sender, e);
+                }
+            }
             //Properties.Settings.Default.SchemaSettings = _settingItems.Settings;
             //Properties.Settings.Default.Templetes = templates.TemplatesValue;
             //Properties.Settings.Default.Save();
@@ -1578,38 +1646,6 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Setups the scintilla edit box.
-        /// </summary>
-        private void SetupScintillaBox()
-        {
-            // INITIAL VIEW CONFIG
-            sqlTextBox.WrapMode = WrapMode.None;
-            sqlTextBox.IndentationGuides = IndentView.LookBoth;
-
-            // STYLING
-            InitColors();
-            InitSyntaxColoring();
-
-            // NUMBER MARGIN
-            InitNumberMargin();
-
-            // BOOKMARK MARGIN
-            InitBookmarkMargin();
-
-            // CODE FOLDING MARGIN
-            InitCodeFolding();
-
-            // DRAG DROP
-            InitDragDropFile();
-
-            // DEFAULT FILE
-            //LoadDataFromFile("../../MainForm.cs");
-
-            // INIT HOTKEYS
-            InitHotkeys();
-        }
-
-        /// <summary>
         /// Tables the definition tool strip menu item click.
         /// </summary>
         /// <param name="sender">The sender.</param>
@@ -1628,16 +1664,16 @@ namespace SQL_Document_Builder
                 {
                     sqlTextBox.Text = String.Empty;
                 }
-                var builder = new SharePoint();
+                var builder = new SharePointBuilder();
                 sqlTextBox.AppendText(await builder.GetTableDef(objectName));
 
-                if ((objectName.Name.StartsWith("LT_")) || (objectName.Name.StartsWith("AT_")))
-                {
-                    var valueBuilder = new SharePoint();
-                    sqlTextBox.AppendText(await valueBuilder.GetTableValuesAsync(objectName.FullName));
-                }
+                //if ((objectName.Name.StartsWith("LT_")) || (objectName.Name.StartsWith("AT_")))
+                //{
+                //    var valueBuilder = new SharePointBuilder();
+                //    sqlTextBox.AppendText(await valueBuilder.GetTableValuesAsync(objectName.FullName));
+                //}
 
-                sqlTextBox.AppendText(FooterText() + Environment.NewLine);
+                //sqlTextBox.AppendText(FooterText() + Environment.NewLine);
                 EndBuild();
             }
         }
@@ -1680,7 +1716,7 @@ namespace SQL_Document_Builder
                 });
 
                 string scripts = String.Empty;
-                var builder = new SharePoint();
+                var builder = new SharePointBuilder();
                 await Task.Run(async () =>
                 {
                     scripts = await builder.BuildTableListAsync(dlg.Schema, progress);
@@ -1749,7 +1785,7 @@ namespace SQL_Document_Builder
             if (objectsListBox.SelectedItem != null)
             {
                 var objectName = (ObjectName)objectsListBox.SelectedItem;
-                var builder = new SharePoint();
+                var builder = new SharePointBuilder();
                 SetScript(await builder.GetTableValuesAsync(objectName.FullName));
                 EndBuild();
             }
@@ -1790,7 +1826,7 @@ namespace SQL_Document_Builder
                 });
 
                 string scripts = String.Empty;
-                var builder = new SharePoint();
+                var builder = new SharePointBuilder();
                 await Task.Run(async () =>
                 {
                     scripts = await builder.BuildViewListAsync(dlg.Schema, progress);
@@ -1900,6 +1936,9 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void OnTextChanged(object sender, EventArgs e)
         {
+            _changed = true;
+            statusToolStripStatusLabe.Text = string.Empty;
+
             SetColumnMargins();
         }
 
@@ -1921,6 +1960,23 @@ namespace SQL_Document_Builder
         private const int BACK_COLOR = 0x2A211C;
 
         /// <summary>
+        /// change this to whatever margin you want the bookmarks/breakpoints to show in
+        /// </summary>
+        private const int BOOKMARK_MARGIN = 2;
+
+        private const int BOOKMARK_MARKER = 2;
+
+        /// <summary>
+        /// set this true to show circular buttons for code folding (the [+] and [-] buttons on the margin)
+        /// </summary>
+        private const bool CODEFOLDING_CIRCULAR = true;
+
+        /// <summary>
+        /// change this to whatever margin you want the code folding tree (+/-) to show in
+        /// </summary>
+        private const int FOLDING_MARGIN = 3;
+
+        /// <summary>
         /// default text color of the text area
         /// </summary>
         private const int FORE_COLOR = 0xB7B7B7;
@@ -1929,42 +1985,6 @@ namespace SQL_Document_Builder
         /// change this to whatever margin you want the line numbers to show in
         /// </summary>
         private const int NUMBER_MARGIN = 1;
-
-        /// <summary>
-        /// change this to whatever margin you want the bookmarks/breakpoints to show in
-        /// </summary>
-        private const int BOOKMARK_MARGIN = 2;
-
-        private const int BOOKMARK_MARKER = 2;
-
-        /// <summary>
-        /// change this to whatever margin you want the code folding tree (+/-) to show in
-        /// </summary>
-        private const int FOLDING_MARGIN = 3;
-
-        /// <summary>
-        /// set this true to show circular buttons for code folding (the [+] and [-] buttons on the margin)
-        /// </summary>
-        private const bool CODEFOLDING_CIRCULAR = true;
-
-        /// <summary>
-        /// Inits the number margin.
-        /// </summary>
-        private void InitNumberMargin()
-        {
-            sqlTextBox.Styles[Style.LineNumber].BackColor = IntToColor(BACK_COLOR);
-            sqlTextBox.Styles[Style.LineNumber].ForeColor = IntToColor(FORE_COLOR);
-            sqlTextBox.Styles[Style.IndentGuide].ForeColor = IntToColor(FORE_COLOR);
-            sqlTextBox.Styles[Style.IndentGuide].BackColor = IntToColor(BACK_COLOR);
-
-            var nums = sqlTextBox.Margins[NUMBER_MARGIN];
-            nums.Width = 20;
-            nums.Type = MarginType.Number;
-            nums.Sensitive = true;
-            nums.Mask = 0;
-
-            sqlTextBox.MarginClick += Scintilla1_MarginClick;
-        }
 
         /// <summary>
         /// Inits the bookmark margin.
@@ -2023,6 +2043,25 @@ namespace SQL_Document_Builder
 
             // Enable automatic folding
             sqlTextBox.AutomaticFold = (AutomaticFold.Show | AutomaticFold.Click | AutomaticFold.Change);
+        }
+
+        /// <summary>
+        /// Inits the number margin.
+        /// </summary>
+        private void InitNumberMargin()
+        {
+            sqlTextBox.Styles[Style.LineNumber].BackColor = IntToColor(BACK_COLOR);
+            sqlTextBox.Styles[Style.LineNumber].ForeColor = IntToColor(FORE_COLOR);
+            sqlTextBox.Styles[Style.IndentGuide].ForeColor = IntToColor(FORE_COLOR);
+            sqlTextBox.Styles[Style.IndentGuide].BackColor = IntToColor(BACK_COLOR);
+
+            var nums = sqlTextBox.Margins[NUMBER_MARGIN];
+            nums.Width = 20;
+            nums.Type = MarginType.Number;
+            nums.Sensitive = true;
+            nums.Mask = 0;
+
+            sqlTextBox.MarginClick += Scintilla1_MarginClick;
         }
 
         /// <summary>
@@ -2123,91 +2162,9 @@ namespace SQL_Document_Builder
 
         #region Main Menu Commands
 
-        /// <summary>
-        /// Handles the click event of the quick find tool strip menu item.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void QuickFindToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            OpenSearch();
-        }
-
-        private void FindDialogToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            OpenFindDialog();
-        }
-
-        private void FindAndReplaceToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            OpenReplaceDialog();
-        }
-
-        private void SelectLineToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            Line line = sqlTextBox.Lines[sqlTextBox.CurrentLine];
-            sqlTextBox.SetSelection(line.Position + line.Length, line.Position);
-        }
-
         private void ClearSelectionToolStripMenuItem_Click(object sender, EventArgs e)
         {
             sqlTextBox.SetEmptySelection(0);
-        }
-
-        private void IndentSelectionToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            Indent();
-        }
-
-        private void OutdentSelectionToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            Outdent();
-        }
-
-        private void UppercaseSelectionToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            Uppercase();
-        }
-
-        private void LowercaseSelectionToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            Lowercase();
-        }
-
-        private void WordWrapToolStripMenuItem1_Click(object sender, EventArgs e)
-        {
-            //// toggle word wrap
-            //wordWrapItem.Checked = !wordWrapItem.Checked;
-            //sqlTextBox.WrapMode = wordWrapItem.Checked ? WrapMode.Word : WrapMode.None;
-        }
-
-        private void IndentGuidesToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            //// toggle indent guides
-            //indentGuidesItem.Checked = !indentGuidesItem.Checked;
-            //sqlTextBox.IndentationGuides = indentGuidesItem.Checked ? IndentView.LookBoth : IndentView.None;
-        }
-
-        private void HiddenCharactersToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            //// toggle view whitespace
-            //hiddenCharactersItem.Checked = !hiddenCharactersItem.Checked;
-            //sqlTextBox.ViewWhitespace = hiddenCharactersItem.Checked ? WhitespaceMode.VisibleAlways : WhitespaceMode.Invisible;
-        }
-
-        private void ZoomInToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            ZoomIn();
-        }
-
-        private void ZoomOutToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            ZoomOut();
-        }
-
-        private void Zoom100ToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            ZoomDefault();
         }
 
         private void CollapseAllToolStripMenuItem_Click(object sender, EventArgs e)
@@ -2218,6 +2175,88 @@ namespace SQL_Document_Builder
         private void ExpandAllToolStripMenuItem_Click(object sender, EventArgs e)
         {
             sqlTextBox.FoldAll(FoldAction.Expand);
+        }
+
+        private void FindAndReplaceToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            OpenReplaceDialog();
+        }
+
+        private void FindDialogToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            OpenFindDialog();
+        }
+
+        private void HiddenCharactersToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            //// toggle view whitespace
+            //hiddenCharactersItem.Checked = !hiddenCharactersItem.Checked;
+            //sqlTextBox.ViewWhitespace = hiddenCharactersItem.Checked ? WhitespaceMode.VisibleAlways : WhitespaceMode.Invisible;
+        }
+
+        private void IndentGuidesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            //// toggle indent guides
+            //indentGuidesItem.Checked = !indentGuidesItem.Checked;
+            //sqlTextBox.IndentationGuides = indentGuidesItem.Checked ? IndentView.LookBoth : IndentView.None;
+        }
+
+        private void IndentSelectionToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Indent();
+        }
+
+        private void LowercaseSelectionToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Lowercase();
+        }
+
+        private void OutdentSelectionToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Outdent();
+        }
+
+        /// <summary>
+        /// Handles the click event of the quick find tool strip menu item.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void QuickFindToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            OpenSearch();
+        }
+
+        private void SelectLineToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Line line = sqlTextBox.Lines[sqlTextBox.CurrentLine];
+            sqlTextBox.SetSelection(line.Position + line.Length, line.Position);
+        }
+
+        private void UppercaseSelectionToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Uppercase();
+        }
+
+        private void WordWrapToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            //// toggle word wrap
+            //wordWrapItem.Checked = !wordWrapItem.Checked;
+            //sqlTextBox.WrapMode = wordWrapItem.Checked ? WrapMode.Word : WrapMode.None;
+        }
+
+        private void Zoom100ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ZoomDefault();
+        }
+
+        private void ZoomInToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ZoomIn();
+        }
+
+        private void ZoomOutToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ZoomOut();
         }
 
         #endregion Main Menu Commands
@@ -2261,6 +2300,18 @@ namespace SQL_Document_Builder
         #region Indent / Outdent
 
         /// <summary>
+        /// Generates the keystrokes.
+        /// </summary>
+        /// <param name="keys">The keys.</param>
+        private void GenerateKeystrokes(string keys)
+        {
+            HotKeyManager.Enable = false;
+            sqlTextBox.Focus();
+            SendKeys.Send(keys);
+            HotKeyManager.Enable = true;
+        }
+
+        /// <summary>
         /// Indents the.
         /// </summary>
         private void Indent()
@@ -2280,21 +2331,17 @@ namespace SQL_Document_Builder
             GenerateKeystrokes("+{TAB}");
         }
 
-        /// <summary>
-        /// Generates the keystrokes.
-        /// </summary>
-        /// <param name="keys">The keys.</param>
-        private void GenerateKeystrokes(string keys)
-        {
-            HotKeyManager.Enable = false;
-            sqlTextBox.Focus();
-            SendKeys.Send(keys);
-            HotKeyManager.Enable = true;
-        }
-
         #endregion Indent / Outdent
 
         #region Zoom
+
+        /// <summary>
+        /// Zooms the default.
+        /// </summary>
+        private void ZoomDefault()
+        {
+            sqlTextBox.Zoom = 0;
+        }
 
         /// <summary>
         /// Zooms the in.
@@ -2312,14 +2359,6 @@ namespace SQL_Document_Builder
             sqlTextBox.ZoomOut();
         }
 
-        /// <summary>
-        /// Zooms the default.
-        /// </summary>
-        private void ZoomDefault()
-        {
-            sqlTextBox.Zoom = 0;
-        }
-
         #endregion Zoom
 
         #endregion ScintillaNET
@@ -2327,6 +2366,52 @@ namespace SQL_Document_Builder
         #region Quick Search Bar
 
         private bool SearchIsOpen = false;
+
+        /// <summary>
+        /// Btns the clear search_ click.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void BtnClearSearch_Click(object sender, EventArgs e)
+        {
+            CloseSearch();
+        }
+
+        /// <summary>
+        /// Btns the next search_ click.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void BtnNextSearch_Click(object sender, EventArgs e)
+        {
+            SearchManager.Find(true, false);
+        }
+
+        /// <summary>
+        /// Btns the prev search_ click.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void BtnPrevSearch_Click(object sender, EventArgs e)
+        {
+            SearchManager.Find(false, false);
+        }
+
+        /// <summary>
+        /// Closes the search.
+        /// </summary>
+        private void CloseSearch()
+        {
+            if (SearchIsOpen)
+            {
+                SearchIsOpen = false;
+                InvokeIfNeeded(delegate ()
+                {
+                    searchPanel.Visible = false;
+                    //CurBrowser.GetBrowser().StopFinding(true);
+                });
+            }
+        }
 
         /// <summary>
         /// Opens the search.
@@ -2358,62 +2443,6 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Closes the search.
-        /// </summary>
-        private void CloseSearch()
-        {
-            if (SearchIsOpen)
-            {
-                SearchIsOpen = false;
-                InvokeIfNeeded(delegate ()
-                {
-                    searchPanel.Visible = false;
-                    //CurBrowser.GetBrowser().StopFinding(true);
-                });
-            }
-        }
-
-        /// <summary>
-        /// Btns the clear search_ click.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void BtnClearSearch_Click(object sender, EventArgs e)
-        {
-            CloseSearch();
-        }
-
-        /// <summary>
-        /// Btns the prev search_ click.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void BtnPrevSearch_Click(object sender, EventArgs e)
-        {
-            SearchManager.Find(false, false);
-        }
-
-        /// <summary>
-        /// Btns the next search_ click.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void BtnNextSearch_Click(object sender, EventArgs e)
-        {
-            SearchManager.Find(true, false);
-        }
-
-        /// <summary>
-        /// Txts the search_ text changed.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void TxtSearch_TextChanged(object sender, EventArgs e)
-        {
-            SearchManager.Find(true, true);
-        }
-
-        /// <summary>
         /// Txts the search_ key down.
         /// </summary>
         /// <param name="sender">The sender.</param>
@@ -2428,6 +2457,16 @@ namespace SQL_Document_Builder
             {
                 SearchManager.Find(false, false);
             }
+        }
+
+        /// <summary>
+        /// Txts the search_ text changed.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void TxtSearch_TextChanged(object sender, EventArgs e)
+        {
+            SearchManager.Find(true, true);
         }
 
         #endregion Quick Search Bar
@@ -2485,77 +2524,38 @@ namespace SQL_Document_Builder
 
         #endregion Utils
 
-        /// <summary>
-        /// Handles the click event of the quick find tool strip menu item.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void GoToLineToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            // go to line in scintilla
-            //var lineNumber = sqlTextBox.LineFromPosition(sqlTextBox.CurrentPosition) + 1;
-
-            //int lineNumber = 1;
-            //using (var dlg = new GoToLineForm(lineNumber))
-            //{
-            //    if (dlg.ShowDialog() == DialogResult.OK)
-            //    {
-            //        lineNumber = dlg.LineNumber - 1;
-            //        sqlTextBox.GotoLine(lineNumber);
-            //        sqlTextBox.SetEmptySelection(sqlTextBox.Lines[lineNumber].Position);
-            //    }
-            //}
-        }
-
-        /// <summary>
-        /// Handles the resize event of the SQL text box.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void SqlTextBox_Resize(object sender, EventArgs e)
-        {
-            searchPanel.Left = sqlTextBox.Left + sqlTextBox.Width - searchPanel.Width - 5;
-        }
-
         #region Markdown document builder
 
         /// <summary>
-        /// Tables the list tool strip menu item_ click.
+        /// Handles the click event of the clipboard to table tool strip menu item.
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
-        private async void TableListToolStripMenuItem_Click(object sender, EventArgs e)
+        private void ClipboardToTableToolStripMenuItem1_Click(object sender, EventArgs e)
         {
-            sqlTextBox.Text = string.Empty;
-            using var dlg = new Schemapicker();
-            if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
+            sqlTextBox.Text = String.Empty;
+
+            if (Clipboard.ContainsText())
             {
-                StartBuild();
+                var metaData = Clipboard.GetText();
 
-                var progress = new Progress<int>(value =>
+                if (metaData.Length > 1)
                 {
-                    progressBar.Value = value;
-                });
-
-                string scripts = String.Empty;
-                var builder = new MarkdownBuilder();
-                await Task.Run(async () =>
-                {
-                    scripts = await builder.BuildTableList(dlg.Schema, progress);
-                });
-
-                SetScript(scripts);
-
-                EndBuild();
+                    var builder = new MarkdownBuilder();
+                    SetScript(builder.TextToTable(metaData));
+                    EndBuild();
+                }
             }
+
+            statusToolStripStatusLabe.Text = "Complete!";
         }
 
         /// <summary>
-        /// Handles the click event of the view list tool strip menu item.
+        /// Functions the list tool strip menu item_ click.
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
-        private async void ViewListToolStripMenuItem_Click(object sender, EventArgs e)
+        private async void FunctionListToolStripMenuItem_Click(object sender, EventArgs e)
         {
             sqlTextBox.Text = string.Empty;
             using var dlg = new Schemapicker();
@@ -2572,7 +2572,7 @@ namespace SQL_Document_Builder
                 var builder = new MarkdownBuilder();
                 await Task.Run(async () =>
                 {
-                    scripts = await builder.BuildViewListAsync(dlg.Schema, progress);
+                    scripts = await builder.BuildFunctionListAsync(dlg.Schema, progress);
                 });
 
                 SetScript(scripts);
@@ -2613,37 +2613,6 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Functions the list tool strip menu item_ click.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private async void FunctionListToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            sqlTextBox.Text = string.Empty;
-            using var dlg = new Schemapicker();
-            if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
-            {
-                StartBuild();
-
-                var progress = new Progress<int>(value =>
-                {
-                    progressBar.Value = value;
-                });
-
-                string scripts = String.Empty;
-                var builder = new MarkdownBuilder();
-                await Task.Run(async () =>
-                {
-                    scripts = await builder.BuildFunctionListAsync(dlg.Schema, progress);
-                });
-
-                SetScript(scripts);
-
-                EndBuild();
-            }
-        }
-
-        /// <summary>
         /// Tables the definition tool strip menu item_ click_1.
         /// </summary>
         /// <param name="sender">The sender.</param>
@@ -2674,7 +2643,37 @@ namespace SQL_Document_Builder
                 //sqlTextBox.AppendText(FooterText() + Environment.NewLine);
                 EndBuild();
             }
+        }
 
+        /// <summary>
+        /// Tables the list tool strip menu item_ click.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private async void TableListToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            sqlTextBox.Text = string.Empty;
+            using var dlg = new Schemapicker();
+            if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
+            {
+                StartBuild();
+
+                var progress = new Progress<int>(value =>
+                {
+                    progressBar.Value = value;
+                });
+
+                string scripts = String.Empty;
+                var builder = new MarkdownBuilder();
+                await Task.Run(async () =>
+                {
+                    scripts = await builder.BuildTableList(dlg.Schema, progress);
+                });
+
+                SetScript(scripts);
+
+                EndBuild();
+            }
         }
 
         /// <summary>
@@ -2697,31 +2696,36 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Handles the click event of the clipboard to table tool strip menu item.
+        /// Handles the click event of the view list tool strip menu item.
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
-        private void ClipboardToTableToolStripMenuItem1_Click(object sender, EventArgs e)
+        private async void ViewListToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            sqlTextBox.Text = String.Empty;
-
-            if (Clipboard.ContainsText())
+            sqlTextBox.Text = string.Empty;
+            using var dlg = new Schemapicker();
+            if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
             {
-                var metaData = Clipboard.GetText();
+                StartBuild();
 
-                if (metaData.Length > 1)
+                var progress = new Progress<int>(value =>
                 {
-                    var builder = new MarkdownBuilder();
-                    SetScript(builder.TextToTable(metaData));
-                    EndBuild();
-                }
+                    progressBar.Value = value;
+                });
+
+                string scripts = String.Empty;
+                var builder = new MarkdownBuilder();
+                await Task.Run(async () =>
+                {
+                    scripts = await builder.BuildViewListAsync(dlg.Schema, progress);
+                });
+
+                SetScript(scripts);
+
+                EndBuild();
             }
-
-            statusToolStripStatusLabe.Text = "Complete!";
-
         }
 
         #endregion Markdown document builder
-
     }
 }

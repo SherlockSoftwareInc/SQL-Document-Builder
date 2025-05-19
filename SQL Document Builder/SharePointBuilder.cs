@@ -7,7 +7,10 @@ using System.Windows.Forms;
 
 namespace SQL_Document_Builder
 {
-    internal class SharePoint
+    /// <summary>
+    /// The share point builder.
+    /// </summary>
+    internal class SharePointBuilder
     {
         private readonly SQLServerConnections _connections = new();
 

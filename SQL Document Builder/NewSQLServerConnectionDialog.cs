@@ -336,15 +336,5 @@ namespace SQL_Document_Builder
                 Cursor = Cursors.Default;
             }
         }
-
-        /// <summary>
-        /// Handles the selected index changed event of the authentication combo box.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void AuthenticationComboBox_SelectedIndexChanged1(object sender, EventArgs e)
-        {
-        }
-
     }
 }

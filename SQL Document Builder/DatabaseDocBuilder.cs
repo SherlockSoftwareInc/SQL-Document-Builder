@@ -1,6 +1,5 @@
 ﻿using Microsoft.Data.SqlClient;
 using System;
-using System.Collections.Generic;
 using System.Data;
 using System.Text;
 using System.Threading.Tasks;
@@ -108,19 +107,6 @@ WHERE sm.object_id = OBJECT_ID(@SchemaQualifiedName);";
             return viewDefinition;
         }
 
-
-        /// <summary>
-        /// Queries the data to insert statement async.
-        /// </summary>
-        /// <param name="tableName">The table name.</param>
-        /// <returns>A Task.</returns>
-        public static async Task<string> TableToInsertStatementAsync(ObjectName tableName)
-        {
-            var sql = $"select * from {tableName.FullName}";
-            var hasIdentity = await DatabaseHelper.HasIdentityColumnAsync(tableName);
-            return await QueryDataToInsertStatementAsync(sql, tableName.FullName, hasIdentity);
-        }
-
         /// <summary>
         /// Queries the data and generates the insert statements.
         /// </summary>
@@ -158,7 +144,7 @@ WHERE sm.object_id = OBJECT_ID(@SchemaQualifiedName);";
                     int rowCount = 0;
                     int batchCount = 0;
 
-                    if(hasIdentity)
+                    if (hasIdentity)
                     {
                         // add SET IDENTITY_INSERT  ON;
                         sb.AppendLine($"SET IDENTITY_INSERT {tableName} ON;");
@@ -169,84 +155,84 @@ WHERE sm.object_id = OBJECT_ID(@SchemaQualifiedName);";
                     //}
 
                     while (await reader.ReadAsync())
+                    {
+                        // Check if row count exceeds 5000
+                        if (rowCount >= 5000)
                         {
-                            // Check if row count exceeds 5000
-                            if (rowCount >= 5000)
-                            {
-                                return "Too much rows";
-                            }
-
-                            // Start a new batch every 50 rows
-                            if (rowCount % 50 == 0)
-                            {
-                                if (batchCount > 0)
-                                {
-                                    // Remove the trailing comma from the previous batch
-                                    sb.Length -= 3; // Remove ",\n"
-                                    sb.AppendLine(";"); // Close the previous batch
-                                }
-                                sb.AppendLine($"INSERT INTO {tableName} ({columnNames}) VALUES");
-                                batchCount++;
-                            }
-
-                            // Generate the values for the current row
-                            sb.Append("\t(");
-                            for (int i = 0; i < reader.FieldCount; i++)
-                            {
-                                if (reader.IsDBNull(i))
-                                {
-                                    sb.Append("NULL");
-                                }
-                                else
-                                {
-                                    switch (reader.GetFieldType(i).Name)
-                                    {
-                                        case "String":
-                                            sb.Append("'" + reader.GetString(i).Replace("'", "''") + "'");
-                                            break;
-
-                                        case "DateTime":
-                                            sb.Append("'" + reader.GetDateTime(i).ToString("yyyy-MM-dd HH:mm:ss") + "'");
-                                            break;
-
-                                        case "Int32":
-                                            sb.Append(reader.GetInt32(i));
-                                            break;
-
-                                        case "Int64":
-                                            sb.Append(reader.GetInt64(i));
-                                            break;
-
-                                        case "Decimal":
-                                            sb.Append(reader.GetDecimal(i));
-                                            break;
-
-                                        case "Double":
-                                            sb.Append(reader.GetDouble(i));
-                                            break;
-
-                                        case "Single":
-                                            sb.Append(reader.GetFloat(i));
-                                            break;
-
-                                        case "Boolean":
-                                            sb.Append(reader.GetBoolean(i) ? "1" : "0");
-                                            break;
-
-                                        default:
-                                            sb.Append("'" + reader.GetValue(i).ToString().Replace("'", "''") + "'");
-                                            break;
-                                    }
-                                }
-                                if (i < reader.FieldCount - 1)
-                                {
-                                    sb.Append(", ");
-                                }
-                            }
-                            sb.AppendLine("),");
-
-                            rowCount++;
+                            return "Too much rows";
                         }
+
+                        // Start a new batch every 50 rows
+                        if (rowCount % 50 == 0)
+                        {
+                            if (batchCount > 0)
+                            {
+                                // Remove the trailing comma from the previous batch
+                                sb.Length -= 3; // Remove ",\n"
+                                sb.AppendLine(";"); // Close the previous batch
+                            }
+                            sb.AppendLine($"INSERT INTO {tableName} ({columnNames}) VALUES");
+                            batchCount++;
+                        }
+
+                        // Generate the values for the current row
+                        sb.Append("\t(");
+                        for (int i = 0; i < reader.FieldCount; i++)
+                        {
+                            if (reader.IsDBNull(i))
+                            {
+                                sb.Append("NULL");
+                            }
+                            else
+                            {
+                                switch (reader.GetFieldType(i).Name)
+                                {
+                                    case "String":
+                                        sb.Append("'" + reader.GetString(i).Replace("'", "''") + "'");
+                                        break;
+
+                                    case "DateTime":
+                                        sb.Append("'" + reader.GetDateTime(i).ToString("yyyy-MM-dd HH:mm:ss") + "'");
+                                        break;
+
+                                    case "Int32":
+                                        sb.Append(reader.GetInt32(i));
+                                        break;
+
+                                    case "Int64":
+                                        sb.Append(reader.GetInt64(i));
+                                        break;
+
+                                    case "Decimal":
+                                        sb.Append(reader.GetDecimal(i));
+                                        break;
+
+                                    case "Double":
+                                        sb.Append(reader.GetDouble(i));
+                                        break;
+
+                                    case "Single":
+                                        sb.Append(reader.GetFloat(i));
+                                        break;
+
+                                    case "Boolean":
+                                        sb.Append(reader.GetBoolean(i) ? "1" : "0");
+                                        break;
+
+                                    default:
+                                        sb.Append("'" + reader.GetValue(i).ToString().Replace("'", "''") + "'");
+                                        break;
+                                }
+                            }
+                            if (i < reader.FieldCount - 1)
+                            {
+                                sb.Append(", ");
+                            }
+                        }
+                        sb.AppendLine("),");
+
+                        rowCount++;
+                    }
 
                     // Remove the trailing comma from the last row in the last batch
                     if (sb.Length > 0)
@@ -275,6 +261,18 @@ WHERE sm.object_id = OBJECT_ID(@SchemaQualifiedName);";
             }
 
             return sb.ToString();
+        }
+
+        /// <summary>
+        /// Queries the data to insert statement async.
+        /// </summary>
+        /// <param name="tableName">The table name.</param>
+        /// <returns>A Task.</returns>
+        public static async Task<string> TableToInsertStatementAsync(ObjectName tableName)
+        {
+            var sql = $"select * from {tableName.FullName}";
+            var hasIdentity = await DatabaseHelper.HasIdentityColumnAsync(tableName);
+            return await QueryDataToInsertStatementAsync(sql, tableName.FullName, hasIdentity);
         }
 
         /// <summary>

@@ -1,6 +1,4 @@
-﻿using Microsoft.Data.SqlClient;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Data;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,7 +10,7 @@ namespace SQL_Document_Builder
     /// The common class.
     /// </summary>
     internal class Common
-    {       
+    {
         /// <summary>
         /// Input the box.
         /// </summary>
@@ -55,31 +53,16 @@ namespace SQL_Document_Builder
         public static async Task<string> QueryDataToHTMLTableAsync(string sql)
         {
             var sb = new StringBuilder();
-            var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
 
-            try
+            var dt = await DatabaseHelper.GetDataTableAsync(sql);
+
+            if (dt != null && dt.Rows.Count > 0)
             {
-                var cmd = new SqlCommand(sql, conn) { CommandType = CommandType.Text };
-                await conn.OpenAsync();
-
-                var dat = new SqlDataAdapter(cmd);
-                var ds = new DataSet();
-
-                // Fill the dataset asynchronously
-                await Task.Run(() => dat.Fill(ds));
-
-                if (ds?.Tables.Count > 0)
-                {
-                    sb.AppendLine(DataTableToHTML(ds.Tables[0]));
-                }
+                sb.AppendLine(DataTableToHTML(dt));
             }
-            catch (Exception ex)
+            else
             {
-                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                await conn.CloseAsync();
+                sb.AppendLine("<p>No data found.</p>");
             }
 
             return sb.ToString();
@@ -130,47 +113,6 @@ namespace SQL_Document_Builder
             sb.AppendLine("</table>");
 
             return sb.ToString();
-        }
-
-        /// <summary>
-        /// Get the object list.
-        /// </summary>
-        /// <param name="objType">The obj type.</param>
-        /// <returns><![CDATA[List<ObjectName>]]></returns>
-        public static List<ObjectName> GetObjectList(ObjectName.ObjectTypeEnums objType)
-        {
-            var tables = new List<ObjectName>();
-            var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
-            try
-            {
-                var sql = string.Format("SELECT TABLE_SCHEMA, TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = @TableType ORDER BY TABLE_SCHEMA, TABLE_NAME");
-                var cmd = new SqlCommand(sql, conn) { CommandType = CommandType.Text };
-                cmd.Parameters.AddWithValue("@TableType", objType == ObjectName.ObjectTypeEnums.View ? "View" : "BASE TABLE");
-                conn.Open();
-                var reader = cmd.ExecuteReader();
-                while (reader.Read())
-                {
-                    var schemaName = reader.GetString(0);
-                    if (!schemaName.Equals("sys", StringComparison.CurrentCultureIgnoreCase))
-                    {
-                        tables.Add(new ObjectName()
-                        {
-                            ObjectType = objType,
-                            Schema = schemaName,
-                            Name = reader.GetString(1)
-                        });
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                conn.Close();
-            }
-            return tables;
         }
 
         /// <summary>
