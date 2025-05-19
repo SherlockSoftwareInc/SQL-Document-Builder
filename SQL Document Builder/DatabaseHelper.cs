@@ -489,6 +489,11 @@ ORDER BY s.name, p.name;";
             return result;
         }
 
+        internal static async Task<DataTable> GetTableListAsync(string schemaName)
+        {
+            throw new NotImplementedException();
+        }
+
         /// <summary>
         /// Gets the tables async.
         /// </summary>

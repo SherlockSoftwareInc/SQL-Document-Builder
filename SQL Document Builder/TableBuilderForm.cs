@@ -5,12 +5,10 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
-using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using static SQL_Document_Builder.ObjectName;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace SQL_Document_Builder
 {
@@ -1685,7 +1683,7 @@ namespace SQL_Document_Builder
                 var builder = new SharePoint();
                 await Task.Run(async () =>
                 {
-                    scripts = await builder.BuildTableList(dlg.Schema, progress);
+                    scripts = await builder.BuildTableListAsync(dlg.Schema, progress);
                 });
 
                 SetScript(scripts);
@@ -1795,7 +1793,7 @@ namespace SQL_Document_Builder
                 var builder = new SharePoint();
                 await Task.Run(async () =>
                 {
-                    scripts = await builder.BuildViewList(dlg.Schema, progress);
+                    scripts = await builder.BuildViewListAsync(dlg.Schema, progress);
                 });
 
                 SetScript(scripts);
@@ -1893,7 +1891,6 @@ namespace SQL_Document_Builder
             sqlTextBox.SetKeywords(4, "all and any between cross exists in inner is join left like not null or outer pivot right some unpivot ( ) * ");
             // User2 = 5
             sqlTextBox.SetKeywords(5, "sys objects sysobjects ");
-
         }
 
         /// <summary>
@@ -1915,7 +1912,6 @@ namespace SQL_Document_Builder
             //int numberWidth = TextRenderer.MeasureText(maxLineNumber.ToString(), sqlTextBox.Font).Width;
             sqlTextBox.Margins[NUMBER_MARGIN].Width = sqlTextBox.TextWidth(Style.LineNumber, new string('9', maxLineNumber + 1)) + 5;
         }
-
 
         #region Numbers, Bookmarks, Code Folding
 
@@ -2328,8 +2324,6 @@ namespace SQL_Document_Builder
 
         #endregion ScintillaNET
 
-
-
         #region Quick Search Bar
 
         private bool SearchIsOpen = false;
@@ -2522,5 +2516,212 @@ namespace SQL_Document_Builder
         {
             searchPanel.Left = sqlTextBox.Left + sqlTextBox.Width - searchPanel.Width - 5;
         }
+
+        #region Markdown document builder
+
+        /// <summary>
+        /// Tables the list tool strip menu item_ click.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private async void TableListToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            sqlTextBox.Text = string.Empty;
+            using var dlg = new Schemapicker();
+            if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
+            {
+                StartBuild();
+
+                var progress = new Progress<int>(value =>
+                {
+                    progressBar.Value = value;
+                });
+
+                string scripts = String.Empty;
+                var builder = new MarkdownBuilder();
+                await Task.Run(async () =>
+                {
+                    scripts = await builder.BuildTableList(dlg.Schema, progress);
+                });
+
+                SetScript(scripts);
+
+                EndBuild();
+            }
+        }
+
+        /// <summary>
+        /// Handles the click event of the view list tool strip menu item.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private async void ViewListToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            sqlTextBox.Text = string.Empty;
+            using var dlg = new Schemapicker();
+            if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
+            {
+                StartBuild();
+
+                var progress = new Progress<int>(value =>
+                {
+                    progressBar.Value = value;
+                });
+
+                string scripts = String.Empty;
+                var builder = new MarkdownBuilder();
+                await Task.Run(async () =>
+                {
+                    scripts = await builder.BuildViewListAsync(dlg.Schema, progress);
+                });
+
+                SetScript(scripts);
+
+                EndBuild();
+            }
+        }
+
+        /// <summary>
+        /// Storeds the procedure list tool strip menu item_ click.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private async void StoredProcedureListToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            sqlTextBox.Text = string.Empty;
+            using var dlg = new Schemapicker();
+            if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
+            {
+                StartBuild();
+
+                var progress = new Progress<int>(value =>
+                {
+                    progressBar.Value = value;
+                });
+
+                string scripts = String.Empty;
+                var builder = new MarkdownBuilder();
+                await Task.Run(async () =>
+                {
+                    scripts = await builder.BuildSPListAsync(dlg.Schema, progress);
+                });
+
+                SetScript(scripts);
+
+                EndBuild();
+            }
+        }
+
+        /// <summary>
+        /// Functions the list tool strip menu item_ click.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private async void FunctionListToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            sqlTextBox.Text = string.Empty;
+            using var dlg = new Schemapicker();
+            if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
+            {
+                StartBuild();
+
+                var progress = new Progress<int>(value =>
+                {
+                    progressBar.Value = value;
+                });
+
+                string scripts = String.Empty;
+                var builder = new MarkdownBuilder();
+                await Task.Run(async () =>
+                {
+                    scripts = await builder.BuildFunctionListAsync(dlg.Schema, progress);
+                });
+
+                SetScript(scripts);
+
+                EndBuild();
+            }
+        }
+
+        /// <summary>
+        /// Tables the definition tool strip menu item_ click_1.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private async void TableDefinitionToolStripMenuItem_Click_1(object sender, EventArgs e)
+        {
+            if (objectsListBox.SelectedItem != null)
+            {
+                var objectName = (ObjectName)objectsListBox.SelectedItem;
+                var header = HeaderText();
+                if (header.Length > 0)
+                {
+                    SetScript(header + Environment.NewLine);
+                }
+                else
+                {
+                    sqlTextBox.Text = String.Empty;
+                }
+                var builder = new MarkdownBuilder();
+                sqlTextBox.AppendText(await builder.GetTableDef(objectName));
+
+                //if ((objectName.Name.StartsWith("LT_")) || (objectName.Name.StartsWith("AT_")))
+                //{
+                //    var valueBuilder = new MarkdownBuilder();
+                //    sqlTextBox.AppendText(await valueBuilder.GetTableValuesAsync(objectName.FullName));
+                //}
+
+                //sqlTextBox.AppendText(FooterText() + Environment.NewLine);
+                EndBuild();
+            }
+
+        }
+
+        /// <summary>
+        /// Handles the click event of the table values (MarkDown) tool strip menu item.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private async void TableValuesMDToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (objectsListBox.SelectedItem != null)
+            {
+                var objectName = (ObjectName)objectsListBox.SelectedItem;
+
+                var valueBuilder = new MarkdownBuilder();
+                sqlTextBox.AppendText(await valueBuilder.GetTableValuesAsync(objectName.FullName));
+
+                //sqlTextBox.AppendText(FooterText() + Environment.NewLine);
+                EndBuild();
+            }
+        }
+
+        /// <summary>
+        /// Handles the click event of the clipboard to table tool strip menu item.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void ClipboardToTableToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            sqlTextBox.Text = String.Empty;
+
+            if (Clipboard.ContainsText())
+            {
+                var metaData = Clipboard.GetText();
+
+                if (metaData.Length > 1)
+                {
+                    var builder = new MarkdownBuilder();
+                    SetScript(builder.TextToTable(metaData));
+                    EndBuild();
+                }
+            }
+
+            statusToolStripStatusLabe.Text = "Complete!";
+
+        }
+
+        #endregion Markdown document builder
+
     }
 }

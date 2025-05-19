@@ -31,8 +31,6 @@ namespace SQL_Document_Builder
             {
                 AppendLine("\t<table class=\"wikitable\" style=\"margin: 1em 0px; border: 1px solid #a2a9b1; color: #202122; font-family: sans-serif; font-size: 14px; background-color: #f8f9fa;\">");
                 AppendLine("\t<tbody>");
-                //AppendLine("\t\t<tr>");
-                //AppendLine("\t</tr>");
                 AppendLine("\t\t<tr>");
                 AppendLine("\t\t<th style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\">Schema</th>");
                 AppendLine("\t\t<th style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\">Table Name</th>");
@@ -68,7 +66,6 @@ namespace SQL_Document_Builder
                         AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + tableSchema + "</td>");
                         AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + string.Format("[[{0}.{1}|{1}]]", tableSchema, tableName) + "</td>");
                         AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + await DatabaseHelper.GetTableDescriptionAsync(new ObjectName() { Schema = tableSchema, Name = tableName }) + "</td>");
-                        //AppendLine(string.Format("| {0} || [[DW Table: {0}.{1}|{1}]] || {2}", tableSchema, tableName, Common.GetTableDescription(new ObjectName() { Schema = tableSchema, Name = tableName })));
                         AppendLine("\t\t</tr>");
                     }
                 }
@@ -89,14 +86,81 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Scan user view in the database and generate the creation script for them
+        /// Builds the table list async.
         /// </summary>
-        public async Task<string> BuildViewList(string schemaName, IProgress<int> progress)
+        /// <param name="schemaName">The schema name.</param>
+        /// <param name="progress">The progress.</param>
+        /// <returns>A Task.</returns>
+        public async Task<string> BuildTableListAsync(string schemaName, IProgress<int> progress)
         {
             _script.Clear();
 
-            var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
             try
+            {
+                // Use DatabaseHelper to get the DataTable asynchronously
+                string sql;
+                if (schemaName.Length == 0)
+                    sql = "SELECT SCHEMA_NAME(schema_id) AS table_schema, name AS table_name FROM sys.tables order by table_schema, table_name";
+                else
+                    sql = string.Format("SELECT SCHEMA_NAME(schema_id) AS table_schema, name AS table_name FROM sys.tables WHERE SCHEMA_NAME(schema_id) = N'{0}' order by table_schema, table_name", schemaName);
+
+                DataTable? dt = await DatabaseHelper.GetDataTableAsync(sql);
+
+                if (dt?.Rows.Count > 0)
+                {
+                    AppendLine("\t<table class=\"wikitable\" style=\"margin: 1em 0px; border: 1px solid #a2a9b1; color: #202122; font-family: sans-serif; font-size: 14px; background-color: #f8f9fa;\">");
+                    AppendLine("\t<tbody>");
+                    AppendLine("\t\t<tr>");
+                    AppendLine("\t\t<th style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\">Schema</th>");
+                    AppendLine("\t\t<th style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\">Table Name</th>");
+                    AppendLine("\t\t<th style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\">Description</th>");
+                    AppendLine("\t\t</tr>");
+
+                    for (int i = 0; i < dt.Rows.Count; i++)
+                    {
+                        int percentComplete = (i * 100) / dt.Rows.Count;
+                        if (percentComplete > 0 && percentComplete % 2 == 0)
+                        {
+                            progress.Report(percentComplete + 1);
+                        }
+
+                        DataRow dr = dt.Rows[i];
+                        string tableSchema = dr["table_schema"]?.ToString() ?? string.Empty;
+                        string tableName = dr["table_name"]?.ToString() ?? string.Empty;
+                        AppendLine("\t\t<tr>");
+                        AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + tableSchema + "</td>");
+                        AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + string.Format("[[{0}.{1}|{1}]]", tableSchema, tableName) + "</td>");
+                        AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + await DatabaseHelper.GetTableDescriptionAsync(new ObjectName() { Schema = tableSchema, Name = tableName }) + "</td>");
+                        AppendLine("\t\t</tr>");
+                    }
+                    AppendLine("\t</tbody>");
+                    AppendLine("\t</table>");
+                }
+            }
+            catch (Exception ex)
+            {
+                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
+            }
+
+            return _script.ToString();
+        }
+
+        /// <summary>
+        /// Scan user view in the database and generate the creation script for them
+        /// </summary>
+        public async Task<string> BuildViewListAsync(string schemaName, IProgress<int> progress)
+        {
+            _script.Clear();
+
+            string sql;
+            if (schemaName.Length == 0)
+                sql = "SELECT SCHEMA_NAME(schema_id) AS table_schema, name AS table_name FROM sys.views ORDER BY table_schema, table_name";
+            else
+                sql = string.Format("SELECT SCHEMA_NAME(schema_id) AS table_schema, name AS table_name FROM sys.views WHERE SCHEMA_NAME(schema_id) = N'{0}' order by table_schema, table_name", schemaName);
+
+            var dt = await DatabaseHelper.GetDataTableAsync(sql);
+
+            if (dt?.Rows.Count > 0)
             {
                 AppendLine("\t<table class=\"wikitable\" style=\"margin: 1em 0px; border: 1px solid #a2a9b1; color: #202122; font-family: sans-serif; font-size: 14px; background-color: #f8f9fa;\">");
                 AppendLine("\t<tbody>");
@@ -106,48 +170,25 @@ namespace SQL_Document_Builder
                 AppendLine("\t\t<th style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\">Description</th>");
                 AppendLine("\t\t</tr>");
 
-                string sql;
-                if (schemaName.Length == 0)
-                    sql = "SELECT SCHEMA_NAME(schema_id) AS table_schema, name AS table_name FROM sys.views ORDER BY table_schema, table_name";
-                else
-                    sql = string.Format("SELECT SCHEMA_NAME(schema_id) AS table_schema, name AS table_name FROM sys.views WHERE SCHEMA_NAME(schema_id) = N'{0}' order by table_schema, table_name", schemaName);
-                var cmd = new SqlCommand(sql, conn)
-                { CommandType = CommandType.Text };
-                conn.Open();
-                var ds = new DataSet();
-                var dat = new SqlDataAdapter(cmd);
-                dat.Fill(ds);
-                if (ds.Tables[0].Rows.Count > 0)
+                for (int i = 0; i < dt.Rows.Count; i++)
                 {
-                    for (int i = 0; i < ds.Tables[0].Rows.Count; i++)
+                    int percentComplete = (i * 100) / dt.Rows.Count;
+                    if (percentComplete > 0 && percentComplete % 2 == 0)
                     {
-                        int percentComplete = (i * 100) / ds.Tables[0].Rows.Count;
-                        if (percentComplete > 0 && percentComplete % 2 == 0)
-                        {
-                            progress.Report(percentComplete + 1);
-                        }
-
-                        DataRow dr = ds.Tables[0].Rows[i];
-                        string tableSchema = (string)dr[0];
-                        string tableName = (string)dr[1];
-                        AppendLine("\t\t<tr>");
-                        AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + tableSchema + "</td>");
-                        AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + string.Format("[[{0}.{1}|{1}]]", tableSchema, tableName) + "</td>");
-                        AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + await DatabaseHelper.GetTableDescriptionAsync(new ObjectName() { Schema = tableSchema, Name = tableName, ObjectType = ObjectName.ObjectTypeEnums.View }) + "</td>");
-                        AppendLine("\t\t</tr>");
+                        progress.Report(percentComplete + 1);
                     }
-                }
 
+                    DataRow dr = dt.Rows[i];
+                    string tableSchema = (string)dr[0];
+                    string tableName = (string)dr[1];
+                    AppendLine("\t\t<tr>");
+                    AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + tableSchema + "</td>");
+                    AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + string.Format("[[{0}.{1}|{1}]]", tableSchema, tableName) + "</td>");
+                    AppendLine("\t\t<td style=\"padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\">" + await DatabaseHelper.GetTableDescriptionAsync(new ObjectName() { Schema = tableSchema, Name = tableName, ObjectType = ObjectName.ObjectTypeEnums.View }) + "</td>");
+                    AppendLine("\t\t</tr>");
+                }
                 AppendLine("\t</tbody>");
                 AppendLine("\t</table>");
-            }
-            catch (Exception ex)
-            {
-                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                conn.Close();
             }
 
             return _script.ToString();
