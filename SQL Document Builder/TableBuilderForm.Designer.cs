@@ -1002,6 +1002,7 @@
             queryDataToTableToolStripMenuItem1.Name = "queryDataToTableToolStripMenuItem1";
             queryDataToTableToolStripMenuItem1.Size = new System.Drawing.Size(183, 22);
             queryDataToTableToolStripMenuItem1.Text = "Query Data to Table";
+            queryDataToTableToolStripMenuItem1.Click += QueryDataToTableToolStripMenuItem1_Click;
             // 
             // toolsToolStripMenuItem
             // 
@@ -1161,7 +1162,7 @@
             // statusToolStripStatusLabe
             // 
             statusToolStripStatusLabe.Name = "statusToolStripStatusLabe";
-            statusToolStripStatusLabe.Size = new System.Drawing.Size(843, 20);
+            statusToolStripStatusLabe.Size = new System.Drawing.Size(996, 20);
             statusToolStripStatusLabe.Spring = true;
             statusToolStripStatusLabe.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
@@ -1213,7 +1214,7 @@
             closeSearchButton.TabIndex = 3;
             closeSearchButton.Text = "❌";
             closeSearchButton.UseVisualStyleBackColor = false;
-            closeSearchButton.Click += BtnClearSearch_Click;
+            closeSearchButton.Click += CloseQuickSearch_Click;
             // 
             // nextSearchButton
             // 
@@ -1227,7 +1228,7 @@
             nextSearchButton.Tag = "Find next (Enter)";
             nextSearchButton.Text = "⮟";
             nextSearchButton.UseVisualStyleBackColor = false;
-            nextSearchButton.Click += BtnNextSearch_Click;
+            nextSearchButton.Click += SearchNext_Click;
             // 
             // prevSearchButton
             // 
@@ -1241,7 +1242,7 @@
             prevSearchButton.Tag = "Find previous (Shift+Enter)";
             prevSearchButton.Text = "⮝";
             prevSearchButton.UseVisualStyleBackColor = false;
-            prevSearchButton.Click += BtnPrevSearch_Click;
+            prevSearchButton.Click += SearchPrevious_Click;
             // 
             // searchSQLTextBox
             // 

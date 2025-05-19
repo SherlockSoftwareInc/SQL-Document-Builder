@@ -185,14 +185,21 @@ WHERE sm.object_id = OBJECT_ID(@SchemaQualifiedName);";
                             }
                             else
                             {
-                                switch (reader.GetFieldType(i).Name)
+                                var typeName = reader.GetFieldType(i).Name;
+                                System.Diagnostics.Debug.Print(typeName);
+
+                                switch (typeName)
                                 {
                                     case "String":
-                                        sb.Append("'" + reader.GetString(i).Replace("'", "''") + "'");
+                                        sb.Append("N'" + reader.GetString(i).Replace("'", "''") + "'");
                                         break;
 
                                     case "DateTime":
                                         sb.Append("'" + reader.GetDateTime(i).ToString("yyyy-MM-dd HH:mm:ss") + "'");
+                                        break;
+
+                                    case "Int16":
+                                        sb.Append(reader.GetInt16(i));
                                         break;
 
                                     case "Int32":
@@ -219,8 +226,12 @@ WHERE sm.object_id = OBJECT_ID(@SchemaQualifiedName);";
                                         sb.Append(reader.GetBoolean(i) ? "1" : "0");
                                         break;
 
+                                    case "Byte":
+                                        sb.Append(reader.GetByte(i));
+                                        break;
+
                                     default:
-                                        sb.Append("'" + reader.GetValue(i).ToString().Replace("'", "''") + "'");
+                                        sb.Append("N'" + reader.GetValue(i).ToString().Replace("'", "''") + "'");
                                         break;
                                 }
                             }

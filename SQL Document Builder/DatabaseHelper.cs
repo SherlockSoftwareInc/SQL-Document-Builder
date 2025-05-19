@@ -512,14 +512,41 @@ AND s.name = @SchemaName;";
         /// </summary>
         internal static async Task SaveColumnDescAsync(string? objectName, string columnName, string desc)
         {
-            SqlConnection? conn = new(Properties.Settings.Default.dbConnectionString);
+            const string sql = @"
+IF EXISTS (SELECT name
+           FROM sys.columns
+           WHERE object_id = OBJECT_ID(@TableName)
+             AND name = @ColumnName)
+BEGIN
+    DECLARE @Schema varchar(100) = OBJECT_SCHEMA_NAME(OBJECT_ID(@TableName));
+    DECLARE @ObjectName varchar(100) = OBJECT_NAME(OBJECT_ID(@TableName));
+    DECLARE @ObjectType varchar(100);
+    SELECT @ObjectType = CASE type_desc WHEN 'USER_TABLE' THEN 'TABLE' ELSE 'VIEW' END
+      FROM sys.objects
+     WHERE object_id = OBJECT_ID(@TableName);
+
+    IF EXISTS (SELECT value
+               FROM sys.extended_properties
+               WHERE class = 1 AND major_id = OBJECT_ID(@TableName)
+                 AND minor_id = (SELECT column_id FROM sys.columns WHERE name = @ColumnName AND object_id = OBJECT_ID(@TableName))
+                 AND name = 'MS_Description')
+        EXEC sp_updateextendedproperty @name = N'MS_Description', @value = @Description,
+            @level0type = N'SCHEMA', @level0name = @Schema,
+            @level1type = @ObjectType, @level1name = @ObjectName,
+            @level2type = N'COLUMN', @level2name = @ColumnName
+    ELSE
+        EXEC sp_addextendedproperty @name = N'MS_Description', @value = @Description,
+            @level0type = N'SCHEMA', @level0name = @Schema,
+            @level1type = @ObjectType, @level1name = @ObjectName,
+            @level2type = N'COLUMN', @level2name = @ColumnName
+END";
+            await using var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
             try
             {
-                await using var cmd = new SqlCommand("usp_AddColumnDescription", conn) { CommandType = CommandType.StoredProcedure };
-
-                cmd.Parameters.Add(new SqlParameter("@TableName", objectName));
-                cmd.Parameters.Add(new SqlParameter("@ColumnName", columnName));
-                cmd.Parameters.Add(new SqlParameter("@Description", desc));
+                await using var cmd = new SqlCommand(sql, conn) { CommandType = CommandType.Text, CommandTimeout = 5000 };
+                cmd.Parameters.AddWithValue("@TableName", objectName ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@ColumnName", columnName ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@Description", desc ?? (object)DBNull.Value);
 
                 await conn.OpenAsync();
                 await cmd.ExecuteNonQueryAsync();
@@ -533,7 +560,5 @@ AND s.name = @SchemaName;";
                 await conn.CloseAsync();
             }
         }
-
-
     }
 }

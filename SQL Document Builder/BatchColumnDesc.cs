@@ -144,47 +144,6 @@ namespace SQL_Document_Builder
                 }
             }
 
-            //using SqlConnection conn = new(Properties.Settings.Default.dbConnectionString);
-            //try
-            //{
-            //    await using var cmd = new SqlCommand() { Connection = conn };
-            //    cmd.Parameters.Add(new SqlParameter("@searchFor", searchFor));
-            //    cmd.CommandText = "SELECT DISTINCT TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, 'BASE TABLE' TABLE_TYPE, COLUMN_NAME FROM information_schema.columns WHERE column_name = @SearchFor ORDER BY TABLE_NAME";
-
-            //    await conn.OpenAsync();
-            //    var dr = await cmd.ExecuteReaderAsync();
-            //    string schemaName = string.Empty;
-            //    if (schemaComboBox.SelectedIndex > 0) schemaName = (string)schemaComboBox.Items[schemaComboBox.SelectedIndex];
-
-            //    while (await dr.ReadAsync())
-            //    {
-            //        if (schemaName.Length > 0)
-            //        {
-            //            string tableSchema = (string)dr["TABLE_SCHEMA"];
-            //            if (tableSchema.Equals(schemaName, StringComparison.CurrentCultureIgnoreCase))
-            //            {
-            //                objectsListBox.Items.Add(string.Format("{0}.{1}", dr["TABLE_SCHEMA"].ToString(), dr["TABLE_NAME"].ToString()));
-            //            }
-            //        }
-            //        else
-            //        {
-            //            objectsListBox.Items.Add(string.Format("{0}.{1}", dr["TABLE_SCHEMA"].ToString(), dr["TABLE_NAME"].ToString()));
-            //        }
-            //    }
-            //    dr.Close();
-            //}
-            //catch (SqlException)
-            //{
-            //    throw;
-            //}
-            //finally
-            //{
-            //    if (conn.State == ConnectionState.Open)
-            //    {
-            //        await conn.CloseAsync();
-            //    }
-            //}
-
             messageToolStripStatusLabel.Text = objectsListBox.Items.Count switch
             {
                 0 => "No match found",

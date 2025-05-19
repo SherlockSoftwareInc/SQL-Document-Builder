@@ -161,7 +161,7 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Abouts the tool strip menu item_ click.
+        /// Handles the "About" tool strip menu item click event:
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
@@ -249,13 +249,37 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Assistants the content tool strip menu item_ click.
+        /// Clears the script text box.
+        /// </summary>
+        private void ClearTextBox()
+        {
+            // if the Control key is pressed, clear the text box without asking to save
+            if (ModifierKeys != Keys.Control)
+            {
+                if (_changed)
+                {
+                    var result = Common.MsgBox("Do you want to save the changes?", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
+                    if (result == DialogResult.Yes)
+                    {
+                        saveToolStripMenuItem.PerformClick();
+                    }
+                }
+            }
+
+            sqlTextBox.Text = string.Empty;
+            _changed = false;
+            _fileName = string.Empty;
+            this.Text = $"SharePoint Script Builder - (New)";
+        }
+
+        /// <summary>
+        /// Handles the "Assistant content" tool strip menu item click event:
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
         private async void AssistantContentToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            sqlTextBox.Text = string.Empty;
+            ClearTextBox();
 
             try
             {
@@ -285,7 +309,7 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Batches the tool strip button click.
+        /// Handles the "Batch column description" tool strip button click event:
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The E.</param>
@@ -363,7 +387,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The E.</param>
         private void ClipboardToTableToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            sqlTextBox.Text = String.Empty;
+            ClearTextBox();
 
             if (Clipboard.ContainsText())
             {
@@ -381,7 +405,7 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Close tool strip button click.
+        /// Handles the "Close" tool strip button click event:
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The E.</param>
@@ -404,7 +428,7 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Copy tool strip menu item click.
+        /// Handles the "Copy" tool strip menu item click:
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The E.</param>
@@ -445,6 +469,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void CreateIndexToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            ClearTextBox();
             SetScript(definitionPanel.CreateIndexScript());
         }
 
@@ -455,7 +480,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void CREATEINSERTToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            sqlTextBox.Text = string.Empty;
+            ClearTextBox();
 
             List<ObjectName>? selectedObjects = SelectObjects();
 
@@ -507,6 +532,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void CreatePrimaryKeyToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            ClearTextBox();
             SetScript(definitionPanel.PrimaryKeyScript());
             if (!string.IsNullOrEmpty(sqlTextBox.Text))
             {
@@ -521,7 +547,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void CreateTableToolStripButton_Click(object sender, EventArgs e)
         {
-            sqlTextBox.Text = string.Empty;
+            ClearTextBox();
 
             if (objectsListBox.SelectedItem is not ObjectName objectName)
             {
@@ -543,7 +569,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void CREATEToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            sqlTextBox.Text = string.Empty;
+            ClearTextBox();
 
             List<ObjectName>? selectedObjects = SelectObjects();
 
@@ -572,7 +598,7 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Cuts the tool strip menu item click.
+        /// Handles the "Cut" tool strip menu item click:
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The E.</param>
@@ -650,6 +676,8 @@ namespace SQL_Document_Builder
             form.ShowDialog();
             if (form.ResultDataTable != null)
             {
+                ClearTextBox();
+
                 var dataHelper = new ExcelDataHelper(form.ResultDataTable);
                 sqlTextBox.Text = dataHelper.GetInsertStatement();
                 //sqlTextBox.AppendText("GO" + Environment.NewLine);
@@ -717,18 +745,18 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Function the list tool strip menu item1 click.
+        /// Handles the "Function list" tool strip menu item click:
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The E.</param>
-        private void FunctionListToolStripMenuItem1_Click(object sender, EventArgs e)
+        private async void FunctionListToolStripMenuItem1_Click(object sender, EventArgs e)
         {
-            sqlTextBox.Text = string.Empty;
+            ClearTextBox();
             using var dlg = new Schemapicker();
             if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
             {
                 var builder = new SharePointBuilder();
-                SetScript(builder.BuildFunctionList(dlg.Schema));
+                SetScript(await builder.BuildFunctionList(dlg.Schema));
                 EndBuild();
             }
         }
@@ -910,19 +938,8 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void NewToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (_changed)
-            {
-                if (Common.MsgBox("Do you want to save the changes?", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
-                {
-                    SaveToolStripMenuItem_Click(sender, e);
-                }
-            }
-
-            _fileName = string.Empty;
-            this.Text = $"SharePoint Script Builder - (New)";
-
             // clear the sqlTextBox
-            sqlTextBox.Text = string.Empty;
+            ClearTextBox();
             sqlTextBox.Focus();
 
             _changed = false;
@@ -935,7 +952,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void ObjectsDescriptionToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            sqlTextBox.Text = string.Empty;
+            ClearTextBox();
 
             List<ObjectName>? selectedObjects = SelectObjects();
 
@@ -971,7 +988,7 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Objects the list box selected index changed.
+        /// Handles the "Objects list" list box selected index changed event:
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The E.</param>
@@ -1136,7 +1153,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void OpenToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if(_changed)
+            if (_changed)
             {
                 if (Common.MsgBox("Do you want to save the changes?", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                 {
@@ -1335,12 +1352,13 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Queries the data to table tool strip menu item click.
+        /// Handles the "Query data to table" tool strip menu item click:
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The E.</param>
         private void QueryDataToTableToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            ClearTextBox();
             using var form = new QueryDataToTableForm();
             form.ShowDialog();
             if (!string.IsNullOrEmpty(form.DocumentBody))
@@ -1364,12 +1382,14 @@ namespace SQL_Document_Builder
 
             if (!string.IsNullOrEmpty(form.DocumentBody))
             {
+                ClearTextBox();
+
                 sqlTextBox.Text = form.DocumentBody;
             }
         }
 
         /// <summary>
-        /// Saves the as tool strip menu item_ click.
+        /// Handles the "Save as" tool strip menu item click:
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
@@ -1391,7 +1411,7 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Saves the replace tool strip menu item_ click.
+        /// Handles the "Save and replace" tool strip menu item click:
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
@@ -1410,7 +1430,7 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Save tool strip menu item click.
+        /// Handles the "Save" tool strip menu item click:
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The E.</param>
@@ -1431,7 +1451,7 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Schemata the combo box selected index changed.
+        /// Handles the "Schema" combo box selected index changed event:
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The E.</param>
@@ -1441,7 +1461,7 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Search text box text changed.
+        /// Handles the "Search" text box text changed event:
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The E.</param>
@@ -1457,7 +1477,7 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Selects the all tool strip menu item click.
+        /// Handles the "Select all" tool strip menu item click:
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The E.</param>
@@ -1564,30 +1584,30 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Storeds the procedure list tool strip menu item1 click.
+        /// Handles the "Stored procedure list" tool strip menu item click:
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The E.</param>
-        private void StoredProcedureListToolStripMenuItem1_Click(object sender, EventArgs e)
+        private async void StoredProcedureListToolStripMenuItem1_Click(object sender, EventArgs e)
         {
-            sqlTextBox.Text = string.Empty;
+            ClearTextBox();
             using var dlg = new Schemapicker();
             if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
             {
                 var builder = new SharePointBuilder();
-                SetScript(builder.BuildSPList(dlg.Schema));
+                SetScript(await builder.BuildSPList(dlg.Schema));
                 EndBuild();
             }
         }
 
         /// <summary>
-        /// Tables the builder form form closing.
+        /// Handles the "Table builder form" form closing event:
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The E.</param>
         private void TableBuilderForm_FormClosing(object sender, FormClosingEventArgs e)
         {
-            if(_changed)
+            if (_changed)
             {
                 if (Common.MsgBox("Do you want to save the changes?", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                 {
@@ -1600,7 +1620,7 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Tables the builder form load.
+        /// Handles the "Table builder form" load event:
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The E.</param>
@@ -1646,12 +1666,13 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Tables the definition tool strip menu item click.
+        /// Handles the "Table definition" tool strip menu item click:
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The E.</param>
         private async void TableDefinitionToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            ClearTextBox();
             if (objectsListBox.SelectedItem != null)
             {
                 var objectName = (ObjectName)objectsListBox.SelectedItem;
@@ -1686,6 +1707,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void TableDescriptionToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            ClearTextBox();
             var objectName = objectsListBox.SelectedItem as ObjectName;
             if (!string.IsNullOrEmpty(objectName?.Name))
             {
@@ -1702,13 +1724,13 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Table the list tool strip menu item1 click.
+        /// Handles the "Table list" tool strip menu item click:
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The E.</param>
         private async void TableListToolStripMenuItem1_Click(object sender, EventArgs e)
         {
-            sqlTextBox.Text = string.Empty;
+            ClearTextBox();
             using var dlg = new Schemapicker();
             if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
             {
@@ -1733,7 +1755,7 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Tables the wiki tool strip button click.
+        /// Handles the "Table SQL" tool strip menu item click:
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The E.</param>
@@ -1775,17 +1797,19 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void UspToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            ClearTextBox();
             sqlTextBox.Text = DatabaseDocBuilder.UspAddObjectDescription();
             Clipboard.SetText(sqlTextBox.Text);
         }
 
         /// <summary>
-        /// Value the list tool strip menu item click.
+        /// Handles the "Value list" tool strip menu item click:
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The E.</param>
         private async void ValueListToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            ClearTextBox();
             if (objectsListBox.SelectedItem != null)
             {
                 var objectName = (ObjectName)objectsListBox.SelectedItem;
@@ -1796,7 +1820,7 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Values the wiki tool strip button click.
+        /// Handles the "Values wiki" tool strip menu item click:
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The E.</param>
@@ -1812,13 +1836,13 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// View the list tool strip menu item1 click.
+        /// Handles the "View list" tool strip menu item click:
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The E.</param>
         private async void ViewListToolStripMenuItem1_Click(object sender, EventArgs e)
         {
-            sqlTextBox.Text = string.Empty;
+            ClearTextBox();
             using var dlg = new Schemapicker();
             if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
             {
@@ -1934,7 +1958,7 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Ons the text changed.
+        /// Handles the text changed event of the SQL text box:
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
@@ -1968,6 +1992,9 @@ namespace SQL_Document_Builder
         /// </summary>
         private const int BOOKMARK_MARGIN = 2;
 
+        /// <summary>
+        /// The bookmark marker.
+        /// </summary>
         private const int BOOKMARK_MARKER = 2;
 
         /// <summary>
@@ -2372,31 +2399,31 @@ namespace SQL_Document_Builder
         private bool SearchIsOpen = false;
 
         /// <summary>
-        /// Btns the clear search_ click.
+        /// Handles the click event of the close quick search button.
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
-        private void BtnClearSearch_Click(object sender, EventArgs e)
+        private void CloseQuickSearch_Click(object sender, EventArgs e)
         {
             CloseSearch();
         }
 
         /// <summary>
-        /// Btns the next search_ click.
+        /// Handles the click event of the search next button.
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
-        private void BtnNextSearch_Click(object sender, EventArgs e)
+        private void SearchNext_Click(object sender, EventArgs e)
         {
             SearchManager.Find(true, false);
         }
 
         /// <summary>
-        /// Btns the prev search_ click.
+        /// Handles the click event of the search previous button.
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
-        private void BtnPrevSearch_Click(object sender, EventArgs e)
+        private void SearchPrevious_Click(object sender, EventArgs e)
         {
             SearchManager.Find(false, false);
         }
@@ -2447,7 +2474,7 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Txts the search_ key down.
+        /// Handles the key down event of the search text box.
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
@@ -2464,7 +2491,7 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Txts the search_ text changed.
+        /// Handles the text changed event of the search text box.
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
@@ -2537,7 +2564,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void ClipboardToTableToolStripMenuItem1_Click(object sender, EventArgs e)
         {
-            sqlTextBox.Text = String.Empty;
+            ClearTextBox();
 
             if (Clipboard.ContainsText())
             {
@@ -2555,13 +2582,13 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Functions the list tool strip menu item_ click.
+        /// Handles the click event of the function list tool strip menu item.
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
         private async void FunctionListToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            sqlTextBox.Text = string.Empty;
+            ClearTextBox();
             using var dlg = new Schemapicker();
             if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
             {
@@ -2586,13 +2613,13 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Storeds the procedure list tool strip menu item_ click.
+        /// Handles the click event of the stored procedure list tool strip menu item.
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
         private async void StoredProcedureListToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            sqlTextBox.Text = string.Empty;
+            ClearTextBox();
             using var dlg = new Schemapicker();
             if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
             {
@@ -2617,12 +2644,13 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Tables the definition tool strip menu item_ click_1.
+        /// Handles the click event of the table definition tool strip menu item.
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
         private async void TableDefinitionToolStripMenuItem_Click_1(object sender, EventArgs e)
         {
+            ClearTextBox();
             if (objectsListBox.SelectedItem != null)
             {
                 var objectName = (ObjectName)objectsListBox.SelectedItem;
@@ -2650,13 +2678,13 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Tables the list tool strip menu item_ click.
+        /// Handles the click event of the table list tool strip menu item.
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
         private async void TableListToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            sqlTextBox.Text = string.Empty;
+            ClearTextBox();
             using var dlg = new Schemapicker();
             if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
             {
@@ -2687,6 +2715,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void TableValuesMDToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            ClearTextBox();
             if (objectsListBox.SelectedItem != null)
             {
                 var objectName = (ObjectName)objectsListBox.SelectedItem;
@@ -2706,7 +2735,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void ViewListToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            sqlTextBox.Text = string.Empty;
+            ClearTextBox();
             using var dlg = new Schemapicker();
             if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
             {
@@ -2730,6 +2759,16 @@ namespace SQL_Document_Builder
             }
         }
 
+        /// <summary>
+        /// Handles the click event of the query data to table tool strip menu item.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void QueryDataToTableToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+
+        }
         #endregion Markdown document builder
+
     }
 }
