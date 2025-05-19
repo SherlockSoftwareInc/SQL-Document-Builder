@@ -1395,19 +1395,27 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void SaveAsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var oFile = new SaveFileDialog() { Filter = "SQL script(*.sql)|*.sql|Text file(*.txt)|*.txt|All files(*.*)|*.*" };
-            if (oFile.ShowDialog() == DialogResult.OK)
+            try
             {
-                _fileName = oFile.FileName;
-                this.Text = $"SharePoint Script Builder - {_fileName}";
+                var oFile = new SaveFileDialog() { Filter = "SQL script(*.sql)|*.sql|Text file(*.txt)|*.txt|All files(*.*)|*.*" };
+                if (oFile.ShowDialog() == DialogResult.OK)
+                {
+                    _fileName = oFile.FileName;
+                    this.Text = $"SharePoint Script Builder - {_fileName}";
+
+                    var file = new System.IO.StreamWriter(_fileName, false);
+                    await file.WriteAsync(sqlTextBox.Text);
+                    file.Close();
+                    _changed = false;
+
+                    statusToolStripStatusLabe.Text = "Complete";
+                }
             }
-
-            var file = new System.IO.StreamWriter(_fileName, false);
-            await file.WriteAsync(sqlTextBox.Text);
-            file.Close();
-            _changed = false;
-
-            statusToolStripStatusLabe.Text = "Complete";
+            catch (Exception ex)
+            {
+                // show error message if the file cannot be saved
+                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
+            }
         }
 
         /// <summary>
