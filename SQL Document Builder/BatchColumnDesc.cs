@@ -1,4 +1,4 @@
-﻿using Microsoft.Data.SqlClient;
+﻿using DarkModeForms;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -20,33 +20,7 @@ namespace SQL_Document_Builder
         public BatchColumnDesc()
         {
             InitializeComponent();
-        }
-
-        /// <summary>
-        /// Save the description of the selected column
-        /// </summary>
-        private static async Task SaveColumnDescAsync(string? objectName, string columnName, string desc)
-        {
-            SqlConnection? conn = new(Properties.Settings.Default.dbConnectionString);
-            try
-            {
-                await using var cmd = new SqlCommand("usp_AddColumnDescription", conn) { CommandType = CommandType.StoredProcedure };
-
-                cmd.Parameters.Add(new SqlParameter("@TableName", objectName));
-                cmd.Parameters.Add(new SqlParameter("@ColumnName", columnName));
-                cmd.Parameters.Add(new SqlParameter("@Description", desc));
-
-                await conn.OpenAsync();
-                await cmd.ExecuteNonQueryAsync();
-            }
-            catch (Exception ex)
-            {
-                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                await conn.CloseAsync();
-            }
+            _ = new DarkModeCS(this);
         }
 
         /// <summary>
@@ -100,7 +74,7 @@ namespace SQL_Document_Builder
                 if (item != null)
                 {
                     var objectName = item.ToString();
-                    await SaveColumnDescAsync(objectName, columnName, desc);
+                    await DatabaseHelper.SaveColumnDescAsync(objectName, columnName, desc);
                 }
             }
         }
@@ -129,52 +103,96 @@ namespace SQL_Document_Builder
                 return;
             }
 
-            using SqlConnection conn = new(Properties.Settings.Default.dbConnectionString);
-            try
+            // replace single quotes with double quotes
+            searchFor = searchFor.Replace("'", "''");
+            string sql;
+            //if (searchFor.Contains('%'))
+            //{
+            //    sql = $"SELECT DISTINCT TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, 'BASE TABLE' TABLE_TYPE, COLUMN_NAME FROM information_schema.columns WHERE column_name LIKE '{searchFor}' ORDER BY TABLE_NAME";
+            //}
+            //else
+            //{
+            sql = $"SELECT DISTINCT TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, 'BASE TABLE' TABLE_TYPE, COLUMN_NAME FROM information_schema.columns WHERE column_name = '{searchFor}' ORDER BY TABLE_NAME";
+            //}
+
+            var dt = await DatabaseHelper.GetDataTableAsync(sql);
+
+            if (dt?.Rows.Count > 0)
             {
-                await using var cmd = new SqlCommand() { Connection = conn };
-                cmd.Parameters.Add(new SqlParameter("@searchFor", searchFor));
-                cmd.CommandText = "SELECT DISTINCT TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, 'BASE TABLE' TABLE_TYPE, COLUMN_NAME FROM information_schema.columns WHERE column_name = @SearchFor ORDER BY TABLE_NAME";
+                // get the select schema name
+                string? schemaName = string.Empty;
+                if (schemaComboBox.SelectedIndex > 0)
+                    schemaName = schemaComboBox.SelectedItem?.ToString();
 
-                await conn.OpenAsync();
-                var dr = await cmd.ExecuteReaderAsync();
-                string schemaName = string.Empty;
-                if (schemaComboBox.SelectedIndex > 0) schemaName = (string)schemaComboBox.Items[schemaComboBox.SelectedIndex];
-
-                while (await dr.ReadAsync())
+                foreach (DataRow dr in dt.Rows)
                 {
-                    if (schemaName.Length > 0)
+                    string tableSchema = (string)dr["TABLE_SCHEMA"];
+                    string tableName = (string)dr["TABLE_NAME"];
+
+                    if (schemaName?.Length > 0)
                     {
-                        string tableSchema = (string)dr["TABLE_SCHEMA"];
                         if (tableSchema.Equals(schemaName, StringComparison.CurrentCultureIgnoreCase))
                         {
-                            objectsListBox.Items.Add(string.Format("{0}.{1}", dr["TABLE_SCHEMA"].ToString(), dr["TABLE_NAME"].ToString()));
+                            objectsListBox.Items.Add(string.Format("{0}.{1}", tableSchema, tableName));
                         }
                     }
                     else
                     {
-                        objectsListBox.Items.Add(string.Format("{0}.{1}", dr["TABLE_SCHEMA"].ToString(), dr["TABLE_NAME"].ToString()));
+                        // add all tables
+                        objectsListBox.Items.Add(string.Format("{0}.{1}", tableSchema, tableName));
                     }
                 }
-                dr.Close();
             }
-            catch (SqlException)
-            {
-                throw;
-            }
-            finally
-            {
-                if (conn.State == ConnectionState.Open)
-                {
-                    await conn.CloseAsync();
-                }
-            }
+
+            //using SqlConnection conn = new(Properties.Settings.Default.dbConnectionString);
+            //try
+            //{
+            //    await using var cmd = new SqlCommand() { Connection = conn };
+            //    cmd.Parameters.Add(new SqlParameter("@searchFor", searchFor));
+            //    cmd.CommandText = "SELECT DISTINCT TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, 'BASE TABLE' TABLE_TYPE, COLUMN_NAME FROM information_schema.columns WHERE column_name = @SearchFor ORDER BY TABLE_NAME";
+
+            //    await conn.OpenAsync();
+            //    var dr = await cmd.ExecuteReaderAsync();
+            //    string schemaName = string.Empty;
+            //    if (schemaComboBox.SelectedIndex > 0) schemaName = (string)schemaComboBox.Items[schemaComboBox.SelectedIndex];
+
+            //    while (await dr.ReadAsync())
+            //    {
+            //        if (schemaName.Length > 0)
+            //        {
+            //            string tableSchema = (string)dr["TABLE_SCHEMA"];
+            //            if (tableSchema.Equals(schemaName, StringComparison.CurrentCultureIgnoreCase))
+            //            {
+            //                objectsListBox.Items.Add(string.Format("{0}.{1}", dr["TABLE_SCHEMA"].ToString(), dr["TABLE_NAME"].ToString()));
+            //            }
+            //        }
+            //        else
+            //        {
+            //            objectsListBox.Items.Add(string.Format("{0}.{1}", dr["TABLE_SCHEMA"].ToString(), dr["TABLE_NAME"].ToString()));
+            //        }
+            //    }
+            //    dr.Close();
+            //}
+            //catch (SqlException)
+            //{
+            //    throw;
+            //}
+            //finally
+            //{
+            //    if (conn.State == ConnectionState.Open)
+            //    {
+            //        await conn.CloseAsync();
+            //    }
+            //}
+
             messageToolStripStatusLabel.Text = objectsListBox.Items.Count switch
             {
                 0 => "No match found",
                 1 => "one matche found",
                 _ => string.Format("{0} matches found", objectsListBox.Items.Count),
             };
+
+            // select all items in the list box
             SelectAllToolStripButton_Click(this, EventArgs.Empty);
         }
 

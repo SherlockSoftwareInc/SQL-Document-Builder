@@ -15,36 +15,6 @@ namespace SQL_Document_Builder
     internal class DatabaseHelper
     {
         /// <summary>
-        /// Executes the non query.
-        /// </summary>
-        /// <param name="sql">The sql.</param>
-        internal static async Task ExecuteNonQueryAsync(string sql, string? connectionString)
-        {
-            if (string.IsNullOrEmpty(connectionString)) return;
-
-            using var conn = new SqlConnection(connectionString);
-            try
-            {
-                await using var cmd = new SqlCommand(sql, conn)
-                {
-                    CommandType = System.Data.CommandType.Text,
-                    CommandTimeout = 50000
-                };
-
-                await conn.OpenAsync();
-                await cmd.ExecuteNonQueryAsync();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message, "An Error Occurred", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                await conn.CloseAsync();
-            }
-        }
-
-        /// <summary>
         /// Executes the SQL statement asynchronously.
         /// </summary>
         /// <param name="sql">The SQL statement to execute.</param>
@@ -69,8 +39,6 @@ namespace SQL_Document_Builder
             }
             catch (Exception ex)
             {
-                // Handle or log the exception as needed
-                //MessageBox.Show(ex.Message, "An Error Occurred", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return ex.Message;
             }
             finally
@@ -103,11 +71,15 @@ namespace SQL_Document_Builder
             try
             {
                 await conn.OpenAsync();
-                await using var cmd = new SqlCommand(sql, conn) { CommandType = CommandType.Text };
+                await using var cmd = new SqlCommand(sql, conn)
+                {
+                    CommandType = CommandType.Text,
+                    CommandTimeout = 50000
+                };
                 await using var dr = await cmd.ExecuteReaderAsync();
                 if (await dr.ReadAsync())
                 {
-                    result = dr.GetString(0);   // dr[0].ToString();
+                    result = dr.GetString(0);
                 }
 
                 dr.Close();
@@ -146,7 +118,7 @@ namespace SQL_Document_Builder
             {
                 // Log or handle the exception as needed
                 MessageBox.Show($"Error retrieving database objects: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return new List<ObjectName>(); // Return an empty list in case of an error
+                return []; // Return an empty list in case of an error
             }
         }
 
@@ -209,76 +181,6 @@ namespace SQL_Document_Builder
         /// Gets the data table.
         /// </summary>
         /// <param name="sql">The sql.</param>
-        /// <param name="connectionString">The connection string.</param>
-        /// <returns>A DataTable? .</returns>
-        internal static DataTable? GetDataTable(string sql, string? connectionString)
-        {
-            if (string.IsNullOrEmpty(connectionString)) return null;
-
-            try
-            {
-                using var connection = new SqlConnection(connectionString);
-                using var command = new SqlCommand(sql, connection)
-                {
-                    CommandType = System.Data.CommandType.Text,
-                    CommandTimeout = 50000
-                };
-                using var adapter = new SqlDataAdapter(command);
-                var dataTable = new DataTable();
-                adapter.Fill(dataTable);
-                return dataTable;
-            }
-            catch (Exception ex)
-            {
-                // show error message
-                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                //throw;
-            }
-            return null;
-        }
-
-        /// <summary>
-        /// Gets the data table.
-        /// </summary>
-        /// <param name="sql">The sql.</param>
-        /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns>A DataTable? .</returns>
-        internal static DataTable? GetDataTable(string sql, CancellationToken cancellationToken)
-        {
-            try
-            {
-                using var connection = new SqlConnection(Properties.Settings.Default.dbConnectionString);
-                connection.Open(); // Ensure the connection is opened before executing commands
-                using var command = new SqlCommand(sql, connection)
-                {
-                    CommandType = System.Data.CommandType.Text,
-                    CommandTimeout = 50000
-                };
-                using var reader = command.ExecuteReader();
-
-                var dataTable = new DataTable();
-
-                // Fill DataTable manually with support for cancellation
-                LoadFromReader(reader, dataTable, cancellationToken);
-
-                return dataTable;
-            }
-            catch (OperationCanceledException)
-            {
-                MessageBox.Show("Operation was canceled.", "Canceled", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return null; // Or handle it as needed
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-            return null;
-        }
-
-        /// <summary>
-        /// Gets the data table.
-        /// </summary>
-        /// <param name="sql">The sql.</param>
         /// <returns>A DataTable? .</returns>
         internal static async Task<DataTable?> GetDataTableAsync(string sql)
         {
@@ -328,7 +230,11 @@ WHERE o.type IN ('FN', 'IF', 'TF')
 ORDER BY s.name, o.name;";
 
             using var connection = new SqlConnection(Properties.Settings.Default.dbConnectionString);
-            using var command = new SqlCommand(query, connection);
+            using var command = new SqlCommand(query, connection)
+            {
+                CommandType = CommandType.Text,
+                CommandTimeout = 50000
+            };
             await connection.OpenAsync();
 
             using var reader = await command.ExecuteReaderAsync();
@@ -370,33 +276,6 @@ ORDER BY s.name, o.name;";
         }
 
         /// <summary>
-        /// Gets the scalar value.
-        /// </summary>
-        /// <param name="sql">The sql.</param>
-        /// <returns>An Object? .</returns>
-        internal static Object? GetScalarValue(string sql)
-        {
-            try
-            {
-                using var connection = new SqlConnection(Properties.Settings.Default.dbConnectionString);
-                using var command = new SqlCommand(sql, connection)
-                {
-                    CommandType = System.Data.CommandType.Text,
-                    CommandTimeout = 50000
-                };
-                connection.Open();
-                return command.ExecuteScalar();
-            }
-            catch (Exception ex)
-            {
-                // show error message
-                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                //throw;
-            }
-            return null;
-        }
-
-        /// <summary>
         /// Gets the schemas async.
         /// </summary>
         /// <returns>A Task.</returns>
@@ -405,7 +284,11 @@ ORDER BY s.name, o.name;";
             var schemas = new List<string>();
             var query = "SELECT name FROM sys.schemas ORDER BY name";
             using var connection = new SqlConnection(Properties.Settings.Default.dbConnectionString);
-            using var command = new SqlCommand(query, connection);
+            using var command = new SqlCommand(query, connection)
+            {
+                CommandType = CommandType.Text,
+                CommandTimeout = 50000
+            };
 
             try
             {
@@ -414,7 +297,9 @@ ORDER BY s.name, o.name;";
 
                 while (await reader.ReadAsync())
                 {
-                    schemas.Add(reader["name"].ToString());
+                    var schemaName = reader["name"].ToString();
+                    if (!string.IsNullOrEmpty(schemaName))
+                        schemas.Add(schemaName);
                 }
             }
             catch (Exception ex)
@@ -444,7 +329,7 @@ JOIN sys.schemas s ON p.schema_id = s.schema_id
 ORDER BY s.name, p.name;";
 
             using var connection = new SqlConnection(Properties.Settings.Default.dbConnectionString);
-            using var command = new SqlCommand(query, connection);
+            using var command = new SqlCommand(query, connection) { CommandType = CommandType.Text, CommandTimeout = 50000 };
             await connection.OpenAsync();
 
             using var reader = await command.ExecuteReaderAsync();
@@ -470,7 +355,11 @@ ORDER BY s.name, p.name;";
             try
             {
                 await conn.OpenAsync();
-                await using var cmd = new SqlCommand(sql, conn) { CommandType = CommandType.Text };
+                await using var cmd = new SqlCommand(sql, conn)
+                {
+                    CommandType = CommandType.Text,
+                    CommandTimeout = 50000
+                };
                 await using var dr = await cmd.ExecuteReaderAsync();
                 if (await dr.ReadAsync())
                 {
@@ -487,11 +376,6 @@ ORDER BY s.name, p.name;";
             }
 
             return result;
-        }
-
-        internal static async Task<DataTable> GetTableListAsync(string schemaName)
-        {
-            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -511,7 +395,7 @@ ORDER BY s.name, p.name;";
                 ORDER BY TABLE_SCHEMA, TABLE_NAME";
 
             using var connection = new SqlConnection(Properties.Settings.Default.dbConnectionString);
-            using var command = new SqlCommand(query, connection);
+            using var command = new SqlCommand(query, connection) { CommandType = CommandType.Text, CommandTimeout = 50000 };
             await connection.OpenAsync();
 
             using var reader = await command.ExecuteReaderAsync();
@@ -544,7 +428,11 @@ AND s.name = @SchemaName;";
             try
             {
                 await conn.OpenAsync();
-                await using var cmd = new SqlCommand(sql, conn);
+                await using var cmd = new SqlCommand(sql, conn)
+                {
+                    CommandType = CommandType.Text,
+                    CommandTimeout = 50000
+                };
                 cmd.Parameters.AddWithValue("@TableName", objectName.Name);
                 cmd.Parameters.AddWithValue("@SchemaName", objectName.Schema);
 
@@ -603,7 +491,11 @@ AND s.name = @SchemaName;";
                 ORDER BY TABLE_SCHEMA, TABLE_NAME";
 
             using var connection = new SqlConnection(Properties.Settings.Default.dbConnectionString);
-            using var command = new SqlCommand(query, connection);
+            using var command = new SqlCommand(query, connection)
+            {
+                CommandType = CommandType.Text,
+                CommandTimeout = 50000
+            };
             await connection.OpenAsync();
 
             using var reader = await command.ExecuteReaderAsync();
@@ -616,44 +508,32 @@ AND s.name = @SchemaName;";
         }
 
         /// <summary>
-        /// Loads the from reader.
+        /// Save the description of the selected column
         /// </summary>
-        /// <param name="reader">The reader.</param>
-        /// <param name="dataTable">The data table.</param>
-        /// <param name="cancellationToken">The cancellation token.</param>
-        private static void LoadFromReader(SqlDataReader reader, DataTable dataTable, CancellationToken cancellationToken)
+        internal static async Task SaveColumnDescAsync(string? objectName, string columnName, string desc)
         {
-            // Add columns to DataTable based on reader fields
-            for (int i = 0; i < reader.FieldCount; i++)
+            SqlConnection? conn = new(Properties.Settings.Default.dbConnectionString);
+            try
             {
-                dataTable.Columns.Add(new DataColumn(reader.GetName(i), reader.GetFieldType(i)));
+                await using var cmd = new SqlCommand("usp_AddColumnDescription", conn) { CommandType = CommandType.StoredProcedure };
+
+                cmd.Parameters.Add(new SqlParameter("@TableName", objectName));
+                cmd.Parameters.Add(new SqlParameter("@ColumnName", columnName));
+                cmd.Parameters.Add(new SqlParameter("@Description", desc));
+
+                await conn.OpenAsync();
+                await cmd.ExecuteNonQueryAsync();
             }
-
-            // Read rows from reader
-            while (true)
+            catch (Exception ex)
             {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                bool read;
-                try
-                {
-                    read = reader.Read();
-                }
-                catch (Exception ex)
-                {
-                    // Handle or log the exception as needed
-                    throw new InvalidOperationException("Error reading data from the reader.", ex);
-                }
-
-                if (!read) break; // Exit loop if no more rows
-
-                var row = dataTable.NewRow();
-                for (int i = 0; i < reader.FieldCount; i++)
-                {
-                    row[i] = reader.IsDBNull(i) ? DBNull.Value : reader.GetValue(i);
-                }
-                dataTable.Rows.Add(row);
+                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                await conn.CloseAsync();
             }
         }
+
+
     }
 }

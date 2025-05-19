@@ -1,4 +1,5 @@
-﻿using Microsoft.Data.SqlClient;
+﻿using DarkModeForms;
+using Microsoft.Data.SqlClient;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -17,6 +18,7 @@ namespace SQL_Document_Builder
         public SQLServerLoginDialog()
         {
             InitializeComponent();
+            _ = new DarkModeCS(this);
         }
 
         /// <summary>

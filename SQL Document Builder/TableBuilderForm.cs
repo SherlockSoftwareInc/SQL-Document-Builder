@@ -1694,6 +1694,10 @@ namespace SQL_Document_Builder
                 {
                     Clipboard.SetText(sqlTextBox.Text);
                 }
+                else
+                {
+                    statusToolStripStatusLabe.Text = "No object description found";
+                }
             }
         }
 

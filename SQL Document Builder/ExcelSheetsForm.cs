@@ -1,4 +1,5 @@
-﻿using ExcelDataReader;
+﻿using DarkModeForms;
+using ExcelDataReader;
 using System;
 using System.Data;
 using System.IO;
@@ -13,7 +14,7 @@ namespace SQL_Document_Builder
     /// </summary>
     public partial class ExcelSheetsForm : Form
     {
-        private DataTable _resultDataTable;
+        private DataTable? _resultDataTable;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ExcelSheetsForm"/> class.
@@ -21,6 +22,7 @@ namespace SQL_Document_Builder
         public ExcelSheetsForm()
         {
             InitializeComponent();
+            _ = new DarkModeCS(this);
         }
 
         /// <summary>
@@ -31,7 +33,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// The Excel file name to analyze.
         /// </summary>
-        public string FileName { get; set; }
+        public string FileName { get; set; } = string.Empty;
 
         /// <summary>
         /// Open the Excel file with task cancellation control.

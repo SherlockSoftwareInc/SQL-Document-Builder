@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DarkModeForms;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -19,6 +20,7 @@ namespace SQL_Document_Builder
         public DBObjectsSelectForm()
         {
             InitializeComponent();
+            _ = new DarkModeCS(this);
         }
 
         /// <summary>

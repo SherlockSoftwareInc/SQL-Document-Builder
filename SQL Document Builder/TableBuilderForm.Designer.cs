@@ -1161,7 +1161,7 @@
             // statusToolStripStatusLabe
             // 
             statusToolStripStatusLabe.Name = "statusToolStripStatusLabe";
-            statusToolStripStatusLabe.Size = new System.Drawing.Size(996, 20);
+            statusToolStripStatusLabe.Size = new System.Drawing.Size(843, 20);
             statusToolStripStatusLabe.Spring = true;
             statusToolStripStatusLabe.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 

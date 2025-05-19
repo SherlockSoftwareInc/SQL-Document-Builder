@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DarkModeForms;
+using System;
 using System.ComponentModel;
 using System.Windows.Forms;
 
@@ -15,6 +16,7 @@ namespace SQL_Document_Builder
         public QueryDataToTableForm()
         {
             InitializeComponent();
+            _ = new DarkModeCS(this);
         }
 
         /// <summary>
