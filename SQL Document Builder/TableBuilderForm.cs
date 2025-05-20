@@ -17,8 +17,6 @@ namespace SQL_Document_Builder
     /// </summary>
     public partial class TableBuilderForm : Form
     {
-        private const string SQL_KeyWords = "add alter as authorization backup begin bigint binary bit break browse bulk by cascade case catch check checkpoint close clustered column commit compute constraint containstable continue create current cursor cursor database date datetime datetime2 datetimeoffset dbcc deallocate decimal declare default delete deny desc disk distinct distributed double drop dump else end errlvl escape except exec execute exit external fetch file fillfactor float for foreign freetext freetexttable from full function goto grant group having hierarchyid holdlock identity identity_insert identitycol if image index insert int intersect into key kill lineno load merge money national nchar nocheck nocount nolock nonclustered ntext numeric nvarchar of off offsets on open opendatasource openquery openrowset openxml option order over percent plan precision primary print proc procedure public raiserror read readtext real reconfigure references replication restore restrict return revert revoke rollback rowcount rowguidcol rule save schema securityaudit select set setuser shutdown smalldatetime smallint smallmoney sql_variant statistics table table tablesample text textsize then time timestamp tinyint to top tran transaction trigger truncate try union unique uniqueidentifier update updatetext use user values varbinary varchar varying view waitfor when where while with writetext xml go ";
-
         /// <summary>
         /// The database connections.
         /// </summary>
@@ -1570,38 +1568,6 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Setups the scintilla edit box.
-        /// </summary>
-        private void SetupScintillaBox()
-        {
-            // INITIAL VIEW CONFIG
-            sqlTextBox.WrapMode = WrapMode.None;
-            sqlTextBox.IndentationGuides = IndentView.LookBoth;
-
-            // STYLING
-            InitColors();
-            InitSyntaxColoring();
-
-            // NUMBER MARGIN
-            InitNumberMargin();
-
-            // BOOKMARK MARGIN
-            InitBookmarkMargin();
-
-            // CODE FOLDING MARGIN
-            InitCodeFolding();
-
-            // DRAG DROP
-            InitDragDropFile();
-
-            // DEFAULT FILE
-            //LoadDataFromFile("../../MainForm.cs");
-
-            // INIT HOTKEYS
-            InitHotkeys();
-        }
-
-        /// <summary>
         /// Handles the resize event of the SQL text box.
         /// </summary>
         /// <param name="sender">The sender.</param>
@@ -1672,7 +1638,9 @@ namespace SQL_Document_Builder
         {
             WindowState = FormWindowState.Maximized;
 
-            SetupScintillaBox();
+            // INIT HOTKEYS
+            InitHotkeys();
+
             SetTitle();
 
             _connections.Load();
@@ -1920,14 +1888,6 @@ namespace SQL_Document_Builder
         #region ScintillaNET
 
         /// <summary>
-        /// Inits the colors.
-        /// </summary>
-        private void InitColors()
-        {
-            sqlTextBox.SetSelectionBackColor(true, IntToColor(0x114D9C));
-        }
-
-        /// <summary>
         /// Inits the hotkeys.
         /// </summary>
         private void InitHotkeys()
@@ -1953,319 +1913,17 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Inits the syntax coloring.
-        /// </summary>
-        private void InitSyntaxColoring()
-        {
-            //sqlTextBox.Lexer = Lexer.Sql;
-            sqlTextBox.LexerName = "sql";
-
-            // Configure the default style
-            sqlTextBox.StyleResetDefault();
-            sqlTextBox.Styles[Style.Default].Font = "Consolas";
-            sqlTextBox.Styles[Style.Default].Size = 10;
-            sqlTextBox.Styles[Style.Default].BackColor = IntToColor(0x212121);
-            sqlTextBox.Styles[Style.Default].ForeColor = IntToColor(0xFFFFFF);
-            sqlTextBox.StyleClearAll();
-
-            // Configure the CPP (C#) lexer styles
-            //sqlTextBox.Styles[Style.Cpp.Identifier].ForeColor = IntToColor(0xD0DAE2);
-            //sqlTextBox.Styles[Style.Cpp.Comment].ForeColor = IntToColor(0xBD758B);
-            //sqlTextBox.Styles[Style.Cpp.CommentLine].ForeColor = IntToColor(0x40BF57);
-            //sqlTextBox.Styles[Style.Cpp.CommentDoc].ForeColor = IntToColor(0x2FAE35);
-            //sqlTextBox.Styles[Style.Cpp.Number].ForeColor = IntToColor(0xFFFF00);
-            //sqlTextBox.Styles[Style.Cpp.String].ForeColor = IntToColor(0xFFFF00);
-            //sqlTextBox.Styles[Style.Cpp.Character].ForeColor = IntToColor(0xE95454);
-            //sqlTextBox.Styles[Style.Cpp.Preprocessor].ForeColor = IntToColor(0x8AAFEE);
-            //sqlTextBox.Styles[Style.Cpp.Operator].ForeColor = IntToColor(0xE0E0E0);
-            //sqlTextBox.Styles[Style.Cpp.Regex].ForeColor = IntToColor(0xff00ff);
-            //sqlTextBox.Styles[Style.Cpp.CommentLineDoc].ForeColor = IntToColor(0x77A7DB);
-            //sqlTextBox.Styles[Style.Cpp.Word].ForeColor = IntToColor(0x48A8EE);
-            //sqlTextBox.Styles[Style.Cpp.Word2].ForeColor = IntToColor(0xF98906);
-            //sqlTextBox.Styles[Style.Cpp.CommentDocKeyword].ForeColor = IntToColor(0xB3D991);
-            //sqlTextBox.Styles[Style.Cpp.CommentDocKeywordError].ForeColor = IntToColor(0xFF0000);
-            //sqlTextBox.Styles[Style.Cpp.GlobalClass].ForeColor = IntToColor(0x48A8EE);
-
-            // Configure the SQL lexer styles
-            sqlTextBox.Styles[Style.Sql.Comment].ForeColor = Color.RosyBrown; // IntToColor(0xBD758B);
-            sqlTextBox.Styles[Style.Sql.CommentLine].ForeColor = Color.MediumSeaGreen; // IntToColor(0x40BF57);
-            sqlTextBox.Styles[Style.Sql.CommentDoc].ForeColor = Color.SeaGreen; // IntToColor(0x2FAE35);
-            sqlTextBox.Styles[Style.Sql.Number].ForeColor = Color.Yellow; // IntToColor(0xFFFF00);
-            sqlTextBox.Styles[Style.Sql.String].ForeColor = Color.Yellow; // IntToColor(0xFFFF00);
-            sqlTextBox.Styles[Style.Sql.Character].ForeColor = Color.IndianRed; // IntToColor(0xE95454);
-            sqlTextBox.Styles[Style.Sql.Operator].ForeColor = Color.LightGray; // IntToColor(0xE0E0E0);
-            sqlTextBox.Styles[Style.Sql.Identifier].ForeColor = Color.LightSteelBlue; // IntToColor(0xD0DAE2);
-            sqlTextBox.Styles[Style.Sql.CommentLineDoc].ForeColor = Color.CornflowerBlue; // IntToColor(0x77A7DB);
-            sqlTextBox.Styles[Style.Sql.Word].ForeColor = Color.DodgerBlue; // IntToColor(0x48A8EE);
-            sqlTextBox.Styles[Style.Sql.Word2].ForeColor = Color.DarkOrange; // IntToColor(0xF98906);
-            sqlTextBox.Styles[Style.Sql.CommentDocKeyword].ForeColor = Color.DarkSeaGreen; // IntToColor(0xB3D991);
-            sqlTextBox.Styles[Style.Sql.CommentDocKeywordError].ForeColor = Color.Red; // IntToColor(0xFF0000);
-            sqlTextBox.Styles[Style.Sql.SqlPlus].ForeColor = Color.LightGray;	// IntToColor(0xD3D3D3);
-            sqlTextBox.Styles[Style.Sql.SqlPlusPrompt].ForeColor = Color.LightGreen;	// IntToColor(0x90EE90);
-            sqlTextBox.Styles[Style.Sql.SqlPlusComment].ForeColor = Color.DarkGray;	// IntToColor(0xA9A9A9);
-            sqlTextBox.Styles[Style.Sql.User1].ForeColor = Color.LightBlue;	// IntToColor(0xADD8E6);
-            sqlTextBox.Styles[Style.Sql.User2].ForeColor = Color.LightPink;	// IntToColor(0xFFB6C1);
-            sqlTextBox.Styles[Style.Sql.User3].ForeColor = Color.Orange;	// IntToColor(0xFFA500);
-            sqlTextBox.Styles[Style.Sql.User4].ForeColor = Color.Cyan;	// IntToColor(0x00FFFF);
-            sqlTextBox.Styles[Style.Sql.QuotedIdentifier].ForeColor = Color.LightYellow;	// IntToColor(0xFFFF00);
-            sqlTextBox.Styles[Style.Sql.QOperator].ForeColor = Color.Magenta;	// IntToColor(0xFF00FF);
-
-            //sqlTextBox.SetKeywords(0, "select from where and or not in is null like between exists all any " +
-            //       "insert into values update set delete truncate create alter drop table view index procedure function trigger " +
-            //       "begin end commit rollback declare case when then else union group by order by having limit " +
-            //       "join inner left right outer on as distinct count avg sum min max cast convert " +
-            //       "go exec sp_ execute"); // Add GO, EXEC, sp_ for T-SQL like dialects
-
-            sqlTextBox.SetKeywords(0, SQL_KeyWords); // Add your custom keywords here
-
-            // Secondary keywords (Data Types, Functions - adjust as needed)
-            //sqlTextBox.SetKeywords(1, "int varchar nvarchar char text datetime date time smallint bigint bit decimal numeric float real " +
-            //                   "primary key foreign references constraint unique default check " +
-            //                   "getdate() current_timestamp system_user session_user user " +
-            //                   "isnull coalesce nullif");
-
-            // Word2 = 1
-            sqlTextBox.SetKeywords(1, "ascii cast char charindex ceiling coalesce collate contains convert current_date current_time current_timestamp current_user floor isnull max min nullif object_id session_user substring system_user tsequal ");
-            // User1 = 4
-            sqlTextBox.SetKeywords(4, "all and any between cross exists in inner is join left like not null or outer pivot right some unpivot ( ) * ");
-            // User2 = 5
-            sqlTextBox.SetKeywords(5, "sys objects sysobjects ");
-        }
-
-        /// <summary>
         /// Handles the text changed event of the SQL text box:
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
         private void OnTextChanged(object sender, EventArgs e)
         {
+            base.OnTextChanged(e);
             _changed = true;
             statusToolStripStatusLabe.Text = string.Empty;
 
-            SetColumnMargins();
         }
-
-        /// <summary>
-        /// Sets the column margins.
-        /// </summary>
-        private void SetColumnMargins()
-        {
-            int maxLineNumber = sqlTextBox.Lines.Count.ToString().Length;
-            //int numberWidth = TextRenderer.MeasureText(maxLineNumber.ToString(), sqlTextBox.Font).Width;
-            sqlTextBox.Margins[NUMBER_MARGIN].Width = sqlTextBox.TextWidth(Style.LineNumber, new string('9', maxLineNumber + 1)) + 5;
-        }
-
-        #region Numbers, Bookmarks, Code Folding
-
-        /// <summary>
-        /// the background color of the text area
-        /// </summary>
-        private const int BACK_COLOR = 0x2A211C;
-
-        /// <summary>
-        /// change this to whatever margin you want the bookmarks/breakpoints to show in
-        /// </summary>
-        private const int BOOKMARK_MARGIN = 2;
-
-        /// <summary>
-        /// The bookmark marker.
-        /// </summary>
-        private const int BOOKMARK_MARKER = 2;
-
-        /// <summary>
-        /// set this true to show circular buttons for code folding (the [+] and [-] buttons on the margin)
-        /// </summary>
-        private const bool CODEFOLDING_CIRCULAR = true;
-
-        /// <summary>
-        /// change this to whatever margin you want the code folding tree (+/-) to show in
-        /// </summary>
-        private const int FOLDING_MARGIN = 3;
-
-        /// <summary>
-        /// default text color of the text area
-        /// </summary>
-        private const int FORE_COLOR = 0xB7B7B7;
-
-        /// <summary>
-        /// change this to whatever margin you want the line numbers to show in
-        /// </summary>
-        private const int NUMBER_MARGIN = 1;
-
-        /// <summary>
-        /// Inits the bookmark margin.
-        /// </summary>
-        private void InitBookmarkMargin()
-        {
-            //scintilla1.SetFoldMarginColor(true, IntToColor(BACK_COLOR));
-
-            var margin = sqlTextBox.Margins[BOOKMARK_MARGIN];
-            margin.Width = 20;
-            margin.Sensitive = true;
-            margin.Type = MarginType.Symbol;
-            margin.Mask = (1 << BOOKMARK_MARKER);
-            //margin.Cursor = MarginCursor.Arrow;
-
-            var marker = sqlTextBox.Markers[BOOKMARK_MARKER];
-            marker.Symbol = MarkerSymbol.Circle;
-            marker.SetBackColor(IntToColor(0xFF003B));
-            marker.SetForeColor(IntToColor(0x000000));
-            marker.SetAlpha(100);
-        }
-
-        /// <summary>
-        /// Inits the code folding.
-        /// </summary>
-        private void InitCodeFolding()
-        {
-            sqlTextBox.SetFoldMarginColor(true, IntToColor(BACK_COLOR));
-            sqlTextBox.SetFoldMarginHighlightColor(true, IntToColor(BACK_COLOR));
-
-            // Enable code folding
-            sqlTextBox.SetProperty("fold", "1");
-            sqlTextBox.SetProperty("fold.compact", "1");
-
-            // Configure a margin to display folding symbols
-            sqlTextBox.Margins[FOLDING_MARGIN].Type = MarginType.Symbol;
-            sqlTextBox.Margins[FOLDING_MARGIN].Mask = Marker.MaskFolders;
-            sqlTextBox.Margins[FOLDING_MARGIN].Sensitive = true;
-            sqlTextBox.Margins[FOLDING_MARGIN].Width = 20;
-
-            // Set colors for all folding markers
-            for (int i = 25; i <= 31; i++)
-            {
-                sqlTextBox.Markers[i].SetForeColor(IntToColor(BACK_COLOR)); // styles for [+] and [-]
-                sqlTextBox.Markers[i].SetBackColor(IntToColor(FORE_COLOR)); // styles for [+] and [-]
-            }
-
-            // Configure folding markers with respective symbols
-            sqlTextBox.Markers[Marker.Folder].Symbol = CODEFOLDING_CIRCULAR ? MarkerSymbol.CirclePlus : MarkerSymbol.BoxPlus;
-            sqlTextBox.Markers[Marker.FolderOpen].Symbol = CODEFOLDING_CIRCULAR ? MarkerSymbol.CircleMinus : MarkerSymbol.BoxMinus;
-            sqlTextBox.Markers[Marker.FolderEnd].Symbol = CODEFOLDING_CIRCULAR ? MarkerSymbol.CirclePlusConnected : MarkerSymbol.BoxPlusConnected;
-            sqlTextBox.Markers[Marker.FolderMidTail].Symbol = MarkerSymbol.TCorner;
-            sqlTextBox.Markers[Marker.FolderOpenMid].Symbol = CODEFOLDING_CIRCULAR ? MarkerSymbol.CircleMinusConnected : MarkerSymbol.BoxMinusConnected;
-            sqlTextBox.Markers[Marker.FolderSub].Symbol = MarkerSymbol.VLine;
-            sqlTextBox.Markers[Marker.FolderTail].Symbol = MarkerSymbol.LCorner;
-
-            // Enable automatic folding
-            sqlTextBox.AutomaticFold = (AutomaticFold.Show | AutomaticFold.Click | AutomaticFold.Change);
-        }
-
-        /// <summary>
-        /// Inits the number margin.
-        /// </summary>
-        private void InitNumberMargin()
-        {
-            sqlTextBox.Styles[Style.LineNumber].BackColor = IntToColor(BACK_COLOR);
-            sqlTextBox.Styles[Style.LineNumber].ForeColor = IntToColor(FORE_COLOR);
-            sqlTextBox.Styles[Style.IndentGuide].ForeColor = IntToColor(FORE_COLOR);
-            sqlTextBox.Styles[Style.IndentGuide].BackColor = IntToColor(BACK_COLOR);
-
-            var nums = sqlTextBox.Margins[NUMBER_MARGIN];
-            nums.Width = 20;
-            nums.Type = MarginType.Number;
-            nums.Sensitive = true;
-            nums.Mask = 0;
-
-            sqlTextBox.MarginClick += Scintilla1_MarginClick;
-        }
-
-        /// <summary>
-        /// Handles the scintilla1 margin click event.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void Scintilla1_MarginClick(object sender, MarginClickEventArgs e)
-        {
-            if (e.Margin == BOOKMARK_MARGIN)
-            {
-                // Do we have a marker for this line?
-                const uint mask = (1 << BOOKMARK_MARKER);
-                var line = sqlTextBox.Lines[sqlTextBox.LineFromPosition(e.Position)];
-                if ((line.MarkerGet() & mask) > 0)
-                {
-                    // Remove existing bookmark
-                    line.MarkerDelete(BOOKMARK_MARKER);
-                }
-                else
-                {
-                    // Add bookmark
-                    line.MarkerAdd(BOOKMARK_MARKER);
-                }
-            }
-        }
-
-        #endregion Numbers, Bookmarks, Code Folding
-
-        #region Drag & Drop File
-
-        /// <summary>
-        /// Inits the drag drop file.
-        /// </summary>
-        public void InitDragDropFile()
-        {
-            sqlTextBox.AllowDrop = true;
-            sqlTextBox.DragEnter += (sender, e) =>
-            {
-                if (e.Data.GetDataPresent(DataFormats.FileDrop))
-                {
-                    var files = (string[])e.Data.GetData(DataFormats.FileDrop);
-                    if (files != null && files.Length > 0)
-                    {
-                        string ext = Path.GetExtension(files[0]).ToLowerInvariant();
-                        if (ext == ".sql" || ext == ".txt")
-                            e.Effect = DragDropEffects.Copy;
-                        else
-                            e.Effect = DragDropEffects.None;
-                    }
-                    else
-                    {
-                        e.Effect = DragDropEffects.None;
-                    }
-                }
-                else
-                {
-                    e.Effect = DragDropEffects.None;
-                }
-            };
-
-            sqlTextBox.DragDrop += (sender, e) =>
-            {
-                if (e.Data.GetDataPresent(DataFormats.FileDrop))
-                {
-                    var files = (string[])e.Data.GetData(DataFormats.FileDrop);
-                    if (files != null && files.Length > 0)
-                    {
-                        string path = files[0];
-                        string ext = Path.GetExtension(path).ToLowerInvariant();
-                        if (ext == ".sql" || ext == ".txt")
-                        {
-                            try
-                            {
-                                if (File.Exists(path))
-                                {
-                                    _fileName = path;
-                                    SetTitle(_fileName);
-                                    
-                                    sqlTextBox.Text = File.ReadAllText(_fileName);
-                                    _changed = false;
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                MessageBox.Show($"Failed to load file: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                            }
-                        }
-                        else
-                        {
-                            MessageBox.Show("Only .sql and .txt files are supported.", "Unsupported File", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        }
-                    }
-                }
-            };
-        }
-
-        #endregion Drag & Drop File
 
         #region Main Menu Commands
 

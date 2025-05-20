@@ -161,7 +161,7 @@
             nextSearchButton = new System.Windows.Forms.Button();
             prevSearchButton = new System.Windows.Forms.Button();
             searchSQLTextBox = new System.Windows.Forms.TextBox();
-            sqlTextBox = new ScintillaNET.Scintilla();
+            sqlTextBox = new SqlEditBox();
             definitionPanel = new ColumnDefView();
             collapsibleSplitter1 = new CollapsibleSplitter();
             timer1 = new System.Windows.Forms.Timer(components);
@@ -1478,7 +1478,7 @@
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator7;
         private System.Windows.Forms.ToolStripMenuItem clipboardToTableToolStripMenuItem1;
         private System.Windows.Forms.ToolStripMenuItem queryDataToTableToolStripMenuItem1;
-        private ScintillaNET.Scintilla sqlTextBox;
+        private SqlEditBox sqlTextBox;
         private System.Windows.Forms.ToolStripMenuItem quickFindToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem findToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem findAndReplaceToolStripMenuItem;
