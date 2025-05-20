@@ -1,12 +1,7 @@
 ﻿using ScintillaNET;
-using SQL_Document_Builder.ScintillaNetUtils;
 using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace SQL_Document_Builder
@@ -51,8 +46,12 @@ namespace SQL_Document_Builder
 
             // INIT HOTKEYS
             //InitHotkeys();
-
         }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether text changed.
+        /// </summary>
+        internal bool Changed { get; set; } = false;
 
         /// <summary>
         /// Inits the colors.
@@ -172,9 +171,9 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
-        private void OnTextChanged(object sender, EventArgs e)
+        internal void OnTextChanged(object sender, EventArgs e)
         {
-            //_changed = true;
+            Changed = true;
             //statusToolStripStatusLabe.Text = string.Empty;
 
             SetColumnMargins();
@@ -329,6 +328,7 @@ namespace SQL_Document_Builder
                 }
             }
         }
+
         #endregion Numbers, Bookmarks, Code Folding
 
         #region Drag & Drop File
@@ -430,7 +430,5 @@ namespace SQL_Document_Builder
         }
 
         #endregion Utils
-
-
     }
 }

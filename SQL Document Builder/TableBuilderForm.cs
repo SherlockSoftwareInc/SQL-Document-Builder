@@ -22,8 +22,6 @@ namespace SQL_Document_Builder
         /// </summary>
         private readonly SQLServerConnections _connections = new();
 
-        private bool _changed = false;
-
         /// <summary>
         /// The count of database connections.
         /// </summary>
@@ -228,6 +226,8 @@ namespace SQL_Document_Builder
         /// </summary>
         private void AppendSave()
         {
+            if (CurrentEditBox == null) return;
+
             if (string.IsNullOrEmpty(_fileName))
             {
                 saveAsToolStripMenuItem.PerformClick();
@@ -238,7 +238,7 @@ namespace SQL_Document_Builder
                 try
                 {
                     File.AppendAllText(_fileName, Environment.NewLine + CurrentEditBox?.Text);
-                    _changed = false;
+                    CurrentEditBox.Changed = false;
                 }
                 catch (Exception)
                 {
@@ -250,7 +250,7 @@ namespace SQL_Document_Builder
         /// Sets the title of the form.
         /// </summary>
         private void SetTitle(string fileName = "")
-        { 
+        {
             if (string.IsNullOrEmpty(fileName))
             {
                 this.Text = $"SQL Server Document Builder - (New)";
@@ -271,10 +271,10 @@ namespace SQL_Document_Builder
         /// </summary>
         private DialogResult ClearTextBox()
         {
-            if(_changed == false && string.IsNullOrEmpty(_fileName) && CurrentEditBox != null)
+            if (string.IsNullOrEmpty(_fileName) && CurrentEditBox != null && CurrentEditBox?.Changed == false)
             {
                 CurrentEditBox.Text = string.Empty;
-                _changed = false;
+                CurrentEditBox.Changed = false;
                 SetTitle();
 
                 return DialogResult.OK;
@@ -283,7 +283,7 @@ namespace SQL_Document_Builder
             // if the Control key is pressed, clear the text box without asking to save
             if (ModifierKeys != Keys.Control)
             {
-                if (_changed)
+                if (CurrentEditBox.Changed)
                 {
                     var result = Common.MsgBox("Do you want to save the changes?", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
                     if (result == DialogResult.Cancel)
@@ -302,7 +302,7 @@ namespace SQL_Document_Builder
             {
                 CurrentEditBox.Text = string.Empty;
             }
-            _changed = false;
+            CurrentEditBox.Changed = false;
             _fileName = string.Empty;
             SetTitle();
             return DialogResult.OK;
@@ -447,16 +447,19 @@ namespace SQL_Document_Builder
         /// <param name="e">The E.</param>
         private void CloseToolStripButton_Click(object sender, EventArgs e)
         {
-            if (_changed)
+            if (CurrentEditBox != null)
             {
-                var result = Common.MsgBox("Do you want to save the changes?", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
-                if (result == DialogResult.Yes)
+                if (CurrentEditBox.Changed)
                 {
-                    AppendSave();
-                }
-                else if (result == DialogResult.Cancel)
-                {
-                    return;
+                    var result = Common.MsgBox("Do you want to save the changes?", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
+                    if (result == DialogResult.Yes)
+                    {
+                        AppendSave();
+                    }
+                    else if (result == DialogResult.Cancel)
+                    {
+                        return;
+                    }
                 }
             }
 
@@ -983,12 +986,15 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void NewToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            // clear the sqlTextBox
-            if (ClearTextBox() == DialogResult.Cancel) return;
+            if (CurrentEditBox != null)
+            {
+                // clear the sqlTextBox
+                if (ClearTextBox() == DialogResult.Cancel) return;
 
-            CurrentEditBox?.Focus();
+                CurrentEditBox?.Focus();
 
-            _changed = false;
+                CurrentEditBox.Changed = false;
+            }
         }
 
         /// <summary>
@@ -1199,12 +1205,9 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void OpenToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if(CurrentEditBox == null)
-            {
-                return;
-            }
+            if (CurrentEditBox == null) return;
 
-            if (_changed)
+            if (CurrentEditBox.Changed)
             {
                 if (Common.MsgBox("Do you want to save the changes?", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                 {
@@ -1219,7 +1222,7 @@ namespace SQL_Document_Builder
                 SetTitle(_fileName);
 
                 CurrentEditBox.Text = File.ReadAllText(_fileName);
-                _changed = false;
+                CurrentEditBox.Changed = false;
             }
         }
 
@@ -1451,6 +1454,8 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void SaveAsToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (CurrentEditBox == null) return;
+
             try
             {
                 var oFile = new SaveFileDialog() { Filter = "SQL script(*.sql)|*.sql|Text file(*.txt)|*.txt|All files(*.*)|*.*" };
@@ -1462,7 +1467,7 @@ namespace SQL_Document_Builder
                     var file = new System.IO.StreamWriter(_fileName, false);
                     await file.WriteAsync(CurrentEditBox?.Text);
                     file.Close();
-                    _changed = false;
+                    CurrentEditBox.Changed = false;
 
                     statusToolStripStatusLabe.Text = "Complete";
                 }
@@ -1481,6 +1486,8 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void SaveReplaceToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (CurrentEditBox == null) return;
+
             // save the text in the sqlTextBox to the file
             if (string.IsNullOrEmpty(_fileName))
             {
@@ -1489,7 +1496,7 @@ namespace SQL_Document_Builder
             else
             {
                 File.WriteAllText(_fileName, CurrentEditBox?.Text);
-                _changed = false;
+                CurrentEditBox.Changed = false;
             }
         }
 
@@ -1500,7 +1507,9 @@ namespace SQL_Document_Builder
         /// <param name="e">The E.</param>
         private void SaveToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (!_changed) return;
+            if (CurrentEditBox == null) return;
+
+            if (!CurrentEditBox.Changed) return;
 
             if (string.IsNullOrEmpty(_fileName))
             {
@@ -1642,7 +1651,8 @@ namespace SQL_Document_Builder
         /// <param name="e">The E.</param>
         private void TableBuilderForm_FormClosing(object sender, FormClosingEventArgs e)
         {
-            if (_changed)
+            if (CurrentEditBox == null) return;
+            if (CurrentEditBox.Changed)
             {
                 if (Common.MsgBox("Do you want to save the changes?", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                 {
@@ -1696,6 +1706,8 @@ namespace SQL_Document_Builder
             }
 
             extendedPropertiesCheckBox.Checked = Properties.Settings.Default.UseExtendedProperties;
+            insertBatchTextBox.Text = Properties.Settings.Default.InsertBatchRows.ToString();
+            insertMaxTextBox.Text = Properties.Settings.Default.InertMaxRows.ToString();
 
             WindowState = FormWindowState.Maximized;
             splitContainer1.SplitterDistance = 200;
@@ -1840,10 +1852,10 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void UspToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if(CurrentEditBox == null)
+            if (CurrentEditBox == null)
             {
                 return;
-            }   
+            }
 
             if (ClearTextBox() == DialogResult.Cancel) return;
 
@@ -1951,10 +1963,9 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void OnTextChanged(object sender, EventArgs e)
         {
-            base.OnTextChanged(e);
-            _changed = true;
+            if (CurrentEditBox == null) return;
+            CurrentEditBox.OnTextChanged(sender, e);
             statusToolStripStatusLabe.Text = string.Empty;
-
         }
 
         #region Main Menu Commands
@@ -2025,7 +2036,7 @@ namespace SQL_Document_Builder
 
         private void SelectLineToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if(CurrentEditBox == null) return;
+            if (CurrentEditBox == null) return;
 
             Line line = CurrentEditBox.Lines[CurrentEditBox.CurrentLine];
             CurrentEditBox?.SetSelection(line.Position + line.Length, line.Position);
@@ -2552,5 +2563,107 @@ namespace SQL_Document_Builder
         }
 
         #endregion Markdown document builder
+
+        /// <summary>
+        /// Handles the validating event of the insert batch text box.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void InsertBatchTextBox_Validating(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            // checks the input value of the insert batch text box. it should be a number and between 1 and 100
+            if (int.TryParse(insertBatchTextBox.Text, out int value))
+            {
+                if (value < 1 || value > 100)
+                {
+                    // show error message if the value is not between 1 and 100
+                    Common.MsgBox("The value should be between 1 and 100", MessageBoxIcon.Error);
+                    insertBatchTextBox.Text = Properties.Settings.Default.InsertBatchRows.ToString();
+                    insertBatchTextBox.Focus();
+                    insertBatchTextBox.SelectAll();
+                }
+            }
+            else
+            {
+                // show error message if the value is not a number
+                Common.MsgBox("The value should be a number", MessageBoxIcon.Error);
+                insertBatchTextBox.Text = Properties.Settings.Default.InsertBatchRows.ToString();
+                insertBatchTextBox.Focus();
+                insertBatchTextBox.SelectAll();
+            }
+        }
+
+        /// <summary>
+        /// Handles the validated event of the insert batch text box.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void InsertBatchTextBox_Validated(object sender, EventArgs e)
+        {
+            if (int.TryParse(insertBatchTextBox.Text, out int value))
+            {
+                Properties.Settings.Default.InsertBatchRows = value;
+                Properties.Settings.Default.Save();
+            }
+            else
+            {
+                // show error message if the value is not a number
+                Common.MsgBox("The value should be a number", MessageBoxIcon.Error);
+                insertBatchTextBox.Text = Properties.Settings.Default.InsertBatchRows.ToString();
+                insertBatchTextBox.Focus();
+                insertBatchTextBox.SelectAll();
+            }
+        }
+
+        /// <summary>
+        /// Handles the validating event of the insert max text box.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void InsertMaxTextBox_Validating(object sender, System.ComponentModel.CancelEventArgs e)
+        {            // checks the input value of the insert batch text box. it should be a number and between 1 and 100
+            if (int.TryParse(insertMaxTextBox.Text, out int value))
+            {
+                if (value < 1 || value > 10000)
+                {
+                    // show error message if the value is not between 1 and 10000
+                    Common.MsgBox("The value should be between 1 and 10,000", MessageBoxIcon.Error);
+                    insertMaxTextBox.Text = Properties.Settings.Default.InertMaxRows.ToString();
+                    insertMaxTextBox.Focus();
+                    insertMaxTextBox.SelectAll();
+                }
+            }
+            else
+            {
+                // show error message if the value is not a number
+                Common.MsgBox("The value should be a number", MessageBoxIcon.Error);
+                insertMaxTextBox.Text = Properties.Settings.Default.InertMaxRows.ToString();
+                insertMaxTextBox.Focus();
+                insertMaxTextBox.SelectAll();
+            }
+
+        }
+
+        /// <summary>
+        /// Handles the validated event of the insert max text box.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void InsertMaxTextBox_Validated(object sender, EventArgs e)
+        {
+            if (int.TryParse(insertMaxTextBox.Text, out int value))
+            {
+                Properties.Settings.Default.InertMaxRows = value;
+                Properties.Settings.Default.Save();
+            }
+            else
+            {
+                // show error message if the value is not a number
+                Common.MsgBox("The value should be a number", MessageBoxIcon.Error);
+                insertMaxTextBox.Text = Properties.Settings.Default.InertMaxRows.ToString();
+                insertMaxTextBox.Focus();
+                insertMaxTextBox.SelectAll();
+            }
+        }
     }
 }

@@ -67,7 +67,10 @@
             schemaComboBox = new System.Windows.Forms.ComboBox();
             label1 = new System.Windows.Forms.Label();
             tabPage2 = new System.Windows.Forms.TabPage();
-            checkBox10 = new System.Windows.Forms.CheckBox();
+            insertMaxTextBox = new System.Windows.Forms.TextBox();
+            insertBatchTextBox = new System.Windows.Forms.TextBox();
+            label3 = new System.Windows.Forms.Label();
+            label2 = new System.Windows.Forms.Label();
             indexesCheckBox = new System.Windows.Forms.CheckBox();
             includeHeadersCheckBox = new System.Windows.Forms.CheckBox();
             scriptDataCheckBox = new System.Windows.Forms.CheckBox();
@@ -267,7 +270,7 @@
             tableWikiToolStripButton.Image = Properties.Resources.doc_html;
             tableWikiToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             tableWikiToolStripButton.Name = "tableWikiToolStripButton";
-            tableWikiToolStripButton.Size = new System.Drawing.Size(80, 24);
+            tableWikiToolStripButton.Size = new System.Drawing.Size(79, 24);
             tableWikiToolStripButton.Text = "Table Def";
             tableWikiToolStripButton.Click += TableDefinitionToolStripMenuItem_Click;
             // 
@@ -307,14 +310,14 @@
             // tableToolStripMenuItem
             // 
             tableToolStripMenuItem.Name = "tableToolStripMenuItem";
-            tableToolStripMenuItem.Size = new System.Drawing.Size(157, 22);
+            tableToolStripMenuItem.Size = new System.Drawing.Size(156, 22);
             tableToolStripMenuItem.Text = "Table Definition";
             tableToolStripMenuItem.Click += TableWikiToolStripButton_Click;
             // 
             // valuesToolStripMenuItem
             // 
             valuesToolStripMenuItem.Name = "valuesToolStripMenuItem";
-            valuesToolStripMenuItem.Size = new System.Drawing.Size(157, 22);
+            valuesToolStripMenuItem.Size = new System.Drawing.Size(156, 22);
             valuesToolStripMenuItem.Text = "Value List";
             valuesToolStripMenuItem.Click += ValuesWikiToolStripButton_Click;
             // 
@@ -332,7 +335,7 @@
             indexToolStripButton.Image = Properties.Resources.sp_16;
             indexToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             indexToolStripButton.Name = "indexToolStripButton";
-            indexToolStripButton.Size = new System.Drawing.Size(59, 24);
+            indexToolStripButton.Size = new System.Drawing.Size(60, 24);
             indexToolStripButton.Text = "Index";
             indexToolStripButton.Click += CreateIndexToolStripMenuItem_Click;
             // 
@@ -341,7 +344,7 @@
             createTableToolStripButton.Image = Properties.Resources.sp_16;
             createTableToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             createTableToolStripButton.Name = "createTableToolStripButton";
-            createTableToolStripButton.Size = new System.Drawing.Size(72, 24);
+            createTableToolStripButton.Size = new System.Drawing.Size(71, 24);
             createTableToolStripButton.Text = "CREATE";
             createTableToolStripButton.Click += CreateTableToolStripButton_Click;
             // 
@@ -350,7 +353,7 @@
             insertToolStripButton.Image = Properties.Resources.sp_16;
             insertToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             insertToolStripButton.Name = "insertToolStripButton";
-            insertToolStripButton.Size = new System.Drawing.Size(68, 24);
+            insertToolStripButton.Size = new System.Drawing.Size(67, 24);
             insertToolStripButton.Text = "INSERT";
             insertToolStripButton.Click += InsertToolStripButton_Click;
             // 
@@ -365,25 +368,25 @@
             exeToolStripDropDownButton.Image = Properties.Resources.play16;
             exeToolStripDropDownButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             exeToolStripDropDownButton.Name = "exeToolStripDropDownButton";
-            exeToolStripDropDownButton.Size = new System.Drawing.Size(63, 24);
+            exeToolStripDropDownButton.Size = new System.Drawing.Size(64, 24);
             exeToolStripDropDownButton.Text = "Exec";
             // 
             // onDEVToolStripMenuItem
             // 
             onDEVToolStripMenuItem.Name = "onDEVToolStripMenuItem";
-            onDEVToolStripMenuItem.Size = new System.Drawing.Size(165, 22);
+            onDEVToolStripMenuItem.Size = new System.Drawing.Size(166, 22);
             onDEVToolStripMenuItem.Text = "Execute on DEV";
             // 
             // onPRODToolStripMenuItem
             // 
             onPRODToolStripMenuItem.Name = "onPRODToolStripMenuItem";
-            onPRODToolStripMenuItem.Size = new System.Drawing.Size(165, 22);
+            onPRODToolStripMenuItem.Size = new System.Drawing.Size(166, 22);
             onPRODToolStripMenuItem.Text = "Execute on PROD";
             // 
             // executeOnSTGToolStripMenuItem
             // 
             executeOnSTGToolStripMenuItem.Name = "executeOnSTGToolStripMenuItem";
-            executeOnSTGToolStripMenuItem.Size = new System.Drawing.Size(165, 22);
+            executeOnSTGToolStripMenuItem.Size = new System.Drawing.Size(166, 22);
             executeOnSTGToolStripMenuItem.Text = "Execute on STG";
             // 
             // tabControl1
@@ -505,7 +508,10 @@
             // 
             // tabPage2
             // 
-            tabPage2.Controls.Add(checkBox10);
+            tabPage2.Controls.Add(insertMaxTextBox);
+            tabPage2.Controls.Add(insertBatchTextBox);
+            tabPage2.Controls.Add(label3);
+            tabPage2.Controls.Add(label2);
             tabPage2.Controls.Add(indexesCheckBox);
             tabPage2.Controls.Add(includeHeadersCheckBox);
             tabPage2.Controls.Add(scriptDataCheckBox);
@@ -523,22 +529,50 @@
             tabPage2.Text = "Output options";
             tabPage2.UseVisualStyleBackColor = true;
             // 
-            // checkBox10
+            // insertMaxTextBox
             // 
-            checkBox10.AutoSize = true;
-            checkBox10.Location = new System.Drawing.Point(8, 245);
-            checkBox10.Name = "checkBox10";
-            checkBox10.Size = new System.Drawing.Size(82, 19);
-            checkBox10.TabIndex = 7;
-            checkBox10.Text = "checkBox1";
-            checkBox10.UseVisualStyleBackColor = true;
+            insertMaxTextBox.Location = new System.Drawing.Point(9, 329);
+            insertMaxTextBox.Name = "insertMaxTextBox";
+            insertMaxTextBox.Size = new System.Drawing.Size(100, 23);
+            insertMaxTextBox.TabIndex = 18;
+            insertMaxTextBox.Text = "1000";
+            insertMaxTextBox.Validating += InsertMaxTextBox_Validating;
+            insertMaxTextBox.Validated += InsertMaxTextBox_Validated;
+            // 
+            // insertBatchTextBox
+            // 
+            insertBatchTextBox.Location = new System.Drawing.Point(8, 285);
+            insertBatchTextBox.Name = "insertBatchTextBox";
+            insertBatchTextBox.Size = new System.Drawing.Size(100, 23);
+            insertBatchTextBox.TabIndex = 18;
+            insertBatchTextBox.Text = "50";
+            insertBatchTextBox.Validating += InsertBatchTextBox_Validating;
+            insertBatchTextBox.Validated += InsertBatchTextBox_Validated;
+            // 
+            // label3
+            // 
+            label3.AutoSize = true;
+            label3.Location = new System.Drawing.Point(8, 311);
+            label3.Name = "label3";
+            label3.Size = new System.Drawing.Size(132, 15);
+            label3.TabIndex = 17;
+            label3.Text = "INSERT maximum rows:";
+            // 
+            // label2
+            // 
+            label2.AutoSize = true;
+            label2.Location = new System.Drawing.Point(8, 267);
+            label2.Name = "label2";
+            label2.Size = new System.Drawing.Size(107, 15);
+            label2.TabIndex = 17;
+            label2.Text = "INSERT batch rows:";
             // 
             // indexesCheckBox
             // 
             indexesCheckBox.AutoSize = true;
             indexesCheckBox.Location = new System.Drawing.Point(8, 220);
             indexesCheckBox.Name = "indexesCheckBox";
-            indexesCheckBox.Size = new System.Drawing.Size(65, 19);
+            indexesCheckBox.Size = new System.Drawing.Size(66, 19);
             indexesCheckBox.TabIndex = 8;
             indexesCheckBox.Text = "Indexes";
             indexesCheckBox.UseVisualStyleBackColor = true;
@@ -592,7 +626,7 @@
             extendedPropertiesCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
             extendedPropertiesCheckBox.Location = new System.Drawing.Point(8, 81);
             extendedPropertiesCheckBox.Name = "extendedPropertiesCheckBox";
-            extendedPropertiesCheckBox.Size = new System.Drawing.Size(127, 19);
+            extendedPropertiesCheckBox.Size = new System.Drawing.Size(128, 19);
             extendedPropertiesCheckBox.TabIndex = 13;
             extendedPropertiesCheckBox.Text = "ExtendedProperties";
             extendedPropertiesCheckBox.UseVisualStyleBackColor = true;
@@ -603,7 +637,7 @@
             includeIfNotExistsCheckBox.AutoSize = true;
             includeIfNotExistsCheckBox.Location = new System.Drawing.Point(8, 56);
             includeIfNotExistsCheckBox.Name = "includeIfNotExistsCheckBox";
-            includeIfNotExistsCheckBox.Size = new System.Drawing.Size(120, 19);
+            includeIfNotExistsCheckBox.Size = new System.Drawing.Size(121, 19);
             includeIfNotExistsCheckBox.TabIndex = 14;
             includeIfNotExistsCheckBox.Text = "IncludeIfNotExists";
             includeIfNotExistsCheckBox.UseVisualStyleBackColor = true;
@@ -1008,7 +1042,7 @@
             // 
             toolsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { customizeToolStripMenuItem, optionsToolStripMenuItem, toolStripSeparator1, batchColumnDescToolStripMenuItem });
             toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
-            toolsToolStripMenuItem.Size = new System.Drawing.Size(47, 20);
+            toolsToolStripMenuItem.Size = new System.Drawing.Size(46, 20);
             toolsToolStripMenuItem.Text = "&Tools";
             // 
             // customizeToolStripMenuItem
@@ -1255,12 +1289,17 @@
             // 
             // sqlTextBox
             // 
+            sqlTextBox.AllowDrop = true;
             sqlTextBox.AutocompleteListSelectedBackColor = System.Drawing.Color.FromArgb(0, 120, 215);
+            sqlTextBox.AutomaticFold = ScintillaNET.AutomaticFold.Show | ScintillaNET.AutomaticFold.Click | ScintillaNET.AutomaticFold.Change;
             sqlTextBox.Dock = System.Windows.Forms.DockStyle.Fill;
+            sqlTextBox.IndentationGuides = ScintillaNET.IndentView.LookBoth;
             sqlTextBox.LexerName = null;
             sqlTextBox.Location = new System.Drawing.Point(0, 0);
             sqlTextBox.Name = "sqlTextBox";
             sqlTextBox.ScrollWidth = 49;
+            sqlTextBox.SelectionAdditionalBackColor = System.Drawing.Color.FromArgb(17, 77, 156);
+            sqlTextBox.SelectionBackColor = System.Drawing.Color.FromArgb(17, 77, 156);
             sqlTextBox.Size = new System.Drawing.Size(586, 671);
             sqlTextBox.TabIndex = 1;
             sqlTextBox.TextChanged += OnTextChanged;
@@ -1360,7 +1399,6 @@
         private System.Windows.Forms.TabControl tabControl1;
         private System.Windows.Forms.TabPage tabPage1;
         private System.Windows.Forms.TabPage tabPage2;
-        private System.Windows.Forms.CheckBox checkBox10;
         private System.Windows.Forms.CheckBox indexesCheckBox;
         private System.Windows.Forms.CheckBox includeHeadersCheckBox;
         private System.Windows.Forms.CheckBox scriptDataCheckBox;
@@ -1492,5 +1530,9 @@
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator17;
         private System.Windows.Forms.ToolStripMenuItem tableDefinitionToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem tableValuesToolStripMenuItem1;
+        private System.Windows.Forms.TextBox insertMaxTextBox;
+        private System.Windows.Forms.TextBox insertBatchTextBox;
+        private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.Label label2;
     }
 }
