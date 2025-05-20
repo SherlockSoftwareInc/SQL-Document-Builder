@@ -45,6 +45,8 @@
             cancelButton = new System.Windows.Forms.Button();
             removeButton = new System.Windows.Forms.Button();
             removeAllButton = new System.Windows.Forms.Button();
+            pasteButton = new System.Windows.Forms.Button();
+            copyButton = new System.Windows.Forms.Button();
             SuspendLayout();
             // 
             // label1
@@ -174,9 +176,10 @@
             // 
             // okButton
             // 
-            okButton.Location = new System.Drawing.Point(546, 415);
+            okButton.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
+            okButton.Location = new System.Drawing.Point(553, 415);
             okButton.Name = "okButton";
-            okButton.Size = new System.Drawing.Size(75, 23);
+            okButton.Size = new System.Drawing.Size(68, 23);
             okButton.TabIndex = 5;
             okButton.Text = "&OK";
             okButton.UseVisualStyleBackColor = true;
@@ -184,9 +187,10 @@
             // 
             // cancelButton
             // 
-            cancelButton.Location = new System.Drawing.Point(465, 415);
+            cancelButton.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
+            cancelButton.Location = new System.Drawing.Point(479, 415);
             cancelButton.Name = "cancelButton";
-            cancelButton.Size = new System.Drawing.Size(75, 23);
+            cancelButton.Size = new System.Drawing.Size(68, 23);
             cancelButton.TabIndex = 5;
             cancelButton.Text = "&Cancel";
             cancelButton.UseVisualStyleBackColor = true;
@@ -212,12 +216,36 @@
             removeAllButton.UseVisualStyleBackColor = true;
             removeAllButton.Click += RemoveAllButton_Click;
             // 
+            // pasteButton
+            // 
+            pasteButton.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
+            pasteButton.Location = new System.Drawing.Point(405, 415);
+            pasteButton.Name = "pasteButton";
+            pasteButton.Size = new System.Drawing.Size(68, 23);
+            pasteButton.TabIndex = 5;
+            pasteButton.Text = "&Paste";
+            pasteButton.UseVisualStyleBackColor = true;
+            pasteButton.Click += PasteButton_Click;
+            // 
+            // copyButton
+            // 
+            copyButton.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
+            copyButton.Location = new System.Drawing.Point(331, 415);
+            copyButton.Name = "copyButton";
+            copyButton.Size = new System.Drawing.Size(68, 23);
+            copyButton.TabIndex = 5;
+            copyButton.Text = "&Copy";
+            copyButton.UseVisualStyleBackColor = true;
+            copyButton.Click += CopyButton_Click;
+            // 
             // DBObjectsSelectForm
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             ClientSize = new System.Drawing.Size(633, 450);
             Controls.Add(cancelButton);
+            Controls.Add(copyButton);
+            Controls.Add(pasteButton);
             Controls.Add(okButton);
             Controls.Add(selectedListBox);
             Controls.Add(selectableListBox);
@@ -264,5 +292,7 @@
         private System.Windows.Forms.Button cancelButton;
         private System.Windows.Forms.Button removeButton;
         private System.Windows.Forms.Button removeAllButton;
+        private System.Windows.Forms.Button pasteButton;
+        private System.Windows.Forms.Button copyButton;
     }
 }

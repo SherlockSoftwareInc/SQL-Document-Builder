@@ -1,6 +1,7 @@
 ﻿using DarkModeForms;
 using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using static SQL_Document_Builder.ObjectName;
@@ -97,6 +98,25 @@ namespace SQL_Document_Builder
             // clear the filter text box
             filterTextBox.Text = string.Empty;
             filterTextBox.Focus();
+        }
+
+        /// <summary>
+        /// Handles the click event of the copy button.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void CopyButton_Click(object sender, EventArgs e)
+        {
+            // Copy the Selected Items To Clipboard
+            if (selectedListBox.Items.Count > 0)
+            {
+                var sb = new StringBuilder();
+                foreach (var item in selectedListBox.Items)
+                {
+                    sb.AppendLine(item.ToString());
+                }
+                Clipboard.SetText(sb.ToString());
+            }
         }
 
         /// <summary>
@@ -204,6 +224,39 @@ namespace SQL_Document_Builder
         {
             DialogResult = DialogResult.OK;
             Close();
+        }
+
+        /// <summary>
+        /// Pastes the button_ click.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void PasteButton_Click(object sender, EventArgs e)
+        {
+            // Paste the items from the clipboard to the selected list box
+            string clipboardText = Clipboard.GetText();
+            if (!string.IsNullOrEmpty(clipboardText))
+            {
+                string[] items = clipboardText.Split([Environment.NewLine], StringSplitOptions.RemoveEmptyEntries);
+
+                // set the schema combo box to (All)
+                schemaComboBox.SelectedIndex = 0;
+
+                foreach (string item in items)
+                {
+                    // find the item in the selectable list box
+                    foreach (ObjectName selectableItem in selectableListBox.Items)
+                    {
+                        // check if the item is already in the selectable list box
+                        if (selectableItem.ToString().Equals(item, StringComparison.OrdinalIgnoreCase))
+                        {
+                            selectableListBox.SelectedItem = selectableItem;
+                            addButton.PerformClick();
+                            break;
+                        }
+                    }
+                }
+            }
         }
 
         /// <summary>
