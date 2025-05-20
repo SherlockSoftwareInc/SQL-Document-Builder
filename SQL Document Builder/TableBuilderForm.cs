@@ -55,8 +55,8 @@ namespace SQL_Document_Builder
         /// </summary>
         private static async Task<string> ExecuteScriptsAsync(SQLDatabaseConnectionItem connection, string script)
         {
-            // from the sqlTextBox.Text, break it into individual SQL statements by the GO keyword
-            //var sqlStatements = sqlTextBox.Text.Split(["GO"], StringSplitOptions.RemoveEmptyEntries);
+            // from the CurrentEditBox?.Text, break it into individual SQL statements by the GO keyword
+            //var sqlStatements = CurrentEditBox?.Text.Split(["GO"], StringSplitOptions.RemoveEmptyEntries);
             var sqlStatements = Regex.Split(script, @"\bGO\b", RegexOptions.IgnoreCase | RegexOptions.Multiline);
 
             // execute each statement
@@ -237,7 +237,7 @@ namespace SQL_Document_Builder
                 // append the script to the file
                 try
                 {
-                    File.AppendAllText(_fileName, Environment.NewLine + sqlTextBox.Text);
+                    File.AppendAllText(_fileName, Environment.NewLine + CurrentEditBox?.Text);
                     _changed = false;
                 }
                 catch (Exception)
@@ -262,13 +262,18 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Gets the current edit box.
+        /// </summary>
+        private SqlEditBox? CurrentEditBox => sqlTextBox;
+
+        /// <summary>
         /// Clears the script text box.
         /// </summary>
         private DialogResult ClearTextBox()
         {
-            if(_changed == false && string.IsNullOrEmpty(_fileName))
+            if(_changed == false && string.IsNullOrEmpty(_fileName) && CurrentEditBox != null)
             {
-                sqlTextBox.Text = string.Empty;
+                CurrentEditBox.Text = string.Empty;
                 _changed = false;
                 SetTitle();
 
@@ -293,7 +298,10 @@ namespace SQL_Document_Builder
                 }
             }
 
-            sqlTextBox.Text = string.Empty;
+            if (CurrentEditBox != null)
+            {
+                CurrentEditBox.Text = string.Empty;
+            }
             _changed = false;
             _fileName = string.Empty;
             SetTitle();
@@ -533,7 +541,7 @@ namespace SQL_Document_Builder
 
                 // get the object create script
                 var script = await GetObjectCreateScriptAsync(obj);
-                sqlTextBox.AppendText(script);
+                CurrentEditBox?.AppendText(script);
 
                 // get the insert statement for the object
                 // get the number of rows in the table
@@ -542,12 +550,12 @@ namespace SQL_Document_Builder
                 // confirm if the user wants to continue when the number of rows is too much
                 if (rowCount > 1000)
                 {
-                    sqlTextBox.AppendText("-- Too many rows to insert" + Environment.NewLine + Environment.NewLine);
+                    CurrentEditBox?.AppendText("-- Too many rows to insert" + Environment.NewLine + Environment.NewLine);
                 }
                 else
                 {
                     var insertScript = await DatabaseDocBuilder.TableToInsertStatementAsync(obj);
-                    sqlTextBox.AppendText(insertScript + "GO" + Environment.NewLine);
+                    CurrentEditBox?.AppendText(insertScript + "GO" + Environment.NewLine);
                 }
             }
 
@@ -564,9 +572,9 @@ namespace SQL_Document_Builder
             if (ClearTextBox() == DialogResult.Cancel) return;
 
             SetScript(definitionPanel.PrimaryKeyScript());
-            if (!string.IsNullOrEmpty(sqlTextBox.Text))
+            if (!string.IsNullOrEmpty(CurrentEditBox?.Text))
             {
-                Clipboard.SetText(sqlTextBox.Text);
+                Clipboard.SetText(CurrentEditBox?.Text);
             }
         }
 
@@ -621,7 +629,7 @@ namespace SQL_Document_Builder
 
                 var script = await GetObjectCreateScriptAsync(selectedObjects[i]);
 
-                sqlTextBox.AppendText(script);
+                CurrentEditBox?.AppendText(script);
             }
 
             EndBuild();
@@ -667,14 +675,18 @@ namespace SQL_Document_Builder
         /// </summary>
         private void EndBuild()
         {
-            sqlTextBox.Enabled = true;
-            sqlTextBox.Cursor = Cursors.Default;
             progressBar.Visible = false;
             statusToolStripStatusLabe.Text = "Complete!";
             this.Cursor = Cursors.Default;
-            if (sqlTextBox.Text.Length > 0)
+            if (CurrentEditBox != null)
             {
-                Clipboard.SetText(sqlTextBox.Text);
+                CurrentEditBox.Enabled = true;
+                CurrentEditBox.Cursor = Cursors.Default;
+
+                if (CurrentEditBox.Text.Length > 0)
+                {
+                    Clipboard.SetText(CurrentEditBox.Text);
+                }
             }
         }
 
@@ -686,6 +698,8 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void ExcelToINSERTToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (CurrentEditBox == null) return;
+
             // get the Excel file name
             var openFileDialog = new OpenFileDialog
             {
@@ -709,11 +723,11 @@ namespace SQL_Document_Builder
                 if (ClearTextBox() == DialogResult.Cancel) return;
 
                 var dataHelper = new ExcelDataHelper(form.ResultDataTable);
-                sqlTextBox.Text = dataHelper.GetInsertStatement();
-                //sqlTextBox.AppendText("GO" + Environment.NewLine);
-                if (!string.IsNullOrEmpty(sqlTextBox.Text))
+                CurrentEditBox.Text = dataHelper.GetInsertStatement();
+                //CurrentEditBox?.AppendText("GO" + Environment.NewLine);
+                if (!string.IsNullOrEmpty(CurrentEditBox.Text))
                 {
-                    Clipboard.SetText(sqlTextBox.Text);
+                    Clipboard.SetText(CurrentEditBox.Text);
                 }
             }
         }
@@ -821,7 +835,7 @@ namespace SQL_Document_Builder
         private void GoToLineToolStripMenuItem_Click(object sender, EventArgs e)
         {
             // go to line in scintilla
-            //var lineNumber = sqlTextBox.LineFromPosition(sqlTextBox.CurrentPosition) + 1;
+            //var lineNumber = CurrentEditBox?.LineFromPosition(CurrentEditBox?.CurrentPosition) + 1;
 
             //int lineNumber = 1;
             //using (var dlg = new GoToLineForm(lineNumber))
@@ -829,8 +843,8 @@ namespace SQL_Document_Builder
             //    if (dlg.ShowDialog() == DialogResult.OK)
             //    {
             //        lineNumber = dlg.LineNumber - 1;
-            //        sqlTextBox.GotoLine(lineNumber);
-            //        sqlTextBox.SetEmptySelection(sqlTextBox.Lines[lineNumber].Position);
+            //        CurrentEditBox?.GotoLine(lineNumber);
+            //        CurrentEditBox?.SetEmptySelection(CurrentEditBox?.Lines[lineNumber].Position);
             //    }
             //}
         }
@@ -904,23 +918,23 @@ namespace SQL_Document_Builder
                         // add SET IDENTITY_INSERT ON if the table has identity column
                         if (hasIdentityColumn)
                         {
-                            sqlTextBox.AppendText("SET IDENTITY_INSERT " + objectName.FullName + " ON;" + Environment.NewLine + "GO" + Environment.NewLine);
+                            CurrentEditBox?.AppendText("SET IDENTITY_INSERT " + objectName.FullName + " ON;" + Environment.NewLine + "GO" + Environment.NewLine);
                         }
 
                         // append the insert statement to the script
-                        sqlTextBox.AppendText(script);
+                        CurrentEditBox?.AppendText(script);
 
                         // add SET IDENTITY_INSERT OFF if the table has identity column
                         if (hasIdentityColumn)
                         {
-                            sqlTextBox.AppendText("GO" + Environment.NewLine);
-                            sqlTextBox.AppendText("SET IDENTITY_INSERT " + objectName.FullName + " OFF;" + Environment.NewLine);
+                            CurrentEditBox?.AppendText("GO" + Environment.NewLine);
+                            CurrentEditBox?.AppendText("SET IDENTITY_INSERT " + objectName.FullName + " OFF;" + Environment.NewLine);
                         }
 
-                        sqlTextBox.AppendText("GO" + Environment.NewLine);
-                        if (!string.IsNullOrEmpty(sqlTextBox.Text))
+                        CurrentEditBox?.AppendText("GO" + Environment.NewLine);
+                        if (!string.IsNullOrEmpty(CurrentEditBox?.Text))
                         {
-                            Clipboard.SetText(sqlTextBox.Text);
+                            Clipboard.SetText(CurrentEditBox?.Text);
                         }
                     }
                     else
@@ -972,7 +986,7 @@ namespace SQL_Document_Builder
             // clear the sqlTextBox
             if (ClearTextBox() == DialogResult.Cancel) return;
 
-            sqlTextBox.Focus();
+            CurrentEditBox?.Focus();
 
             _changed = false;
         }
@@ -1013,7 +1027,7 @@ namespace SQL_Document_Builder
                     script += Environment.NewLine + "GO" + Environment.NewLine;
                 }
 
-                sqlTextBox.AppendText(script);
+                CurrentEditBox?.AppendText(script);
             }
 
             EndBuild();
@@ -1122,11 +1136,11 @@ namespace SQL_Document_Builder
         private async void OnExecuteToolStripMenuItem_Click(object sender, EventArgs e)
         {
             // get the selected text from the sqlTextBox
-            string script = sqlTextBox.SelectedText;
+            string script = CurrentEditBox?.SelectedText;
             if (script.Length == 0)
             {
                 // if no text is selected, get the whole text from the sqlTextBox
-                script = sqlTextBox.Text;
+                script = CurrentEditBox?.Text;
             }
 
             // if the script is empty, show a message box and return
@@ -1185,6 +1199,11 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void OpenToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if(CurrentEditBox == null)
+            {
+                return;
+            }
+
             if (_changed)
             {
                 if (Common.MsgBox("Do you want to save the changes?", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
@@ -1199,7 +1218,7 @@ namespace SQL_Document_Builder
                 _fileName = oFile.FileName;
                 SetTitle(_fileName);
 
-                sqlTextBox.Text = File.ReadAllText(_fileName);
+                CurrentEditBox.Text = File.ReadAllText(_fileName);
                 _changed = false;
             }
         }
@@ -1390,13 +1409,15 @@ namespace SQL_Document_Builder
         /// <param name="e">The E.</param>
         private void QueryDataToTableToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (CurrentEditBox == null) return;
+
             if (ClearTextBox() == DialogResult.Cancel) return;
 
             using var form = new QueryDataToTableForm();
             form.ShowDialog();
             if (!string.IsNullOrEmpty(form.DocumentBody))
             {
-                sqlTextBox.Text = form.DocumentBody;
+                CurrentEditBox.Text = form.DocumentBody;
             }
         }
 
@@ -1407,6 +1428,8 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void QueryInsertToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (CurrentEditBox == null) return;
+
             if (ClearTextBox() == DialogResult.Cancel) return;
 
             using var form = new QueryDataToTableForm()
@@ -1417,7 +1440,7 @@ namespace SQL_Document_Builder
 
             if (!string.IsNullOrEmpty(form.DocumentBody))
             {
-                sqlTextBox.Text = form.DocumentBody;
+                CurrentEditBox.Text = form.DocumentBody;
             }
         }
 
@@ -1437,7 +1460,7 @@ namespace SQL_Document_Builder
                     SetTitle(_fileName);
 
                     var file = new System.IO.StreamWriter(_fileName, false);
-                    await file.WriteAsync(sqlTextBox.Text);
+                    await file.WriteAsync(CurrentEditBox?.Text);
                     file.Close();
                     _changed = false;
 
@@ -1465,7 +1488,7 @@ namespace SQL_Document_Builder
             }
             else
             {
-                File.WriteAllText(_fileName, sqlTextBox.Text);
+                File.WriteAllText(_fileName, CurrentEditBox?.Text);
                 _changed = false;
             }
         }
@@ -1558,12 +1581,12 @@ namespace SQL_Document_Builder
         /// <param name="sql">The sql.</param>
         private void SetScript(string sql)
         {
-            if (string.IsNullOrEmpty(sql))
+            if (string.IsNullOrEmpty(sql) || CurrentEditBox == null)
             {
                 return;
             }
 
-            sqlTextBox.Text = sql;
+            CurrentEditBox.Text = sql;
             Clipboard.SetText(sql);
         }
 
@@ -1582,10 +1605,12 @@ namespace SQL_Document_Builder
         /// </summary>
         private void StartBuild()
         {
+            if (CurrentEditBox == null) return;
+
             this.Cursor = Cursors.WaitCursor;
-            sqlTextBox.Text = String.Empty;
-            sqlTextBox.Enabled = false;
-            sqlTextBox.Cursor = Cursors.WaitCursor;
+            CurrentEditBox.Text = String.Empty;
+            CurrentEditBox.Enabled = false;
+            CurrentEditBox.Cursor = Cursors.WaitCursor;
             statusToolStripStatusLabe.Text = "Please wait while generate the scripts";
             progressBar.Maximum = 100;
             progressBar.Value = 0;
@@ -1685,6 +1710,8 @@ namespace SQL_Document_Builder
         /// <param name="e">The E.</param>
         private async void TableDefinitionToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (CurrentEditBox == null) return;
+
             if (ClearTextBox() == DialogResult.Cancel) return;
 
             if (objectsListBox.SelectedItem != null)
@@ -1697,18 +1724,18 @@ namespace SQL_Document_Builder
                 }
                 else
                 {
-                    sqlTextBox.Text = String.Empty;
+                    CurrentEditBox.Text = String.Empty;
                 }
                 var builder = new SharePointBuilder();
-                sqlTextBox.AppendText(await builder.GetTableDef(objectName));
+                CurrentEditBox?.AppendText(await builder.GetTableDef(objectName));
 
                 //if ((objectName.Name.StartsWith("LT_")) || (objectName.Name.StartsWith("AT_")))
                 //{
                 //    var valueBuilder = new SharePointBuilder();
-                //    sqlTextBox.AppendText(await valueBuilder.GetTableValuesAsync(objectName.FullName));
+                //    CurrentEditBox?.AppendText(await valueBuilder.GetTableValuesAsync(objectName.FullName));
                 //}
 
-                //sqlTextBox.AppendText(FooterText() + Environment.NewLine);
+                //CurrentEditBox?.AppendText(FooterText() + Environment.NewLine);
                 EndBuild();
             }
         }
@@ -1727,9 +1754,9 @@ namespace SQL_Document_Builder
             if (!string.IsNullOrEmpty(objectName?.Name))
             {
                 SetScript(await ObjectDescription.BuildObjectDescription(objectName, Properties.Settings.Default.UseExtendedProperties));
-                if (!string.IsNullOrEmpty(sqlTextBox.Text))
+                if (!string.IsNullOrEmpty(CurrentEditBox?.Text))
                 {
-                    Clipboard.SetText(sqlTextBox.Text);
+                    Clipboard.SetText(CurrentEditBox?.Text);
                 }
                 else
                 {
@@ -1782,16 +1809,16 @@ namespace SQL_Document_Builder
             //    var objectName = (ObjectName)objectsListBox.SelectedItem;
             //    if (headerTextBox.Text.Length > 0)
             //    {
-            //        sqlTextBox.Text = headerTextBox.Text + "\r\n";
+            //        CurrentEditBox?.Text = headerTextBox.Text + "\r\n";
             //    }
             //    else
             //    {
-            //        sqlTextBox.Text = String.Empty;
+            //        CurrentEditBox?.Text = String.Empty;
             //    }
             //    var builder = new Wiki();
-            //    sqlTextBox.AppendText(builder.GetTableDef(objectName));
+            //    CurrentEditBox?.AppendText(builder.GetTableDef(objectName));
             //    AppendLine(footerTextBox.Text);
-            //    Clipboard.SetText(sqlTextBox.Text);
+            //    Clipboard.SetText(CurrentEditBox?.Text);
             //}
         }
 
@@ -1813,10 +1840,15 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void UspToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if(CurrentEditBox == null)
+            {
+                return;
+            }   
+
             if (ClearTextBox() == DialogResult.Cancel) return;
 
-            sqlTextBox.Text = DatabaseDocBuilder.UspAddObjectDescription();
-            Clipboard.SetText(sqlTextBox.Text);
+            CurrentEditBox.Text = DatabaseDocBuilder.UspAddObjectDescription();
+            Clipboard.SetText(CurrentEditBox?.Text);
         }
 
         /// <summary>
@@ -1848,8 +1880,8 @@ namespace SQL_Document_Builder
             //{
             //    var objectName = (ObjectName)objectsListBox.SelectedItem;
             //    var builder = new Wiki();
-            //    sqlTextBox.Text = builder.GetTableValues(objectName.FullName);
-            //    Clipboard.SetText(sqlTextBox.Text);
+            //    CurrentEditBox?.Text = builder.GetTableValues(objectName.FullName);
+            //    Clipboard.SetText(CurrentEditBox?.Text);
             //}
         }
 
@@ -1929,17 +1961,17 @@ namespace SQL_Document_Builder
 
         private void ClearSelectionToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            sqlTextBox.SetEmptySelection(0);
+            CurrentEditBox?.SetEmptySelection(0);
         }
 
         private void CollapseAllToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            sqlTextBox.FoldAll(FoldAction.Contract);
+            CurrentEditBox?.FoldAll(FoldAction.Contract);
         }
 
         private void ExpandAllToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            sqlTextBox.FoldAll(FoldAction.Expand);
+            CurrentEditBox?.FoldAll(FoldAction.Expand);
         }
 
         private void FindAndReplaceToolStripMenuItem_Click(object sender, EventArgs e)
@@ -1956,14 +1988,14 @@ namespace SQL_Document_Builder
         {
             //// toggle view whitespace
             //hiddenCharactersItem.Checked = !hiddenCharactersItem.Checked;
-            //sqlTextBox.ViewWhitespace = hiddenCharactersItem.Checked ? WhitespaceMode.VisibleAlways : WhitespaceMode.Invisible;
+            //CurrentEditBox?.ViewWhitespace = hiddenCharactersItem.Checked ? WhitespaceMode.VisibleAlways : WhitespaceMode.Invisible;
         }
 
         private void IndentGuidesToolStripMenuItem_Click(object sender, EventArgs e)
         {
             //// toggle indent guides
             //indentGuidesItem.Checked = !indentGuidesItem.Checked;
-            //sqlTextBox.IndentationGuides = indentGuidesItem.Checked ? IndentView.LookBoth : IndentView.None;
+            //CurrentEditBox?.IndentationGuides = indentGuidesItem.Checked ? IndentView.LookBoth : IndentView.None;
         }
 
         private void IndentSelectionToolStripMenuItem_Click(object sender, EventArgs e)
@@ -1993,8 +2025,10 @@ namespace SQL_Document_Builder
 
         private void SelectLineToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            Line line = sqlTextBox.Lines[sqlTextBox.CurrentLine];
-            sqlTextBox.SetSelection(line.Position + line.Length, line.Position);
+            if(CurrentEditBox == null) return;
+
+            Line line = CurrentEditBox.Lines[CurrentEditBox.CurrentLine];
+            CurrentEditBox?.SetSelection(line.Position + line.Length, line.Position);
         }
 
         private void UppercaseSelectionToolStripMenuItem_Click(object sender, EventArgs e)
@@ -2006,7 +2040,7 @@ namespace SQL_Document_Builder
         {
             //// toggle word wrap
             //wordWrapItem.Checked = !wordWrapItem.Checked;
-            //sqlTextBox.WrapMode = wordWrapItem.Checked ? WrapMode.Word : WrapMode.None;
+            //CurrentEditBox?.WrapMode = wordWrapItem.Checked ? WrapMode.Word : WrapMode.None;
         }
 
         private void Zoom100ToolStripMenuItem_Click(object sender, EventArgs e)
@@ -2033,15 +2067,17 @@ namespace SQL_Document_Builder
         /// </summary>
         private void Lowercase()
         {
+            if (CurrentEditBox == null) return;
+
             // save the selection
-            int start = sqlTextBox.SelectionStart;
-            int end = sqlTextBox.SelectionEnd;
+            int start = CurrentEditBox.SelectionStart;
+            int end = CurrentEditBox.SelectionEnd;
 
             // modify the selected text
-            sqlTextBox.ReplaceSelection(sqlTextBox.GetTextRange(start, end - start).ToLower());
+            CurrentEditBox?.ReplaceSelection(CurrentEditBox?.GetTextRange(start, end - start).ToLower());
 
             // preserve the original selection
-            sqlTextBox.SetSelection(start, end);
+            CurrentEditBox?.SetSelection(start, end);
         }
 
         /// <summary>
@@ -2049,15 +2085,17 @@ namespace SQL_Document_Builder
         /// </summary>
         private void Uppercase()
         {
+            if (CurrentEditBox == null) return;
+
             // save the selection
-            int start = sqlTextBox.SelectionStart;
-            int end = sqlTextBox.SelectionEnd;
+            int start = CurrentEditBox.SelectionStart;
+            int end = CurrentEditBox.SelectionEnd;
 
             // modify the selected text
-            sqlTextBox.ReplaceSelection(sqlTextBox.GetTextRange(start, end - start).ToUpper());
+            CurrentEditBox?.ReplaceSelection(CurrentEditBox?.GetTextRange(start, end - start).ToUpper());
 
             // preserve the original selection
-            sqlTextBox.SetSelection(start, end);
+            CurrentEditBox?.SetSelection(start, end);
         }
 
         #endregion Uppercase / Lowercase
@@ -2071,7 +2109,7 @@ namespace SQL_Document_Builder
         private void GenerateKeystrokes(string keys)
         {
             HotKeyManager.Enable = false;
-            sqlTextBox.Focus();
+            CurrentEditBox?.Focus();
             SendKeys.Send(keys);
             HotKeyManager.Enable = true;
         }
@@ -2105,7 +2143,8 @@ namespace SQL_Document_Builder
         /// </summary>
         private void ZoomDefault()
         {
-            sqlTextBox.Zoom = 0;
+            if (CurrentEditBox == null) return;
+            CurrentEditBox.Zoom = 0;
         }
 
         /// <summary>
@@ -2113,7 +2152,7 @@ namespace SQL_Document_Builder
         /// </summary>
         private void ZoomIn()
         {
-            sqlTextBox.ZoomIn();
+            CurrentEditBox?.ZoomIn();
         }
 
         /// <summary>
@@ -2121,7 +2160,7 @@ namespace SQL_Document_Builder
         /// </summary>
         private void ZoomOut()
         {
-            sqlTextBox.ZoomOut();
+            CurrentEditBox?.ZoomOut();
         }
 
         #endregion Zoom
@@ -2183,6 +2222,8 @@ namespace SQL_Document_Builder
         /// </summary>
         private void OpenSearch()
         {
+            if (CurrentEditBox == null) return;
+
             SearchManager.SearchBox = searchSQLTextBox;
             SearchManager.TextArea = sqlTextBox;
 
@@ -2386,6 +2427,8 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void TableDefinitionToolStripMenuItem_Click_1(object sender, EventArgs e)
         {
+            if (CurrentEditBox == null) return;
+
             if (ClearTextBox() == DialogResult.Cancel) return;
 
             if (objectsListBox.SelectedItem != null)
@@ -2398,18 +2441,18 @@ namespace SQL_Document_Builder
                 }
                 else
                 {
-                    sqlTextBox.Text = String.Empty;
+                    CurrentEditBox.Text = String.Empty;
                 }
                 var builder = new MarkdownBuilder();
-                sqlTextBox.AppendText(await builder.GetTableDef(objectName));
+                CurrentEditBox?.AppendText(await builder.GetTableDef(objectName));
 
                 //if ((objectName.Name.StartsWith("LT_")) || (objectName.Name.StartsWith("AT_")))
                 //{
                 //    var valueBuilder = new MarkdownBuilder();
-                //    sqlTextBox.AppendText(await valueBuilder.GetTableValuesAsync(objectName.FullName));
+                //    CurrentEditBox?.AppendText(await valueBuilder.GetTableValuesAsync(objectName.FullName));
                 //}
 
-                //sqlTextBox.AppendText(FooterText() + Environment.NewLine);
+                //CurrentEditBox?.AppendText(FooterText() + Environment.NewLine);
                 EndBuild();
             }
         }
@@ -2460,9 +2503,9 @@ namespace SQL_Document_Builder
                 var objectName = (ObjectName)objectsListBox.SelectedItem;
 
                 var valueBuilder = new MarkdownBuilder();
-                sqlTextBox.AppendText(await valueBuilder.GetTableValuesAsync(objectName.FullName));
+                CurrentEditBox?.AppendText(await valueBuilder.GetTableValuesAsync(objectName.FullName));
 
-                //sqlTextBox.AppendText(FooterText() + Environment.NewLine);
+                //CurrentEditBox?.AppendText(FooterText() + Environment.NewLine);
                 EndBuild();
             }
         }
