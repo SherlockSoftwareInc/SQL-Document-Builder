@@ -32,8 +32,8 @@ namespace SQL_Document_Builder
             var sb = new StringBuilder();
 
             // Add drop table statement
-            sb.AppendLine($"IF OBJECT_ID('[YourTableName]', 'U') IS NOT NULL");
-            sb.AppendLine($"\tDROP TABLE [YourTableName];");
+            sb.AppendLine($"IF OBJECT_ID('YourTableName', 'U') IS NOT NULL");
+            sb.AppendLine($"\tDROP TABLE YourTableName;");
             sb.AppendLine($"GO");
 
             // Generate the CREATE TABLE statement
@@ -47,7 +47,7 @@ namespace SQL_Document_Builder
                 sb.Append(column.DataType == typeof(int) ? "INT" :
                           column.DataType == typeof(decimal) ? "DECIMAL" :
                           column.DataType == typeof(DateTime) ? "DATETIME" :
-                          "NVARCHAR(MAX)");
+                          "NVARCHAR(255)");
 
                 if (i < Data.Columns.Count - 1)
                 {
@@ -61,8 +61,12 @@ namespace SQL_Document_Builder
             sb.AppendLine(");");
             sb.AppendLine();
 
-            // Generate the INSERT statements in batches of 20 rows
-            const int batchSize = 20;
+            // Generate the INSERT statements in batches
+            int batchSize = Properties.Settings.Default.InsertBatchRows;
+            if (batchSize <= 0)
+            {
+                batchSize = 20; // Default batch size
+            }
 
             for (int batchStart = 0; batchStart < Data.Rows.Count; batchStart += batchSize)
             {

@@ -548,7 +548,7 @@ namespace SQL_Document_Builder
                 var rowCount = await DatabaseHelper.GetRowCountAsync(obj.FullName);
 
                 // confirm if the user wants to continue when the number of rows is too much
-                if (rowCount > 1000)
+                if (rowCount > Properties.Settings.Default.InertMaxRows)
                 {
                     CurrentEditBox?.AppendText("-- Too many rows to insert" + Environment.NewLine + Environment.NewLine);
                 }

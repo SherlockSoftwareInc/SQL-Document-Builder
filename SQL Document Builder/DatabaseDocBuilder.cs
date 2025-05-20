@@ -154,16 +154,22 @@ WHERE sm.object_id = OBJECT_ID(@SchemaQualifiedName);";
                     //    sb.AppendLine($"--SET IDENTITY_INSERT {tableName} ON;");
                     //}
 
+                    int batchSize = Properties.Settings.Default.InsertBatchRows;
+                    if (batchSize <= 0)
+                    {
+                        batchSize = 20; // Default batch size
+                    }
+
                     while (await reader.ReadAsync())
                     {
-                        // Check if row count exceeds 5000
-                        if (rowCount >= 5000)
-                        {
-                            return "Too much rows";
-                        }
+                        //// Check if row count exceeds 5000
+                        //if (rowCount >= Properties.Settings.Default.InertMaxRows)
+                        //{
+                        //    return "Exceeded the maximum rows for INSERT statement.";
+                        //}
 
                         // Start a new batch every 50 rows
-                        if (rowCount % 50 == 0)
+                        if (rowCount % batchSize == 0)
                         {
                             if (batchCount > 0)
                             {
