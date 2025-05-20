@@ -1328,7 +1328,7 @@
             Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
             MainMenuStrip = menuStrip1;
             Name = "TableBuilderForm";
-            Text = "SharePoint Script Builder";
+            Text = "SQL Server Document Builder";
             FormClosing += TableBuilderForm_FormClosing;
             Load += TableBuilderForm_Load;
             toolStrip1.ResumeLayout(false);

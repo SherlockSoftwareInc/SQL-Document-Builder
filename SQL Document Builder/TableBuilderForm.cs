@@ -249,16 +249,45 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Sets the title of the form.
+        /// </summary>
+        private void SetTitle(string fileName = "")
+        { 
+            if (string.IsNullOrEmpty(fileName))
+            {
+                this.Text = $"SQL Server Document Builder - (New)";
+            }
+            else
+            {
+                this.Text = $"SQL Server Document Builder - {Path.GetFileName(fileName)}";
+            }
+        }
+
+        /// <summary>
         /// Clears the script text box.
         /// </summary>
-        private void ClearTextBox()
+        private DialogResult ClearTextBox()
         {
+            if(_changed == false && string.IsNullOrEmpty(_fileName))
+            {
+                sqlTextBox.Text = string.Empty;
+                _changed = false;
+                SetTitle();
+
+                return DialogResult.OK;
+            }
+
             // if the Control key is pressed, clear the text box without asking to save
             if (ModifierKeys != Keys.Control)
             {
                 if (_changed)
                 {
                     var result = Common.MsgBox("Do you want to save the changes?", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
+                    if (result == DialogResult.Cancel)
+                    {
+                        return result;
+                    }
+
                     if (result == DialogResult.Yes)
                     {
                         saveToolStripMenuItem.PerformClick();
@@ -269,7 +298,8 @@ namespace SQL_Document_Builder
             sqlTextBox.Text = string.Empty;
             _changed = false;
             _fileName = string.Empty;
-            this.Text = $"SharePoint Script Builder - (New)";
+            SetTitle();
+            return DialogResult.OK;
         }
 
         /// <summary>
@@ -279,7 +309,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void AssistantContentToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            ClearTextBox();
+            if (ClearTextBox() == DialogResult.Cancel) return;
 
             try
             {
@@ -387,7 +417,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The E.</param>
         private void ClipboardToTableToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            ClearTextBox();
+            if (ClearTextBox() == DialogResult.Cancel) return;
 
             if (Clipboard.ContainsText())
             {
@@ -469,7 +499,8 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void CreateIndexToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            ClearTextBox();
+            if (ClearTextBox() == DialogResult.Cancel) return;
+
             SetScript(definitionPanel.CreateIndexScript());
         }
 
@@ -480,7 +511,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void CREATEINSERTToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            ClearTextBox();
+            if (ClearTextBox() == DialogResult.Cancel) return;
 
             List<ObjectName>? selectedObjects = SelectObjects();
 
@@ -532,7 +563,8 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void CreatePrimaryKeyToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            ClearTextBox();
+            if (ClearTextBox() == DialogResult.Cancel) return;
+
             SetScript(definitionPanel.PrimaryKeyScript());
             if (!string.IsNullOrEmpty(sqlTextBox.Text))
             {
@@ -547,7 +579,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void CreateTableToolStripButton_Click(object sender, EventArgs e)
         {
-            ClearTextBox();
+            if (ClearTextBox() == DialogResult.Cancel) return;
 
             if (objectsListBox.SelectedItem is not ObjectName objectName)
             {
@@ -569,7 +601,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void CREATEToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            ClearTextBox();
+            if (ClearTextBox() == DialogResult.Cancel) return;
 
             List<ObjectName>? selectedObjects = SelectObjects();
 
@@ -676,7 +708,7 @@ namespace SQL_Document_Builder
             form.ShowDialog();
             if (form.ResultDataTable != null)
             {
-                ClearTextBox();
+                if (ClearTextBox() == DialogResult.Cancel) return;
 
                 var dataHelper = new ExcelDataHelper(form.ResultDataTable);
                 sqlTextBox.Text = dataHelper.GetInsertStatement();
@@ -751,7 +783,8 @@ namespace SQL_Document_Builder
         /// <param name="e">The E.</param>
         private async void FunctionListToolStripMenuItem1_Click(object sender, EventArgs e)
         {
-            ClearTextBox();
+            if (ClearTextBox() == DialogResult.Cancel) return;
+
             using var dlg = new Schemapicker();
             if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
             {
@@ -939,7 +972,8 @@ namespace SQL_Document_Builder
         private void NewToolStripMenuItem_Click(object sender, EventArgs e)
         {
             // clear the sqlTextBox
-            ClearTextBox();
+            if (ClearTextBox() == DialogResult.Cancel) return;
+
             sqlTextBox.Focus();
 
             _changed = false;
@@ -952,7 +986,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void ObjectsDescriptionToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            ClearTextBox();
+            if (ClearTextBox() == DialogResult.Cancel) return;
 
             List<ObjectName>? selectedObjects = SelectObjects();
 
@@ -1165,7 +1199,7 @@ namespace SQL_Document_Builder
             if (oFile.ShowDialog() == DialogResult.OK)
             {
                 _fileName = oFile.FileName;
-                this.Text = $"SharePoint Script Builder - {_fileName}";
+                SetTitle(_fileName);
 
                 sqlTextBox.Text = File.ReadAllText(_fileName);
                 _changed = false;
@@ -1358,7 +1392,8 @@ namespace SQL_Document_Builder
         /// <param name="e">The E.</param>
         private void QueryDataToTableToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            ClearTextBox();
+            if (ClearTextBox() == DialogResult.Cancel) return;
+
             using var form = new QueryDataToTableForm();
             form.ShowDialog();
             if (!string.IsNullOrEmpty(form.DocumentBody))
@@ -1374,6 +1409,8 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void QueryInsertToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (ClearTextBox() == DialogResult.Cancel) return;
+
             using var form = new QueryDataToTableForm()
             {
                 InsertStatement = true
@@ -1382,8 +1419,6 @@ namespace SQL_Document_Builder
 
             if (!string.IsNullOrEmpty(form.DocumentBody))
             {
-                ClearTextBox();
-
                 sqlTextBox.Text = form.DocumentBody;
             }
         }
@@ -1401,7 +1436,7 @@ namespace SQL_Document_Builder
                 if (oFile.ShowDialog() == DialogResult.OK)
                 {
                     _fileName = oFile.FileName;
-                    this.Text = $"SharePoint Script Builder - {_fileName}";
+                    SetTitle(_fileName);
 
                     var file = new System.IO.StreamWriter(_fileName, false);
                     await file.WriteAsync(sqlTextBox.Text);
@@ -1598,7 +1633,8 @@ namespace SQL_Document_Builder
         /// <param name="e">The E.</param>
         private async void StoredProcedureListToolStripMenuItem1_Click(object sender, EventArgs e)
         {
-            ClearTextBox();
+            if (ClearTextBox() == DialogResult.Cancel) return;
+
             using var dlg = new Schemapicker();
             if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
             {
@@ -1637,6 +1673,7 @@ namespace SQL_Document_Builder
             WindowState = FormWindowState.Maximized;
 
             SetupScintillaBox();
+            SetTitle();
 
             _connections.Load();
             await PopulateConnections();
@@ -1680,7 +1717,8 @@ namespace SQL_Document_Builder
         /// <param name="e">The E.</param>
         private async void TableDefinitionToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            ClearTextBox();
+            if (ClearTextBox() == DialogResult.Cancel) return;
+
             if (objectsListBox.SelectedItem != null)
             {
                 var objectName = (ObjectName)objectsListBox.SelectedItem;
@@ -1715,7 +1753,8 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void TableDescriptionToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            ClearTextBox();
+            if (ClearTextBox() == DialogResult.Cancel) return;
+
             var objectName = objectsListBox.SelectedItem as ObjectName;
             if (!string.IsNullOrEmpty(objectName?.Name))
             {
@@ -1738,7 +1777,8 @@ namespace SQL_Document_Builder
         /// <param name="e">The E.</param>
         private async void TableListToolStripMenuItem1_Click(object sender, EventArgs e)
         {
-            ClearTextBox();
+            if (ClearTextBox() == DialogResult.Cancel) return;
+
             using var dlg = new Schemapicker();
             if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
             {
@@ -1805,7 +1845,8 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void UspToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            ClearTextBox();
+            if (ClearTextBox() == DialogResult.Cancel) return;
+
             sqlTextBox.Text = DatabaseDocBuilder.UspAddObjectDescription();
             Clipboard.SetText(sqlTextBox.Text);
         }
@@ -1817,7 +1858,8 @@ namespace SQL_Document_Builder
         /// <param name="e">The E.</param>
         private async void ValueListToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            ClearTextBox();
+            if (ClearTextBox() == DialogResult.Cancel) return;
+
             if (objectsListBox.SelectedItem != null)
             {
                 var objectName = (ObjectName)objectsListBox.SelectedItem;
@@ -1850,7 +1892,8 @@ namespace SQL_Document_Builder
         /// <param name="e">The E.</param>
         private async void ViewListToolStripMenuItem1_Click(object sender, EventArgs e)
         {
-            ClearTextBox();
+            if (ClearTextBox() == DialogResult.Cancel) return;
+
             using var dlg = new Schemapicker();
             if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
             {
@@ -2202,7 +2245,8 @@ namespace SQL_Document_Builder
                                 if (File.Exists(path))
                                 {
                                     _fileName = path;
-                                    this.Text = $"SharePoint Script Builder - {Path.GetFileName(_fileName)}";
+                                    SetTitle(_fileName);
+                                    
                                     sqlTextBox.Text = File.ReadAllText(_fileName);
                                     _changed = false;
                                 }
@@ -2596,7 +2640,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void ClipboardToTableToolStripMenuItem1_Click(object sender, EventArgs e)
         {
-            ClearTextBox();
+            if (ClearTextBox() == DialogResult.Cancel) return;
 
             if (Clipboard.ContainsText())
             {
@@ -2620,7 +2664,8 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void FunctionListToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            ClearTextBox();
+            if (ClearTextBox() == DialogResult.Cancel) return;
+
             using var dlg = new Schemapicker();
             if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
             {
@@ -2651,7 +2696,8 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void StoredProcedureListToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            ClearTextBox();
+            if (ClearTextBox() == DialogResult.Cancel) return;
+
             using var dlg = new Schemapicker();
             if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
             {
@@ -2682,7 +2728,8 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void TableDefinitionToolStripMenuItem_Click_1(object sender, EventArgs e)
         {
-            ClearTextBox();
+            if (ClearTextBox() == DialogResult.Cancel) return;
+
             if (objectsListBox.SelectedItem != null)
             {
                 var objectName = (ObjectName)objectsListBox.SelectedItem;
@@ -2716,7 +2763,8 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void TableListToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            ClearTextBox();
+            if (ClearTextBox() == DialogResult.Cancel) return;
+
             using var dlg = new Schemapicker();
             if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
             {
@@ -2747,7 +2795,8 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void TableValuesMDToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            ClearTextBox();
+            if (ClearTextBox() == DialogResult.Cancel) return;
+
             if (objectsListBox.SelectedItem != null)
             {
                 var objectName = (ObjectName)objectsListBox.SelectedItem;
@@ -2767,7 +2816,8 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void ViewListToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            ClearTextBox();
+            if (ClearTextBox() == DialogResult.Cancel) return;
+
             using var dlg = new Schemapicker();
             if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
             {
@@ -2798,9 +2848,8 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void QueryDataToTableToolStripMenuItem1_Click(object sender, EventArgs e)
         {
-
         }
-        #endregion Markdown document builder
 
+        #endregion Markdown document builder
     }
 }
