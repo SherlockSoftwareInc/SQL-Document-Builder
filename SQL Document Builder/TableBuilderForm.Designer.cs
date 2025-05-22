@@ -75,7 +75,7 @@
             ansiPaddingCheckBox = new System.Windows.Forms.CheckBox();
             extendedPropertiesCheckBox = new System.Windows.Forms.CheckBox();
             includeIfNotExistsCheckBox = new System.Windows.Forms.CheckBox();
-            scriptForCreateDropCheckBox = new System.Windows.Forms.CheckBox();
+            addDataSourceCheckBox = new System.Windows.Forms.CheckBox();
             scriptDropsCheckBox = new System.Windows.Forms.CheckBox();
             menuStrip1 = new System.Windows.Forms.MenuStrip();
             fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -502,7 +502,7 @@
             tabPage2.Controls.Add(ansiPaddingCheckBox);
             tabPage2.Controls.Add(extendedPropertiesCheckBox);
             tabPage2.Controls.Add(includeIfNotExistsCheckBox);
-            tabPage2.Controls.Add(scriptForCreateDropCheckBox);
+            tabPage2.Controls.Add(addDataSourceCheckBox);
             tabPage2.Controls.Add(scriptDropsCheckBox);
             tabPage2.Location = new System.Drawing.Point(4, 24);
             tabPage2.Name = "tabPage2";
@@ -553,97 +553,115 @@
             // indexesCheckBox
             // 
             indexesCheckBox.AutoSize = true;
-            indexesCheckBox.Location = new System.Drawing.Point(8, 220);
+            indexesCheckBox.Location = new System.Drawing.Point(9, 528);
             indexesCheckBox.Name = "indexesCheckBox";
             indexesCheckBox.Size = new System.Drawing.Size(65, 19);
             indexesCheckBox.TabIndex = 8;
             indexesCheckBox.Text = "Indexes";
             indexesCheckBox.UseVisualStyleBackColor = true;
+            indexesCheckBox.Visible = false;
+            indexesCheckBox.CheckedChanged += Options_Changed;
             // 
             // includeHeadersCheckBox
             // 
             includeHeadersCheckBox.AutoSize = true;
-            includeHeadersCheckBox.Location = new System.Drawing.Point(8, 181);
+            includeHeadersCheckBox.Location = new System.Drawing.Point(9, 503);
             includeHeadersCheckBox.Name = "includeHeadersCheckBox";
             includeHeadersCheckBox.Size = new System.Drawing.Size(108, 19);
             includeHeadersCheckBox.TabIndex = 9;
             includeHeadersCheckBox.Text = "IncludeHeaders";
             includeHeadersCheckBox.UseVisualStyleBackColor = true;
+            includeHeadersCheckBox.Visible = false;
+            includeHeadersCheckBox.CheckedChanged += Options_Changed;
             // 
             // scriptDataCheckBox
             // 
             scriptDataCheckBox.AutoSize = true;
-            scriptDataCheckBox.Location = new System.Drawing.Point(8, 156);
+            scriptDataCheckBox.Location = new System.Drawing.Point(9, 478);
             scriptDataCheckBox.Name = "scriptDataCheckBox";
             scriptDataCheckBox.Size = new System.Drawing.Size(80, 19);
             scriptDataCheckBox.TabIndex = 10;
             scriptDataCheckBox.Text = "ScriptData";
             scriptDataCheckBox.UseVisualStyleBackColor = true;
+            scriptDataCheckBox.Visible = false;
+            scriptDataCheckBox.CheckedChanged += Options_Changed;
             // 
             // noCollationCheckBox
             // 
             noCollationCheckBox.AutoSize = true;
             noCollationCheckBox.Checked = true;
             noCollationCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
-            noCollationCheckBox.Location = new System.Drawing.Point(8, 131);
+            noCollationCheckBox.Location = new System.Drawing.Point(9, 438);
             noCollationCheckBox.Name = "noCollationCheckBox";
             noCollationCheckBox.Size = new System.Drawing.Size(90, 19);
             noCollationCheckBox.TabIndex = 11;
             noCollationCheckBox.Text = "NoCollation";
             noCollationCheckBox.UseVisualStyleBackColor = true;
+            noCollationCheckBox.Visible = false;
+            noCollationCheckBox.CheckedChanged += Options_Changed;
             // 
             // ansiPaddingCheckBox
             // 
             ansiPaddingCheckBox.AutoSize = true;
-            ansiPaddingCheckBox.Location = new System.Drawing.Point(8, 106);
+            ansiPaddingCheckBox.Location = new System.Drawing.Point(9, 413);
             ansiPaddingCheckBox.Name = "ansiPaddingCheckBox";
             ansiPaddingCheckBox.Size = new System.Drawing.Size(93, 19);
             ansiPaddingCheckBox.TabIndex = 12;
             ansiPaddingCheckBox.Text = "AnsiPadding";
             ansiPaddingCheckBox.UseVisualStyleBackColor = true;
+            ansiPaddingCheckBox.Visible = false;
+            ansiPaddingCheckBox.CheckedChanged += Options_Changed;
             // 
             // extendedPropertiesCheckBox
             // 
             extendedPropertiesCheckBox.AutoSize = true;
             extendedPropertiesCheckBox.Checked = true;
             extendedPropertiesCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
-            extendedPropertiesCheckBox.Location = new System.Drawing.Point(8, 81);
+            extendedPropertiesCheckBox.Location = new System.Drawing.Point(8, 56);
             extendedPropertiesCheckBox.Name = "extendedPropertiesCheckBox";
-            extendedPropertiesCheckBox.Size = new System.Drawing.Size(127, 19);
+            extendedPropertiesCheckBox.Size = new System.Drawing.Size(166, 19);
             extendedPropertiesCheckBox.TabIndex = 13;
-            extendedPropertiesCheckBox.Text = "ExtendedProperties";
+            extendedPropertiesCheckBox.Text = "Use sp_extendedproperties";
             extendedPropertiesCheckBox.UseVisualStyleBackColor = true;
-            extendedPropertiesCheckBox.CheckedChanged += ExtendedPropertiesCheckBox_CheckedChanged;
+            extendedPropertiesCheckBox.CheckedChanged += Options_Changed;
             // 
             // includeIfNotExistsCheckBox
             // 
             includeIfNotExistsCheckBox.AutoSize = true;
-            includeIfNotExistsCheckBox.Location = new System.Drawing.Point(8, 56);
+            includeIfNotExistsCheckBox.Location = new System.Drawing.Point(9, 388);
             includeIfNotExistsCheckBox.Name = "includeIfNotExistsCheckBox";
             includeIfNotExistsCheckBox.Size = new System.Drawing.Size(120, 19);
             includeIfNotExistsCheckBox.TabIndex = 14;
             includeIfNotExistsCheckBox.Text = "IncludeIfNotExists";
             includeIfNotExistsCheckBox.UseVisualStyleBackColor = true;
+            includeIfNotExistsCheckBox.Visible = false;
+            includeIfNotExistsCheckBox.CheckedChanged += Options_Changed;
             // 
-            // scriptForCreateDropCheckBox
+            // addDataSourceCheckBox
             // 
-            scriptForCreateDropCheckBox.AutoSize = true;
-            scriptForCreateDropCheckBox.Location = new System.Drawing.Point(8, 31);
-            scriptForCreateDropCheckBox.Name = "scriptForCreateDropCheckBox";
-            scriptForCreateDropCheckBox.Size = new System.Drawing.Size(133, 19);
-            scriptForCreateDropCheckBox.TabIndex = 15;
-            scriptForCreateDropCheckBox.Text = "ScriptForCreateDrop";
-            scriptForCreateDropCheckBox.UseVisualStyleBackColor = true;
+            addDataSourceCheckBox.AutoSize = true;
+            addDataSourceCheckBox.Checked = true;
+            addDataSourceCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
+            addDataSourceCheckBox.Location = new System.Drawing.Point(8, 31);
+            addDataSourceCheckBox.Name = "addDataSourceCheckBox";
+            addDataSourceCheckBox.Size = new System.Drawing.Size(182, 19);
+            addDataSourceCheckBox.TabIndex = 15;
+            addDataSourceCheckBox.Text = "Add data source at beginning";
+            addDataSourceCheckBox.UseVisualStyleBackColor = true;
+            addDataSourceCheckBox.CheckedChanged += Options_Changed;
             // 
             // scriptDropsCheckBox
             // 
             scriptDropsCheckBox.AutoSize = true;
+            scriptDropsCheckBox.Checked = true;
+            scriptDropsCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
             scriptDropsCheckBox.Location = new System.Drawing.Point(8, 6);
             scriptDropsCheckBox.Name = "scriptDropsCheckBox";
-            scriptDropsCheckBox.Size = new System.Drawing.Size(87, 19);
+            scriptDropsCheckBox.Size = new System.Drawing.Size(138, 19);
             scriptDropsCheckBox.TabIndex = 16;
-            scriptDropsCheckBox.Text = "ScriptDrops";
+            scriptDropsCheckBox.Text = "Add DROP statement";
             scriptDropsCheckBox.UseVisualStyleBackColor = true;
+            scriptDropsCheckBox.CheckedChanged += Options_Changed;
             // 
             // menuStrip1
             // 
@@ -666,7 +684,7 @@
             // 
             connectToToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { localToolStripMenuItem, azureToolStripMenuItem });
             connectToToolStripMenuItem.Name = "connectToToolStripMenuItem";
-            connectToToolStripMenuItem.Size = new System.Drawing.Size(189, 26);
+            connectToToolStripMenuItem.Size = new System.Drawing.Size(185, 22);
             connectToToolStripMenuItem.Text = "Connect to...";
             // 
             // localToolStripMenuItem
@@ -685,21 +703,21 @@
             // 
             newConnectionToolStripMenuItem.Image = Properties.Resources.add;
             newConnectionToolStripMenuItem.Name = "newConnectionToolStripMenuItem";
-            newConnectionToolStripMenuItem.Size = new System.Drawing.Size(189, 26);
+            newConnectionToolStripMenuItem.Size = new System.Drawing.Size(185, 22);
             newConnectionToolStripMenuItem.Text = "New connection";
             newConnectionToolStripMenuItem.Click += NewConnectionToolStripMenuItem_Click;
             // 
             // manageConnectionsToolStripMenuItem
             // 
             manageConnectionsToolStripMenuItem.Name = "manageConnectionsToolStripMenuItem";
-            manageConnectionsToolStripMenuItem.Size = new System.Drawing.Size(189, 26);
+            manageConnectionsToolStripMenuItem.Size = new System.Drawing.Size(185, 22);
             manageConnectionsToolStripMenuItem.Text = "Manage connections";
             manageConnectionsToolStripMenuItem.Click += ManageConnectionsToolStripMenuItem_Click;
             // 
             // toolStripSeparator4
             // 
             toolStripSeparator4.Name = "toolStripSeparator4";
-            toolStripSeparator4.Size = new System.Drawing.Size(186, 6);
+            toolStripSeparator4.Size = new System.Drawing.Size(182, 6);
             // 
             // newToolStripMenuItem1
             // 
@@ -707,7 +725,7 @@
             newToolStripMenuItem1.ImageTransparentColor = System.Drawing.Color.Magenta;
             newToolStripMenuItem1.Name = "newToolStripMenuItem1";
             newToolStripMenuItem1.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.N;
-            newToolStripMenuItem1.Size = new System.Drawing.Size(189, 26);
+            newToolStripMenuItem1.Size = new System.Drawing.Size(185, 22);
             newToolStripMenuItem1.Text = "&New";
             newToolStripMenuItem1.Click += NewToolStripMenuItem_Click;
             // 
@@ -717,7 +735,7 @@
             openToolStripMenuItem.ImageTransparentColor = System.Drawing.Color.Magenta;
             openToolStripMenuItem.Name = "openToolStripMenuItem";
             openToolStripMenuItem.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.O;
-            openToolStripMenuItem.Size = new System.Drawing.Size(189, 26);
+            openToolStripMenuItem.Size = new System.Drawing.Size(185, 22);
             openToolStripMenuItem.Text = "&Open";
             openToolStripMenuItem.Click += OpenToolStripMenuItem_Click;
             // 
@@ -727,14 +745,14 @@
             saveToolStripMenuItem.ImageTransparentColor = System.Drawing.Color.Magenta;
             saveToolStripMenuItem.Name = "saveToolStripMenuItem";
             saveToolStripMenuItem.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.S;
-            saveToolStripMenuItem.Size = new System.Drawing.Size(189, 26);
+            saveToolStripMenuItem.Size = new System.Drawing.Size(185, 22);
             saveToolStripMenuItem.Text = "&Save";
             saveToolStripMenuItem.Click += SaveToolStripMenuItem_Click;
             // 
             // saveAsToolStripMenuItem
             // 
             saveAsToolStripMenuItem.Name = "saveAsToolStripMenuItem";
-            saveAsToolStripMenuItem.Size = new System.Drawing.Size(189, 26);
+            saveAsToolStripMenuItem.Size = new System.Drawing.Size(185, 22);
             saveAsToolStripMenuItem.Text = "Save as...";
             saveAsToolStripMenuItem.Click += SaveAsToolStripMenuItem_Click;
             // 
@@ -742,26 +760,26 @@
             // 
             closeToolStripMenuItem1.Name = "closeToolStripMenuItem1";
             closeToolStripMenuItem1.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.W;
-            closeToolStripMenuItem1.Size = new System.Drawing.Size(189, 26);
+            closeToolStripMenuItem1.Size = new System.Drawing.Size(185, 22);
             closeToolStripMenuItem1.Text = "Close";
             closeToolStripMenuItem1.Click += CloseToolStripMenuItem1_Click;
             // 
             // closeAllToolStripMenuItem
             // 
             closeAllToolStripMenuItem.Name = "closeAllToolStripMenuItem";
-            closeAllToolStripMenuItem.Size = new System.Drawing.Size(189, 26);
+            closeAllToolStripMenuItem.Size = new System.Drawing.Size(185, 22);
             closeAllToolStripMenuItem.Text = "Close All";
             closeAllToolStripMenuItem.Click += CloseAllToolStripMenuItem_Click;
             // 
             // toolStripSeparator5
             // 
             toolStripSeparator5.Name = "toolStripSeparator5";
-            toolStripSeparator5.Size = new System.Drawing.Size(186, 6);
+            toolStripSeparator5.Size = new System.Drawing.Size(182, 6);
             // 
             // assistantContentToolStripMenuItem
             // 
             assistantContentToolStripMenuItem.Name = "assistantContentToolStripMenuItem";
-            assistantContentToolStripMenuItem.Size = new System.Drawing.Size(189, 26);
+            assistantContentToolStripMenuItem.Size = new System.Drawing.Size(185, 22);
             assistantContentToolStripMenuItem.Text = "Assistant content";
             assistantContentToolStripMenuItem.Visible = false;
             assistantContentToolStripMenuItem.Click += AssistantContentToolStripMenuItem_Click;
@@ -769,13 +787,13 @@
             // toolStripSeparator11
             // 
             toolStripSeparator11.Name = "toolStripSeparator11";
-            toolStripSeparator11.Size = new System.Drawing.Size(186, 6);
+            toolStripSeparator11.Size = new System.Drawing.Size(182, 6);
             toolStripSeparator11.Visible = false;
             // 
             // exitToolStripMenuItem
             // 
             exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            exitToolStripMenuItem.Size = new System.Drawing.Size(189, 26);
+            exitToolStripMenuItem.Size = new System.Drawing.Size(185, 22);
             exitToolStripMenuItem.Text = "&Exit";
             exitToolStripMenuItem.Click += CloseToolStripButton_Click;
             // 
@@ -1415,7 +1433,7 @@
         private System.Windows.Forms.CheckBox ansiPaddingCheckBox;
         private System.Windows.Forms.CheckBox extendedPropertiesCheckBox;
         private System.Windows.Forms.CheckBox includeIfNotExistsCheckBox;
-        private System.Windows.Forms.CheckBox scriptForCreateDropCheckBox;
+        private System.Windows.Forms.CheckBox addDataSourceCheckBox;
         private System.Windows.Forms.CheckBox scriptDropsCheckBox;
         private System.Windows.Forms.ListBox objectsListBox;
         private System.Windows.Forms.TextBox searchTextBox;

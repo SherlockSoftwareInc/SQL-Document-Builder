@@ -422,10 +422,13 @@ GO";
             // Add the header
             createScript.AppendLine($"/****** Object:  Stored Procedure {objectName.FullName} ******/");
 
-            // Add drop table statement
-            createScript.AppendLine($"IF OBJECT_ID('{objectName.FullName}', 'P') IS NOT NULL");
-            createScript.AppendLine($"\tDROP PROCEDURE {objectName.FullName};");
-            createScript.AppendLine($"GO");
+            if (Properties.Settings.Default.AddDropStatement)
+            {
+                // Add drop table statement
+                createScript.AppendLine($"IF OBJECT_ID('{objectName.FullName}', 'P') IS NOT NULL");
+                createScript.AppendLine($"\tDROP PROCEDURE {objectName.FullName};");
+                createScript.AppendLine($"GO");
+            }
 
             var script = await GetStoredProcedureDefinitionAsync(objectName);
 
@@ -468,9 +471,12 @@ GO";
             }
 
             // Add drop table statement
-            createScript.AppendLine($"IF OBJECT_ID('{objectName.FullName}', 'U') IS NOT NULL");
-            createScript.AppendLine($"\tDROP TABLE {objectName.FullName};");
-            createScript.AppendLine($"GO");
+            if (Properties.Settings.Default.AddDropStatement)
+            {
+                createScript.AppendLine($"IF OBJECT_ID('{objectName.FullName}', 'U') IS NOT NULL");
+                createScript.AppendLine($"\tDROP TABLE {objectName.FullName};");
+                createScript.AppendLine($"GO");
+            }
 
             // Get the primary key column names that the ColID ends with "🗝"
             string primaryKeyColumns = table.PrimaryKeyColumns;
@@ -551,9 +557,12 @@ GO";
             createScript.AppendLine($"/****** Object:  View {objectName.FullName} ******/");
 
             // Add drop table statement
-            createScript.AppendLine($"IF OBJECT_ID('{objectName.FullName}', 'V') IS NOT NULL");
-            createScript.AppendLine($"\tDROP VIEW {objectName.FullName};");
-            createScript.AppendLine($"GO");
+            if (Properties.Settings.Default.AddDropStatement)
+            {
+                createScript.AppendLine($"IF OBJECT_ID('{objectName.FullName}', 'V') IS NOT NULL");
+                createScript.AppendLine($"\tDROP VIEW {objectName.FullName};");
+                createScript.AppendLine($"GO");
+            }
 
             var script = await GetViewDefinitionAsync(objectName);
             createScript.Append(script);

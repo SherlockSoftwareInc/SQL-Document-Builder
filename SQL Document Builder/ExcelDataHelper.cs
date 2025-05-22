@@ -116,9 +116,12 @@ namespace SQL_Document_Builder
                 inferredTypes[i] = InferColumnType(i, 1000);
             }
 
-            sb.AppendLine($"IF OBJECT_ID('{objectName.FullName}', 'U') IS NOT NULL");
-            sb.AppendLine($"\tDROP TABLE {objectName.FullName};");
-            sb.AppendLine("GO");
+            if (Properties.Settings.Default.AddDropStatement)
+            {
+                sb.AppendLine($"IF OBJECT_ID('{objectName.FullName}', 'U') IS NOT NULL");
+                sb.AppendLine($"\tDROP TABLE {objectName.FullName};");
+                sb.AppendLine("GO");
+            }
 
             // CREATE TABLE statement using inferred types
             sb.AppendLine($"CREATE TABLE {objectName.FullName} (");

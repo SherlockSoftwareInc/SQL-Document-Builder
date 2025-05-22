@@ -415,11 +415,11 @@ namespace SQL_Document_Builder
         /// Begin adding ddl script.
         /// </summary>
         /// <returns>A bool.</returns>
-        private bool BeginAddDDLScript(bool addDataSource = false)
+        private bool BeginAddDDLScript()
         {
             if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Sql) != DialogResult.Yes) return false;
 
-            if (addDataSource) AddDataSourceText();
+            AddDataSourceText();
 
             return true;
         }
@@ -761,7 +761,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void CreateIndexToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (BeginAddDDLScript(true))
+            if (BeginAddDDLScript())
             {
                 CurrentEditBox?.AppendText(definitionPanel.CreateIndexScript());
                 // Move caret to end and scroll to it
@@ -783,48 +783,49 @@ namespace SQL_Document_Builder
                 return;
             }
 
-            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Sql) != DialogResult.Yes) return;
-
-            StartBuild();
-
-            for (int i = 0; i < selectedObjects.Count; i++)
+            if (BeginAddDDLScript())
             {
-                int percentComplete = (i * 100) / selectedObjects.Count;
-                if (percentComplete > 0 && percentComplete % 2 == 0)
+                StartBuild();
+
+                for (int i = 0; i < selectedObjects.Count; i++)
                 {
-                    progressBar.Value = percentComplete;
-                }
-                statusToolStripStatusLabe.Text = $"Processing {percentComplete}%...";
+                    int percentComplete = (i * 100) / selectedObjects.Count;
+                    if (percentComplete > 0 && percentComplete % 2 == 0)
+                    {
+                        progressBar.Value = percentComplete;
+                    }
+                    statusToolStripStatusLabe.Text = $"Processing {percentComplete}%...";
 
-                var obj = selectedObjects[i];
+                    var obj = selectedObjects[i];
 
-                // get the object create script
-                var script = await GetObjectCreateScriptAsync(obj);
-                CurrentEditBox?.AppendText(script);
-
-                // Move caret to end and scroll to it
-                ScrollToCaret();
-
-                // get the insert statement for the object
-                // get the number of rows in the table
-                var rowCount = await DatabaseHelper.GetRowCountAsync(obj.FullName);
-
-                // confirm if the user wants to continue when the number of rows is too much
-                if (rowCount > Properties.Settings.Default.InertMaxRows)
-                {
-                    CurrentEditBox?.AppendText("-- Too many rows to insert" + Environment.NewLine + Environment.NewLine);
-                }
-                else
-                {
-                    var insertScript = await DatabaseDocBuilder.TableToInsertStatementAsync(obj);
-                    CurrentEditBox?.AppendText(insertScript + "GO" + Environment.NewLine);
+                    // get the object create script
+                    var script = await GetObjectCreateScriptAsync(obj);
+                    CurrentEditBox?.AppendText(script);
 
                     // Move caret to end and scroll to it
                     ScrollToCaret();
-                }
-            }
 
-            EndBuild();
+                    // get the insert statement for the object
+                    // get the number of rows in the table
+                    var rowCount = await DatabaseHelper.GetRowCountAsync(obj.FullName);
+
+                    // confirm if the user wants to continue when the number of rows is too much
+                    if (rowCount > Properties.Settings.Default.InertMaxRows)
+                    {
+                        CurrentEditBox?.AppendText("-- Too many rows to insert" + Environment.NewLine + Environment.NewLine);
+                    }
+                    else
+                    {
+                        var insertScript = await DatabaseDocBuilder.TableToInsertStatementAsync(obj);
+                        CurrentEditBox?.AppendText(insertScript + "GO" + Environment.NewLine);
+
+                        // Move caret to end and scroll to it
+                        ScrollToCaret();
+                    }
+                }
+
+                EndBuild();
+            }
         }
 
         /// <summary>
@@ -834,7 +835,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void CreatePrimaryKeyToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (BeginAddDDLScript(true))
+            if (BeginAddDDLScript())
             {
                 CurrentEditBox?.AppendText(definitionPanel.PrimaryKeyScript());
 
@@ -880,28 +881,29 @@ namespace SQL_Document_Builder
                 return;
             }
 
-            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Sql) != DialogResult.Yes) return;
-
-            StartBuild();
-
-            for (int i = 0; i < selectedObjects.Count; i++)
+            if (BeginAddDDLScript())
             {
-                int percentComplete = (i * 100) / selectedObjects.Count;
-                if (percentComplete > 0 && percentComplete % 2 == 0)
+                StartBuild();
+
+                for (int i = 0; i < selectedObjects.Count; i++)
                 {
-                    progressBar.Value = percentComplete;
+                    int percentComplete = (i * 100) / selectedObjects.Count;
+                    if (percentComplete > 0 && percentComplete % 2 == 0)
+                    {
+                        progressBar.Value = percentComplete;
+                    }
+                    statusToolStripStatusLabe.Text = $"Processing {percentComplete}%...";
+
+                    var script = await GetObjectCreateScriptAsync(selectedObjects[i]);
+
+                    CurrentEditBox?.AppendText(script);
+
+                    // Move caret to end and scroll to it
+                    ScrollToCaret();
                 }
-                statusToolStripStatusLabe.Text = $"Processing {percentComplete}%...";
 
-                var script = await GetObjectCreateScriptAsync(selectedObjects[i]);
-
-                CurrentEditBox?.AppendText(script);
-
-                // Move caret to end and scroll to it
-                ScrollToCaret();
+                EndBuild();
             }
-
-            EndBuild();
         }
 
         /// <summary>
@@ -1034,15 +1036,18 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Handles the "Extended properties" check box checked changed event:
+        /// Options_S the changed.
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
-        private void ExtendedPropertiesCheckBox_CheckedChanged(object sender, EventArgs e)
+        private void Options_Changed(object sender, EventArgs e)
         {
+            Properties.Settings.Default.AddDataSource= addDataSourceCheckBox.Checked ;
+            Properties.Settings.Default.AddDropStatement= scriptDropsCheckBox.Checked ;
             Properties.Settings.Default.UseExtendedProperties = extendedPropertiesCheckBox.Checked;
             Properties.Settings.Default.Save();
         }
+
 
         /// <summary>
         /// Footers the text.
@@ -1436,7 +1441,7 @@ namespace SQL_Document_Builder
                     }
                     else if (!string.IsNullOrEmpty(script))
                     {
-                        if (!BeginAddDDLScript(true)) return;
+                        if (!BeginAddDDLScript()) return;
 
                         // add SET IDENTITY_INSERT ON if the table has identity column
                         if (hasIdentityColumn)
@@ -1535,35 +1540,36 @@ namespace SQL_Document_Builder
 
             if (selectedObjects == null || selectedObjects.Count == 0) return;
 
-            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Sql) != DialogResult.Yes) return;
-
-            StartBuild();
-
-            for (int i = 0; i < selectedObjects.Count; i++)
+            if (BeginAddDDLScript())
             {
-                int percentComplete = (i * 100) / selectedObjects.Count;
-                if (percentComplete > 0 && percentComplete % 2 == 0)
+                StartBuild();
+
+                for (int i = 0; i < selectedObjects.Count; i++)
                 {
-                    progressBar.Value = percentComplete;
+                    int percentComplete = (i * 100) / selectedObjects.Count;
+                    if (percentComplete > 0 && percentComplete % 2 == 0)
+                    {
+                        progressBar.Value = percentComplete;
+                    }
+                    statusToolStripStatusLabe.Text = $"Processing {percentComplete}%...";
+
+                    var obj = selectedObjects[i];
+                    var script = await ObjectDescription.BuildObjectDescription(obj, Properties.Settings.Default.UseExtendedProperties);
+
+                    // add "GO" and new line after each object description if it is not empty
+                    if (!string.IsNullOrEmpty(script))
+                    {
+                        script += Environment.NewLine + "GO" + Environment.NewLine;
+                    }
+
+                    CurrentEditBox?.AppendText(script);
+
+                    // Move caret to end and scroll to it
+                    ScrollToCaret();
                 }
-                statusToolStripStatusLabe.Text = $"Processing {percentComplete}%...";
 
-                var obj = selectedObjects[i];
-                var script = await ObjectDescription.BuildObjectDescription(obj, Properties.Settings.Default.UseExtendedProperties);
-
-                // add "GO" and new line after each object description if it is not empty
-                if (!string.IsNullOrEmpty(script))
-                {
-                    script += Environment.NewLine + "GO" + Environment.NewLine;
-                }
-
-                CurrentEditBox?.AppendText(script);
-
-                // Move caret to end and scroll to it
-                ScrollToCaret();
+                EndBuild();
             }
-
-            EndBuild();
         }
 
         /// <summary>
@@ -2176,7 +2182,6 @@ namespace SQL_Document_Builder
             if (CurrentEditBox == null) return;
 
             this.Cursor = Cursors.WaitCursor;
-            CurrentEditBox.Text = String.Empty;
             CurrentEditBox.Enabled = false;
             CurrentEditBox.Cursor = Cursors.WaitCursor;
             statusToolStripStatusLabe.Text = "Please wait while generate the scripts";
@@ -2391,6 +2396,8 @@ namespace SQL_Document_Builder
                 Close();
             }
 
+            addDataSourceCheckBox.Checked = Properties.Settings.Default.AddDataSource;
+            scriptDropsCheckBox.Checked = Properties.Settings.Default.AddDropStatement;
             extendedPropertiesCheckBox.Checked = Properties.Settings.Default.UseExtendedProperties;
             insertBatchTextBox.Text = Properties.Settings.Default.InsertBatchRows.ToString();
             insertMaxTextBox.Text = Properties.Settings.Default.InertMaxRows.ToString();
@@ -2446,7 +2453,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void TableDescriptionToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (BeginAddDDLScript(true))
+            if (BeginAddDDLScript())
             {
                 var objectName = objectsListBox.SelectedItem as ObjectName;
                 if (!string.IsNullOrEmpty(objectName?.Name))

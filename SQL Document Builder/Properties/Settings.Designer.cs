@@ -202,5 +202,17 @@ namespace SQL_Document_Builder.Properties {
                 this["AddDataSource"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool AddDropStatement {
+            get {
+                return ((bool)(this["AddDropStatement"]));
+            }
+            set {
+                this["AddDropStatement"] = value;
+            }
+        }
     }
 }

@@ -57,5 +57,8 @@ Back to [[DW: Database tables|Data warehouse tables]]
     <Setting Name="AddDataSource" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">True</Value>
     </Setting>
+    <Setting Name="AddDropStatement" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
   </Settings>
 </SettingsFile>
