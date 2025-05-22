@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -14,6 +15,72 @@ namespace SQL_Document_Builder
     /// </summary>
     internal class DatabaseHelper
     {
+
+        /// <summary>
+        /// Adds the object description s ps.
+        /// </summary>
+        /// <param name="connectionString">The connection string.</param>
+        /// <returns>A Task.</returns>
+        internal static async Task<string> AddObjectDescriptionSPs(string connectionString)
+        {
+            var script = DatabaseDocBuilder.UspAddObjectDescription();
+
+            var sqlStatements = Regex.Split(script, @"\bGO\b", RegexOptions.IgnoreCase | RegexOptions.Multiline);
+
+            // execute each statement
+            foreach (var sql in sqlStatements)
+            {
+                //Execute(builder.ConnectionString, sql);
+                if (sql.Length > 0)
+                {
+                    var result = await DatabaseHelper.ExecuteSQLAsync(sql, connectionString);
+                    if (result != string.Empty)
+                    {
+                        return result;
+                    }
+                }
+            }
+            return string.Empty;
+        }
+
+        /// <summary>
+        /// Executes the scalar async.
+        /// </summary>
+        /// <param name="sql">The sql.</param>
+        /// <returns>A Task.</returns>
+        internal static async Task<object?> ExecuteScalarAsync(string sql, string connectionString = "")
+        {
+            object? value;
+
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                connectionString = Properties.Settings.Default.dbConnectionString;
+            }
+
+            using var connection = new SqlConnection(connectionString);
+            try
+            {
+                await using var command = new SqlCommand(sql, connection)
+                {
+                    CommandType = System.Data.CommandType.Text,
+                    CommandTimeout = 50000
+                };
+                await connection.OpenAsync(); // Ensure the connection is opened before executing commands
+                value = await command.ExecuteScalarAsync();
+            }
+            catch (Exception ex)
+            {
+                // show error message
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                value = null;
+            }
+            finally
+            {
+                await connection.CloseAsync();
+            }
+            return value;
+        }
+
         /// <summary>
         /// Executes the SQL statement asynchronously.
         /// </summary>
@@ -455,59 +522,6 @@ AND s.name = @SchemaName;";
         }
 
         /// <summary>
-        /// Test connection.
-        /// </summary>
-        /// <param name="connectionString">The connection string.</param>
-        /// <returns><![CDATA[Task<bool>]]></returns>
-        internal static async Task<bool> TestConnectionAsync(string connectionString)
-        {
-            using SqlConnection connection = new(connectionString);
-            try
-            {
-                await connection.OpenAsync();
-                connection.Close();
-                return true;
-            }
-            catch (SqlException)
-            {
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Gets the views async.
-        /// </summary>
-        /// <returns>A Task.</returns>
-        private static async Task<List<ObjectName>> GetViewsAsync()
-        {
-            var objects = new List<ObjectName>();
-
-            var query = @"
-                SELECT
-                    TABLE_SCHEMA,
-                    TABLE_NAME
-                FROM INFORMATION_SCHEMA.TABLES
-                WHERE TABLE_TYPE = 'View'
-                ORDER BY TABLE_SCHEMA, TABLE_NAME";
-
-            using var connection = new SqlConnection(Properties.Settings.Default.dbConnectionString);
-            using var command = new SqlCommand(query, connection)
-            {
-                CommandType = CommandType.Text,
-                CommandTimeout = 50000
-            };
-            await connection.OpenAsync();
-
-            using var reader = await command.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
-            {
-                objects.Add(new ObjectName(ObjectTypeEnums.View, reader["TABLE_SCHEMA"].ToString(), reader["TABLE_NAME"].ToString()));
-            }
-
-            return objects;
-        }
-
-        /// <summary>
         /// Save the description of the selected column
         /// </summary>
         internal static async Task SaveColumnDescAsync(string? objectName, string columnName, string desc)
@@ -559,6 +573,59 @@ END";
             {
                 await conn.CloseAsync();
             }
+        }
+
+        /// <summary>
+        /// Test connection.
+        /// </summary>
+        /// <param name="connectionString">The connection string.</param>
+        /// <returns><![CDATA[Task<bool>]]></returns>
+        internal static async Task<bool> TestConnectionAsync(string connectionString)
+        {
+            using SqlConnection connection = new(connectionString);
+            try
+            {
+                await connection.OpenAsync();
+                connection.Close();
+                return true;
+            }
+            catch (SqlException)
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Gets the views async.
+        /// </summary>
+        /// <returns>A Task.</returns>
+        private static async Task<List<ObjectName>> GetViewsAsync()
+        {
+            var objects = new List<ObjectName>();
+
+            var query = @"
+                SELECT
+                    TABLE_SCHEMA,
+                    TABLE_NAME
+                FROM INFORMATION_SCHEMA.TABLES
+                WHERE TABLE_TYPE = 'View'
+                ORDER BY TABLE_SCHEMA, TABLE_NAME";
+
+            using var connection = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+            using var command = new SqlCommand(query, connection)
+            {
+                CommandType = CommandType.Text,
+                CommandTimeout = 50000
+            };
+            await connection.OpenAsync();
+
+            using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                objects.Add(new ObjectName(ObjectTypeEnums.View, reader["TABLE_SCHEMA"].ToString(), reader["TABLE_NAME"].ToString()));
+            }
+
+            return objects;
         }
     }
 }

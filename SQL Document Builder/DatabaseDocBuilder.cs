@@ -267,6 +267,10 @@ WHERE sm.object_id = OBJECT_ID(@SchemaQualifiedName);";
                     //    sb.AppendLine($"--SET IDENTITY_INSERT {tableName} OFF;");
                     //}
                 }
+                else
+                {
+                    sb.AppendLine($"-- No data found for the query: {sql}");
+                }
             }
             catch (Exception ex)
             {

@@ -379,7 +379,8 @@ BEGIN
     CREATE INDEX {indexName}
     ON [{Schema}].[{TableName}] ({SelectedColumn});
 END
-GO";
+GO
+";
             }
 
             return sql;

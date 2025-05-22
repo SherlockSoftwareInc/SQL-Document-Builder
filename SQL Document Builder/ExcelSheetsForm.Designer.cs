@@ -31,10 +31,13 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ExcelSheetsForm));
             selectSheetLabel = new System.Windows.Forms.Label();
             closeButton = new System.Windows.Forms.Button();
-            analysisButton = new System.Windows.Forms.Button();
+            loadButton = new System.Windows.Forms.Button();
             sheetsListBox = new System.Windows.Forms.ListBox();
             statusStrip1 = new System.Windows.Forms.StatusStrip();
             infoToolStripStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
+            label1 = new System.Windows.Forms.Label();
+            tableNameTextBox = new System.Windows.Forms.TextBox();
+            nullCheckBox = new System.Windows.Forms.CheckBox();
             statusStrip1.SuspendLayout();
             SuspendLayout();
             // 
@@ -50,12 +53,12 @@
             closeButton.UseVisualStyleBackColor = true;
             closeButton.Click += CloseButton_Click;
             // 
-            // analysisButton
+            // loadButton
             // 
-            resources.ApplyResources(analysisButton, "analysisButton");
-            analysisButton.Name = "analysisButton";
-            analysisButton.UseVisualStyleBackColor = true;
-            analysisButton.Click += AnalysisButton_Click;
+            resources.ApplyResources(loadButton, "loadButton");
+            loadButton.Name = "loadButton";
+            loadButton.UseVisualStyleBackColor = true;
+            loadButton.Click += AnalysisButton_Click;
             // 
             // sheetsListBox
             // 
@@ -75,14 +78,36 @@
             resources.ApplyResources(infoToolStripStatusLabel, "infoToolStripStatusLabel");
             infoToolStripStatusLabel.Spring = true;
             // 
+            // label1
+            // 
+            resources.ApplyResources(label1, "label1");
+            label1.Name = "label1";
+            // 
+            // tableNameTextBox
+            // 
+            resources.ApplyResources(tableNameTextBox, "tableNameTextBox");
+            tableNameTextBox.Name = "tableNameTextBox";
+            // 
+            // nullCheckBox
+            // 
+            resources.ApplyResources(nullCheckBox, "nullCheckBox");
+            nullCheckBox.Checked = true;
+            nullCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
+            nullCheckBox.Name = "nullCheckBox";
+            nullCheckBox.UseVisualStyleBackColor = true;
+            // 
             // ExcelSheetsForm
             // 
+            AcceptButton = loadButton;
             resources.ApplyResources(this, "$this");
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            Controls.Add(nullCheckBox);
+            Controls.Add(tableNameTextBox);
             Controls.Add(statusStrip1);
+            Controls.Add(label1);
             Controls.Add(selectSheetLabel);
             Controls.Add(closeButton);
-            Controls.Add(analysisButton);
+            Controls.Add(loadButton);
             Controls.Add(sheetsListBox);
             FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             MaximizeBox = false;
@@ -99,9 +124,12 @@
 
         private System.Windows.Forms.Label selectSheetLabel;
         private System.Windows.Forms.Button closeButton;
-        private System.Windows.Forms.Button analysisButton;
+        private System.Windows.Forms.Button loadButton;
         private System.Windows.Forms.ListBox sheetsListBox;
         private System.Windows.Forms.StatusStrip statusStrip1;
         private System.Windows.Forms.ToolStripStatusLabel infoToolStripStatusLabel;
+        private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.TextBox tableNameTextBox;
+        private System.Windows.Forms.CheckBox nullCheckBox;
     }
 }

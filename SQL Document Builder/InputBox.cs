@@ -44,6 +44,11 @@ namespace SQL_Document_Builder
         public string? Title { get; set; }
 
         /// <summary>
+        /// Gets or sets the max length of the input text.
+        /// </summary>
+        public int MaxLength { get => textBox1.MaxLength; set => textBox1.MaxLength = value < 32767 ? value : 32767; }
+
+        /// <summary>
         /// Cancels the button_ click.
         /// </summary>
         /// <param name="sender">The sender.</param>

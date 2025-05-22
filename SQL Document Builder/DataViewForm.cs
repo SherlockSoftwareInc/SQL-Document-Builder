@@ -16,12 +16,12 @@ namespace SQL_Document_Builder
     /// </summary>
     public partial class DataViewForm : Form
     {
-        private CancellationTokenSource cancellationTokenSource;
+        private CancellationTokenSource? cancellationTokenSource;
         private string connectionString = string.Empty;
         private readonly DataTable? data;
         private int databaseIndex = 0;
 
-        private Task<DataTable> getDataTask;
+        private Task<DataTable?> getDataTask;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DataViewForm"/> class.
@@ -235,10 +235,7 @@ namespace SQL_Document_Builder
         /// </summary>
         private async void CloseFormAndCancelTask()
         {
-            if (cancellationTokenSource == null)
-            {
-                return;
-            }
+            if (cancellationTokenSource == null) return;
 
             // Signal cancellation
             cancellationTokenSource.Cancel();
@@ -347,44 +344,106 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>A Task.</returns>
-        private async Task<DataTable> GetDataAsync(string sql, CancellationToken cancellationToken)
+        private async Task<DataTable?> GetDataAsync(string sql, CancellationToken cancellationToken)
         {
             DataTable dt = new();
 
-            using var conn = new SqlConnection(connectionString);
-            using var cmd = new SqlCommand(sql, conn)
+            try
             {
-                CommandType = System.Data.CommandType.Text,
-                CommandTimeout = 50000
-            };
+                using var conn = new SqlConnection(connectionString);
+                using var cmd = new SqlCommand(sql, conn)
+                {
+                    CommandType = System.Data.CommandType.Text,
+                    CommandTimeout = 50000
+                };
 
-            await conn.OpenAsync(cancellationToken);
-            using var crt = cancellationToken.Register(() => cmd.Cancel());
+                await conn.OpenAsync(cancellationToken);
+                using var crt = cancellationToken.Register(() => cmd.Cancel());
 
-            using var dr = await cmd.ExecuteReaderAsync(cancellationToken);
+                using var dr = await cmd.ExecuteReaderAsync(cancellationToken);
 
-            // Load the schema from the data reader and create DataTable columns
-            for (int i = 0; i < dr.FieldCount; i++)
-            {
-                dt.Columns.Add(dr.GetName(i), dr.GetFieldType(i));
-            }
-
-            // Read rows one by one, checking for cancellation
-            while (await dr.ReadAsync(cancellationToken))
-            {
-                DataRow row = dt.NewRow();
+                // Load the schema from the data reader and create DataTable columns
                 for (int i = 0; i < dr.FieldCount; i++)
                 {
-                    row[i] = dr.IsDBNull(i) ? DBNull.Value : dr.GetValue(i);
+                    dt.Columns.Add(dr.GetName(i), dr.GetFieldType(i));
                 }
-                dt.Rows.Add(row);
 
-                // Check for cancellation request
-                cancellationToken.ThrowIfCancellationRequested();
+                // Read rows one by one, checking for cancellation
+                while (await dr.ReadAsync(cancellationToken))
+                {
+                    DataRow row = dt.NewRow();
+                    for (int i = 0; i < dr.FieldCount; i++)
+                    {
+                        row[i] = dr.IsDBNull(i) ? DBNull.Value : dr.GetValue(i);
+                    }
+                    dt.Rows.Add(row);
+
+                    // Check for cancellation request
+                    cancellationToken.ThrowIfCancellationRequested();
+                }
             }
-
+            catch (OperationCanceledException)
+            {
+                // Expected on cancellation, do not show error or close form
+                return null;
+            }
+            catch (Exception)
+            {
+                //// show error message and close the form
+                //MessageBox.Show(ex.Message, "Failed to load data",
+                //    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                //this.Invoke((MethodInvoker)delegate { this.Close(); });
+                throw;
+            }
             return dt;
         }
+        //private async Task<DataTable?> GetDataAsync(string sql, CancellationToken cancellationToken)
+        //{
+        //    DataTable dt = new();
+
+        //    try
+        //    {
+        //        using var conn = new SqlConnection(connectionString);
+        //        using var cmd = new SqlCommand(sql, conn)
+        //        {
+        //            CommandType = System.Data.CommandType.Text,
+        //            CommandTimeout = 50000
+        //        };
+
+        //        await conn.OpenAsync(cancellationToken);
+        //        using var crt = cancellationToken.Register(() => cmd.Cancel());
+
+        //        using var dr = await cmd.ExecuteReaderAsync(cancellationToken);
+
+        //        // Load the schema from the data reader and create DataTable columns
+        //        for (int i = 0; i < dr.FieldCount; i++)
+        //        {
+        //            dt.Columns.Add(dr.GetName(i), dr.GetFieldType(i));
+        //        }
+
+        //        // Read rows one by one, checking for cancellation
+        //        while (await dr.ReadAsync(cancellationToken))
+        //        {
+        //            DataRow row = dt.NewRow();
+        //            for (int i = 0; i < dr.FieldCount; i++)
+        //            {
+        //                row[i] = dr.IsDBNull(i) ? DBNull.Value : dr.GetValue(i);
+        //            }
+        //            dt.Rows.Add(row);
+
+        //            // Check for cancellation request
+        //            cancellationToken.ThrowIfCancellationRequested();
+        //        }
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        // show error message and close the form
+        //        MessageBox.Show(ex.Message, "Failed to load data",
+        //            MessageBoxButtons.OK, MessageBoxIcon.Error);
+        //        return null;
+        //    }
+        //    return dt;
+        //}
 
         /// <summary>
         /// Fetch the data and populates the data grid view
@@ -426,6 +485,8 @@ namespace SQL_Document_Builder
                     var dt = await getDataTask;
                     this.Invoke((MethodInvoker)delegate
                     {
+                        if (dt == null) Close();
+
                         if (MultipleValue && databaseIndex == 0)
                         {
                             dataGridView.DataSource = MergeValueColumns(dt);

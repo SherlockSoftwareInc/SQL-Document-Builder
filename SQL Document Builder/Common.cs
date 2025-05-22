@@ -40,9 +40,9 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="message">The message.</param>
         /// <param name="icon">The icon.</param>
-        public static DialogResult MsgBox(string message, MessageBoxIcon icon)
+        public static DialogResult MsgBox(string message, MessageBoxIcon icon = MessageBoxIcon.Information, MessageBoxButtons messageBoxButtons = MessageBoxButtons.OK)
         {
-            return MessageBox.Show(message, "Message", MessageBoxButtons.OK, icon);
+            return MessageBox.Show(message, "Message", messageBoxButtons, icon);
         }
 
         /// <summary>

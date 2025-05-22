@@ -8,6 +8,7 @@ using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using static ScintillaNET.Style;
 using static SQL_Document_Builder.ObjectName;
 
 namespace SQL_Document_Builder
@@ -27,8 +28,6 @@ namespace SQL_Document_Builder
         /// </summary>
         private int _connectionCount = 0;
 
-        private string _fileName = string.Empty;
-
         /// <summary>
         /// The selected connection.
         /// </summary>
@@ -39,6 +38,8 @@ namespace SQL_Document_Builder
         /// </summary>
         private List<ObjectName>? _tables = [];
 
+        private int _tabNo = 1;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="TableBuilderForm"/> class.
         /// </summary>
@@ -46,6 +47,26 @@ namespace SQL_Document_Builder
         {
             InitializeComponent();
             _ = new DarkModeCS(this);
+        }
+
+        /// <summary>
+        /// Gets the current edit box.
+        /// </summary>
+        private SqlEditBox? CurrentEditBox
+        {
+            get
+            {
+                // get the currently selected tab page
+                var selectedTab = tabControl1.SelectedTab;
+                if (selectedTab != null)
+                {
+                    // get the edit box from the selected tab page
+                    var editBox = selectedTab.Controls[0] as SqlEditBox;
+                    return editBox;
+                }
+
+                return null;
+            }
         }
 
         /// <summary>
@@ -72,6 +93,62 @@ namespace SQL_Document_Builder
             }
             return string.Empty;
         }
+
+        /*
+        private static async Task<string> ExecuteScriptsAsync(SQLDatabaseConnectionItem connection, string script)
+        {
+            // Start transaction
+            var beginResult = await DatabaseHelper.ExecuteSQLAsync("BEGIN TRANSACTION", connection.ConnectionString);
+            if (!string.IsNullOrEmpty(beginResult))
+                return beginResult;
+
+            // replace "Go" statement with "" in the script
+            script = Regex.Replace(script, @"\bGO\b", string.Empty, RegexOptions.IgnoreCase | RegexOptions.Multiline);
+
+            var result = await DatabaseHelper.ExecuteSQLAsync(script, connection.ConnectionString);
+            if (!string.IsNullOrEmpty(result))
+            {
+                // If error, rollback and return error
+                await DatabaseHelper.ExecuteSQLAsync("ROLLBACK TRANSACTION", connection.ConnectionString);
+                return result;
+            }
+
+            //// Split script into statements
+            //var sqlStatements = Regex.Split(script, @"\bGO\b", RegexOptions.IgnoreCase | RegexOptions.Multiline);
+
+            //// Execute each statement
+            //foreach (var sql in sqlStatements)
+            //{
+            //    if (sql.Trim().Length > 0)
+            //    {
+            //        var result = await DatabaseHelper.ExecuteSQLAsync(sql, connection.ConnectionString);
+            //        if (!string.IsNullOrEmpty(result))
+            //        {
+            //            // If error, rollback and return error
+            //            await DatabaseHelper.ExecuteSQLAsync("ROLLBACK TRANSACTION", connection.ConnectionString);
+            //            return result;
+            //        }
+            //    }
+            //}
+
+            // Ask user to commit or rollback
+            var dialogResult = MessageBox.Show(
+                "Do you want to COMMIT the transaction?\nClick Yes to COMMIT, No to ROLLBACK.",
+                "Transaction Complete",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question);
+
+            string endTransactionSql = dialogResult == DialogResult.Yes
+                ? "COMMIT TRANSACTION"
+                : "ROLLBACK TRANSACTION";
+
+            var endResult = await DatabaseHelper.ExecuteSQLAsync(endTransactionSql, connection.ConnectionString);
+            if (!string.IsNullOrEmpty(endResult))
+                return endResult;
+
+            return string.Empty;
+        }
+        */
 
         /// <summary>
         /// Recursively gets the currently focused control within a container.
@@ -211,6 +288,18 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Adds the data source tag to the document.
+        /// </summary>
+        private void AddDataSourceText()
+        {
+            // add the data source tag to the document when the document is empty
+            if (string.IsNullOrEmpty(CurrentEditBox?.Text) && Properties.Settings.Default.AddDataSource)
+            {
+                CurrentEditBox?.AppendText($"-- Data source: {serverToolStripStatusLabel.Text}::{databaseToolStripStatusLabel.Text}" + Environment.NewLine);
+            }
+        }
+
+        /// <summary>
         /// Add list item.
         /// </summary>
         /// <param name="tableType">The table type.</param>
@@ -222,90 +311,59 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Appends the current text in the sqlTextBox to the file.
+        /// Add a new tab with query edit box
         /// </summary>
-        private void AppendSave()
+        /// <param name="fileName"></param>
+        private bool AddTab(string fileName)
         {
-            if (CurrentEditBox == null) return;
+            // number of tabs is limited to 128
+            if (tabControl1.TabPages.Count >= 128)
+            {
+                MessageBox.Show("You can open up to 128 editing windows.", "Too many editing windows",
+                    MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                return false;
+            }
 
-            if (string.IsNullOrEmpty(_fileName))
+            var queryTextBox = GetNewTextBox(!(fileName.Length == 0));
+
+            if (fileName.Length > 0)
             {
-                saveAsToolStripMenuItem.PerformClick();
+                queryTextBox.OpenFile(fileName);
             }
-            else
-            {
-                // append the script to the file
-                try
-                {
-                    File.AppendAllText(_fileName, Environment.NewLine + CurrentEditBox?.Text);
-                    CurrentEditBox.Changed = false;
-                }
-                catch (Exception)
-                {
-                }
-            }
+
+            AddWindowsMenuItem(queryTextBox.FileName?.Length == 0 ? tabControl1.SelectedTab.Text : queryTextBox.FileNameOnly, queryTextBox.ID, tabControl1.SelectedTab.ToolTipText);
+
+            //if (fileName.Length > 0 && CurrentEditBox != null)
+            //{
+            //    SetFileName(fileName);
+            //}
+
+            CurrentEditBox?.Focus();
+
+            return true;
         }
 
         /// <summary>
-        /// Sets the title of the form.
+        /// Add a menu item under the windows dropdown to link the tab
         /// </summary>
-        private void SetTitle(string fileName = "")
+        /// <param name="name"></param>
+        /// <param name="id"></param>
+        private void AddWindowsMenuItem(string name, string id, string tooltipText)
         {
-            if (string.IsNullOrEmpty(fileName))
+            for (int i = 0; i < windowsToolStripMenuItem.DropDownItems.Count; i++)
             {
-                this.Text = $"SQL Server Document Builder - (New)";
-            }
-            else
-            {
-                this.Text = $"SQL Server Document Builder - {Path.GetFileName(fileName)}";
-            }
-        }
-
-        /// <summary>
-        /// Gets the current edit box.
-        /// </summary>
-        private SqlEditBox? CurrentEditBox => sqlTextBox;
-
-        /// <summary>
-        /// Clears the script text box.
-        /// </summary>
-        private DialogResult ClearTextBox()
-        {
-            if (string.IsNullOrEmpty(_fileName) && CurrentEditBox != null && CurrentEditBox?.Changed == false)
-            {
-                CurrentEditBox.Text = string.Empty;
-                CurrentEditBox.Changed = false;
-                SetTitle();
-
-                return DialogResult.OK;
-            }
-
-            // if the Control key is pressed, clear the text box without asking to save
-            if (ModifierKeys != Keys.Control)
-            {
-                if (CurrentEditBox.Changed)
+                if (id == windowsToolStripMenuItem.DropDownItems[i].Tag?.ToString())
                 {
-                    var result = Common.MsgBox("Do you want to save the changes?", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
-                    if (result == DialogResult.Cancel)
-                    {
-                        return result;
-                    }
-
-                    if (result == DialogResult.Yes)
-                    {
-                        saveToolStripMenuItem.PerformClick();
-                    }
+                    windowsToolStripMenuItem.DropDownItems[i].Text = name;
+                    windowsToolStripMenuItem.DropDownItems[i].ToolTipText = tooltipText;
+                    return;
                 }
             }
 
-            if (CurrentEditBox != null)
-            {
-                CurrentEditBox.Text = string.Empty;
-            }
-            CurrentEditBox.Changed = false;
-            _fileName = string.Empty;
-            SetTitle();
-            return DialogResult.OK;
+            ToolStripMenuItem tabItem = new ToolStripMenuItem(name) { Tag = id, ToolTipText = tooltipText };
+            tabItem.Click += WindowItem_Click;
+
+            windowsToolStripMenuItem.DropDownItems.Add(tabItem);
         }
 
         /// <summary>
@@ -315,7 +373,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void AssistantContentToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (ClearTextBox() == DialogResult.Cancel) return;
+            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Text) != DialogResult.Yes) return;
 
             try
             {
@@ -334,7 +392,10 @@ namespace SQL_Document_Builder
                     contents = builder.SchemaContent(Properties.Settings.Default.dbConnectionString, progress);
                 });
 
-                SetScript(contents);
+                CurrentEditBox?.AppendText(contents);
+
+                // Move caret to end and scroll to it
+                ScrollToCaret();
 
                 EndBuild();
             }
@@ -353,6 +414,19 @@ namespace SQL_Document_Builder
         {
             using var frm = new BatchColumnDesc();
             frm.ShowDialog();
+        }
+
+        /// <summary>
+        /// Begin adding ddl script.
+        /// </summary>
+        /// <returns>A bool.</returns>
+        private bool BeginAddDDLScript(bool addDataSource = false)
+        {
+            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Sql) != DialogResult.Yes) return false;
+
+            if (addDataSource) AddDataSourceText();
+
+            return true;
         }
 
         /// <summary>
@@ -406,6 +480,48 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Checks the current document type.
+        /// </summary>
+        /// <param name="targetType">The target type.</param>
+        /// <returns>A DialogResult.</returns>
+        private DialogResult CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums targetType)
+        {
+            bool result = false;
+
+            /// Check if the current edit box is null or not
+            if (CurrentEditBox == null)
+            {
+                AddTab("");
+                result = true;
+            }
+            else if (CurrentEditBox.Text.Length == 0)
+            {
+                result = true;
+            }
+            else if (CurrentEditBox.DocumentType != targetType)
+            {
+                if (Common.MsgBox("The current document type is not the same as the generated document type. Do you want to continue?", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                {
+                    result = true;
+                }
+            }
+            else
+            {
+                result = (CurrentEditBox.DocumentType == targetType);
+            }
+
+            if (result)
+            {
+                CurrentEditBox.DocumentType = targetType;
+                return DialogResult.Yes;
+            }
+            else
+            {
+                return DialogResult.No;
+            }
+        }
+
+        /// <summary>
         /// Handles the "Clear search" button click event.
         /// </summary>
         /// <param name="sender">The sender.</param>
@@ -423,7 +539,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The E.</param>
         private void ClipboardToTableToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (ClearTextBox() == DialogResult.Cancel) return;
+            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Html) != DialogResult.Yes) return;
 
             if (Clipboard.ContainsText())
             {
@@ -432,12 +548,57 @@ namespace SQL_Document_Builder
                 if (metaData.Length > 1)
                 {
                     var builder = new SharePointBuilder();
-                    SetScript(builder.TextToTable(metaData));
+                    var scripts = builder.TextToTable(metaData);
+                    CurrentEditBox?.AppendText(scripts);
+
+                    // Move caret to end and scroll to it
+                    ScrollToCaret();
+
                     EndBuild();
                 }
             }
 
             statusToolStripStatusLabe.Text = "Complete!";
+        }
+
+        /// <summary>
+        /// Close a specified tab
+        /// </summary>
+        /// <param name="tabIndex"></param>
+        /// <returns></returns>
+        private DialogResult CloseTab(int tabIndex)
+        {
+            var queryTextBox = GetTextBoxAt(tabIndex);
+            if (queryTextBox != null)
+            {
+                if (queryTextBox.SaveCheck() == DialogResult.Cancel) return DialogResult.Cancel;
+
+                // Remove the menu item in Windows dropdown menu
+                for (int i = 0; i < windowsToolStripMenuItem.DropDownItems.Count; i++)
+                {
+                    if (queryTextBox.ID == windowsToolStripMenuItem.DropDownItems[i].Tag?.ToString())
+                    {
+                        var menuItem = windowsToolStripMenuItem.DropDownItems[i];
+                        menuItem.Click -= WindowItem_Click;
+                        windowsToolStripMenuItem.DropDownItems.RemoveAt(i);
+                    }
+                }
+
+                // Remove the query edit box
+                //queryTextBox.FontChanged -= new System.EventHandler(this.SqlTextBox_FontChanged);
+                //queryTextBox.TextChanged -= new System.EventHandler(this.SqlTextBox_TextChanged);
+                //queryTextBox.Validated -= new System.EventHandler(this.SqlTextBox_Validated);
+                queryTextBox.Dispose();
+            }
+
+            if (tabIndex > 0)
+            {
+                tabControl1.SelectedIndex = tabIndex - 1;
+            }
+            // Removes the tab:
+            tabControl1.TabPages.RemoveAt(tabIndex);
+
+            return DialogResult.OK;
         }
 
         /// <summary>
@@ -449,21 +610,118 @@ namespace SQL_Document_Builder
         {
             if (CurrentEditBox != null)
             {
-                if (CurrentEditBox.Changed)
-                {
-                    var result = Common.MsgBox("Do you want to save the changes?", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
-                    if (result == DialogResult.Yes)
-                    {
-                        AppendSave();
-                    }
-                    else if (result == DialogResult.Cancel)
-                    {
-                        return;
-                    }
-                }
+                //if (CurrentEditBox.Changed)
+                //{
+                //    var result = Common.MsgBox("Do you want to save the changes?", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
+                //    if (result == DialogResult.Yes)
+                //    {
+                //        AppendSave();
+                //    }
+                //    else if (result == DialogResult.Cancel)
+                //    {
+                //        return;
+                //    }
+                //}
             }
 
             Close();
+        }
+
+        private void CloseToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (_mouseOnTabIndex < 0 || _mouseOnTabIndex >= tabControl1.TabCount) return;
+            if (CloseTab(_mouseOnTabIndex) != DialogResult.Cancel)
+            {
+                if (tabControl1.TabCount == 0) AddTab("");
+                if (tabControl1.TabCount > 0)
+                {
+                    tabControl1.SelectedIndex = tabControl1.TabCount - 1;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Handles the click event of the close tool strip menu item:
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void CloseToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            var selectedTabIndex = tabControl1.SelectedIndex;
+            if (selectedTabIndex < 0 || selectedTabIndex >= tabControl1.TabCount) return;
+
+            if (CloseTab(selectedTabIndex) != DialogResult.Cancel)
+            {
+                if (tabControl1.TabCount == 0) AddTab("");
+                //if (tabControl1.TabCount > 0)
+                //{
+                //    tabControl1.SelectedIndex = tabControl1.TabCount - 1;
+                //}
+            }
+        }
+
+        /// <summary>
+        /// Closes the all tabs.
+        /// </summary>
+        /// <returns>A DialogResult.</returns>
+        private DialogResult CloseAllTabs()
+        {
+            if (tabControl1.TabCount == 0) return DialogResult.OK;
+            for (int i = tabControl1.TabCount - 1; i >= 0; i--)
+            {
+                if (CloseATab(i) == DialogResult.Cancel) return DialogResult.Cancel;
+            }
+            return DialogResult.OK;
+        }
+
+        /// <summary>
+        /// Closes the a tab by index.
+        /// </summary>
+        /// <param name="tabIndex">The tab index.</param>
+        /// <returns>A DialogResult.</returns>
+        private DialogResult CloseATab(int tabIndex)
+        {
+            if (tabIndex < 0 || tabIndex >= tabControl1.TabCount) return DialogResult.OK;
+
+            tabControl1.SelectedIndex = tabIndex;
+
+            var queryTextBox = GetTextBoxAt(tabIndex);
+            if (queryTextBox != null)
+            {
+                if (queryTextBox.Changed)
+                {
+                    var checkResult = queryTextBox.SaveCheck();
+                    if (checkResult == DialogResult.Cancel) return DialogResult.Cancel;
+
+                    if (checkResult == DialogResult.Yes)
+                    {
+                        var saveResult = queryTextBox.Save();
+                        if (saveResult == DialogResult.Cancel) return DialogResult.Cancel;
+                    }
+                }
+                // Remove the menu item in Windows dropdown menu
+                for (int i = 0; i < windowsToolStripMenuItem.DropDownItems.Count; i++)
+                {
+                    if (queryTextBox.ID == windowsToolStripMenuItem.DropDownItems[i].Tag?.ToString())
+                    {
+                        var menuItem = windowsToolStripMenuItem.DropDownItems[i];
+                        menuItem.Click -= WindowItem_Click;
+                        windowsToolStripMenuItem.DropDownItems.RemoveAt(i);
+                        break;
+                    }
+                }
+                // Remove the query edit box
+                //queryTextBox.FontChanged -= new System.EventHandler(this.SqlTextBox_FontChanged);
+                queryTextBox.TextChanged -= new System.EventHandler(this.OnTextChanged);
+                queryTextBox.FileNameChanged -= new System.EventHandler(this.EditBox_FileNameChanged);
+                //queryTextBox.Validated -= new System.EventHandler(this.SqlTextBox_Validated);
+                queryTextBox.Dispose();
+            }
+
+            // Removes the tab:
+            tabControl1.TabPages.RemoveAt(tabIndex);
+
+            return DialogResult.OK;
         }
 
         /// <summary>
@@ -508,9 +766,12 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void CreateIndexToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (ClearTextBox() == DialogResult.Cancel) return;
-
-            SetScript(definitionPanel.CreateIndexScript());
+            if (BeginAddDDLScript(true))
+            {
+                CurrentEditBox?.AppendText(definitionPanel.CreateIndexScript());
+                // Move caret to end and scroll to it
+                ScrollToCaret();
+            }
         }
 
         /// <summary>
@@ -520,14 +781,14 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void CREATEINSERTToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (ClearTextBox() == DialogResult.Cancel) return;
-
             List<ObjectName>? selectedObjects = SelectObjects();
 
             if (selectedObjects == null || selectedObjects.Count == 0)
             {
                 return;
             }
+
+            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Sql) != DialogResult.Yes) return;
 
             StartBuild();
 
@@ -546,6 +807,9 @@ namespace SQL_Document_Builder
                 var script = await GetObjectCreateScriptAsync(obj);
                 CurrentEditBox?.AppendText(script);
 
+                // Move caret to end and scroll to it
+                ScrollToCaret();
+
                 // get the insert statement for the object
                 // get the number of rows in the table
                 var rowCount = await DatabaseHelper.GetRowCountAsync(obj.FullName);
@@ -559,6 +823,9 @@ namespace SQL_Document_Builder
                 {
                     var insertScript = await DatabaseDocBuilder.TableToInsertStatementAsync(obj);
                     CurrentEditBox?.AppendText(insertScript + "GO" + Environment.NewLine);
+
+                    // Move caret to end and scroll to it
+                    ScrollToCaret();
                 }
             }
 
@@ -572,12 +839,12 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void CreatePrimaryKeyToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (ClearTextBox() == DialogResult.Cancel) return;
-
-            SetScript(definitionPanel.PrimaryKeyScript());
-            if (!string.IsNullOrEmpty(CurrentEditBox?.Text))
+            if (BeginAddDDLScript(true))
             {
-                Clipboard.SetText(CurrentEditBox?.Text);
+                CurrentEditBox?.AppendText(definitionPanel.PrimaryKeyScript());
+
+                // Move caret to end and scroll to it
+                ScrollToCaret();
             }
         }
 
@@ -588,18 +855,19 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void CreateTableToolStripButton_Click(object sender, EventArgs e)
         {
-            if (ClearTextBox() == DialogResult.Cancel) return;
+            if (objectsListBox.SelectedItem is not ObjectName objectName) return;
 
-            if (objectsListBox.SelectedItem is not ObjectName objectName)
-            {
-                return;
-            }
+            if (!BeginAddDDLScript()) return;
 
             var script = await GetObjectCreateScriptAsync(objectName);
 
             if (!string.IsNullOrEmpty(script))
             {
-                SetScript(script);
+                AddDataSourceText();
+
+                CurrentEditBox?.AppendText(script);
+                // Move caret to end and scroll to it
+                ScrollToCaret();
             }
         }
 
@@ -610,14 +878,14 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void CREATEToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (ClearTextBox() == DialogResult.Cancel) return;
-
             List<ObjectName>? selectedObjects = SelectObjects();
 
             if (selectedObjects == null || selectedObjects.Count == 0)
             {
                 return;
             }
+
+            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Sql) != DialogResult.Yes) return;
 
             StartBuild();
 
@@ -633,6 +901,9 @@ namespace SQL_Document_Builder
                 var script = await GetObjectCreateScriptAsync(selectedObjects[i]);
 
                 CurrentEditBox?.AppendText(script);
+
+                // Move caret to end and scroll to it
+                ScrollToCaret();
             }
 
             EndBuild();
@@ -674,6 +945,38 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Edits the box_ file name changed.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void EditBox_FileNameChanged(object? sender, EventArgs e)
+        {
+            if (sender is SqlEditBox editBox)
+            {
+                // get the tab where the edit box is located
+                for (int i = 0; i < tabControl1.TabCount; i++)
+                {
+                    TabPage tabPage = tabControl1.TabPages[i];
+                    if (tabPage != null)
+                    {
+                        var queryTextBox = tabPage.Controls[0] as SqlEditBox;
+                        if (queryTextBox != null && editBox.ID == queryTextBox.ID)
+                        {
+                            // Set tab text to the title, or "new {index}" if empty
+                            tabPage.Text = string.IsNullOrEmpty(queryTextBox.Title)
+                                ? $"new {i}"
+                                : queryTextBox.Title;
+
+                            // Set tooltip to the full file name (full path)
+                            tabPage.ToolTipText = queryTextBox.FileName;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
         /// End build.
         /// </summary>
         private void EndBuild()
@@ -686,10 +989,10 @@ namespace SQL_Document_Builder
                 CurrentEditBox.Enabled = true;
                 CurrentEditBox.Cursor = Cursors.Default;
 
-                if (CurrentEditBox.Text.Length > 0)
-                {
-                    Clipboard.SetText(CurrentEditBox.Text);
-                }
+                //if (CurrentEditBox.Text.Length > 0)
+                //{
+                //    Clipboard.SetText(CurrentEditBox.Text);
+                //}
             }
         }
 
@@ -701,36 +1004,36 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void ExcelToINSERTToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (CurrentEditBox == null) return;
+            if (!BeginAddDDLScript()) return;
 
-            // get the Excel file name
-            var openFileDialog = new OpenFileDialog
+            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Sql) == DialogResult.Yes)
             {
-                Filter = "Excel files (*.xls;*.xlsx)|*.xls;*.xlsx|All files (*.*)|*.*",
-                Multiselect = false
-            };
-            if (openFileDialog.ShowDialog() != DialogResult.OK)
-            {
-                return;
-            }
-
-            var fileName = openFileDialog.FileName;
-
-            using var form = new ExcelSheetsForm()
-            {
-                FileName = fileName
-            };
-            form.ShowDialog();
-            if (form.ResultDataTable != null)
-            {
-                if (ClearTextBox() == DialogResult.Cancel) return;
-
-                var dataHelper = new ExcelDataHelper(form.ResultDataTable);
-                CurrentEditBox.Text = dataHelper.GetInsertStatement();
-                //CurrentEditBox?.AppendText("GO" + Environment.NewLine);
-                if (!string.IsNullOrEmpty(CurrentEditBox.Text))
+                // get the Excel file name
+                var openFileDialog = new OpenFileDialog
                 {
-                    Clipboard.SetText(CurrentEditBox.Text);
+                    Filter = "Excel files (*.xls;*.xlsx)|*.xls;*.xlsx|All files (*.*)|*.*",
+                    Multiselect = false
+                };
+                if (openFileDialog.ShowDialog() != DialogResult.OK)
+                {
+                    return;
+                }
+
+                var fileName = openFileDialog.FileName;
+
+                using var form = new ExcelSheetsForm()
+                {
+                    FileName = fileName
+                };
+                form.ShowDialog();
+                if (form.ResultDataTable != null)
+                {
+                    CurrentEditBox?.AppendText($"-- Data source: {fileName}" + Environment.NewLine);
+
+                    var dataHelper = new ExcelDataHelper(form.ResultDataTable);
+                    CurrentEditBox?.AppendText(dataHelper.GetInsertStatement(form.TableName, form.NullForBlank));
+                    // Move caret to end and scroll to it
+                    ScrollToCaret();
                 }
             }
         }
@@ -798,15 +1101,91 @@ namespace SQL_Document_Builder
         /// <param name="e">The E.</param>
         private async void FunctionListToolStripMenuItem1_Click(object sender, EventArgs e)
         {
-            if (ClearTextBox() == DialogResult.Cancel) return;
+            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Html) != DialogResult.Yes) return;
 
             using var dlg = new Schemapicker();
             if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
             {
                 var builder = new SharePointBuilder();
-                SetScript(await builder.BuildFunctionList(dlg.Schema));
+                var scripts = await builder.BuildFunctionList(dlg.Schema);
+
+                CurrentEditBox?.AppendText(scripts);
+
+                // Move caret to end and scroll to it
+                ScrollToCaret();
+
                 EndBuild();
             }
+        }
+
+        /// <summary>
+        /// Get next available empty new query edit box, add one if there is no empty
+        /// </summary>
+        /// <returns></returns>
+        private SqlEditBox GetNewTextBox(bool lookForEmpty)
+        {
+            TabPage tabPage;
+            if (lookForEmpty)
+            {
+                for (int i = 0; i < tabControl1.TabCount; i++)
+                {
+                    tabPage = (TabPage)tabControl1.Controls[i];
+                    if (tabPage?.Controls.Count > 0)
+                    {
+                        tabControl1.SelectedIndex = i;
+                        var editBox = (SqlEditBox)tabPage.Controls[0];
+                        if (editBox.FileName?.Length == 0 && editBox.Text.Length == 0) return editBox;
+                    }
+                }
+            }
+
+            var textBoxName = string.Format("sqlTextBox{0}", _tabNo);
+            var tabPageName = string.Format("tabPage{0}", _tabNo);
+            var tabTitle = $"new {_tabNo}";
+            _tabNo++;
+
+            var queryTextBox = new SqlEditBox()
+            {
+                Name = textBoxName,
+                Dock = DockStyle.Fill,
+                Location = new Point(6, 6),
+                Margin = new Padding(6),
+                TabIndex = _tabNo
+            };
+
+            //queryTextBox.QueryTextFontChanged += new System.EventHandler(this.SqlTextBox_FontChanged);
+            //queryTextBox.QueryTextChanged += new EventHandler(SqlTextBox_TextChanged);
+            //queryTextBox.QueryTextValidated += new System.EventHandler(this.SqlTextBox_Validated);
+            //queryTextBox.QueryScriptGenerated += new System.EventHandler<QueryScriptGeneratedArgs>(this.SqlTextBox_QueryScriptGenerated);
+            queryTextBox.FileNameChanged += EditBox_FileNameChanged;
+            queryTextBox.TextChanged += OnTextChanged;
+
+            tabPage = new TabPage(tabTitle)
+            {
+                Location = new Point(8, 39),
+                Margin = new Padding(6),
+                Padding = new Padding(6),
+                Size = new Size(1806, 420),
+                TabIndex = _tabNo,
+                Name = tabPageName,
+                UseVisualStyleBackColor = true
+            };
+            tabPage.SuspendLayout();
+            tabPage.Controls.Add(queryTextBox);
+
+            tabControl1.Controls.Add(tabPage);
+            tabPage.ResumeLayout(true);
+
+            queryTextBox.DefaultStyleFont = Properties.Settings.Default.EditorFont;
+            //if (Properties.Settings.Default.DarkMode)
+            //{
+            //    queryTextBox.SetDarkTheme();
+            //}
+            //queryTextBox.ChangeEditorFont(Properties.Settings.Default.EditorFont);
+
+            tabControl1.SelectedIndex = tabControl1.TabCount - 1;
+
+            return queryTextBox;
         }
 
         /// <summary>
@@ -828,6 +1207,27 @@ namespace SQL_Document_Builder
                 }
             }
             return dtSchemas;
+        }
+
+        /// <summary>
+        /// Get query text box on the specified tab
+        /// </summary>
+        /// <param name="tabIndex"></param>
+        /// <returns></returns>
+        private SqlEditBox GetTextBoxAt(int tabIndex)
+        {
+            if (tabIndex >= 0 && tabIndex < tabControl1.TabCount)
+            {
+                if (tabControl1.TabPages.Count > 0)
+                {
+                    if (tabControl1.TabPages[tabIndex].Controls[0] is SqlEditBox box)
+                    {
+                        return box;
+                    }
+                }
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -869,6 +1269,107 @@ namespace SQL_Document_Builder
             //    }
             //}
             return result;
+        }
+
+        /// <summary>
+        /// Handles the validated event of the insert batch text box.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void InsertBatchTextBox_Validated(object sender, EventArgs e)
+        {
+            if (int.TryParse(insertBatchTextBox.Text, out int value))
+            {
+                Properties.Settings.Default.InsertBatchRows = value;
+                Properties.Settings.Default.Save();
+            }
+            else
+            {
+                // show error message if the value is not a number
+                Common.MsgBox("The value should be a number", MessageBoxIcon.Error);
+                insertBatchTextBox.Text = Properties.Settings.Default.InsertBatchRows.ToString();
+                insertBatchTextBox.Focus();
+                insertBatchTextBox.SelectAll();
+            }
+        }
+
+        /// <summary>
+        /// Handles the validating event of the insert batch text box.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void InsertBatchTextBox_Validating(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            // checks the input value of the insert batch text box. it should be a number and between 1 and 100
+            if (int.TryParse(insertBatchTextBox.Text, out int value))
+            {
+                if (value < 1 || value > 100)
+                {
+                    // show error message if the value is not between 1 and 100
+                    Common.MsgBox("The value should be between 1 and 100", MessageBoxIcon.Error);
+                    insertBatchTextBox.Text = Properties.Settings.Default.InsertBatchRows.ToString();
+                    insertBatchTextBox.Focus();
+                    insertBatchTextBox.SelectAll();
+                }
+            }
+            else
+            {
+                // show error message if the value is not a number
+                Common.MsgBox("The value should be a number", MessageBoxIcon.Error);
+                insertBatchTextBox.Text = Properties.Settings.Default.InsertBatchRows.ToString();
+                insertBatchTextBox.Focus();
+                insertBatchTextBox.SelectAll();
+            }
+        }
+
+        /// <summary>
+        /// Handles the validated event of the insert max text box.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void InsertMaxTextBox_Validated(object sender, EventArgs e)
+        {
+            if (int.TryParse(insertMaxTextBox.Text, out int value))
+            {
+                Properties.Settings.Default.InertMaxRows = value;
+                Properties.Settings.Default.Save();
+            }
+            else
+            {
+                // show error message if the value is not a number
+                Common.MsgBox("The value should be a number", MessageBoxIcon.Error);
+                insertMaxTextBox.Text = Properties.Settings.Default.InertMaxRows.ToString();
+                insertMaxTextBox.Focus();
+                insertMaxTextBox.SelectAll();
+            }
+        }
+
+        /// <summary>
+        /// Handles the validating event of the insert max text box.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void InsertMaxTextBox_Validating(object sender, System.ComponentModel.CancelEventArgs e)
+        {            // checks the input value of the insert batch text box. it should be a number and between 1 and 100
+            if (int.TryParse(insertMaxTextBox.Text, out int value))
+            {
+                if (value < 1 || value > 10000)
+                {
+                    // show error message if the value is not between 1 and 10000
+                    Common.MsgBox("The value should be between 1 and 10,000", MessageBoxIcon.Error);
+                    insertMaxTextBox.Text = Properties.Settings.Default.InertMaxRows.ToString();
+                    insertMaxTextBox.Focus();
+                    insertMaxTextBox.SelectAll();
+                }
+            }
+            else
+            {
+                // show error message if the value is not a number
+                Common.MsgBox("The value should be a number", MessageBoxIcon.Error);
+                insertMaxTextBox.Text = Properties.Settings.Default.InertMaxRows.ToString();
+                insertMaxTextBox.Focus();
+                insertMaxTextBox.SelectAll();
+            }
         }
 
         /// <summary>
@@ -918,6 +1419,8 @@ namespace SQL_Document_Builder
                     }
                     else if (!string.IsNullOrEmpty(script))
                     {
+                        if (!BeginAddDDLScript(true)) return;
+
                         // add SET IDENTITY_INSERT ON if the table has identity column
                         if (hasIdentityColumn)
                         {
@@ -935,10 +1438,9 @@ namespace SQL_Document_Builder
                         }
 
                         CurrentEditBox?.AppendText("GO" + Environment.NewLine);
-                        if (!string.IsNullOrEmpty(CurrentEditBox?.Text))
-                        {
-                            Clipboard.SetText(CurrentEditBox?.Text);
-                        }
+
+                        // Move caret to end and scroll to it
+                        ScrollToCaret();
                     }
                     else
                     {
@@ -947,6 +1449,22 @@ namespace SQL_Document_Builder
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Checks if the usp_AddObjectDescription stored procedure exists in the database.
+        /// </summary>
+        /// <returns>A Task.</returns>
+        private async Task<bool> IsAddObjectDescriptionSPExists(string connectionString)
+        {
+            string sql = "select ROUTINE_NAME from INFORMATION_SCHEMA.ROUTINES where ROUTINE_SCHEMA = 'dbo' and ROUTINE_NAME = 'usp_AddObjectDescription'";
+            var returnValue = await DatabaseHelper.ExecuteScalarAsync(sql, connectionString);
+            if (returnValue == null || returnValue == DBNull.Value)
+            {
+                return false;
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -986,15 +1504,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void NewToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (CurrentEditBox != null)
-            {
-                // clear the sqlTextBox
-                if (ClearTextBox() == DialogResult.Cancel) return;
-
-                CurrentEditBox?.Focus();
-
-                CurrentEditBox.Changed = false;
-            }
+            AddTab("");
         }
 
         /// <summary>
@@ -1004,14 +1514,11 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void ObjectsDescriptionToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (ClearTextBox() == DialogResult.Cancel) return;
-
             List<ObjectName>? selectedObjects = SelectObjects();
 
-            if (selectedObjects == null || selectedObjects.Count == 0)
-            {
-                return;
-            }
+            if (selectedObjects == null || selectedObjects.Count == 0) return;
+
+            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Sql) != DialogResult.Yes) return;
 
             StartBuild();
 
@@ -1034,6 +1541,9 @@ namespace SQL_Document_Builder
                 }
 
                 CurrentEditBox?.AppendText(script);
+
+                // Move caret to end and scroll to it
+                ScrollToCaret();
             }
 
             EndBuild();
@@ -1142,15 +1652,15 @@ namespace SQL_Document_Builder
         private async void OnExecuteToolStripMenuItem_Click(object sender, EventArgs e)
         {
             // get the selected text from the sqlTextBox
-            string script = CurrentEditBox?.SelectedText;
-            if (script.Length == 0)
+            string? script = CurrentEditBox?.SelectedText;
+            if (script?.Length == 0)
             {
                 // if no text is selected, get the whole text from the sqlTextBox
                 script = CurrentEditBox?.Text;
             }
 
             // if the script is empty, show a message box and return
-            if (script.Length == 0)
+            if (script?.Length == 0)
             {
                 Common.MsgBox("No SQL statements to execute", MessageBoxIcon.Information);
                 return;
@@ -1177,6 +1687,24 @@ namespace SQL_Document_Builder
                     // show a message box if the connection string is empty
                     Common.MsgBox("Database connection not available", MessageBoxIcon.Error);
                     return;
+                }
+
+                // check if the script contains a 'usp_AddObjectDescription' statement
+                if (script.Contains("usp_AddObjectDescription", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    bool spExists = await IsAddObjectDescriptionSPExists(connection.ConnectionString);
+                    if (!spExists)
+                    {
+                        // ask for confirmation to execute the script
+                        if (Common.MsgBox("The target database does not contains a usp_AddObjectDescription stored procedure. Do you want to create it?", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
+                        {
+                            await DatabaseHelper.AddObjectDescriptionSPs(connection.ConnectionString);
+                        }
+                        else
+                        {
+                            return;
+                        }
+                    }
                 }
 
                 statusToolStripStatusLabe.Text = string.Format("Execute on {0}...", menuItem.ToString());
@@ -1218,11 +1746,30 @@ namespace SQL_Document_Builder
             var oFile = new OpenFileDialog() { Filter = "SQL script(*.sql)|*.sql|Text file(*.txt)|*.txt|All files(*.*)|*.*" };
             if (oFile.ShowDialog() == DialogResult.OK)
             {
-                _fileName = oFile.FileName;
-                SetTitle(_fileName);
+                var fileName = oFile.FileName;
+                if (fileName == null) return;
 
-                CurrentEditBox.Text = File.ReadAllText(_fileName);
-                CurrentEditBox.Changed = false;
+                // checks if the file has already opened
+                for (int i = 0; i < tabControl1.TabCount; i++)
+                {
+                    var queryTextBox = GetTextBoxAt(i);
+                    if (queryTextBox != null && queryTextBox?.FileName == fileName)
+                    {
+                        tabControl1.SelectedIndex = i;
+                        return;
+                    }
+                }
+
+                // add a new tab with the opened file
+                AddTab(fileName);
+
+                //SqlEditBox.OpenFile(oFile.FileName);
+
+                //_fileName = oFile.FileName;
+                //SetTitle(_fileName);
+
+                //CurrentEditBox.Text = File.ReadAllText(_fileName);
+                //CurrentEditBox.Changed = false;
             }
         }
 
@@ -1412,15 +1959,16 @@ namespace SQL_Document_Builder
         /// <param name="e">The E.</param>
         private void QueryDataToTableToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (CurrentEditBox == null) return;
-
-            if (ClearTextBox() == DialogResult.Cancel) return;
+            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Html) != DialogResult.Yes) return;
 
             using var form = new QueryDataToTableForm();
             form.ShowDialog();
             if (!string.IsNullOrEmpty(form.DocumentBody))
             {
-                CurrentEditBox.Text = form.DocumentBody;
+                CurrentEditBox?.AppendText(form.DocumentBody);
+
+                // Move caret to end and scroll to it
+                ScrollToCaret();
             }
         }
 
@@ -1431,19 +1979,24 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void QueryInsertToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (CurrentEditBox == null) return;
-
-            if (ClearTextBox() == DialogResult.Cancel) return;
-
-            using var form = new QueryDataToTableForm()
+            if (BeginAddDDLScript())
             {
-                InsertStatement = true
-            };
-            form.ShowDialog();
+                using var form = new QueryDataToTableForm()
+                {
+                    InsertStatement = true
+                };
+                form.ShowDialog();
 
-            if (!string.IsNullOrEmpty(form.DocumentBody))
-            {
-                CurrentEditBox.Text = form.DocumentBody;
+                var sql = form.DocumentBody;
+                if (!string.IsNullOrEmpty(sql))
+                {
+                    AddDataSourceText();
+
+                    CurrentEditBox?.AppendText(sql);
+
+                    // Move caret to end and scroll to it
+                    ScrollToCaret();
+                }
             }
         }
 
@@ -1452,52 +2005,11 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
-        private async void SaveAsToolStripMenuItem_Click(object sender, EventArgs e)
+        private void SaveAsToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (CurrentEditBox == null) return;
-
-            try
-            {
-                var oFile = new SaveFileDialog() { Filter = "SQL script(*.sql)|*.sql|Text file(*.txt)|*.txt|All files(*.*)|*.*" };
-                if (oFile.ShowDialog() == DialogResult.OK)
-                {
-                    _fileName = oFile.FileName;
-                    SetTitle(_fileName);
-
-                    var file = new System.IO.StreamWriter(_fileName, false);
-                    await file.WriteAsync(CurrentEditBox?.Text);
-                    file.Close();
-                    CurrentEditBox.Changed = false;
-
-                    statusToolStripStatusLabe.Text = "Complete";
-                }
-            }
-            catch (Exception ex)
-            {
-                // show error message if the file cannot be saved
-                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
-            }
-        }
-
-        /// <summary>
-        /// Handles the "Save and replace" tool strip menu item click:
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void SaveReplaceToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (CurrentEditBox == null) return;
-
-            // save the text in the sqlTextBox to the file
-            if (string.IsNullOrEmpty(_fileName))
-            {
-                saveAsToolStripMenuItem.PerformClick();
-            }
-            else
-            {
-                File.WriteAllText(_fileName, CurrentEditBox?.Text);
-                CurrentEditBox.Changed = false;
-            }
+            CurrentEditBox.SaveAs();
+            statusToolStripStatusLabe.Text = "Complete";
         }
 
         /// <summary>
@@ -1508,19 +2020,35 @@ namespace SQL_Document_Builder
         private void SaveToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (CurrentEditBox == null) return;
+            CurrentEditBox?.Save();
+        }
 
-            if (!CurrentEditBox.Changed) return;
+        /// <summary>
+        /// Handles the click event of the save tool strip menu item:
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void SaveToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            if (_mouseOnTabIndex < 0 || _mouseOnTabIndex >= tabControl1.TabCount) return;
 
-            if (string.IsNullOrEmpty(_fileName))
-            {
-                saveAsToolStripMenuItem.PerformClick();
-                return;
-            }
-            else
-            {
-                AppendSave();
-            }
-            statusToolStripStatusLabe.Text = "Script appended to the file";
+            // get the edit box at the selected tab index
+            var editBox = GetTextBoxAt(_mouseOnTabIndex);
+
+            if (editBox == null) return;
+
+            // save the file
+            editBox.SaveFile();
+
+            //tabControl1.SelectedIndex = _mouseOnTabIndex;
+            //if (_currentEditBox.FileName.Length > 0)
+            //{
+            //    _currentEditBox.SaveFile();
+            //}
+            //else
+            //{
+            //    SaveAsToolStripMenuItem_Click(sender, e);
+            //}
         }
 
         /// <summary>
@@ -1531,6 +2059,20 @@ namespace SQL_Document_Builder
         private async void SchemaComboBox_SelectedIndexChanged(object sender, EventArgs e)
         {
             await PopulateAsync();
+        }
+
+        /// <summary>
+        /// Scrolls the to caret.
+        /// </summary>
+        private void ScrollToCaret()
+        {
+            if (CurrentEditBox != null)
+            {
+                CurrentEditBox.SelectionStart = CurrentEditBox.TextLength;
+                CurrentEditBox.SelectionEnd = CurrentEditBox.TextLength;
+                CurrentEditBox.ScrollCaret();
+                CurrentEditBox.Focus();
+            }
         }
 
         /// <summary>
@@ -1585,18 +2127,18 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Saves the script.
+        /// Sets the title of the form.
         /// </summary>
-        /// <param name="sql">The sql.</param>
-        private void SetScript(string sql)
+        private void SetTitle(string fileName = "")
         {
-            if (string.IsNullOrEmpty(sql) || CurrentEditBox == null)
+            if (string.IsNullOrEmpty(fileName))
             {
-                return;
+                this.Text = $"SQL Server Document Builder - (New)";
             }
-
-            CurrentEditBox.Text = sql;
-            Clipboard.SetText(sql);
+            else
+            {
+                this.Text = $"SQL Server Document Builder - {Path.GetFileName(fileName)}";
+            }
         }
 
         /// <summary>
@@ -1606,7 +2148,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void SqlTextBox_Resize(object sender, EventArgs e)
         {
-            searchPanel.Left = sqlTextBox.Left + sqlTextBox.Width - searchPanel.Width - 5;
+            searchPanel.Left = tabControl1.Left + tabControl1.Width - searchPanel.Width - 5;
         }
 
         /// <summary>
@@ -1633,15 +2175,145 @@ namespace SQL_Document_Builder
         /// <param name="e">The E.</param>
         private async void StoredProcedureListToolStripMenuItem1_Click(object sender, EventArgs e)
         {
-            if (ClearTextBox() == DialogResult.Cancel) return;
+            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Html) != DialogResult.Yes) return;
 
             using var dlg = new Schemapicker();
             if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
             {
                 var builder = new SharePointBuilder();
-                SetScript(await builder.BuildSPList(dlg.Schema));
+                var scripts = await builder.BuildSPList(dlg.Schema);
+
+                CurrentEditBox?.AppendText(scripts);
+
+                // Move caret to end and scroll to it
+                ScrollToCaret();
+
                 EndBuild();
             }
+        }
+
+        /// <summary>
+        /// Handles the click event of the tab alias tool strip menu item:
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void TabAliasToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using var inputBox = new InputBox()
+            {
+                Title = "Alias",
+                Prompt = "Please enter alias:",
+                MaxLength = 50
+            };
+            if (inputBox.ShowDialog() == DialogResult.OK)
+            {
+                string alias = inputBox.InputText.Trim();
+                if (alias.Length > 0)
+                {
+                    var editBox = GetTextBoxAt(_mouseOnTabIndex);
+                    if (editBox != null)
+                    {
+                        editBox.Alias = alias;
+                        tabControl1.TabPages[_mouseOnTabIndex].Text = editBox.Title;
+                        tabControl1.TabPages[_mouseOnTabIndex].ToolTipText = alias;
+
+                        // change the text of the menu item in Windows dropdown
+                        for (int i = 0; i < windowsToolStripMenuItem.DropDownItems.Count; i++)
+                        {
+                            if (editBox.ID == windowsToolStripMenuItem.DropDownItems[i].Tag.ToString())
+                            {
+                                var menuItem = windowsToolStripMenuItem.DropDownItems[i];
+                                menuItem.Text = editBox.Title;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Handles Tab control draw item event: Draw tab with color for the selected tab
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void TabControl1_DrawItem(object sender, DrawItemEventArgs e)
+        {
+            Color tabColor = e.Index == tabControl1.SelectedIndex ? Color.LightBlue : SystemColors.Control;
+            using Brush br = new SolidBrush(tabColor);
+            e.Graphics.FillRectangle(br, e.Bounds);
+            SizeF sz = e.Graphics.MeasureString(tabControl1.TabPages[e.Index].Text, e.Font);
+            e.Graphics.DrawString(tabControl1.TabPages[e.Index].Text, e.Font, Brushes.Black, e.Bounds.Left + (e.Bounds.Width - sz.Width) / 2, e.Bounds.Top + (e.Bounds.Height - sz.Height) / 2 + 1);
+
+            Rectangle rect = e.Bounds;
+            rect.Offset(0, 1);
+            rect.Inflate(0, -1);
+            e.Graphics.DrawRectangle(Pens.DarkGray, rect);
+            e.DrawFocusRectangle();
+        }
+
+        /// <summary>
+        /// Handles MouseUp event of the tab control: Show context menu strip
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void TabControl1_MouseUp(object sender, MouseEventArgs e)
+        {
+            if (e.Button == System.Windows.Forms.MouseButtons.Right)
+            {
+                for (int i = 0; i < tabControl1.TabCount; ++i)
+                {
+                    Rectangle r = tabControl1.GetTabRect(i);
+                    if (r.Contains(e.Location) /* && it is the header that was clicked*/)
+                    {
+                        _mouseOnTabIndex = i;
+                        tabContextMenuStrip.Show(tabControl1, e.Location);
+                        break;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Handles the selected index changed event of the tab control:
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void TabControl1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (tabControl1.SelectedTab == null) return;
+
+            //CloseErrorPanel();
+
+            //_currentEditBox = GetTextBoxAt(tabControl1.SelectedIndex);
+            //if (_currentEditBox != null)
+            //{
+            //    if (_currentEditBox.Connection != null)
+            //    {
+            //        if (!_currentEditBox.Connection.Equals(Connection))
+            //        {
+            //            for (int i = 0; i < dataSourcesToolStripComboBox.Items.Count; i++)
+            //            {
+            //                var item = (DatabaseConnectionItem)dataSourcesToolStripComboBox.Items[i];
+            //                if (item.Name == _currentEditBox.Connection.Name)
+            //                {
+            //                    _tabChange = true;
+            //                    dataSourcesToolStripComboBox.SelectedIndex = i;
+            //                    _tabChange = false;
+            //                    break;
+            //                }
+            //            }
+            //        }
+            //    }
+
+            //    if (!_closeAll)
+            //    {
+            //        ParseSQL(_currentEditBox?.Text);
+            //        EnableExecute();
+            //        EnableUndoRedo();
+            //        _currentEditBox.Focus();
+            //    }
+            //}
         }
 
         /// <summary>
@@ -1651,13 +2323,10 @@ namespace SQL_Document_Builder
         /// <param name="e">The E.</param>
         private void TableBuilderForm_FormClosing(object sender, FormClosingEventArgs e)
         {
-            if (CurrentEditBox == null) return;
-            if (CurrentEditBox.Changed)
+            if (CloseAllTabs() == DialogResult.Cancel)
             {
-                if (Common.MsgBox("Do you want to save the changes?", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
-                {
-                    SaveToolStripMenuItem_Click(sender, e);
-                }
+                e.Cancel = true;
+                return;
             }
             //Properties.Settings.Default.SchemaSettings = _settingItems.Settings;
             //Properties.Settings.Default.Templetes = templates.TemplatesValue;
@@ -1713,6 +2382,8 @@ namespace SQL_Document_Builder
             splitContainer1.SplitterDistance = 200;
             if (collapsibleSplitter1 != null)
                 collapsibleSplitter1.SplitterDistance = (int)(this.Width * 0.4F);
+
+            AddTab("");
         }
 
         /// <summary>
@@ -1722,9 +2393,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The E.</param>
         private async void TableDefinitionToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (CurrentEditBox == null) return;
-
-            if (ClearTextBox() == DialogResult.Cancel) return;
+            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Html) != DialogResult.Yes) return;
 
             if (objectsListBox.SelectedItem != null)
             {
@@ -1732,14 +2401,14 @@ namespace SQL_Document_Builder
                 var header = HeaderText();
                 if (header.Length > 0)
                 {
-                    SetScript(header + Environment.NewLine);
+                    CurrentEditBox?.AppendText(header + Environment.NewLine);
                 }
-                else
-                {
-                    CurrentEditBox.Text = String.Empty;
-                }
+
                 var builder = new SharePointBuilder();
                 CurrentEditBox?.AppendText(await builder.GetTableDef(objectName));
+
+                // Move caret to end and scroll to it
+                ScrollToCaret();
 
                 //if ((objectName.Name.StartsWith("LT_")) || (objectName.Name.StartsWith("AT_")))
                 //{
@@ -1760,19 +2429,22 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void TableDescriptionToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (ClearTextBox() == DialogResult.Cancel) return;
-
-            var objectName = objectsListBox.SelectedItem as ObjectName;
-            if (!string.IsNullOrEmpty(objectName?.Name))
+            if (BeginAddDDLScript(true))
             {
-                SetScript(await ObjectDescription.BuildObjectDescription(objectName, Properties.Settings.Default.UseExtendedProperties));
-                if (!string.IsNullOrEmpty(CurrentEditBox?.Text))
+                var objectName = objectsListBox.SelectedItem as ObjectName;
+                if (!string.IsNullOrEmpty(objectName?.Name))
                 {
-                    Clipboard.SetText(CurrentEditBox?.Text);
-                }
-                else
-                {
-                    statusToolStripStatusLabe.Text = "No object description found";
+                    var description = await ObjectDescription.BuildObjectDescription(objectName, Properties.Settings.Default.UseExtendedProperties);
+                    if (!string.IsNullOrEmpty(description))
+                    {
+                        CurrentEditBox?.AppendText(description);
+                        // Move caret to end and scroll to it
+                        ScrollToCaret();
+                    }
+                    else
+                    {
+                        statusToolStripStatusLabe.Text = "No object description found";
+                    }
                 }
             }
         }
@@ -1784,7 +2456,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The E.</param>
         private async void TableListToolStripMenuItem1_Click(object sender, EventArgs e)
         {
-            if (ClearTextBox() == DialogResult.Cancel) return;
+            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Html) != DialogResult.Yes) return;
 
             using var dlg = new Schemapicker();
             if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
@@ -1803,7 +2475,10 @@ namespace SQL_Document_Builder
                     scripts = await builder.BuildTableListAsync(dlg.Schema, progress);
                 });
 
-                SetScript(scripts);
+                CurrentEditBox?.AppendText(scripts);
+
+                // Move caret to end and scroll to it
+                ScrollToCaret();
 
                 EndBuild();
             }
@@ -1852,15 +2527,12 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void UspToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (CurrentEditBox == null)
+            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Sql) == DialogResult.Yes)
             {
-                return;
+                CurrentEditBox?.AppendText(DatabaseDocBuilder.UspAddObjectDescription());
+                // Move caret to end and scroll to it
+                ScrollToCaret();
             }
-
-            if (ClearTextBox() == DialogResult.Cancel) return;
-
-            CurrentEditBox.Text = DatabaseDocBuilder.UspAddObjectDescription();
-            Clipboard.SetText(CurrentEditBox?.Text);
         }
 
         /// <summary>
@@ -1870,13 +2542,18 @@ namespace SQL_Document_Builder
         /// <param name="e">The E.</param>
         private async void ValueListToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (ClearTextBox() == DialogResult.Cancel) return;
+            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Html) != DialogResult.Yes) return;
 
             if (objectsListBox.SelectedItem != null)
             {
                 var objectName = (ObjectName)objectsListBox.SelectedItem;
                 var builder = new SharePointBuilder();
-                SetScript(await builder.GetTableValuesAsync(objectName.FullName));
+                var scripts = await builder.GetTableValuesAsync(objectName.FullName);
+                CurrentEditBox?.AppendText(scripts);
+
+                // Move caret to end and scroll to it
+                ScrollToCaret();
+
                 EndBuild();
             }
         }
@@ -1904,7 +2581,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The E.</param>
         private async void ViewListToolStripMenuItem1_Click(object sender, EventArgs e)
         {
-            if (ClearTextBox() == DialogResult.Cancel) return;
+            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Html) != DialogResult.Yes) return;
 
             using var dlg = new Schemapicker();
             if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
@@ -1923,9 +2600,34 @@ namespace SQL_Document_Builder
                     scripts = await builder.BuildViewListAsync(dlg.Schema, progress);
                 });
 
-                SetScript(scripts);
+                CurrentEditBox?.AppendText(scripts);
+
+                // Move caret to end and scroll to it
+                ScrollToCaret();
 
                 EndBuild();
+            }
+        }
+
+        /// <summary>
+        /// Handles recent file menu item click event: open selected file
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void WindowItem_Click(object sender, EventArgs e)
+        {
+            for (int i = 0; i < tabControl1.TabCount; i++)
+            {
+                var queryTextBox = GetTextBoxAt(i);
+                var itemTag = ((ToolStripMenuItem)sender).Tag.ToString();
+                if (itemTag != null && queryTextBox != null)
+                {
+                    if (queryTextBox.ID == itemTag)
+                    {
+                        tabControl1.SelectedIndex = i;
+                        break;
+                    }
+                }
             }
         }
 
@@ -1949,11 +2651,11 @@ namespace SQL_Document_Builder
             HotKeyManager.AddHotKey(this, CloseSearch, Keys.Escape);
 
             // remove conflicting hotkeys from scintilla
-            sqlTextBox.ClearCmdKey(Keys.Control | Keys.F);
-            sqlTextBox.ClearCmdKey(Keys.Control | Keys.R);
-            sqlTextBox.ClearCmdKey(Keys.Control | Keys.H);
-            sqlTextBox.ClearCmdKey(Keys.Control | Keys.L);
-            sqlTextBox.ClearCmdKey(Keys.Control | Keys.U);
+            //sqlTextBox.ClearCmdKey(Keys.Control | Keys.F);
+            //sqlTextBox.ClearCmdKey(Keys.Control | Keys.R);
+            //sqlTextBox.ClearCmdKey(Keys.Control | Keys.H);
+            //sqlTextBox.ClearCmdKey(Keys.Control | Keys.L);
+            //sqlTextBox.ClearCmdKey(Keys.Control | Keys.U);
         }
 
         /// <summary>
@@ -1961,9 +2663,9 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
-        private void OnTextChanged(object sender, EventArgs e)
+        private void OnTextChanged(object? sender, EventArgs e)
         {
-            if (CurrentEditBox == null) return;
+            if (CurrentEditBox == null || sender == null) return;
             CurrentEditBox.OnTextChanged(sender, e);
             statusToolStripStatusLabe.Text = string.Empty;
         }
@@ -2180,6 +2882,7 @@ namespace SQL_Document_Builder
 
         #region Quick Search Bar
 
+        private int _mouseOnTabIndex;
         private bool SearchIsOpen = false;
 
         /// <summary>
@@ -2190,26 +2893,6 @@ namespace SQL_Document_Builder
         private void CloseQuickSearch_Click(object sender, EventArgs e)
         {
             CloseSearch();
-        }
-
-        /// <summary>
-        /// Handles the click event of the search next button.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void SearchNext_Click(object sender, EventArgs e)
-        {
-            SearchManager.Find(true, false);
-        }
-
-        /// <summary>
-        /// Handles the click event of the search previous button.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void SearchPrevious_Click(object sender, EventArgs e)
-        {
-            SearchManager.Find(false, false);
         }
 
         /// <summary>
@@ -2236,7 +2919,7 @@ namespace SQL_Document_Builder
             if (CurrentEditBox == null) return;
 
             SearchManager.SearchBox = searchSQLTextBox;
-            SearchManager.TextArea = sqlTextBox;
+            SearchManager.TextArea = CurrentEditBox;
 
             if (!SearchIsOpen)
             {
@@ -2257,6 +2940,26 @@ namespace SQL_Document_Builder
                     searchSQLTextBox.SelectAll();
                 });
             }
+        }
+
+        /// <summary>
+        /// Handles the click event of the search next button.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void SearchNext_Click(object sender, EventArgs e)
+        {
+            SearchManager.Find(true, false);
+        }
+
+        /// <summary>
+        /// Handles the click event of the search previous button.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void SearchPrevious_Click(object sender, EventArgs e)
+        {
+            SearchManager.Find(false, false);
         }
 
         /// <summary>
@@ -2350,7 +3053,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void ClipboardToTableToolStripMenuItem1_Click(object sender, EventArgs e)
         {
-            if (ClearTextBox() == DialogResult.Cancel) return;
+            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Markdown) != DialogResult.Yes) return;
 
             if (Clipboard.ContainsText())
             {
@@ -2359,7 +3062,12 @@ namespace SQL_Document_Builder
                 if (metaData.Length > 1)
                 {
                     var builder = new MarkdownBuilder();
-                    SetScript(builder.TextToTable(metaData));
+
+                    CurrentEditBox?.AppendText(builder.TextToTable(metaData));
+
+                    // Move caret to end and scroll to it
+                    ScrollToCaret();
+
                     EndBuild();
                 }
             }
@@ -2374,7 +3082,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void FunctionListToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (ClearTextBox() == DialogResult.Cancel) return;
+            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Markdown) != DialogResult.Yes) return;
 
             using var dlg = new Schemapicker();
             if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
@@ -2393,10 +3101,26 @@ namespace SQL_Document_Builder
                     scripts = await builder.BuildFunctionListAsync(dlg.Schema, progress);
                 });
 
-                SetScript(scripts);
+                CurrentEditBox?.AppendText(scripts);
+
+                // Move caret to end and scroll to it
+                ScrollToCaret();
 
                 EndBuild();
             }
+        }
+
+        /// <summary>
+        /// Handles the click event of the query data to table tool strip menu item.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void QueryDataToTableToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Markdown) != DialogResult.Yes) return;
+
+            // Move caret to end and scroll to it
+            ScrollToCaret();
         }
 
         /// <summary>
@@ -2406,7 +3130,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void StoredProcedureListToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (ClearTextBox() == DialogResult.Cancel) return;
+            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Markdown) != DialogResult.Yes) return;
 
             using var dlg = new Schemapicker();
             if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
@@ -2425,7 +3149,10 @@ namespace SQL_Document_Builder
                     scripts = await builder.BuildSPListAsync(dlg.Schema, progress);
                 });
 
-                SetScript(scripts);
+                CurrentEditBox?.AppendText(scripts);
+
+                // Move caret to end and scroll to it
+                ScrollToCaret();
 
                 EndBuild();
             }
@@ -2438,9 +3165,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void TableDefinitionToolStripMenuItem_Click_1(object sender, EventArgs e)
         {
-            if (CurrentEditBox == null) return;
-
-            if (ClearTextBox() == DialogResult.Cancel) return;
+            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Markdown) != DialogResult.Yes) return;
 
             if (objectsListBox.SelectedItem != null)
             {
@@ -2448,14 +3173,14 @@ namespace SQL_Document_Builder
                 var header = HeaderText();
                 if (header.Length > 0)
                 {
-                    SetScript(header + Environment.NewLine);
+                    CurrentEditBox?.AppendText(header + Environment.NewLine);
                 }
-                else
-                {
-                    CurrentEditBox.Text = String.Empty;
-                }
+
                 var builder = new MarkdownBuilder();
                 CurrentEditBox?.AppendText(await builder.GetTableDef(objectName));
+
+                // Move caret to end and scroll to it
+                ScrollToCaret();
 
                 //if ((objectName.Name.StartsWith("LT_")) || (objectName.Name.StartsWith("AT_")))
                 //{
@@ -2475,7 +3200,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void TableListToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (ClearTextBox() == DialogResult.Cancel) return;
+            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Markdown) != DialogResult.Yes) return;
 
             using var dlg = new Schemapicker();
             if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
@@ -2494,7 +3219,10 @@ namespace SQL_Document_Builder
                     scripts = await builder.BuildTableList(dlg.Schema, progress);
                 });
 
-                SetScript(scripts);
+                CurrentEditBox?.AppendText(scripts);
+
+                // Move caret to end and scroll to it
+                ScrollToCaret();
 
                 EndBuild();
             }
@@ -2507,7 +3235,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void TableValuesMDToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (ClearTextBox() == DialogResult.Cancel) return;
+            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Markdown) != DialogResult.Yes) return;
 
             if (objectsListBox.SelectedItem != null)
             {
@@ -2516,7 +3244,9 @@ namespace SQL_Document_Builder
                 var valueBuilder = new MarkdownBuilder();
                 CurrentEditBox?.AppendText(await valueBuilder.GetTableValuesAsync(objectName.FullName));
 
-                //CurrentEditBox?.AppendText(FooterText() + Environment.NewLine);
+                // Move caret to end and scroll to it
+                ScrollToCaret();
+
                 EndBuild();
             }
         }
@@ -2528,7 +3258,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void ViewListToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (ClearTextBox() == DialogResult.Cancel) return;
+            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Markdown) != DialogResult.Yes) return;
 
             using var dlg = new Schemapicker();
             if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
@@ -2547,123 +3277,30 @@ namespace SQL_Document_Builder
                     scripts = await builder.BuildViewListAsync(dlg.Schema, progress);
                 });
 
-                SetScript(scripts);
+                CurrentEditBox?.AppendText(scripts);
+
+                // Move caret to end and scroll to it
+                ScrollToCaret();
 
                 EndBuild();
             }
         }
 
-        /// <summary>
-        /// Handles the click event of the query data to table tool strip menu item.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void QueryDataToTableToolStripMenuItem1_Click(object sender, EventArgs e)
-        {
-        }
-
         #endregion Markdown document builder
 
         /// <summary>
-        /// Handles the validating event of the insert batch text box.
+        /// handles the click event of the close all tool strip menu item:
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
-        private void InsertBatchTextBox_Validating(object sender, System.ComponentModel.CancelEventArgs e)
+        private void CloseAllToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            // checks the input value of the insert batch text box. it should be a number and between 1 and 100
-            if (int.TryParse(insertBatchTextBox.Text, out int value))
+            if (CloseAllTabs() == DialogResult.Cancel)
             {
-                if (value < 1 || value > 100)
-                {
-                    // show error message if the value is not between 1 and 100
-                    Common.MsgBox("The value should be between 1 and 100", MessageBoxIcon.Error);
-                    insertBatchTextBox.Text = Properties.Settings.Default.InsertBatchRows.ToString();
-                    insertBatchTextBox.Focus();
-                    insertBatchTextBox.SelectAll();
-                }
-            }
-            else
-            {
-                // show error message if the value is not a number
-                Common.MsgBox("The value should be a number", MessageBoxIcon.Error);
-                insertBatchTextBox.Text = Properties.Settings.Default.InsertBatchRows.ToString();
-                insertBatchTextBox.Focus();
-                insertBatchTextBox.SelectAll();
-            }
-        }
-
-        /// <summary>
-        /// Handles the validated event of the insert batch text box.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void InsertBatchTextBox_Validated(object sender, EventArgs e)
-        {
-            if (int.TryParse(insertBatchTextBox.Text, out int value))
-            {
-                Properties.Settings.Default.InsertBatchRows = value;
-                Properties.Settings.Default.Save();
-            }
-            else
-            {
-                // show error message if the value is not a number
-                Common.MsgBox("The value should be a number", MessageBoxIcon.Error);
-                insertBatchTextBox.Text = Properties.Settings.Default.InsertBatchRows.ToString();
-                insertBatchTextBox.Focus();
-                insertBatchTextBox.SelectAll();
-            }
-        }
-
-        /// <summary>
-        /// Handles the validating event of the insert max text box.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void InsertMaxTextBox_Validating(object sender, System.ComponentModel.CancelEventArgs e)
-        {            // checks the input value of the insert batch text box. it should be a number and between 1 and 100
-            if (int.TryParse(insertMaxTextBox.Text, out int value))
-            {
-                if (value < 1 || value > 10000)
-                {
-                    // show error message if the value is not between 1 and 10000
-                    Common.MsgBox("The value should be between 1 and 10,000", MessageBoxIcon.Error);
-                    insertMaxTextBox.Text = Properties.Settings.Default.InertMaxRows.ToString();
-                    insertMaxTextBox.Focus();
-                    insertMaxTextBox.SelectAll();
-                }
-            }
-            else
-            {
-                // show error message if the value is not a number
-                Common.MsgBox("The value should be a number", MessageBoxIcon.Error);
-                insertMaxTextBox.Text = Properties.Settings.Default.InertMaxRows.ToString();
-                insertMaxTextBox.Focus();
-                insertMaxTextBox.SelectAll();
+                return;
             }
 
-        }
-
-        /// <summary>
-        /// Handles the validated event of the insert max text box.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void InsertMaxTextBox_Validated(object sender, EventArgs e)
-        {
-            if (int.TryParse(insertMaxTextBox.Text, out int value))
-            {
-                Properties.Settings.Default.InertMaxRows = value;
-                Properties.Settings.Default.Save();
-            }
-            else
-            {
-                // show error message if the value is not a number
-                Common.MsgBox("The value should be a number", MessageBoxIcon.Error);
-                insertMaxTextBox.Text = Properties.Settings.Default.InertMaxRows.ToString();
-                insertMaxTextBox.Focus();
-                insertMaxTextBox.SelectAll();
-            }
+            AddTab("");
         }
     }
 }

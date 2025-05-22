@@ -14,7 +14,6 @@ namespace SQL_Document_Builder
     /// </summary>
     public partial class ExcelSheetsForm : Form
     {
-        private DataTable? _resultDataTable;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ExcelSheetsForm"/> class.
@@ -28,12 +27,22 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Gets the result data table.
         /// </summary>
-        public DataTable ResultDataTable => _resultDataTable;
+        public DataTable? ResultDataTable { get; private set; }
 
         /// <summary>
         /// The Excel file name to analyze.
         /// </summary>
         public string FileName { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets the table name.
+        /// </summary>
+        public string TableName { get; private set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether null for blank.
+        /// </summary>
+        public bool NullForBlank { get; private set; } = false;
 
         /// <summary>
         /// Open the Excel file with task cancellation control.
@@ -61,7 +70,7 @@ namespace SQL_Document_Builder
 
                 if (dataSet.Tables.Contains(sheetName))
                 {
-                    _resultDataTable = dataSet.Tables[sheetName];
+                    ResultDataTable = dataSet.Tables[sheetName];
                 }
                 else
                 {
@@ -98,6 +107,8 @@ namespace SQL_Document_Builder
                         MessageBox.Show(result, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
+                TableName = tableNameTextBox.Text.Trim();
+                NullForBlank = nullCheckBox.Checked;
             }
             catch (ObjectDisposedException)
             {
@@ -144,10 +155,12 @@ namespace SQL_Document_Builder
                 if (sheetsListBox.Items.Count > 0)
                 {
                     sheetsListBox.SelectedIndex = 0;
-                    analysisButton.Enabled = true;
+                    loadButton.Enabled = true;
                 }
 
                 infoToolStripStatusLabel.Text = Path.GetFileName(FileName);
+
+                tableNameTextBox.Focus();
             }
             catch (Exception ex)
             {

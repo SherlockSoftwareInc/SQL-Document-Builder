@@ -2,6 +2,7 @@
 using System;
 using System.Drawing;
 using System.IO;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace SQL_Document_Builder
@@ -48,17 +49,201 @@ namespace SQL_Document_Builder
             //InitHotkeys();
         }
 
+        public event EventHandler FileNameChanged;
+
+        public event EventHandler QueryTextChanged;
+
+        public event EventHandler QueryTextFontChanged;
+
+        public event EventHandler QueryTextValidated;
+
+        //public event EventHandler<QueryScriptGeneratedArgs> QueryScriptGenerated;
+
+        /// <summary>
+        /// The document type enums.
+        /// </summary>
+        public enum DocumentTypeEnums
+        {
+            empty,
+            Sql,
+            Text,
+            Xml,
+            Json,
+            Html,
+            Css,
+            JavaScript,
+            CSharp,
+            VBScript,
+            PowerShell,
+            BatchFile,
+            Markdown
+        }
+
+        /// <summary>
+        /// Gets or sets the alias.
+        /// </summary>
+        public string Alias { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets the default style font.
+        /// </summary>
+        public System.Drawing.Font DefaultStyleFont
+        {
+            get => this.Font;
+            set
+            {
+                this.Font = value;
+
+                for (int i = 0; i < this.Styles.Count; i++)
+                {
+                    this.Styles[i].Font = value.Name;
+                    this.Styles[i].SizeF = value.Size;
+                }
+
+                // Refresh the text to apply the new font size
+                this.Refresh();
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the document type.
+        /// </summary>
+        public DocumentTypeEnums DocumentType { get; set; } = DocumentTypeEnums.empty;
+
+        /// <summary>
+        /// File name of current query script
+        /// </summary>
+        public string FileName { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Return file name without full path
+        /// </summary>
+        public string FileNameOnly
+        {
+            get
+            {
+                if (FileName.Length > 0)
+                {
+                    if (System.IO.File.Exists(FileName))
+                        return System.IO.Path.GetFileName(FileName);
+                }
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Gets the edit box id.
+        /// </summary>
+        public string ID { get; private set; } = Guid.NewGuid().ToString();
+
+        /// <summary>
+        /// Return a title for display as tab text and windows menu item
+        /// When the length of the file name > 20, cut the 15 chars on the head and last 2 chars to build a short display name
+        /// </summary>
+        public string Title
+        {
+            get
+            {
+                if (Alias.Length > 0)
+                {
+                    return Alias.Length <= 20 ? Alias : string.Concat(Alias.AsSpan(0, 15), "...", Alias.AsSpan(Alias.Length - 2, 2));
+                }
+
+                if (FileName.Length > 0)
+                {
+                    var fileName = System.IO.Path.GetFileNameWithoutExtension(FileName);
+                    return fileName.Length <= 20 ? fileName : string.Concat(fileName.AsSpan(0, 15), "...", fileName.AsSpan(fileName.Length - 2, 2));
+                }
+                return string.Empty;
+            }
+        }
+
         /// <summary>
         /// Gets or sets a value indicating whether text changed.
         /// </summary>
         internal bool Changed { get; set; } = false;
 
         /// <summary>
+        /// Checks whether the current query text needs to be saved
+        /// </summary>
+        /// <returns></returns>
+        public DialogResult SaveCheck()
+        {
+            if (Changed)
+            {
+                switch (MessageBox.Show("Do you want to save the changes?", "SQL Document Builder", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question))
+                {
+                    case DialogResult.Yes:
+                        SaveFile();
+                        return DialogResult.Yes;
+
+                    case DialogResult.Cancel:
+                        return DialogResult.Cancel;
+
+                    default:
+                        return DialogResult.No;
+                }
+            }
+            return DialogResult.No;
+        }
+
+        /// <summary>
+        /// Save the current edit
+        /// </summary>
+        public void SaveFile()
+        {
+            if (FileName.Length == 0)
+            {
+                using var dlg = new SaveFileDialog()
+                {
+                    Filter = "SQL files(*.sql)|*.sql|Text files(*.txt)|*.txt|All files(*.*)|*.*",
+                    Title = "Save File As"
+                };
+                if (dlg.ShowDialog() == DialogResult.OK)
+                {
+                    FileName = dlg.FileName;
+                }
+                else
+                {
+                    return;
+                }
+            }
+
+            if (FileName.Length > 0)
+            {
+                try
+                {
+                    System.IO.File.WriteAllText(FileName, Text);
+                    this.SetSavePoint();
+                    //_originalText = Text;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "An error occurred", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Handles the text changed event of the SQL text box:
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        internal void OnTextChanged(object sender, EventArgs e)
+        {
+            Changed = true;
+            //statusToolStripStatusLabe.Text = string.Empty;
+
+            SetColumnMargins();
+        }
+
+        /// <summary>
         /// Inits the colors.
         /// </summary>
         private void InitColors()
         {
-            this.SetSelectionBackColor(true, IntToColor(0x114D9C));
+            // Set selection background color using the new property
+            this.SelectionBackColor = IntToColor(0x114D9C);
         }
 
         /// <summary>
@@ -142,7 +327,9 @@ namespace SQL_Document_Builder
             this.Styles[Style.Sql.User3].ForeColor = Color.Orange;	// IntToColor(0xFFA500);
             this.Styles[Style.Sql.User4].ForeColor = Color.Cyan;	// IntToColor(0x00FFFF);
             this.Styles[Style.Sql.QuotedIdentifier].ForeColor = Color.LightYellow;	// IntToColor(0xFFFF00);
-            this.Styles[Style.Sql.QOperator].ForeColor = Color.Magenta;	// IntToColor(0xFF00FF);
+            this.Styles[Style.Sql.QOperator].ForeColor = Color.Magenta; // IntToColor(0xFF00FF);
+
+            this.CaretForeColor = Color.White;
 
             //this.SetKeywords(0, "select from where and or not in is null like between exists all any " +
             //       "insert into values update set delete truncate create alter drop table view index procedure function trigger " +
@@ -164,19 +351,6 @@ namespace SQL_Document_Builder
             this.SetKeywords(4, "all and any between cross exists in inner is join left like not null or outer pivot right some unpivot ( ) * ");
             // User2 = 5
             this.SetKeywords(5, "sys objects sysobjects ");
-        }
-
-        /// <summary>
-        /// Handles the text changed event of the SQL text box:
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        internal void OnTextChanged(object sender, EventArgs e)
-        {
-            Changed = true;
-            //statusToolStripStatusLabe.Text = string.Empty;
-
-            SetColumnMargins();
         }
 
         /// <summary>
@@ -376,7 +550,7 @@ namespace SQL_Document_Builder
                         {
                             try
                             {
-                                if (File.Exists(path))
+                                if (System.IO.File.Exists(path))
                                 {
                                     //_fileName = path;
                                     //SetTitle(_fileName);
@@ -427,6 +601,164 @@ namespace SQL_Document_Builder
             {
                 action.Invoke();
             }
+        }
+
+        /// <summary>
+        /// Opens the file.
+        /// </summary>
+        /// <param name="fileName">The file name.</param>
+        internal void OpenFile(string fileName)
+        {
+            // check if file exists
+            if (System.IO.File.Exists(fileName))
+            {
+                FileName = fileName;
+                this.Text = System.IO.File.ReadAllText(FileName);
+                this.Changed = false;
+
+                // using file extension to set the document type
+                string ext = System.IO.Path.GetExtension(FileName).ToLowerInvariant();
+                switch (ext)
+                {
+                    case ".sql":
+                        DocumentType = DocumentTypeEnums.Sql;
+                        break;
+
+                    case ".txt":
+                        DocumentType = DocumentTypeEnums.Text;
+                        break;
+
+                    case ".xml":
+                        DocumentType = DocumentTypeEnums.Xml;
+                        break;
+
+                    case ".json":
+                        DocumentType = DocumentTypeEnums.Json;
+                        break;
+
+                    case ".html":
+                    case ".htm":
+                        DocumentType = DocumentTypeEnums.Html;
+                        break;
+
+                    case ".css":
+                        DocumentType = DocumentTypeEnums.Css;
+                        break;
+
+                    case ".js":
+                        DocumentType = DocumentTypeEnums.JavaScript;
+                        break;
+
+                    case ".cs":
+                        DocumentType = DocumentTypeEnums.CSharp;
+                        break;
+
+                    case ".vb":
+                        DocumentType = DocumentTypeEnums.VBScript;
+                        break;
+
+                    case ".ps1":
+                        DocumentType = DocumentTypeEnums.PowerShell;
+                        break;
+
+                    case ".bat":
+                    case ".cmd":
+                        DocumentType = DocumentTypeEnums.BatchFile;
+                        break;
+
+                    case ".md":
+                    case ".markdown":
+                        DocumentType = DocumentTypeEnums.Markdown;
+                        break;
+                }
+
+                FileNameChanged?.Invoke(this, EventArgs.Empty);
+            }
+
+            //_fileName = oFile.FileName;
+            //SetTitle(_fileName);
+
+            //CurrentEditBox.Text = File.ReadAllText(_fileName);
+            //CurrentEditBox.Changed = false;
+        }
+
+        /// <summary>
+        /// Saves the current file.
+        /// </summary>
+        internal DialogResult Save()
+        {
+            try
+            {
+                if (FileName.Length > 0)
+                {
+                    System.IO.File.WriteAllTextAsync(FileName, this.Text);
+                    Changed = false;
+                }
+                else
+                {
+                    return SaveAs();
+                }
+            }
+            catch (Exception ex)
+            {
+                // show error message if the file cannot be saved
+                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
+            }
+            return DialogResult.OK;
+        }
+
+        /// <summary>
+        /// Saves the as.
+        /// </summary>
+        internal DialogResult SaveAs()
+        {
+            DialogResult result = DialogResult.None;
+
+            try
+            {
+                var oFile = new SaveFileDialog
+                {
+                    // set the filter based on the document type
+                    Filter = DocumentType switch
+                    {
+                        DocumentTypeEnums.Sql => "SQL files(*.sql)|*.sql|Text files(*.txt)|*.txt|All files(*.*)|*.*",
+                        DocumentTypeEnums.Text => "Text files(*.txt)|*.txt|All files(*.*)|*.*",
+                        DocumentTypeEnums.Markdown => "Markdown files(*.md)|*.md|All files(*.*)|*.*",
+                        DocumentTypeEnums.Xml => "XML files(*.xml)|*.xml|All files(*.*)|*.*",
+                        DocumentTypeEnums.Json => "JSON files(*.json)|*.json|All files(*.*)|*.*",
+                        DocumentTypeEnums.Html => "HTML files(*.html)|*.html|All files(*.*)|*.*",
+                        DocumentTypeEnums.Css => "CSS files(*.css)|*.css|All files(*.*)|*.*",
+                        DocumentTypeEnums.JavaScript => "JavaScript files(*.js)|*.js|All files(*.*)|*.*",
+                        DocumentTypeEnums.CSharp => "C# files(*.cs)|*.cs|All files(*.*)|*.*",
+                        DocumentTypeEnums.VBScript => "VBScript files(*.vb)|*.vb|All files(*.*)|*.*",
+                        DocumentTypeEnums.PowerShell => "PowerShell files(*.ps1)|*.ps1|All files(*.*)|*.*",
+                        DocumentTypeEnums.BatchFile => "Batch files(*.bat)|*.bat|All files(*.*)|*.*",
+                        _ => "All files(*.*)|*.*",
+                    }
+                };
+                result = oFile.ShowDialog();
+
+                if (result == DialogResult.OK)
+                {
+                    if (FileName != oFile.FileName)
+                    {
+                        FileName = oFile.FileName;
+                        FileNameChanged?.Invoke(this, EventArgs.Empty);
+                    }
+
+                    var file = new System.IO.StreamWriter(FileName, false);
+                    file.WriteAsync(this.Text);
+                    file.Close();
+                    Changed = false;
+                }
+            }
+            catch (Exception ex)
+            {
+                // show error message if the file cannot be saved
+                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
+            }
+
+            return result;
         }
 
         #endregion Utils
