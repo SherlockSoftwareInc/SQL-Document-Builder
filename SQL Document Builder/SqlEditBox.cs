@@ -2,7 +2,6 @@
 using System;
 using System.Drawing;
 using System.IO;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace SQL_Document_Builder
@@ -162,67 +161,6 @@ namespace SQL_Document_Builder
         /// Gets or sets a value indicating whether text changed.
         /// </summary>
         internal bool Changed { get; set; } = false;
-
-        /// <summary>
-        /// Checks whether the current query text needs to be saved
-        /// </summary>
-        /// <returns></returns>
-        public DialogResult SaveCheck()
-        {
-            if (Changed)
-            {
-                switch (MessageBox.Show("Do you want to save the changes?", "SQL Document Builder", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question))
-                {
-                    case DialogResult.Yes:
-                        SaveFile();
-                        return DialogResult.Yes;
-
-                    case DialogResult.Cancel:
-                        return DialogResult.Cancel;
-
-                    default:
-                        return DialogResult.No;
-                }
-            }
-            return DialogResult.No;
-        }
-
-        /// <summary>
-        /// Save the current edit
-        /// </summary>
-        public void SaveFile()
-        {
-            if (FileName.Length == 0)
-            {
-                using var dlg = new SaveFileDialog()
-                {
-                    Filter = "SQL files(*.sql)|*.sql|Text files(*.txt)|*.txt|All files(*.*)|*.*",
-                    Title = "Save File As"
-                };
-                if (dlg.ShowDialog() == DialogResult.OK)
-                {
-                    FileName = dlg.FileName;
-                }
-                else
-                {
-                    return;
-                }
-            }
-
-            if (FileName.Length > 0)
-            {
-                try
-                {
-                    System.IO.File.WriteAllText(FileName, Text);
-                    this.SetSavePoint();
-                    //_originalText = Text;
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ex.Message, "An error occurred", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-            }
-        }
 
         /// <summary>
         /// Handles the text changed event of the SQL text box:
@@ -746,9 +684,8 @@ namespace SQL_Document_Builder
                         FileNameChanged?.Invoke(this, EventArgs.Empty);
                     }
 
-                    var file = new System.IO.StreamWriter(FileName, false);
-                    file.WriteAsync(this.Text);
-                    file.Close();
+                    System.IO.File.WriteAllText(FileName, Text);
+                    this.SetSavePoint();
                     Changed = false;
                 }
             }
@@ -760,6 +697,32 @@ namespace SQL_Document_Builder
 
             return result;
         }
+
+        /// <summary>
+        /// Checks whether the current query text needs to be saved
+        /// </summary>
+        /// <returns></returns>
+        internal DialogResult SaveCheck()
+        {
+            if (Changed)
+            {
+                switch (MessageBox.Show("Do you want to save the changes?", "SQL Document Builder", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question))
+                {
+                    case DialogResult.Yes:
+                        Save();
+                        return DialogResult.Yes;
+
+                    case DialogResult.Cancel:
+                        return DialogResult.Cancel;
+
+                    default:
+                        return DialogResult.No;
+                }
+            }
+            return DialogResult.No;
+        }
+
+
 
         #endregion Utils
     }

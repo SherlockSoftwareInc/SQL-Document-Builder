@@ -2038,7 +2038,7 @@ namespace SQL_Document_Builder
             if (editBox == null) return;
 
             // save the file
-            editBox.SaveFile();
+            editBox.Save();
 
             //tabControl1.SelectedIndex = _mouseOnTabIndex;
             //if (_currentEditBox.FileName.Length > 0)
