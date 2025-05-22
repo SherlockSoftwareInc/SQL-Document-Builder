@@ -333,11 +333,6 @@ namespace SQL_Document_Builder
 
             AddWindowsMenuItem(queryTextBox.FileName?.Length == 0 ? tabControl1.SelectedTab.Text : queryTextBox.FileNameOnly, queryTextBox.ID, tabControl1.SelectedTab.ToolTipText);
 
-            //if (fileName.Length > 0 && CurrentEditBox != null)
-            //{
-            //    SetFileName(fileName);
-            //}
-
             CurrentEditBox?.Focus();
 
             return true;
@@ -1139,9 +1134,10 @@ namespace SQL_Document_Builder
                 }
             }
 
-            var textBoxName = string.Format("sqlTextBox{0}", _tabNo);
-            var tabPageName = string.Format("tabPage{0}", _tabNo);
-            var tabTitle = $"new {_tabNo}";
+            var nextPageNum = GetNextTabNum();
+            var textBoxName = $"sqlTextBox{nextPageNum}";
+            var tabPageName = $"tabPage{nextPageNum}";
+            var tabTitle = $"new {nextPageNum}";
             _tabNo++;
 
             var queryTextBox = new SqlEditBox()
@@ -1186,6 +1182,27 @@ namespace SQL_Document_Builder
             tabControl1.SelectedIndex = tabControl1.TabCount - 1;
 
             return queryTextBox;
+        }
+
+        /// <summary>
+        /// Gets the next available tab number.
+        /// </summary>
+        /// <returns>An int.</returns>
+        private int GetNextTabNum()
+        { 
+            int pageNum = 1;
+
+            for (int i = 1; i < 500; i++)
+            {
+                string pageName = $"tabPage{i}";
+                // check if the tab page name already exists
+                if (tabControl1.TabPages[pageName] == null)
+                {
+                    pageNum = i;
+                    break;
+                }
+            }
+            return pageNum;
         }
 
         /// <summary>
