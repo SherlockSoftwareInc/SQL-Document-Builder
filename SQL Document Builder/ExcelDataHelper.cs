@@ -27,60 +27,6 @@ namespace SQL_Document_Builder
         public DataTable Data { get; }
 
         /// <summary>
-        /// Infers the column type.
-        /// </summary>
-        /// <param name="table">The table.</param>
-        /// <param name="columnIndex">The column index.</param>
-        /// <param name="maxRows">The max rows.</param>
-        /// <returns>A Type.</returns>
-        private Type InferColumnType(int columnIndex, int maxRows = 1000)
-        {
-            int rowCount = Math.Min(Data.Rows.Count, maxRows);
-            bool isInt = true, isLong = true, isDecimal = true, isDateTime = true, isBool = true, isGuid = true;
-            for (int i = 0; i < rowCount; i++)
-            {
-                var value = Data.Rows[i][columnIndex]?.ToString();
-                if (string.IsNullOrWhiteSpace(value))
-                    continue;
-
-                // If value is all digits and starts with '0' and length > 1, treat as string
-                if (value.Length > 1 && value[0] == '0' && value.All(char.IsDigit))
-                {
-                    // This column must be string
-                    isInt = isLong = isDecimal = isDateTime = isBool = isGuid = false;
-                    break;
-                }
-
-                int intVal;
-                long longVal;
-                decimal decVal;
-                DateTime dtVal;
-                bool boolVal;
-                Guid guidVal;
-
-                if (isInt && !int.TryParse(value, out intVal))
-                    isInt = false;
-                if (isLong && !long.TryParse(value, out longVal))
-                    isLong = false;
-                if (isDecimal && !decimal.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out decVal))
-                    isDecimal = false;
-                if (isDateTime && !DateTime.TryParse(value, out dtVal))
-                    isDateTime = false;
-                if (isBool && !bool.TryParse(value, out boolVal))
-                    isBool = false;
-                if (isGuid && !Guid.TryParse(value, out guidVal))
-                    isGuid = false;
-            }
-
-            if (isInt) return typeof(int);
-            if (isLong) return typeof(long);
-            if (isDecimal) return typeof(decimal);
-            if (isBool) return typeof(bool);
-            if (isDateTime) return typeof(DateTime);
-            if (isGuid) return typeof(Guid);
-            return typeof(string);
-        }
-        /// <summary>
         /// Gets the insert statement from the DataTable.
         /// </summary>
         /// <returns>A string.</returns>
@@ -151,7 +97,7 @@ namespace SQL_Document_Builder
                     sb.AppendLine();
             }
             sb.AppendLine(");");
-            sb.AppendLine();
+            sb.AppendLine("GO");
 
             // Batch size with safe fallback
             int batchSize = 20;
@@ -178,7 +124,7 @@ namespace SQL_Document_Builder
                 for (int rowIndex = batchStart; rowIndex < batchEnd; rowIndex++)
                 {
                     var row = Data.Rows[rowIndex];
-                    sb.Append('(');
+                    sb.Append("\t(");
                     for (var i = 0; i < Data.Columns.Count; i++)
                     {
                         var type = inferredTypes[i];
@@ -199,7 +145,7 @@ namespace SQL_Document_Builder
                         }
                         else if (type == typeof(string))
                         {
-                            var value = valueStr.Replace("'", "''");
+                            var value = valueStr?.Replace("'", "''");
                             sb.Append($"N'{value}'");
                         }
                         else if (type == typeof(decimal) || type == typeof(double) || type == typeof(float))
@@ -232,7 +178,7 @@ namespace SQL_Document_Builder
                         }
                         else
                         {
-                            var value = valueStr.Replace("'", "''");
+                            var value = valueStr?.Replace("'", "''");
                             sb.Append($"N'{value}'");
                         }
 
@@ -250,6 +196,67 @@ namespace SQL_Document_Builder
             sb.AppendLine($"SELECT * FROM {objectName.FullName}");
 
             return sb.ToString();
+        }
+
+        /// <summary>
+        /// Infers the column type.
+        /// </summary>
+        /// <param name="table">The table.</param>
+        /// <param name="columnIndex">The column index.</param>
+        /// <param name="maxRows">The max rows.</param>
+        /// <returns>A Type.</returns>
+        private Type InferColumnType(int columnIndex, int maxRows = 1000)
+        {
+            int rowCount = Math.Min(Data.Rows.Count, maxRows);
+            bool isInt = true, isLong = true, isDecimal = true, isDateTime = true, isBool = true, isGuid = true;
+            bool foundValue = false;
+            for (int i = 0; i < rowCount; i++)
+            {
+                var value = Data.Rows[i][columnIndex]?.ToString();
+                if (string.IsNullOrWhiteSpace(value))
+                    continue;
+
+                foundValue = true;
+
+                // If value is all digits and starts with '0' and length > 1, treat as string
+                if (value.Length > 1 && value[0] == '0' && value.All(char.IsDigit))
+                {
+                    // This column must be string
+                    isInt = isLong = isDecimal = isDateTime = isBool = isGuid = false;
+                    break;
+                }
+
+                int intVal;
+                long longVal;
+                decimal decVal;
+                DateTime dtVal;
+                bool boolVal;
+                Guid guidVal;
+
+                if (isInt && !int.TryParse(value, out intVal))
+                    isInt = false;
+                if (isLong && !long.TryParse(value, out longVal))
+                    isLong = false;
+                if (isDecimal && !decimal.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out decVal))
+                    isDecimal = false;
+                if (isDateTime && !DateTime.TryParse(value, out dtVal))
+                    isDateTime = false;
+                if (isBool && !bool.TryParse(value, out boolVal))
+                    isBool = false;
+                if (isGuid && !Guid.TryParse(value, out guidVal))
+                    isGuid = false;
+            }
+
+            if (!foundValue)
+                return typeof(string);
+
+            if (isInt) return typeof(int);
+            if (isLong) return typeof(long);
+            if (isDecimal) return typeof(decimal);
+            if (isBool) return typeof(bool);
+            if (isDateTime) return typeof(DateTime);
+            if (isGuid) return typeof(Guid);
+            return typeof(string);
         }
     }
 }

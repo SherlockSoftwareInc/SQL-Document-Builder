@@ -72,9 +72,7 @@
             includeHeadersCheckBox = new System.Windows.Forms.CheckBox();
             scriptDataCheckBox = new System.Windows.Forms.CheckBox();
             noCollationCheckBox = new System.Windows.Forms.CheckBox();
-            ansiPaddingCheckBox = new System.Windows.Forms.CheckBox();
             extendedPropertiesCheckBox = new System.Windows.Forms.CheckBox();
-            includeIfNotExistsCheckBox = new System.Windows.Forms.CheckBox();
             addDataSourceCheckBox = new System.Windows.Forms.CheckBox();
             scriptDropsCheckBox = new System.Windows.Forms.CheckBox();
             menuStrip1 = new System.Windows.Forms.MenuStrip();
@@ -499,9 +497,7 @@
             tabPage2.Controls.Add(includeHeadersCheckBox);
             tabPage2.Controls.Add(scriptDataCheckBox);
             tabPage2.Controls.Add(noCollationCheckBox);
-            tabPage2.Controls.Add(ansiPaddingCheckBox);
             tabPage2.Controls.Add(extendedPropertiesCheckBox);
-            tabPage2.Controls.Add(includeIfNotExistsCheckBox);
             tabPage2.Controls.Add(addDataSourceCheckBox);
             tabPage2.Controls.Add(scriptDropsCheckBox);
             tabPage2.Location = new System.Drawing.Point(4, 24);
@@ -600,18 +596,6 @@
             noCollationCheckBox.Visible = false;
             noCollationCheckBox.CheckedChanged += Options_Changed;
             // 
-            // ansiPaddingCheckBox
-            // 
-            ansiPaddingCheckBox.AutoSize = true;
-            ansiPaddingCheckBox.Location = new System.Drawing.Point(9, 413);
-            ansiPaddingCheckBox.Name = "ansiPaddingCheckBox";
-            ansiPaddingCheckBox.Size = new System.Drawing.Size(93, 19);
-            ansiPaddingCheckBox.TabIndex = 12;
-            ansiPaddingCheckBox.Text = "AnsiPadding";
-            ansiPaddingCheckBox.UseVisualStyleBackColor = true;
-            ansiPaddingCheckBox.Visible = false;
-            ansiPaddingCheckBox.CheckedChanged += Options_Changed;
-            // 
             // extendedPropertiesCheckBox
             // 
             extendedPropertiesCheckBox.AutoSize = true;
@@ -619,23 +603,11 @@
             extendedPropertiesCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
             extendedPropertiesCheckBox.Location = new System.Drawing.Point(8, 56);
             extendedPropertiesCheckBox.Name = "extendedPropertiesCheckBox";
-            extendedPropertiesCheckBox.Size = new System.Drawing.Size(166, 19);
+            extendedPropertiesCheckBox.Size = new System.Drawing.Size(178, 19);
             extendedPropertiesCheckBox.TabIndex = 13;
-            extendedPropertiesCheckBox.Text = "Use sp_extendedproperties";
+            extendedPropertiesCheckBox.Text = "Use sp_addextendedproperty";
             extendedPropertiesCheckBox.UseVisualStyleBackColor = true;
             extendedPropertiesCheckBox.CheckedChanged += Options_Changed;
-            // 
-            // includeIfNotExistsCheckBox
-            // 
-            includeIfNotExistsCheckBox.AutoSize = true;
-            includeIfNotExistsCheckBox.Location = new System.Drawing.Point(9, 388);
-            includeIfNotExistsCheckBox.Name = "includeIfNotExistsCheckBox";
-            includeIfNotExistsCheckBox.Size = new System.Drawing.Size(120, 19);
-            includeIfNotExistsCheckBox.TabIndex = 14;
-            includeIfNotExistsCheckBox.Text = "IncludeIfNotExists";
-            includeIfNotExistsCheckBox.UseVisualStyleBackColor = true;
-            includeIfNotExistsCheckBox.Visible = false;
-            includeIfNotExistsCheckBox.CheckedChanged += Options_Changed;
             // 
             // addDataSourceCheckBox
             // 
@@ -1430,9 +1402,7 @@
         private System.Windows.Forms.CheckBox includeHeadersCheckBox;
         private System.Windows.Forms.CheckBox scriptDataCheckBox;
         private System.Windows.Forms.CheckBox noCollationCheckBox;
-        private System.Windows.Forms.CheckBox ansiPaddingCheckBox;
         private System.Windows.Forms.CheckBox extendedPropertiesCheckBox;
-        private System.Windows.Forms.CheckBox includeIfNotExistsCheckBox;
         private System.Windows.Forms.CheckBox addDataSourceCheckBox;
         private System.Windows.Forms.CheckBox scriptDropsCheckBox;
         private System.Windows.Forms.ListBox objectsListBox;

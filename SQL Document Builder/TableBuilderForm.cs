@@ -1001,8 +1001,6 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void ExcelToINSERTToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (!BeginAddDDLScript()) return;
-
             if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Sql) == DialogResult.Yes)
             {
                 // get the Excel file name
