@@ -2551,6 +2551,12 @@ namespace SQL_Document_Builder
         {
             if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Sql) == DialogResult.Yes)
             {
+                // when the current edit box is not empty, add a tab
+                if (CurrentEditBox?.Text.Length > 0)
+                {
+                    AddTab("");
+                }
+
                 CurrentEditBox?.AppendText(DatabaseDocBuilder.UspAddObjectDescription());
                 // Move caret to end and scroll to it
                 ScrollToCaret();

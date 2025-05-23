@@ -244,11 +244,14 @@ namespace SQL_Document_Builder
 
                 foreach (string item in items)
                 {
+                    var name = new ObjectName(ObjectTypeEnums.None, item.Trim());
+
                     // find the item in the selectable list box
                     foreach (ObjectName selectableItem in selectableListBox.Items)
                     {
                         // check if the item is already in the selectable list box
-                        if (selectableItem.ToString().Equals(item, StringComparison.OrdinalIgnoreCase))
+                        if (selectableItem.Schema.Equals(name.Schema, StringComparison.OrdinalIgnoreCase) &&
+                            selectableItem.Name.Equals(name.Name, StringComparison.OrdinalIgnoreCase))
                         {
                             selectableListBox.SelectedItem = selectableItem;
                             addButton.PerformClick();

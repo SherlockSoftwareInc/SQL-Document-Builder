@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            components = new System.ComponentModel.Container();
             label1 = new System.Windows.Forms.Label();
             objectTypeComboBox = new System.Windows.Forms.ComboBox();
             schemaComboBox = new System.Windows.Forms.ComboBox();
@@ -47,6 +48,7 @@
             removeAllButton = new System.Windows.Forms.Button();
             pasteButton = new System.Windows.Forms.Button();
             copyButton = new System.Windows.Forms.Button();
+            toolTip1 = new System.Windows.Forms.ToolTip(components);
             SuspendLayout();
             // 
             // label1
@@ -67,6 +69,7 @@
             objectTypeComboBox.Name = "objectTypeComboBox";
             objectTypeComboBox.Size = new System.Drawing.Size(183, 23);
             objectTypeComboBox.TabIndex = 1;
+            toolTip1.SetToolTip(objectTypeComboBox, "Select a object type");
             objectTypeComboBox.SelectedIndexChanged += ObjectTypeComboBox_SelectedIndexChanged;
             // 
             // schemaComboBox
@@ -77,7 +80,8 @@
             schemaComboBox.Location = new System.Drawing.Point(105, 41);
             schemaComboBox.Name = "schemaComboBox";
             schemaComboBox.Size = new System.Drawing.Size(183, 23);
-            schemaComboBox.TabIndex = 1;
+            schemaComboBox.TabIndex = 3;
+            toolTip1.SetToolTip(schemaComboBox, "Select schema");
             schemaComboBox.SelectedIndexChanged += SchemaComboBox_SelectedIndexChanged;
             // 
             // label2
@@ -86,7 +90,7 @@
             label2.Location = new System.Drawing.Point(12, 44);
             label2.Name = "label2";
             label2.Size = new System.Drawing.Size(52, 15);
-            label2.TabIndex = 0;
+            label2.TabIndex = 2;
             label2.Text = "Schema:";
             // 
             // filterTextBox
@@ -94,7 +98,8 @@
             filterTextBox.Location = new System.Drawing.Point(105, 70);
             filterTextBox.Name = "filterTextBox";
             filterTextBox.Size = new System.Drawing.Size(161, 23);
-            filterTextBox.TabIndex = 2;
+            filterTextBox.TabIndex = 5;
+            toolTip1.SetToolTip(filterTextBox, "Filter the selectable objects by");
             filterTextBox.TextChanged += FilterTextBox_TextChanged;
             // 
             // label3
@@ -103,7 +108,7 @@
             label3.Location = new System.Drawing.Point(12, 73);
             label3.Name = "label3";
             label3.Size = new System.Drawing.Size(36, 15);
-            label3.TabIndex = 0;
+            label3.TabIndex = 4;
             label3.Text = "Filter:";
             // 
             // clearButton
@@ -111,8 +116,9 @@
             clearButton.Location = new System.Drawing.Point(265, 69);
             clearButton.Name = "clearButton";
             clearButton.Size = new System.Drawing.Size(23, 23);
-            clearButton.TabIndex = 3;
+            clearButton.TabIndex = 6;
             clearButton.Text = "X";
+            toolTip1.SetToolTip(clearButton, "Clear the filter");
             clearButton.UseVisualStyleBackColor = true;
             clearButton.Click += ClearButton_Click;
             // 
@@ -122,7 +128,7 @@
             label4.Location = new System.Drawing.Point(12, 105);
             label4.Name = "label4";
             label4.Size = new System.Drawing.Size(104, 15);
-            label4.TabIndex = 0;
+            label4.TabIndex = 7;
             label4.Text = "Selectable objects:";
             // 
             // selectableListBox
@@ -132,7 +138,8 @@
             selectableListBox.Location = new System.Drawing.Point(12, 123);
             selectableListBox.Name = "selectableListBox";
             selectableListBox.Size = new System.Drawing.Size(276, 289);
-            selectableListBox.TabIndex = 4;
+            selectableListBox.TabIndex = 8;
+            toolTip1.SetToolTip(selectableListBox, "Selectable object list");
             selectableListBox.DoubleClick += SelectableListBox_DoubleClick;
             // 
             // addAllButton
@@ -140,8 +147,9 @@
             addAllButton.Location = new System.Drawing.Point(294, 141);
             addAllButton.Name = "addAllButton";
             addAllButton.Size = new System.Drawing.Size(32, 23);
-            addAllButton.TabIndex = 3;
+            addAllButton.TabIndex = 11;
             addAllButton.Text = ">>";
+            toolTip1.SetToolTip(addAllButton, "Add all to selected list");
             addAllButton.UseVisualStyleBackColor = true;
             addAllButton.Click += AddAllButton_Click;
             // 
@@ -151,7 +159,7 @@
             label5.Location = new System.Drawing.Point(332, 9);
             label5.Name = "label5";
             label5.Size = new System.Drawing.Size(95, 15);
-            label5.TabIndex = 0;
+            label5.TabIndex = 9;
             label5.Text = "Selected objects:";
             // 
             // selectedListBox
@@ -161,7 +169,8 @@
             selectedListBox.Location = new System.Drawing.Point(332, 30);
             selectedListBox.Name = "selectedListBox";
             selectedListBox.Size = new System.Drawing.Size(289, 379);
-            selectedListBox.TabIndex = 4;
+            selectedListBox.TabIndex = 10;
+            toolTip1.SetToolTip(selectedListBox, "Selected object list");
             selectedListBox.DoubleClick += SelectedListBox_DoubleClick;
             // 
             // addButton
@@ -169,8 +178,9 @@
             addButton.Location = new System.Drawing.Point(294, 170);
             addButton.Name = "addButton";
             addButton.Size = new System.Drawing.Size(32, 23);
-            addButton.TabIndex = 3;
+            addButton.TabIndex = 12;
             addButton.Text = ">";
+            toolTip1.SetToolTip(addButton, "Add to selected list");
             addButton.UseVisualStyleBackColor = true;
             addButton.Click += AddButton_Click;
             // 
@@ -180,8 +190,9 @@
             okButton.Location = new System.Drawing.Point(553, 415);
             okButton.Name = "okButton";
             okButton.Size = new System.Drawing.Size(68, 23);
-            okButton.TabIndex = 5;
+            okButton.TabIndex = 15;
             okButton.Text = "&OK";
+            toolTip1.SetToolTip(okButton, "OK");
             okButton.UseVisualStyleBackColor = true;
             okButton.Click += OkButton_Click;
             // 
@@ -191,8 +202,9 @@
             cancelButton.Location = new System.Drawing.Point(479, 415);
             cancelButton.Name = "cancelButton";
             cancelButton.Size = new System.Drawing.Size(68, 23);
-            cancelButton.TabIndex = 5;
+            cancelButton.TabIndex = 16;
             cancelButton.Text = "&Cancel";
+            toolTip1.SetToolTip(cancelButton, "Cancel");
             cancelButton.UseVisualStyleBackColor = true;
             cancelButton.Click += CancelButton_Click;
             // 
@@ -201,8 +213,9 @@
             removeButton.Location = new System.Drawing.Point(294, 199);
             removeButton.Name = "removeButton";
             removeButton.Size = new System.Drawing.Size(32, 23);
-            removeButton.TabIndex = 3;
+            removeButton.TabIndex = 13;
             removeButton.Text = "<";
+            toolTip1.SetToolTip(removeButton, "Remove from selected list");
             removeButton.UseVisualStyleBackColor = true;
             removeButton.Click += RemoveButton_Click;
             // 
@@ -211,8 +224,9 @@
             removeAllButton.Location = new System.Drawing.Point(294, 228);
             removeAllButton.Name = "removeAllButton";
             removeAllButton.Size = new System.Drawing.Size(32, 23);
-            removeAllButton.TabIndex = 3;
+            removeAllButton.TabIndex = 14;
             removeAllButton.Text = "<<";
+            toolTip1.SetToolTip(removeAllButton, "Remove all selected objects");
             removeAllButton.UseVisualStyleBackColor = true;
             removeAllButton.Click += RemoveAllButton_Click;
             // 
@@ -222,8 +236,9 @@
             pasteButton.Location = new System.Drawing.Point(405, 415);
             pasteButton.Name = "pasteButton";
             pasteButton.Size = new System.Drawing.Size(68, 23);
-            pasteButton.TabIndex = 5;
+            pasteButton.TabIndex = 17;
             pasteButton.Text = "&Paste";
+            toolTip1.SetToolTip(pasteButton, "Select objects from the clipboard");
             pasteButton.UseVisualStyleBackColor = true;
             pasteButton.Click += PasteButton_Click;
             // 
@@ -233,8 +248,9 @@
             copyButton.Location = new System.Drawing.Point(331, 415);
             copyButton.Name = "copyButton";
             copyButton.Size = new System.Drawing.Size(68, 23);
-            copyButton.TabIndex = 5;
+            copyButton.TabIndex = 18;
             copyButton.Text = "&Copy";
+            toolTip1.SetToolTip(copyButton, "Copy selected object list");
             copyButton.UseVisualStyleBackColor = true;
             copyButton.Click += CopyButton_Click;
             // 
@@ -294,5 +310,6 @@
         private System.Windows.Forms.Button removeAllButton;
         private System.Windows.Forms.Button pasteButton;
         private System.Windows.Forms.Button copyButton;
+        private System.Windows.Forms.ToolTip toolTip1;
     }
 }
