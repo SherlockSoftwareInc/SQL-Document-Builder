@@ -1207,7 +1207,7 @@
             searchPanel.Controls.Add(nextSearchButton);
             searchPanel.Controls.Add(prevSearchButton);
             searchPanel.Controls.Add(searchSQLTextBox);
-            searchPanel.Location = new System.Drawing.Point(340, 502);
+            searchPanel.Location = new System.Drawing.Point(300, 3);
             searchPanel.Name = "searchPanel";
             searchPanel.Size = new System.Drawing.Size(240, 29);
             searchPanel.TabIndex = 2;
@@ -1307,8 +1307,8 @@
             // 
             // splitContainer1.Panel2
             // 
-            splitContainer1.Panel2.Controls.Add(tabControl1);
             splitContainer1.Panel2.Controls.Add(searchPanel);
+            splitContainer1.Panel2.Controls.Add(tabControl1);
             splitContainer1.Size = new System.Drawing.Size(775, 671);
             splitContainer1.SplitterDistance = 185;
             splitContainer1.TabIndex = 18;
@@ -1324,6 +1324,7 @@
             tabControl1.DrawItem += TabControl1_DrawItem;
             tabControl1.SelectedIndexChanged += TabControl1_SelectedIndexChanged;
             tabControl1.MouseUp += TabControl1_MouseUp;
+            tabControl1.Resize += TabControl1_Resize;
             // 
             // tabContextMenuStrip
             // 

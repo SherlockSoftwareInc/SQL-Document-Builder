@@ -1040,8 +1040,8 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void Options_Changed(object sender, EventArgs e)
         {
-            Properties.Settings.Default.AddDataSource= addDataSourceCheckBox.Checked ;
-            Properties.Settings.Default.AddDropStatement= scriptDropsCheckBox.Checked ;
+            Properties.Settings.Default.AddDataSource = addDataSourceCheckBox.Checked;
+            Properties.Settings.Default.AddDropStatement = scriptDropsCheckBox.Checked;
             Properties.Settings.Default.UseExtendedProperties = extendedPropertiesCheckBox.Checked;
             Properties.Settings.Default.Save();
         }
@@ -1192,7 +1192,7 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <returns>An int.</returns>
         private int GetNextTabNum()
-        { 
+        {
             int pageNum = 1;
 
             for (int i = 1; i < 500; i++)
@@ -2148,31 +2148,6 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Sets the title of the form.
-        /// </summary>
-        private void SetTitle(string fileName = "")
-        {
-            if (string.IsNullOrEmpty(fileName))
-            {
-                this.Text = $"SQL Server Document Builder - (New)";
-            }
-            else
-            {
-                this.Text = $"SQL Server Document Builder - {Path.GetFileName(fileName)}";
-            }
-        }
-
-        /// <summary>
-        /// Handles the resize event of the SQL text box.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void SqlTextBox_Resize(object sender, EventArgs e)
-        {
-            searchPanel.Left = tabControl1.Left + tabControl1.Width - searchPanel.Width - 5;
-        }
-
-        /// <summary>
         /// Start build.
         /// </summary>
         private void StartBuild()
@@ -2303,37 +2278,11 @@ namespace SQL_Document_Builder
         {
             if (tabControl1.SelectedTab == null) return;
 
-            //CloseErrorPanel();
-
-            //_currentEditBox = GetTextBoxAt(tabControl1.SelectedIndex);
-            //if (_currentEditBox != null)
-            //{
-            //    if (_currentEditBox.Connection != null)
-            //    {
-            //        if (!_currentEditBox.Connection.Equals(Connection))
-            //        {
-            //            for (int i = 0; i < dataSourcesToolStripComboBox.Items.Count; i++)
-            //            {
-            //                var item = (DatabaseConnectionItem)dataSourcesToolStripComboBox.Items[i];
-            //                if (item.Name == _currentEditBox.Connection.Name)
-            //                {
-            //                    _tabChange = true;
-            //                    dataSourcesToolStripComboBox.SelectedIndex = i;
-            //                    _tabChange = false;
-            //                    break;
-            //                }
-            //            }
-            //        }
-            //    }
-
-            //    if (!_closeAll)
-            //    {
-            //        ParseSQL(_currentEditBox?.Text);
-            //        EnableExecute();
-            //        EnableUndoRedo();
-            //        _currentEditBox.Focus();
-            //    }
-            //}
+            if (searchPanel.Visible)
+            { 
+                CloseSearch();
+                OpenSearch();
+            }
         }
 
         /// <summary>
@@ -2364,8 +2313,6 @@ namespace SQL_Document_Builder
 
             // INIT HOTKEYS
             InitHotkeys();
-
-            SetTitle();
 
             _connections.Load();
             await PopulateConnections();
@@ -3329,6 +3276,17 @@ namespace SQL_Document_Builder
             }
 
             AddTab("");
+        }
+
+        /// <summary>
+        /// Handles the resize event of the tab control:
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void TabControl1_Resize(object sender, EventArgs e)
+        {
+            searchPanel.Top = tabControl1.Top + 36;
+            searchPanel.Left = tabControl1.Left + tabControl1.Width - searchPanel.Width - 16;
         }
     }
 }
