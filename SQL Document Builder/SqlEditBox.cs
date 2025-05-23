@@ -46,15 +46,21 @@ namespace SQL_Document_Builder
 
             // INIT HOTKEYS
             //InitHotkeys();
+            // remove conflicting hotkeys from scintilla
+            this.ClearCmdKey(Keys.Control | Keys.F);
+            this.ClearCmdKey(Keys.Control | Keys.R);
+            this.ClearCmdKey(Keys.Control | Keys.H);
+            this.ClearCmdKey(Keys.Control | Keys.L);
+            this.ClearCmdKey(Keys.Control | Keys.U);
         }
 
-        public event EventHandler FileNameChanged;
+        public event EventHandler? FileNameChanged;
 
-        public event EventHandler QueryTextChanged;
+        public event EventHandler? QueryTextChanged;
 
-        public event EventHandler QueryTextFontChanged;
+        public event EventHandler? QueryTextFontChanged;
 
-        public event EventHandler QueryTextValidated;
+        public event EventHandler? QueryTextValidated;
 
         //public event EventHandler<QueryScriptGeneratedArgs> QueryScriptGenerated;
 
@@ -721,8 +727,6 @@ namespace SQL_Document_Builder
             }
             return DialogResult.No;
         }
-
-
 
         #endregion Utils
     }

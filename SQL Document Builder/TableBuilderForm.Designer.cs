@@ -1127,14 +1127,14 @@
             cREATEToolStripMenuItem.Name = "cREATEToolStripMenuItem";
             cREATEToolStripMenuItem.Size = new System.Drawing.Size(177, 22);
             cREATEToolStripMenuItem.Text = "CREATE";
-            cREATEToolStripMenuItem.Click += CREATEToolStripMenuItem_Click;
+            cREATEToolStripMenuItem.Click += CreateToolStripMenuItem_Click;
             // 
             // cREATEINSERTToolStripMenuItem
             // 
             cREATEINSERTToolStripMenuItem.Name = "cREATEINSERTToolStripMenuItem";
             cREATEINSERTToolStripMenuItem.Size = new System.Drawing.Size(177, 22);
             cREATEINSERTToolStripMenuItem.Text = "CREATE + INSERT";
-            cREATEINSERTToolStripMenuItem.Click += CREATEINSERTToolStripMenuItem_Click;
+            cREATEINSERTToolStripMenuItem.Click += CreateInsertToolStripMenuItem_Click;
             // 
             // objectsDescriptionToolStripMenuItem
             // 

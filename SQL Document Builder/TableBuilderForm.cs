@@ -622,6 +622,12 @@ namespace SQL_Document_Builder
             Close();
         }
 
+        /// <summary>
+        /// Handles the "Close" tool strip menu item click event:
+        /// Close the mouse on tab
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
         private void CloseToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (_mouseOnTabIndex < 0 || _mouseOnTabIndex >= tabControl1.TabCount) return;
@@ -637,6 +643,7 @@ namespace SQL_Document_Builder
 
         /// <summary>
         /// Handles the click event of the close tool strip menu item:
+        /// Close the current tab
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
@@ -648,10 +655,6 @@ namespace SQL_Document_Builder
             if (CloseTab(selectedTabIndex) != DialogResult.Cancel)
             {
                 if (tabControl1.TabCount == 0) AddTab("");
-                //if (tabControl1.TabCount > 0)
-                //{
-                //    tabControl1.SelectedIndex = tabControl1.TabCount - 1;
-                //}
             }
         }
 
@@ -771,10 +774,11 @@ namespace SQL_Document_Builder
 
         /// <summary>
         /// Handles the "create insert" tool strip menu item click:
+        /// create insert statement for the selected objects and selected column
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
-        private async void CREATEINSERTToolStripMenuItem_Click(object sender, EventArgs e)
+        private async void CreateInsertToolStripMenuItem_Click(object sender, EventArgs e)
         {
             List<ObjectName>? selectedObjects = SelectObjects();
 
@@ -846,6 +850,7 @@ namespace SQL_Document_Builder
 
         /// <summary>
         /// Handles the "create table" tool strip button click:
+        /// Generate the CREATE script for the selected object
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
@@ -869,10 +874,11 @@ namespace SQL_Document_Builder
 
         /// <summary>
         /// Handles the "Create" tool strip menu item click event.
+        /// Batch generate the CREATE scripts for the selected objects
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
-        private async void CREATEToolStripMenuItem_Click(object sender, EventArgs e)
+        private async void CreateToolStripMenuItem_Click(object sender, EventArgs e)
         {
             List<ObjectName>? selectedObjects = SelectObjects();
 
@@ -1034,7 +1040,7 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Options_S the changed.
+        /// Handles the control changs of the output options:
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
@@ -1045,7 +1051,6 @@ namespace SQL_Document_Builder
             Properties.Settings.Default.UseExtendedProperties = extendedPropertiesCheckBox.Checked;
             Properties.Settings.Default.Save();
         }
-
 
         /// <summary>
         /// Footers the text.
@@ -2279,7 +2284,7 @@ namespace SQL_Document_Builder
             if (tabControl1.SelectedTab == null) return;
 
             if (searchPanel.Visible)
-            { 
+            {
                 CloseSearch();
                 OpenSearch();
             }
@@ -2589,18 +2594,25 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void WindowItem_Click(object sender, EventArgs e)
+        private void WindowItem_Click(object? sender, EventArgs e)
         {
-            for (int i = 0; i < tabControl1.TabCount; i++)
+            if (sender == null) return;
+
+            if (sender is ToolStripMenuItem menuItem)
             {
-                var queryTextBox = GetTextBoxAt(i);
-                var itemTag = ((ToolStripMenuItem)sender).Tag.ToString();
-                if (itemTag != null && queryTextBox != null)
+                var itemTag = menuItem?.Tag?.ToString();
+
+                for (int i = 0; i < tabControl1.TabCount; i++)
                 {
-                    if (queryTextBox.ID == itemTag)
+                    var queryTextBox = GetTextBoxAt(i);
+
+                    if (itemTag != null && queryTextBox != null)
                     {
-                        tabControl1.SelectedIndex = i;
-                        break;
+                        if (queryTextBox.ID == itemTag)
+                        {
+                            tabControl1.SelectedIndex = i;
+                            break;
+                        }
                     }
                 }
             }
@@ -2616,21 +2628,14 @@ namespace SQL_Document_Builder
             // register the hotkeys with the form
             HotKeyManager.AddHotKey(this, OpenSearch, Keys.F, true);
             HotKeyManager.AddHotKey(this, OpenFindDialog, Keys.F, true, false, true);
-            HotKeyManager.AddHotKey(this, OpenReplaceDialog, Keys.R, true);
-            HotKeyManager.AddHotKey(this, OpenReplaceDialog, Keys.H, true);
+            //HotKeyManager.AddHotKey(this, OpenReplaceDialog, Keys.R, true);
+            //HotKeyManager.AddHotKey(this, OpenReplaceDialog, Keys.H, true);
             HotKeyManager.AddHotKey(this, Uppercase, Keys.U, true);
             HotKeyManager.AddHotKey(this, Lowercase, Keys.L, true);
             HotKeyManager.AddHotKey(this, ZoomIn, Keys.Oemplus, true);
             HotKeyManager.AddHotKey(this, ZoomOut, Keys.OemMinus, true);
             HotKeyManager.AddHotKey(this, ZoomDefault, Keys.D0, true);
             HotKeyManager.AddHotKey(this, CloseSearch, Keys.Escape);
-
-            // remove conflicting hotkeys from scintilla
-            //sqlTextBox.ClearCmdKey(Keys.Control | Keys.F);
-            //sqlTextBox.ClearCmdKey(Keys.Control | Keys.R);
-            //sqlTextBox.ClearCmdKey(Keys.Control | Keys.H);
-            //sqlTextBox.ClearCmdKey(Keys.Control | Keys.L);
-            //sqlTextBox.ClearCmdKey(Keys.Control | Keys.U);
         }
 
         /// <summary>
