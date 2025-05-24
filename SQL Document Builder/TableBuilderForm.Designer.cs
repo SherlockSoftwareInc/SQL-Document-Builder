@@ -1340,7 +1340,7 @@
             nextSearchButton.Size = new System.Drawing.Size(23, 23);
             nextSearchButton.TabIndex = 2;
             nextSearchButton.Tag = "Find next (Enter)";
-            nextSearchButton.Text = "⮟";
+            nextSearchButton.Text = "🠞";
             nextSearchButton.UseVisualStyleBackColor = false;
             nextSearchButton.Click += SearchNext_Click;
             // 
@@ -1354,7 +1354,7 @@
             prevSearchButton.Size = new System.Drawing.Size(23, 23);
             prevSearchButton.TabIndex = 1;
             prevSearchButton.Tag = "Find previous (Shift+Enter)";
-            prevSearchButton.Text = "⮝";
+            prevSearchButton.Text = "🠜";
             prevSearchButton.UseVisualStyleBackColor = false;
             prevSearchButton.Click += SearchPrevious_Click;
             // 
@@ -1419,7 +1419,6 @@
             // 
             // replacePanel
             // 
-            replacePanel.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             replacePanel.Controls.Add(button1);
             replacePanel.Controls.Add(replaceAllButton);
             replacePanel.Controls.Add(replaceButton);
@@ -1438,7 +1437,7 @@
             button1.BackColor = System.Drawing.Color.White;
             button1.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             button1.ForeColor = System.Drawing.Color.Black;
-            button1.Location = new System.Drawing.Point(212, 3);
+            button1.Location = new System.Drawing.Point(214, 3);
             button1.Name = "button1";
             button1.Size = new System.Drawing.Size(23, 23);
             button1.TabIndex = 5;
@@ -1563,7 +1562,7 @@
             Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
             MainMenuStrip = menuStrip1;
             Name = "TableBuilderForm";
-            Text = "SQL Server Document Builder";
+            Text = "SQL Server Script and Document Builder";
             FormClosing += TableBuilderForm_FormClosing;
             Load += TableBuilderForm_Load;
             toolStrip1.ResumeLayout(false);
