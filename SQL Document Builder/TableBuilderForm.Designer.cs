@@ -442,6 +442,7 @@
             // 
             // clearSerachButton
             // 
+            clearSerachButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             clearSerachButton.Location = new System.Drawing.Point(123, 107);
             clearSerachButton.Name = "clearSerachButton";
             clearSerachButton.Size = new System.Drawing.Size(23, 23);
@@ -803,7 +804,7 @@
             cutToolStripMenuItem.ImageTransparentColor = System.Drawing.Color.Magenta;
             cutToolStripMenuItem.Name = "cutToolStripMenuItem";
             cutToolStripMenuItem.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.X;
-            cutToolStripMenuItem.Size = new System.Drawing.Size(220, 26);
+            cutToolStripMenuItem.Size = new System.Drawing.Size(216, 22);
             cutToolStripMenuItem.Text = "Cu&t";
             cutToolStripMenuItem.Click += CutToolStripMenuItem_Click;
             // 
@@ -813,7 +814,7 @@
             copyToolStripMenuItem.ImageTransparentColor = System.Drawing.Color.Magenta;
             copyToolStripMenuItem.Name = "copyToolStripMenuItem";
             copyToolStripMenuItem.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.C;
-            copyToolStripMenuItem.Size = new System.Drawing.Size(220, 26);
+            copyToolStripMenuItem.Size = new System.Drawing.Size(216, 22);
             copyToolStripMenuItem.Text = "&Copy";
             copyToolStripMenuItem.Click += CopyToolStripMenuItem_Click;
             // 
@@ -823,33 +824,33 @@
             pasteToolStripMenuItem.ImageTransparentColor = System.Drawing.Color.Magenta;
             pasteToolStripMenuItem.Name = "pasteToolStripMenuItem";
             pasteToolStripMenuItem.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.V;
-            pasteToolStripMenuItem.Size = new System.Drawing.Size(220, 26);
+            pasteToolStripMenuItem.Size = new System.Drawing.Size(216, 22);
             pasteToolStripMenuItem.Text = "&Paste";
             pasteToolStripMenuItem.Click += PasteToolStripMenuItem_Click;
             // 
             // toolStripSeparator6
             // 
             toolStripSeparator6.Name = "toolStripSeparator6";
-            toolStripSeparator6.Size = new System.Drawing.Size(217, 6);
+            toolStripSeparator6.Size = new System.Drawing.Size(213, 6);
             // 
             // selectAllToolStripMenuItem
             // 
             selectAllToolStripMenuItem.Name = "selectAllToolStripMenuItem";
             selectAllToolStripMenuItem.ShortcutKeyDisplayString = "Ctrl+A";
-            selectAllToolStripMenuItem.Size = new System.Drawing.Size(220, 26);
+            selectAllToolStripMenuItem.Size = new System.Drawing.Size(216, 22);
             selectAllToolStripMenuItem.Text = "Select &All";
             selectAllToolStripMenuItem.Click += SelectAllToolStripMenuItem_Click;
             // 
             // toolStripSeparator8
             // 
             toolStripSeparator8.Name = "toolStripSeparator8";
-            toolStripSeparator8.Size = new System.Drawing.Size(217, 6);
+            toolStripSeparator8.Size = new System.Drawing.Size(213, 6);
             // 
             // quickFindToolStripMenuItem
             // 
             quickFindToolStripMenuItem.Name = "quickFindToolStripMenuItem";
             quickFindToolStripMenuItem.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.F;
-            quickFindToolStripMenuItem.Size = new System.Drawing.Size(220, 26);
+            quickFindToolStripMenuItem.Size = new System.Drawing.Size(216, 22);
             quickFindToolStripMenuItem.Text = "Quick Find...";
             quickFindToolStripMenuItem.Click += QuickFindToolStripMenuItem_Click;
             // 
@@ -858,7 +859,7 @@
             findToolStripMenuItem.Image = Properties.Resources.search;
             findToolStripMenuItem.Name = "findToolStripMenuItem";
             findToolStripMenuItem.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Alt | System.Windows.Forms.Keys.F;
-            findToolStripMenuItem.Size = new System.Drawing.Size(220, 26);
+            findToolStripMenuItem.Size = new System.Drawing.Size(216, 22);
             findToolStripMenuItem.Text = "Find...";
             findToolStripMenuItem.Visible = false;
             findToolStripMenuItem.Click += FindDialogToolStripMenuItem_Click;
@@ -867,21 +868,21 @@
             // 
             findAndReplaceToolStripMenuItem.Name = "findAndReplaceToolStripMenuItem";
             findAndReplaceToolStripMenuItem.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.H;
-            findAndReplaceToolStripMenuItem.Size = new System.Drawing.Size(220, 26);
+            findAndReplaceToolStripMenuItem.Size = new System.Drawing.Size(216, 22);
             findAndReplaceToolStripMenuItem.Text = "Find and Replace...";
             findAndReplaceToolStripMenuItem.Click += FindAndReplaceToolStripMenuItem_Click;
             // 
             // toolStripSeparator16
             // 
             toolStripSeparator16.Name = "toolStripSeparator16";
-            toolStripSeparator16.Size = new System.Drawing.Size(217, 6);
+            toolStripSeparator16.Size = new System.Drawing.Size(213, 6);
             toolStripSeparator16.Visible = false;
             // 
             // goToLineToolStripMenuItem
             // 
             goToLineToolStripMenuItem.Name = "goToLineToolStripMenuItem";
             goToLineToolStripMenuItem.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.G;
-            goToLineToolStripMenuItem.Size = new System.Drawing.Size(220, 26);
+            goToLineToolStripMenuItem.Size = new System.Drawing.Size(216, 22);
             goToLineToolStripMenuItem.Text = "Go To Line...";
             goToLineToolStripMenuItem.Visible = false;
             goToLineToolStripMenuItem.Click += GoToLineToolStripMenuItem_Click;
@@ -890,7 +891,7 @@
             // 
             uppercaseToolStripMenuItem.Name = "uppercaseToolStripMenuItem";
             uppercaseToolStripMenuItem.ShortcutKeyDisplayString = "Ctrl+Shift+U";
-            uppercaseToolStripMenuItem.Size = new System.Drawing.Size(220, 26);
+            uppercaseToolStripMenuItem.Size = new System.Drawing.Size(216, 22);
             uppercaseToolStripMenuItem.Text = "Uppercase";
             uppercaseToolStripMenuItem.Visible = false;
             uppercaseToolStripMenuItem.Click += UppercaseSelectionToolStripMenuItem_Click;
@@ -899,7 +900,7 @@
             // 
             lowercaseToolStripMenuItem.Name = "lowercaseToolStripMenuItem";
             lowercaseToolStripMenuItem.ShortcutKeyDisplayString = "Ctrl+Shift+L";
-            lowercaseToolStripMenuItem.Size = new System.Drawing.Size(220, 26);
+            lowercaseToolStripMenuItem.Size = new System.Drawing.Size(216, 22);
             lowercaseToolStripMenuItem.Text = "Lowercase";
             lowercaseToolStripMenuItem.Visible = false;
             lowercaseToolStripMenuItem.Click += LowercaseSelectionToolStripMenuItem_Click;
@@ -1364,7 +1365,7 @@
             searchSQLTextBox.Size = new System.Drawing.Size(156, 23);
             searchSQLTextBox.TabIndex = 0;
             searchSQLTextBox.TextChanged += TxtSearch_TextChanged;
-            searchSQLTextBox.KeyDown += TxtSearch_KeyDown;
+            searchSQLTextBox.KeyDown += SearchTextBox_KeyDown;
             // 
             // definitionPanel
             // 
@@ -1451,12 +1452,12 @@
             replaceAllButton.BackColor = System.Drawing.Color.White;
             replaceAllButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             replaceAllButton.ForeColor = System.Drawing.SystemColors.ControlText;
+            replaceAllButton.Image = Properties.Resources.replaceAll;
             replaceAllButton.Location = new System.Drawing.Point(214, 32);
             replaceAllButton.Name = "replaceAllButton";
             replaceAllButton.Size = new System.Drawing.Size(23, 23);
             replaceAllButton.TabIndex = 4;
             replaceAllButton.Tag = "Find previous (Shift+Enter)";
-            replaceAllButton.Text = "⇶";
             toolTip1.SetToolTip(replaceAllButton, "Replace All");
             replaceAllButton.UseVisualStyleBackColor = false;
             replaceAllButton.Click += ReplaceAllButton_Click;
@@ -1466,12 +1467,12 @@
             replaceButton.BackColor = System.Drawing.Color.White;
             replaceButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             replaceButton.ForeColor = System.Drawing.SystemColors.ControlText;
+            replaceButton.Image = Properties.Resources.replace;
             replaceButton.Location = new System.Drawing.Point(188, 32);
             replaceButton.Name = "replaceButton";
             replaceButton.Size = new System.Drawing.Size(23, 23);
             replaceButton.TabIndex = 3;
             replaceButton.Tag = "Find previous (Shift+Enter)";
-            replaceButton.Text = "⮀";
             toolTip1.SetToolTip(replaceButton, "Replace");
             replaceButton.UseVisualStyleBackColor = false;
             replaceButton.Click += ReplaceButton_Click;
@@ -1486,7 +1487,7 @@
             findNextButton.Size = new System.Drawing.Size(23, 23);
             findNextButton.TabIndex = 2;
             findNextButton.Tag = "Find previous (Shift+Enter)";
-            findNextButton.Text = "⮟";
+            findNextButton.Text = "🠞";
             toolTip1.SetToolTip(findNextButton, "Find next");
             findNextButton.UseVisualStyleBackColor = false;
             findNextButton.Click += FindNextButton_Click;
@@ -1497,6 +1498,7 @@
             replaceReplaceTextBox.Name = "replaceReplaceTextBox";
             replaceReplaceTextBox.Size = new System.Drawing.Size(182, 23);
             replaceReplaceTextBox.TabIndex = 1;
+            replaceReplaceTextBox.KeyDown += ReplaceReplaceTextBox_KeyDown;
             // 
             // replaceSearchTextBox
             // 
@@ -1504,6 +1506,8 @@
             replaceSearchTextBox.Name = "replaceSearchTextBox";
             replaceSearchTextBox.Size = new System.Drawing.Size(182, 23);
             replaceSearchTextBox.TabIndex = 0;
+            replaceSearchTextBox.TextChanged += TxtSearch_TextChanged;
+            replaceSearchTextBox.KeyDown += SearchTextBox_KeyDown;
             // 
             // tabControl1
             // 

@@ -365,7 +365,7 @@ namespace DarkModeForms
 
                 case "Button":
                     var button = control as Button;
-                    button.FlatStyle = FlatStyle.System;
+                    button.FlatStyle = FlatStyle.Flat;
                     button.FlatAppearance.CheckedBackColor = OScolors.Accent;
                     button.BackColor = OScolors.Control;
                     button.FlatAppearance.BorderColor = (OwnerForm.AcceptButton == button) ?
@@ -374,11 +374,11 @@ namespace DarkModeForms
                     // Redraw the image if it exists
                     if (button.Image != null)
                     {
-                        //// Optionally recolor the image for dark mode
-                        //var recolored = IsDarkMode
-                        //    ? DarkModeCS.ChangeToColor(new Bitmap(button.Image), OScolors.TextActive)
-                        //    : new Bitmap(button.Image);
-                        //button.Image = recolored;
+                        // Optionally recolor the image for dark mode
+                        var recolored = IsDarkMode
+                            ? DarkModeCS.ChangeToColor(new Bitmap(button.Image), OScolors.TextActive)
+                            : new Bitmap(button.Image);
+                        button.Image = recolored;
                     }
                     break;
 
@@ -1514,6 +1514,10 @@ namespace DarkModeForms
                     e.Graphics.DrawImage(adjustedImage, e.ImageRectangle);
                 }
                 return;
+            }
+            else
+            {
+                System.Diagnostics.Debug.Print("MyRenderer: " + e.Item.GetType().FullName);
             }
 
             // Existing logic for other items

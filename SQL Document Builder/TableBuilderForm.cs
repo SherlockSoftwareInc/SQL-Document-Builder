@@ -2077,6 +2077,26 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Handles the key down event of the replace text box.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void ReplaceReplaceTextBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (HotKeyManager.IsHotkey(e, Keys.Enter))
+            {
+                if (ReplaceIsOpen)
+                {
+                    ReplaceManager.Replace();
+                    //replaceButton.PerformClick();
+                    //e.Handled = true;
+                    //e.SuppressKeyPress = true;
+                    replaceReplaceTextBox.Focus();
+                }
+            }
+        }
+
+        /// <summary>
         /// Handles the "Save as" tool strip menu item click:
         /// </summary>
         /// <param name="sender">The sender.</param>
@@ -3074,15 +3094,21 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
-        private void TxtSearch_KeyDown(object sender, KeyEventArgs e)
+        private void SearchTextBox_KeyDown(object sender, KeyEventArgs e)
         {
             if (HotKeyManager.IsHotkey(e, Keys.Enter))
             {
-                SearchManager.Find(true, false);
+                if (SearchIsOpen)
+                    SearchManager.Find(true, false);
+                else if (ReplaceIsOpen)
+                    ReplaceManager.Find(true, false);
             }
             if (HotKeyManager.IsHotkey(e, Keys.Enter, true) || HotKeyManager.IsHotkey(e, Keys.Enter, false, true))
             {
-                SearchManager.Find(false, false);
+                if (SearchIsOpen)
+                    SearchManager.Find(false, false);
+                else if (ReplaceIsOpen)
+                    SearchManager.Find(false, false);
             }
         }
 
@@ -3093,7 +3119,10 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void TxtSearch_TextChanged(object sender, EventArgs e)
         {
-            SearchManager.Find(true, true);
+            if (SearchIsOpen)
+                SearchManager.Find(true, true);
+            else if (ReplaceIsOpen)
+                ReplaceManager.Find(true, true);
         }
 
         #endregion Quick Search Bar
