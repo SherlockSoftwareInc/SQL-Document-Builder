@@ -3045,6 +3045,12 @@ namespace SQL_Document_Builder
         {
             if (CurrentEditBox == null) return;
 
+            // if the replace panel is open, close it
+            if (ReplaceIsOpen)
+            {
+                CloseSearch();
+            }
+
             SearchManager.SearchBox = searchSQLTextBox;
             SearchManager.TextArea = CurrentEditBox;
 
@@ -3139,9 +3145,21 @@ namespace SQL_Document_Builder
         {
             if (CurrentEditBox == null) return;
 
+            if (SearchIsOpen)
+                CloseSearch();
+
             ReplaceManager.SearchBox = replaceSearchTextBox;
             ReplaceManager.ReplaceBox = replaceReplaceTextBox;
             ReplaceManager.TextArea = CurrentEditBox;
+
+            // If the search box is blank, fill it with the word at the caret
+            if (string.IsNullOrWhiteSpace(replaceSearchTextBox.Text))
+            {
+                int caretPos = CurrentEditBox.CurrentPosition;
+                string word = CurrentEditBox.GetWordFromPosition(caretPos);
+                if (!string.IsNullOrWhiteSpace(word))
+                    replaceSearchTextBox.Text = word;
+            }
 
             if (!ReplaceIsOpen)
             {
@@ -3149,7 +3167,9 @@ namespace SQL_Document_Builder
                 InvokeIfNeeded(delegate ()
                 {
                     replacePanel.Visible = true;
-                    replaceSearchTextBox.Text = ReplaceManager.LastSearch;
+                    // Only set LastSearch if it's not blank, otherwise keep the word at caret
+                    if (!string.IsNullOrWhiteSpace(ReplaceManager.LastSearch))
+                        replaceSearchTextBox.Text = ReplaceManager.LastSearch;
                     replaceSearchTextBox.Focus();
                     replaceSearchTextBox.SelectAll();
                 });
@@ -3163,7 +3183,6 @@ namespace SQL_Document_Builder
                 });
             }
         }
-
         #endregion Find & Replace Dialog
 
         #region Utils
