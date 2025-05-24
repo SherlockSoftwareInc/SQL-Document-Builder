@@ -370,6 +370,16 @@ namespace DarkModeForms
                     button.BackColor = OScolors.Control;
                     button.FlatAppearance.BorderColor = (OwnerForm.AcceptButton == button) ?
                         OScolors.Accent : OScolors.Control;
+
+                    // Redraw the image if it exists
+                    if (button.Image != null)
+                    {
+                        //// Optionally recolor the image for dark mode
+                        //var recolored = IsDarkMode
+                        //    ? DarkModeCS.ChangeToColor(new Bitmap(button.Image), OScolors.TextActive)
+                        //    : new Bitmap(button.Image);
+                        //button.Image = recolored;
+                    }
                     break;
 
                 case "Panel":
@@ -1509,7 +1519,6 @@ namespace DarkModeForms
             // Existing logic for other items
             base.OnRenderItemImage(e);
         }
-
     }
 
     public class CustomColorTable : ProfessionalColorTable

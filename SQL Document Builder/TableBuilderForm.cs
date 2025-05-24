@@ -4,11 +4,9 @@ using SQL_Document_Builder.ScintillaNetUtils;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using static ScintillaNET.Style;
 using static SQL_Document_Builder.ObjectName;
 
 namespace SQL_Document_Builder
@@ -27,11 +25,6 @@ namespace SQL_Document_Builder
         /// The count of database connections.
         /// </summary>
         private int _connectionCount = 0;
-
-        /// <summary>
-        /// The selected connection.
-        /// </summary>
-        private SQLDatabaseConnectionItem? _selectedConnection = new();
 
         /// <summary>
         /// The tables.
@@ -149,6 +142,24 @@ namespace SQL_Document_Builder
             return string.Empty;
         }
         */
+
+        /// <summary>
+        /// Files the display name.
+        /// </summary>
+        /// <param name="fileName">The file name.</param>
+        /// <returns>A string.</returns>
+        private static string FileDisplayName(string? fileName)
+        {
+            if (fileName?.Length > 50)
+            {
+                // Show the first 7 chars, then "...", then the last 20 chars
+                return string.Concat(fileName.AsSpan(0, 7), "...", fileName.AsSpan(fileName.Length - 40));
+            }
+            else
+            {
+                return fileName ?? string.Empty;
+            }
+        }
 
         /// <summary>
         /// Recursively gets the currently focused control within a container.
@@ -331,7 +342,7 @@ namespace SQL_Document_Builder
                 queryTextBox.OpenFile(fileName);
             }
 
-            AddWindowsMenuItem(queryTextBox.FileName?.Length == 0 ? tabControl1.SelectedTab.Text : queryTextBox.FileNameOnly, queryTextBox.ID, tabControl1.SelectedTab.ToolTipText);
+            AddWindowsMenuItem(queryTextBox.FileName?.Length == 0 ? tabControl1.SelectedTab.Text : FileDisplayName(queryTextBox.FileName), queryTextBox.ID, tabControl1.SelectedTab.ToolTipText);
 
             CurrentEditBox?.Focus();
 
@@ -436,7 +447,6 @@ namespace SQL_Document_Builder
 
                 if (connectionChanged)
                 {
-                    _selectedConnection = connection;
                     serverToolStripStatusLabel.Text = "";
                     databaseToolStripStatusLabel.Text = "";
                     schemaComboBox.Items.Clear();
@@ -557,6 +567,85 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Closes the all tabs.
+        /// </summary>
+        /// <returns>A DialogResult.</returns>
+        private DialogResult CloseAllTabs()
+        {
+            if (tabControl1.TabCount == 0) return DialogResult.OK;
+            for (int i = tabControl1.TabCount - 1; i >= 0; i--)
+            {
+                if (CloseATab(i) == DialogResult.Cancel) return DialogResult.Cancel;
+            }
+            return DialogResult.OK;
+        }
+
+        /// <summary>
+        /// handles the click event of the close all tool strip menu item:
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void CloseAllToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (CloseAllTabs() == DialogResult.Cancel)
+            {
+                return;
+            }
+
+            AddTab("");
+        }
+
+        /// <summary>
+        /// Closes the a tab by index.
+        /// </summary>
+        /// <param name="tabIndex">The tab index.</param>
+        /// <returns>A DialogResult.</returns>
+        private DialogResult CloseATab(int tabIndex)
+        {
+            if (tabIndex < 0 || tabIndex >= tabControl1.TabCount) return DialogResult.OK;
+
+            tabControl1.SelectedIndex = tabIndex;
+
+            var queryTextBox = GetTextBoxAt(tabIndex);
+            if (queryTextBox != null)
+            {
+                if (queryTextBox.Changed)
+                {
+                    var checkResult = queryTextBox.SaveCheck();
+                    if (checkResult == DialogResult.Cancel) return DialogResult.Cancel;
+
+                    if (checkResult == DialogResult.Yes)
+                    {
+                        var saveResult = queryTextBox.Save();
+                        if (saveResult == DialogResult.Cancel) return DialogResult.Cancel;
+                    }
+                }
+                // Remove the menu item in Windows dropdown menu
+                for (int i = 0; i < windowsToolStripMenuItem.DropDownItems.Count; i++)
+                {
+                    if (queryTextBox.ID == windowsToolStripMenuItem.DropDownItems[i].Tag?.ToString())
+                    {
+                        var menuItem = windowsToolStripMenuItem.DropDownItems[i];
+                        menuItem.Click -= WindowItem_Click;
+                        windowsToolStripMenuItem.DropDownItems.RemoveAt(i);
+                        break;
+                    }
+                }
+                // Remove the query edit box
+                //queryTextBox.FontChanged -= new System.EventHandler(this.SqlTextBox_FontChanged);
+                queryTextBox.TextChanged -= new System.EventHandler(this.OnTextChanged);
+                queryTextBox.FileNameChanged -= new System.EventHandler(this.EditBox_FileNameChanged);
+                //queryTextBox.Validated -= new System.EventHandler(this.SqlTextBox_Validated);
+                queryTextBox.Dispose();
+            }
+
+            // Removes the tab:
+            tabControl1.TabPages.RemoveAt(tabIndex);
+
+            return DialogResult.OK;
+        }
+
+        /// <summary>
         /// Close a specified tab
         /// </summary>
         /// <param name="tabIndex"></param>
@@ -656,70 +745,6 @@ namespace SQL_Document_Builder
             {
                 if (tabControl1.TabCount == 0) AddTab("");
             }
-        }
-
-        /// <summary>
-        /// Closes the all tabs.
-        /// </summary>
-        /// <returns>A DialogResult.</returns>
-        private DialogResult CloseAllTabs()
-        {
-            if (tabControl1.TabCount == 0) return DialogResult.OK;
-            for (int i = tabControl1.TabCount - 1; i >= 0; i--)
-            {
-                if (CloseATab(i) == DialogResult.Cancel) return DialogResult.Cancel;
-            }
-            return DialogResult.OK;
-        }
-
-        /// <summary>
-        /// Closes the a tab by index.
-        /// </summary>
-        /// <param name="tabIndex">The tab index.</param>
-        /// <returns>A DialogResult.</returns>
-        private DialogResult CloseATab(int tabIndex)
-        {
-            if (tabIndex < 0 || tabIndex >= tabControl1.TabCount) return DialogResult.OK;
-
-            tabControl1.SelectedIndex = tabIndex;
-
-            var queryTextBox = GetTextBoxAt(tabIndex);
-            if (queryTextBox != null)
-            {
-                if (queryTextBox.Changed)
-                {
-                    var checkResult = queryTextBox.SaveCheck();
-                    if (checkResult == DialogResult.Cancel) return DialogResult.Cancel;
-
-                    if (checkResult == DialogResult.Yes)
-                    {
-                        var saveResult = queryTextBox.Save();
-                        if (saveResult == DialogResult.Cancel) return DialogResult.Cancel;
-                    }
-                }
-                // Remove the menu item in Windows dropdown menu
-                for (int i = 0; i < windowsToolStripMenuItem.DropDownItems.Count; i++)
-                {
-                    if (queryTextBox.ID == windowsToolStripMenuItem.DropDownItems[i].Tag?.ToString())
-                    {
-                        var menuItem = windowsToolStripMenuItem.DropDownItems[i];
-                        menuItem.Click -= WindowItem_Click;
-                        windowsToolStripMenuItem.DropDownItems.RemoveAt(i);
-                        break;
-                    }
-                }
-                // Remove the query edit box
-                //queryTextBox.FontChanged -= new System.EventHandler(this.SqlTextBox_FontChanged);
-                queryTextBox.TextChanged -= new System.EventHandler(this.OnTextChanged);
-                queryTextBox.FileNameChanged -= new System.EventHandler(this.EditBox_FileNameChanged);
-                //queryTextBox.Validated -= new System.EventHandler(this.SqlTextBox_Validated);
-                queryTextBox.Dispose();
-            }
-
-            // Removes the tab:
-            tabControl1.TabPages.RemoveAt(tabIndex);
-
-            return DialogResult.OK;
         }
 
         /// <summary>
@@ -976,6 +1001,18 @@ namespace SQL_Document_Builder
                         }
                     }
                 }
+
+                // set the windows menu item text to the file name
+                for (int i = 0; i < windowsToolStripMenuItem.DropDownItems.Count; i++)
+                {
+                    if (editBox.ID == windowsToolStripMenuItem.DropDownItems[i].Tag?.ToString())
+                    {
+                        var menuItem = windowsToolStripMenuItem.DropDownItems[i];
+                        menuItem.Text = FileDisplayName(editBox.FileName);
+                        menuItem.ToolTipText = editBox.FileName;
+                        break;
+                    }
+                }
             }
         }
 
@@ -1040,16 +1077,13 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Handles the control changs of the output options:
+        /// Handles the click event of the find next button.
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
-        private void Options_Changed(object sender, EventArgs e)
+        private void FindNextButton_Click(object sender, EventArgs e)
         {
-            Properties.Settings.Default.AddDataSource = addDataSourceCheckBox.Checked;
-            Properties.Settings.Default.AddDropStatement = scriptDropsCheckBox.Checked;
-            Properties.Settings.Default.UseExtendedProperties = extendedPropertiesCheckBox.Checked;
-            Properties.Settings.Default.Save();
+            ReplaceManager.Find(true, false);
         }
 
         /// <summary>
@@ -1800,6 +1834,19 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Handles the control changs of the output options:
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void Options_Changed(object sender, EventArgs e)
+        {
+            Properties.Settings.Default.AddDataSource = addDataSourceCheckBox.Checked;
+            Properties.Settings.Default.AddDropStatement = scriptDropsCheckBox.Checked;
+            Properties.Settings.Default.UseExtendedProperties = extendedPropertiesCheckBox.Checked;
+            Properties.Settings.Default.Save();
+        }
+
+        /// <summary>
         /// Handles the "Panel2" resize event.
         /// </summary>
         /// <param name="sender">The sender.</param>
@@ -1910,8 +1957,6 @@ namespace SQL_Document_Builder
         /// </summary>
         private async Task PopulateConnections()
         {
-            _selectedConnection = null;
-
             // clear menu items under Connect to... menu
             for (int i = connectToToolStripMenuItem.DropDown.Items.Count - 1; i >= 0; i--)
             {
@@ -2024,6 +2069,26 @@ namespace SQL_Document_Builder
                     ScrollToCaret();
                 }
             }
+        }
+
+        /// <summary>
+        /// Handles the click event of the replace all button.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void ReplaceAllButton_Click(object sender, EventArgs e)
+        {
+            ReplaceManager.ReplaceAll();
+        }
+
+        /// <summary>
+        /// Handles the click event of the find previous button.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void ReplaceButton_Click(object sender, EventArgs e)
+        {
+            ReplaceManager.Replace();
         }
 
         /// <summary>
@@ -2275,6 +2340,20 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Handles the resize event of the tab control:
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void TabControl1_Resize(object sender, EventArgs e)
+        {
+            searchPanel.Top = tabControl1.Top + 36;
+            searchPanel.Left = tabControl1.Left + tabControl1.Width - searchPanel.Width - 16;
+
+            replacePanel.Top = searchPanel.Top;
+            replacePanel.Left = searchPanel.Left;
+        }
+
+        /// <summary>
         /// Handles the selected index changed event of the tab control:
         /// </summary>
         /// <param name="sender">The sender.</param>
@@ -2283,10 +2362,15 @@ namespace SQL_Document_Builder
         {
             if (tabControl1.SelectedTab == null) return;
 
-            if (searchPanel.Visible)
+            if (SearchIsOpen)
             {
                 CloseSearch();
                 OpenSearch();
+            }
+            if (ReplaceIsOpen)
+            {
+                CloseSearch();
+                OpenFindReplace();
             }
         }
 
@@ -2627,7 +2711,7 @@ namespace SQL_Document_Builder
         {
             // register the hotkeys with the form
             HotKeyManager.AddHotKey(this, OpenSearch, Keys.F, true);
-            HotKeyManager.AddHotKey(this, OpenFindDialog, Keys.F, true, false, true);
+            HotKeyManager.AddHotKey(this, OpenFindReplace, Keys.F, true, false, true);
             //HotKeyManager.AddHotKey(this, OpenReplaceDialog, Keys.R, true);
             //HotKeyManager.AddHotKey(this, OpenReplaceDialog, Keys.H, true);
             HotKeyManager.AddHotKey(this, Uppercase, Keys.U, true);
@@ -2667,28 +2751,52 @@ namespace SQL_Document_Builder
             CurrentEditBox?.FoldAll(FoldAction.Expand);
         }
 
+        /// <summary>
+        /// Handles the click event of the find and replace tool strip menu item.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
         private void FindAndReplaceToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            OpenReplaceDialog();
+            OpenFindReplace();
         }
 
         private void FindDialogToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            OpenFindDialog();
         }
 
+        /// <summary>
+        /// Hiddens the characters tool strip menu item_ click.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
         private void HiddenCharactersToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            //// toggle view whitespace
-            //hiddenCharactersItem.Checked = !hiddenCharactersItem.Checked;
-            //CurrentEditBox?.ViewWhitespace = hiddenCharactersItem.Checked ? WhitespaceMode.VisibleAlways : WhitespaceMode.Invisible;
+            // toggle view whitespace
+            showWhitespaceToolStripMenuItem.Checked = !showWhitespaceToolStripMenuItem.Checked;
+            if (CurrentEditBox != null)
+            {
+                CurrentEditBox.ViewWhitespace = showWhitespaceToolStripMenuItem.Checked
+                    ? WhitespaceMode.VisibleAlways
+                    : WhitespaceMode.Invisible;
+            }
         }
 
+        /// <summary>
+        /// Handles the click event of the indent guides tool strip menu item.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
         private void IndentGuidesToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            //// toggle indent guides
-            //indentGuidesItem.Checked = !indentGuidesItem.Checked;
-            //CurrentEditBox?.IndentationGuides = indentGuidesItem.Checked ? IndentView.LookBoth : IndentView.None;
+            // toggle indent guides
+            showIndentGuidesToolStripMenuItem.Checked = !showIndentGuidesToolStripMenuItem.Checked;
+            if (CurrentEditBox != null)
+            {
+                CurrentEditBox.IndentationGuides = showIndentGuidesToolStripMenuItem.Checked
+                    ? ScintillaNET.IndentView.LookBoth
+                    : ScintillaNET.IndentView.None;
+            }
         }
 
         private void IndentSelectionToolStripMenuItem_Click(object sender, EventArgs e)
@@ -2696,6 +2804,11 @@ namespace SQL_Document_Builder
             Indent();
         }
 
+        /// <summary>
+        /// Handles the click event of the lowercase selection tool strip menu item.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
         private void LowercaseSelectionToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Lowercase();
@@ -2724,6 +2837,11 @@ namespace SQL_Document_Builder
             CurrentEditBox?.SetSelection(line.Position + line.Length, line.Position);
         }
 
+        /// <summary>
+        /// Handles the click event of the upper case selection tool strip menu item.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
         private void UppercaseSelectionToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Uppercase();
@@ -2736,16 +2854,31 @@ namespace SQL_Document_Builder
             //CurrentEditBox?.WrapMode = wordWrapItem.Checked ? WrapMode.Word : WrapMode.None;
         }
 
+        /// <summary>
+        /// Handles the click event of the zoom default tool strip menu item.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
         private void Zoom100ToolStripMenuItem_Click(object sender, EventArgs e)
         {
             ZoomDefault();
         }
 
+        /// <summary>
+        /// Handles the click event of the zoom in tool strip menu item.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
         private void ZoomInToolStripMenuItem_Click(object sender, EventArgs e)
         {
             ZoomIn();
         }
 
+        /// <summary>
+        /// Handles the click event of the zoom out tool strip menu item.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
         private void ZoomOutToolStripMenuItem_Click(object sender, EventArgs e)
         {
             ZoomOut();
@@ -2863,6 +2996,7 @@ namespace SQL_Document_Builder
         #region Quick Search Bar
 
         private int _mouseOnTabIndex;
+        private bool ReplaceIsOpen = false;
         private bool SearchIsOpen = false;
 
         /// <summary>
@@ -2887,6 +3021,14 @@ namespace SQL_Document_Builder
                 {
                     searchPanel.Visible = false;
                     //CurBrowser.GetBrowser().StopFinding(true);
+                });
+            }
+            if (ReplaceIsOpen)
+            {
+                ReplaceIsOpen = false;
+                InvokeIfNeeded(delegate ()
+                {
+                    replacePanel.Visible = false;
                 });
             }
         }
@@ -2976,20 +3118,36 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Opens the find dialog.
         /// </summary>
-        private void OpenFindDialog()
-        {
-            //open the find dialog
-            //FindDialog dlg = new FindDialog(sqlTextBox, this);
-            //dlg.Show(this);
-            //dlg.BringToFront();
-            //dlg.Focus();
-        }
-
         /// <summary>
-        /// Opens the replace dialog.
+        /// Opens the find & replace dialog.
         /// </summary>
-        private void OpenReplaceDialog()
+        private void OpenFindReplace()
         {
+            if (CurrentEditBox == null) return;
+
+            ReplaceManager.SearchBox = replaceSearchTextBox;
+            ReplaceManager.ReplaceBox = replaceReplaceTextBox;
+            ReplaceManager.TextArea = CurrentEditBox;
+
+            if (!ReplaceIsOpen)
+            {
+                ReplaceIsOpen = true;
+                InvokeIfNeeded(delegate ()
+                {
+                    replacePanel.Visible = true;
+                    replaceSearchTextBox.Text = ReplaceManager.LastSearch;
+                    replaceSearchTextBox.Focus();
+                    replaceSearchTextBox.SelectAll();
+                });
+            }
+            else
+            {
+                InvokeIfNeeded(delegate ()
+                {
+                    replaceSearchTextBox.Focus();
+                    replaceSearchTextBox.SelectAll();
+                });
+            }
         }
 
         #endregion Find & Replace Dialog
@@ -3267,31 +3425,5 @@ namespace SQL_Document_Builder
         }
 
         #endregion Markdown document builder
-
-        /// <summary>
-        /// handles the click event of the close all tool strip menu item:
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void CloseAllToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (CloseAllTabs() == DialogResult.Cancel)
-            {
-                return;
-            }
-
-            AddTab("");
-        }
-
-        /// <summary>
-        /// Handles the resize event of the tab control:
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void TabControl1_Resize(object sender, EventArgs e)
-        {
-            searchPanel.Top = tabControl1.Top + 36;
-            searchPanel.Left = tabControl1.Left + tabControl1.Width - searchPanel.Width - 16;
-        }
     }
 }
