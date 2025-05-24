@@ -1322,7 +1322,7 @@
             closeSearchButton.BackColor = System.Drawing.Color.White;
             closeSearchButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             closeSearchButton.ForeColor = System.Drawing.Color.Black;
-            closeSearchButton.Location = new System.Drawing.Point(214, 3);
+            closeSearchButton.Location = new System.Drawing.Point(214, 2);
             closeSearchButton.Name = "closeSearchButton";
             closeSearchButton.Size = new System.Drawing.Size(23, 23);
             closeSearchButton.TabIndex = 3;
@@ -1335,7 +1335,7 @@
             nextSearchButton.BackColor = System.Drawing.Color.White;
             nextSearchButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             nextSearchButton.ForeColor = System.Drawing.SystemColors.ControlText;
-            nextSearchButton.Location = new System.Drawing.Point(188, 3);
+            nextSearchButton.Location = new System.Drawing.Point(188, 2);
             nextSearchButton.Name = "nextSearchButton";
             nextSearchButton.Size = new System.Drawing.Size(23, 23);
             nextSearchButton.TabIndex = 2;
@@ -1437,7 +1437,7 @@
             button1.BackColor = System.Drawing.Color.White;
             button1.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             button1.ForeColor = System.Drawing.Color.Black;
-            button1.Location = new System.Drawing.Point(214, 3);
+            button1.Location = new System.Drawing.Point(214, 2);
             button1.Name = "button1";
             button1.Size = new System.Drawing.Size(23, 23);
             button1.TabIndex = 5;
@@ -1452,7 +1452,7 @@
             replaceAllButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             replaceAllButton.ForeColor = System.Drawing.SystemColors.ControlText;
             replaceAllButton.Image = Properties.Resources.replaceAll;
-            replaceAllButton.Location = new System.Drawing.Point(214, 32);
+            replaceAllButton.Location = new System.Drawing.Point(214, 31);
             replaceAllButton.Name = "replaceAllButton";
             replaceAllButton.Size = new System.Drawing.Size(23, 23);
             replaceAllButton.TabIndex = 4;
@@ -1467,7 +1467,7 @@
             replaceButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             replaceButton.ForeColor = System.Drawing.SystemColors.ControlText;
             replaceButton.Image = Properties.Resources.replace;
-            replaceButton.Location = new System.Drawing.Point(188, 32);
+            replaceButton.Location = new System.Drawing.Point(188, 31);
             replaceButton.Name = "replaceButton";
             replaceButton.Size = new System.Drawing.Size(23, 23);
             replaceButton.TabIndex = 3;
@@ -1481,7 +1481,7 @@
             findNextButton.BackColor = System.Drawing.Color.White;
             findNextButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             findNextButton.ForeColor = System.Drawing.SystemColors.ControlText;
-            findNextButton.Location = new System.Drawing.Point(188, 3);
+            findNextButton.Location = new System.Drawing.Point(188, 2);
             findNextButton.Name = "findNextButton";
             findNextButton.Size = new System.Drawing.Size(23, 23);
             findNextButton.TabIndex = 2;
