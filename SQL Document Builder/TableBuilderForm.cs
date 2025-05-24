@@ -1795,15 +1795,7 @@ namespace SQL_Document_Builder
         {
             if (CurrentEditBox == null) return;
 
-            if (CurrentEditBox.Changed)
-            {
-                if (Common.MsgBox("Do you want to save the changes?", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
-                {
-                    SaveToolStripMenuItem_Click(sender, e);
-                }
-            }
-
-            var oFile = new OpenFileDialog() { Filter = "SQL script(*.sql)|*.sql|Text file(*.txt)|*.txt|All files(*.*)|*.*" };
+            var oFile = new OpenFileDialog() { Filter = "SQL script(*.sql)|*.sql|Markdown files(*.md)|*.md|HTML files(*.html)|*.html|Text file(*.txt)|*.txt|All files(*.*)|*.*" };
             if (oFile.ShowDialog() == DialogResult.OK)
             {
                 var fileName = oFile.FileName;
@@ -1815,6 +1807,7 @@ namespace SQL_Document_Builder
                     var queryTextBox = GetTextBoxAt(i);
                     if (queryTextBox != null && queryTextBox?.FileName == fileName)
                     {
+                        // if the file is already opened, select the tab and return
                         tabControl1.SelectedIndex = i;
                         return;
                     }
@@ -1822,14 +1815,6 @@ namespace SQL_Document_Builder
 
                 // add a new tab with the opened file
                 AddTab(fileName);
-
-                //SqlEditBox.OpenFile(oFile.FileName);
-
-                //_fileName = oFile.FileName;
-                //SetTitle(_fileName);
-
-                //CurrentEditBox.Text = File.ReadAllText(_fileName);
-                //CurrentEditBox.Changed = false;
             }
         }
 
