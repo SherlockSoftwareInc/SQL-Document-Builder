@@ -193,26 +193,6 @@ namespace SQL_Document_Builder.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap replace1 {
-            get {
-                object obj = ResourceManager.GetObject("replace1", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        internal static System.Drawing.Bitmap replace2 {
-            get {
-                object obj = ResourceManager.GetObject("replace2", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
         internal static System.Drawing.Bitmap replaceAll {
             get {
                 object obj = ResourceManager.GetObject("replaceAll", resourceCulture);
