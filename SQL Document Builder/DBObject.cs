@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -144,102 +145,113 @@ WHERE
 
         /// <summary>
         /// Generates the SQL script to recreate all non-primary key, non-unique constraint indexes for the specified table.
+        /// Handles XML indexes with the correct syntax.
         /// </summary>
-        /// <param name="fullTableName">The full table name in the format [Schema].[TableName].</param>
         /// <returns>A string containing the SQL script to recreate the indexes.</returns>
-        public string GetCreateIndexesScript()
+        internal async Task<string?> GetCreateIndexesScript()
         {
-            if (ObjectName.IsEmpty())
+            if (ObjectName.IsEmpty() || TableType != ObjectTypeEnums.Table)
                 return string.Empty;
 
-            StringBuilder indexScript = new();
-
-            // Fix: Use CROSS APPLY for included columns and avoid string concatenation with NULLs
-            string query = $@"
+            StringBuilder sb = new();
+            string sql = $@"
 SELECT
-    'CREATE '
-    + CASE WHEN i.is_unique = 1 THEN 'UNIQUE ' ELSE '' END
-    + i.type_desc COLLATE DATABASE_DEFAULT
-    + ' INDEX ' + QUOTENAME(i.name)
-    + ' ON ' + QUOTENAME(s.name) + '.' + QUOTENAME(t.name)
-    + ' (' + ISNULL(key_columns.key_cols, '') + ')'
-    + CASE
-        WHEN include_columns.inc_cols IS NOT NULL AND include_columns.inc_cols <> ''
-          THEN ' INCLUDE (' + include_columns.inc_cols + ')'
-        ELSE ''
-      END
-    + CASE
-        WHEN i.filter_definition IS NOT NULL
-             AND i.filter_definition <> ''
-          THEN ' WHERE ' + i.filter_definition
-        ELSE ''
-      END
-    + ';'
+    i.name AS IndexName,
+    i.type_desc AS IndexType,
+    i.is_unique AS IsUnique,
+    s.name AS SchemaName,
+    t.name AS TableName,
+    STRING_AGG(COL_NAME(ic.object_id, ic.column_id), ',') WITHIN GROUP (ORDER BY ic.key_ordinal) AS IndexColumns,
+    i.filter_definition AS FilterDefinition,
+    i.is_disabled AS IsDisabled,
+    xi.using_xml_index_id,
+    xi.secondary_type
 FROM sys.indexes i
-JOIN sys.tables t
-  ON i.object_id = t.object_id
-JOIN sys.schemas s
-  ON t.schema_id = s.schema_id
--- Generate the key column list
-CROSS APPLY (
-    SELECT
-      key_cols = STUFF((
-        SELECT
-          ', '
-          + QUOTENAME(c.name)
-          + CASE WHEN ic2.is_descending_key = 1 THEN ' DESC' ELSE ' ASC' END
-        FROM sys.index_columns ic2
-        JOIN sys.columns      c
-          ON ic2.object_id = c.object_id
-         AND ic2.column_id = c.column_id
-        WHERE ic2.object_id = i.object_id
-          AND ic2.index_id  = i.index_id
-          AND ic2.is_included_column = 0
-        ORDER BY ic2.key_ordinal
-        FOR XML PATH(''), TYPE
-      ).value('.', 'NVARCHAR(MAX)'), 1, 2, '')
-) AS key_columns
--- Generate the INCLUDE column list
-OUTER APPLY (
-    SELECT
-      inc_cols = STUFF((
-        SELECT
-          ', ' + QUOTENAME(c.name)
-        FROM sys.index_columns ic3
-        JOIN sys.columns      c
-          ON ic3.object_id = c.object_id
-         AND ic3.column_id = c.column_id
-        WHERE ic3.object_id = i.object_id
-          AND ic3.index_id  = i.index_id
-          AND ic3.is_included_column = 1
-        ORDER BY ic3.index_column_id
-        FOR XML PATH(''), TYPE
-      ).value('.', 'NVARCHAR(MAX)'), 1, 2, '')
-) AS include_columns
-WHERE
-    i.object_id = OBJECT_ID(N'{ObjectName.FullName}')
-    AND i.is_primary_key       = 0
-    AND i.is_unique_constraint = 0
-    AND i.is_hypothetical      = 0
-    AND i.index_id             > 0
-ORDER BY
-    i.index_id;";
+INNER JOIN sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id
+INNER JOIN sys.tables t ON i.object_id = t.object_id
+INNER JOIN sys.schemas s ON t.schema_id = s.schema_id
+LEFT JOIN sys.xml_indexes xi ON i.object_id = xi.object_id AND i.index_id = xi.index_id
+WHERE s.name = '{TableSchema}'
+  AND t.name = '{TableName}'
+  AND i.is_primary_key = 0
+  AND i.is_unique_constraint = 0
+  AND i.type_desc <> 'HEAP'
+  AND i.name IS NOT NULL
+GROUP BY i.name, i.type_desc, i.is_unique, s.name, t.name, i.filter_definition, i.is_disabled, xi.using_xml_index_id, xi.secondary_type
+ORDER BY i.name;
+";
 
-            //System.Diagnostics.Debug.Print(query);
+            var dt = await DatabaseHelper.GetDataTableAsync(sql);
+            if (dt == null || dt.Rows.Count == 0)
+                return string.Empty;
 
-            using (SqlConnection connection = new(ConnectionString))
+            // Build a lookup for XML primary index names by index_id
+            var xmlPrimaryIndexes = new Dictionary<int, string>();
+            foreach (System.Data.DataRow dr in dt.Rows)
             {
-                SqlCommand command = new(query, connection);
-                connection.Open();
-
-                using SqlDataReader reader = command.ExecuteReader();
-                while (reader.Read())
+                string indexType = dr["IndexType"].ToString() ?? "";
+                string? secondaryType = dr["secondary_type"] as string;
+                if (indexType == "XML" && string.IsNullOrEmpty(secondaryType))
                 {
-                    indexScript.AppendLine(reader.GetString(0));
+                    // This is a primary XML index
+                    int indexId = dt.Rows.IndexOf(dr) + 1; // index_id is 1-based and matches row order in this context
+                    xmlPrimaryIndexes[indexId] = dr["IndexName"].ToString() ?? "";
                 }
             }
 
-            return indexScript.ToString();
+            foreach (System.Data.DataRow dr in dt.Rows)
+            {
+                string indexName = dr["IndexName"].ToString() ?? "";
+                string indexType = dr["IndexType"].ToString() ?? "";
+                bool isUnique = dr["IsUnique"] != DBNull.Value && (bool)dr["IsUnique"];
+                string schema = dr["SchemaName"].ToString() ?? "";
+                string table = dr["TableName"].ToString() ?? "";
+                string columns = dr["IndexColumns"].ToString() ?? "";
+                string? filter = dr["FilterDefinition"] as string;
+                bool isDisabled = dr["IsDisabled"] != DBNull.Value && (bool)dr["IsDisabled"];
+                object usingXmlIndexIdObj = dr["using_xml_index_id"];
+                string? secondaryType = dr["secondary_type"] as string;
+
+                if (indexType == "XML" && !string.IsNullOrEmpty(secondaryType))
+                {
+                    // Secondary XML index
+                    string xmlType = secondaryType.ToUpperInvariant();
+                    string usingXmlIndexName = "";
+                    if (usingXmlIndexIdObj != DBNull.Value)
+                    {
+                        int usingXmlIndexId = Convert.ToInt32(usingXmlIndexIdObj);
+                        xmlPrimaryIndexes.TryGetValue(usingXmlIndexId, out usingXmlIndexName);
+                    }
+                    sb.Append($"CREATE XML INDEX [{indexName}] ON [{schema}].[{table}] ([{columns.Trim()}]) ");
+                    if (!string.IsNullOrEmpty(usingXmlIndexName))
+                        sb.Append($"USING XML INDEX [{usingXmlIndexName}] ");
+                    sb.Append($"FOR {xmlType};");
+                    if (isDisabled)
+                        sb.Append(" -- Index is disabled");
+                    sb.AppendLine();
+                }
+                else if (indexType == "XML")
+                {
+                    // Primary XML index
+                    sb.Append($"CREATE PRIMARY XML INDEX [{indexName}] ON [{schema}].[{table}] ([{columns.Trim()}]);");
+                    if (isDisabled)
+                        sb.Append(" -- Index is disabled");
+                    sb.AppendLine();
+                }
+                else
+                {
+                    // All other indexes
+                    sb.Append($"CREATE {(isUnique ? "UNIQUE " : "")}{indexType.Replace("_", " ")} INDEX [{indexName}] ON [{schema}].[{table}] ({string.Join(", ", columns.Split(',').Select(c => $"[{c.Trim()}]"))})");
+                    if (!string.IsNullOrWhiteSpace(filter))
+                        sb.Append($" WHERE {filter}");
+                    sb.Append(";");
+                    if (isDisabled)
+                        sb.Append(" -- Index is disabled");
+                    sb.AppendLine();
+                }
+            }
+
+            return sb.ToString();
         }
 
         /// <summary>

@@ -556,7 +556,7 @@ GO";
                 createScript.AppendLine(defaultConstraints);
             }
 
-            var indexScript = table.GetCreateIndexesScript();
+            var indexScript =await table.GetCreateIndexesScript();
             if (!string.IsNullOrEmpty(indexScript))
             {
                 // remove the new line at the end of the script
