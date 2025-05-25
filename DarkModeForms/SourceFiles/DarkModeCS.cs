@@ -697,7 +697,7 @@ namespace DarkModeForms
                     break;
             }
 
-            Debug.Print(string.Format("{0}: {1}", control.Name, control.GetType().Name));
+            //Debug.Print(string.Format("{0}: {1}", control.Name, control.GetType().Name));
 
             if (control.ContextMenuStrip != null)
                 ThemeControl(control.ContextMenuStrip);
@@ -1517,7 +1517,7 @@ namespace DarkModeForms
             }
             else
             {
-                System.Diagnostics.Debug.Print("MyRenderer: " + e.Item.GetType().FullName);
+                //System.Diagnostics.Debug.Print("MyRenderer: " + e.Item.GetType().FullName);
             }
 
             // Existing logic for other items

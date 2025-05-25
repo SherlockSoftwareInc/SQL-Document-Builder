@@ -192,7 +192,7 @@ WHERE sm.object_id = OBJECT_ID(@SchemaQualifiedName);";
                             else
                             {
                                 var typeName = reader.GetFieldType(i).Name;
-                                System.Diagnostics.Debug.Print(typeName);
+                                //System.Diagnostics.Debug.Print(typeName);
 
                                 switch (typeName)
                                 {
@@ -527,9 +527,34 @@ GO";
             {
                 createScript.AppendLine($"\tCONSTRAINT PK_{objectName.Schema}_{objectName.Name} PRIMARY KEY ({primaryKeyColumns})");
             }
-
             createScript.AppendLine(");");
-            createScript.AppendLine($"GO");
+
+            // add the foreign key constraints
+            var foreignKeyConstraints = await table.GetForeignKeyConstraintsScript();
+            if (!string.IsNullOrEmpty(foreignKeyConstraints))
+            {
+                // remove the new line at the end of the script
+                foreignKeyConstraints = foreignKeyConstraints.TrimEnd('\r', '\n');
+                createScript.AppendLine(foreignKeyConstraints);
+            }
+
+            // add the check constraints
+            var checkConstraints = await table.GetCheckConstraintsScript();
+            if (!string.IsNullOrEmpty(checkConstraints))
+            {
+                // remove the new line at the end of the script
+                checkConstraints = checkConstraints.TrimEnd('\r', '\n');
+                createScript.AppendLine(checkConstraints);
+            }
+
+            // add the default constraints
+            var defaultConstraints = await table.GetDefaultConstraintsScript();
+            if (!string.IsNullOrEmpty(defaultConstraints))
+            {
+                // remove the new line at the end of the script
+                defaultConstraints = defaultConstraints.TrimEnd('\r', '\n');
+                createScript.AppendLine(defaultConstraints);
+            }
 
             var indexScript = table.GetCreateIndexesScript();
             if (!string.IsNullOrEmpty(indexScript))
@@ -538,8 +563,10 @@ GO";
                 indexScript = indexScript.TrimEnd('\r', '\n');
 
                 createScript.AppendLine(indexScript);
-                createScript.AppendLine($"GO");
             }
+
+            // add GO statement
+            createScript.AppendLine($"GO");
 
             return createScript.ToString();
         }

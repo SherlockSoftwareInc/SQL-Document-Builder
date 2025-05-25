@@ -146,7 +146,7 @@
             // 
             addAllButton.Location = new System.Drawing.Point(294, 141);
             addAllButton.Name = "addAllButton";
-            addAllButton.Size = new System.Drawing.Size(32, 23);
+            addAllButton.Size = new System.Drawing.Size(44, 23);
             addAllButton.TabIndex = 11;
             addAllButton.Text = ">>";
             toolTip1.SetToolTip(addAllButton, "Add all to selected list");
@@ -156,7 +156,7 @@
             // label5
             // 
             label5.AutoSize = true;
-            label5.Location = new System.Drawing.Point(332, 9);
+            label5.Location = new System.Drawing.Point(344, 9);
             label5.Name = "label5";
             label5.Size = new System.Drawing.Size(95, 15);
             label5.TabIndex = 9;
@@ -166,7 +166,7 @@
             // 
             selectedListBox.FormattingEnabled = true;
             selectedListBox.ItemHeight = 15;
-            selectedListBox.Location = new System.Drawing.Point(332, 30);
+            selectedListBox.Location = new System.Drawing.Point(344, 30);
             selectedListBox.Name = "selectedListBox";
             selectedListBox.Size = new System.Drawing.Size(289, 379);
             selectedListBox.TabIndex = 10;
@@ -177,7 +177,7 @@
             // 
             addButton.Location = new System.Drawing.Point(294, 170);
             addButton.Name = "addButton";
-            addButton.Size = new System.Drawing.Size(32, 23);
+            addButton.Size = new System.Drawing.Size(44, 23);
             addButton.TabIndex = 12;
             addButton.Text = ">";
             toolTip1.SetToolTip(addButton, "Add to selected list");
@@ -187,7 +187,7 @@
             // okButton
             // 
             okButton.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
-            okButton.Location = new System.Drawing.Point(553, 415);
+            okButton.Location = new System.Drawing.Point(564, 415);
             okButton.Name = "okButton";
             okButton.Size = new System.Drawing.Size(68, 23);
             okButton.TabIndex = 15;
@@ -199,7 +199,7 @@
             // cancelButton
             // 
             cancelButton.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
-            cancelButton.Location = new System.Drawing.Point(479, 415);
+            cancelButton.Location = new System.Drawing.Point(490, 415);
             cancelButton.Name = "cancelButton";
             cancelButton.Size = new System.Drawing.Size(68, 23);
             cancelButton.TabIndex = 16;
@@ -212,7 +212,7 @@
             // 
             removeButton.Location = new System.Drawing.Point(294, 199);
             removeButton.Name = "removeButton";
-            removeButton.Size = new System.Drawing.Size(32, 23);
+            removeButton.Size = new System.Drawing.Size(44, 23);
             removeButton.TabIndex = 13;
             removeButton.Text = "<";
             toolTip1.SetToolTip(removeButton, "Remove from selected list");
@@ -223,7 +223,7 @@
             // 
             removeAllButton.Location = new System.Drawing.Point(294, 228);
             removeAllButton.Name = "removeAllButton";
-            removeAllButton.Size = new System.Drawing.Size(32, 23);
+            removeAllButton.Size = new System.Drawing.Size(44, 23);
             removeAllButton.TabIndex = 14;
             removeAllButton.Text = "<<";
             toolTip1.SetToolTip(removeAllButton, "Remove all selected objects");
@@ -233,7 +233,7 @@
             // pasteButton
             // 
             pasteButton.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
-            pasteButton.Location = new System.Drawing.Point(405, 415);
+            pasteButton.Location = new System.Drawing.Point(416, 415);
             pasteButton.Name = "pasteButton";
             pasteButton.Size = new System.Drawing.Size(68, 23);
             pasteButton.TabIndex = 17;
@@ -245,7 +245,7 @@
             // copyButton
             // 
             copyButton.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
-            copyButton.Location = new System.Drawing.Point(331, 415);
+            copyButton.Location = new System.Drawing.Point(342, 415);
             copyButton.Name = "copyButton";
             copyButton.Size = new System.Drawing.Size(68, 23);
             copyButton.TabIndex = 18;
@@ -258,7 +258,7 @@
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            ClientSize = new System.Drawing.Size(633, 450);
+            ClientSize = new System.Drawing.Size(644, 450);
             Controls.Add(cancelButton);
             Controls.Add(copyButton);
             Controls.Add(pasteButton);
