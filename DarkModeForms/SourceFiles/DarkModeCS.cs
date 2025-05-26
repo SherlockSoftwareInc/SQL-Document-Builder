@@ -30,6 +30,9 @@ namespace DarkModeForms
                 ColorizationOpaqueBlend;
         }
 
+        /// <summary>
+        /// The DWMWINDOWATTRIBUTE enumeration specifies the attributes of a window that can be set or retrieved by using the DwmSetWindowAttribute and DwmGetWindowAttribute functions.
+        /// </summary>
         [Flags]
         public enum DWMWINDOWATTRIBUTE : uint
         {
@@ -154,6 +157,9 @@ namespace DarkModeForms
             DWMWA_LAST,
         }
 
+        /// <summary>
+        /// The DWM_WINDOW_CORNER_PREFERENCE enumeration specifies the rounded corner preference for a window.
+        /// </summary>
         [Flags]
         public enum DWM_WINDOW_CORNER_PREFERENCE
         {
@@ -171,12 +177,19 @@ namespace DarkModeForms
             public int Right;
             public int Bottom;
 
+            /// <summary>
+            /// Converts the RECT structure to a Rectangle structure.
+            /// </summary>
+            /// <returns>A Rectangle.</returns>
             public Rectangle ToRectangle()
             {
                 return Rectangle.FromLTRB(Left, Top, Right, Bottom);
             }
         }
 
+        /// <summary>
+        /// The EM_SETCUEBANNER constant is used to set the cue banner text in an edit control.
+        /// </summary>
         public const int EM_SETCUEBANNER = 5377;
 
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
@@ -1525,26 +1538,45 @@ namespace DarkModeForms
         }
     }
 
+    /// <summary>
+    /// The custom color table.
+    /// </summary>
     public class CustomColorTable : ProfessionalColorTable
     {
+        /// <summary>
+        /// Gets or sets the colors.
+        /// </summary>
         public OSThemeColors Colors { get; set; }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="CustomColorTable"/> class.
+        /// </summary>
+        /// <param name="_Colors">The _ colors.</param>
         public CustomColorTable(OSThemeColors _Colors)
         {
             Colors = _Colors;
             base.UseSystemColors = false;
         }
 
+        /// <summary>
+        /// Gets the image margin gradient begin.
+        /// </summary>
         public override Color ImageMarginGradientBegin
         {
             get { return Colors.Control; }
         }
 
+        /// <summary>
+        /// Gets the image margin gradient middle.
+        /// </summary>
         public override Color ImageMarginGradientMiddle
         {
             get { return Colors.Control; }
         }
 
+        /// <summary>
+        /// Gets the image margin gradient end.
+        /// </summary>
         public override Color ImageMarginGradientEnd
         {
             get { return Colors.Control; }

@@ -11,8 +11,8 @@
     <Company>Sherlock Software Inc.</Company>
     <Product>SQL Server Script and Document Builder</Product>
     <StartupObject>SQL_Document_Builder.Program</StartupObject>
-    <ApplicationIcon>SQLDocBuilder.ico</ApplicationIcon>
-    <PackageIcon>SQL_Doc.png</PackageIcon>
+    <ApplicationIcon>SQLBuilder.ico</ApplicationIcon>
+    <PackageIcon>Docs.png</PackageIcon>
     <AssemblyVersion>3.0.11</AssemblyVersion>
     <FileVersion>3.0.11</FileVersion>
     <RepositoryUrl>https://github.com/SherlockSoftwareInc/SQL-Document-Builder</RepositoryUrl>
@@ -34,7 +34,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="SQLDocBuilder.ico" />
+    <None Remove="SQL128.png" />
+    <None Remove="SQL400.png" />
+    <None Remove="SQL512.png" />
+    <None Remove="SQLDocBuilder.ico" />
+    <None Remove="SQL_Doc.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="SQLBuilder.ico" />
   </ItemGroup>
 
   <ItemGroup>
@@ -76,17 +84,6 @@
     <None Update="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
-    </None>
-    <None Update="SQL128.png">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
-    <None Update="SQLDocBuilder.ico">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="SQL_Doc.png">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
     </None>
   </ItemGroup>
 

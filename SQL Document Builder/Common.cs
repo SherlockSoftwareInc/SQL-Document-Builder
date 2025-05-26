@@ -20,17 +20,15 @@ namespace SQL_Document_Builder
         /// <returns>A string.</returns>
         public static string InputBox(string prompt, string title = "", string defaultValue = "")
         {
-            using (var dlg = new InputBox()
+            using var dlg = new InputBox()
             {
                 Title = title.Length == 0 ? Application.ProductName : title,
                 Prompt = prompt,
                 Default = defaultValue
-            })
+            };
+            if (dlg.ShowDialog() == DialogResult.OK)
             {
-                if (dlg.ShowDialog() == DialogResult.OK)
-                {
-                    return dlg.InputText;
-                }
+                return dlg.InputText;
             }
             return "";
         }

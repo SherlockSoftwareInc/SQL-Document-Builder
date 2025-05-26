@@ -139,7 +139,7 @@ WHERE sm.object_id = OBJECT_ID(@SchemaQualifiedName);";
                     {
                         columnNames += $"[{reader.GetName(i)}], ";
                     }
-                    columnNames = columnNames.Substring(0, columnNames.Length - 2); // Remove trailing comma and space
+                    columnNames = columnNames[..^2]; // Remove trailing comma and space
 
                     int rowCount = 0;
                     int batchCount = 0;

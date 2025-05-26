@@ -6,13 +6,19 @@ using System.Windows.Forms;
 
 namespace DarkModeForms
 {
-	// *** CREDITS:  https://github.com/r-aghaei/FlatComboExample/tree/master
+    // *** CREDITS:  https://github.com/r-aghaei/FlatComboExample/tree/master
 
-	public class FlatComboBox : ComboBox
+    /// <summary>
+    /// The flat combo box.
+    /// </summary>
+    public class FlatComboBox : ComboBox
 	{
 		private Color borderColor = Color.Gray;
 
-		[DefaultValue(typeof(Color), "Gray")]
+        /// <summary>
+        /// Gets or sets the border color.
+        /// </summary>
+        [DefaultValue(typeof(Color), "Gray")]
 		public Color BorderColor
 		{
 			get { return borderColor; }
@@ -28,7 +34,10 @@ namespace DarkModeForms
 
 		private Color buttonColor = Color.LightGray;
 
-		[DefaultValue(typeof(Color), "LightGray")]
+        /// <summary>
+        /// Gets or sets the button color.
+        /// </summary>
+        [DefaultValue(typeof(Color), "LightGray")]
 		public Color ButtonColor
 		{
 			get { return buttonColor; }
@@ -42,7 +51,11 @@ namespace DarkModeForms
 			}
 		}
 
-		protected override void WndProc(ref Message m)
+        /// <summary>
+        /// Wnds the proc.
+        /// </summary>
+        /// <param name="m">The m.</param>
+        protected override void WndProc(ref Message m)
 		{
 			if (m.Msg == WM_PAINT && DropDownStyle != ComboBoxStyle.Simple)
 			{
