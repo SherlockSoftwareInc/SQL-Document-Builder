@@ -43,68 +43,59 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Retrieves the T-SQL definition script for a specific view using its fully qualified name.
         /// </summary>
-        /// <param name="connectionString">The SQL Server connection string.</param>
-        /// <param name="fullViewName">The fully qualified name of the view (e.g., "[dbo].[vGetAllCategories]", "sales.CustomersView"). Should be in a format recognizable by OBJECT_ID.</param>
         /// <returns>A string containing the view's definition, or null if not found or an error occurs.</returns>
-        /// <exception cref="ArgumentNullException">Thrown if connectionString or fullViewName is null or empty.</exception>
         /// <remarks>
         /// This function executes SQL targeting sys.sql_modules for objects identifiable via OBJECT_ID.
         /// It assumes the object corresponding to fullViewName is a view or other SQL module.
         /// It does NOT generate CREATE INDEX scripts.
         /// </remarks>
-        public static async Task<string?> GetViewDefinitionAsync(ObjectName objectName)
+        public static async Task<string> GetViewDefinitionAsync(ObjectName objectName)
         {
             string fullViewName = objectName.FullName;
 
+            string viewDefinition = string.Empty;
+
             // Validate the single full name parameter
-            if (string.IsNullOrWhiteSpace(fullViewName))
-                throw new ArgumentNullException(nameof(fullViewName));
-
-            // The SQL query remains the same, using OBJECT_ID which handles schema-qualified names
-            const string query = @"SELECT sm.definition
-FROM sys.sql_modules sm
-WHERE sm.object_id = OBJECT_ID(@SchemaQualifiedName);";
-            // Optional: Add explicit type check if necessary
-            // AND EXISTS (SELECT 1 FROM sys.objects o WHERE o.object_id = sm.object_id AND o.type = 'V');";
-
-            string? viewDefinition = null;
-
-            try
+            if (!string.IsNullOrWhiteSpace(fullViewName))
             {
-                // Use 'await using' for automatic disposal
-                await using var connection = new SqlConnection(Properties.Settings.Default.dbConnectionString);
-                await using var command = new SqlCommand(query, connection);
-                // Use the provided fullViewName directly as the parameter value
-                command.Parameters.AddWithValue("@SchemaQualifiedName", fullViewName);
-
-                await connection.OpenAsync();
-
-                // ExecuteScalarAsync is efficient for retrieving a single value
-                object? result = await command.ExecuteScalarAsync();
-
-                // Check if a result was returned and it's not DBNull
-                if (result != null && result != DBNull.Value)
+                try
                 {
-                    viewDefinition = result.ToString();
+                    // The SQL query remains the same, using OBJECT_ID which handles schema-qualified names
+                    string query = $@"SELECT sm.definition
+FROM sys.sql_modules sm
+WHERE sm.object_id = OBJECT_ID('{objectName.FullName}')";
+
+                    // ExecuteScalarAsync is efficient for retrieving a single value
+                    object? result = await DatabaseHelper.ExecuteScalarAsync(query);
+                    // Check if a result was returned and it's not DBNull
+                    if (result != null && result != DBNull.Value)
+                    {
+                        viewDefinition = result.ToString().TrimStart('\r', '\n', ' ', '\t');
+                    }
                 }
-                // Command is disposed here
-                // Connection is disposed here
-            }
-            catch (SqlException ex)
-            {
-                // Log the exception (replace Console.WriteLine with your logging framework)
-                Console.WriteLine($"SQL Error getting view definition for {fullViewName}: {ex.Message}");
-                // Depending on requirements, you might re-throw, return null, or handle differently
-                // throw; // Uncomment to propagate the exception
-            }
-            catch (Exception ex)
-            {
-                // Handle other potential exceptions
-                Console.WriteLine($"Error getting view definition for {fullViewName}: {ex.Message}");
-                // throw; // Uncomment to propagate the exception
+                catch (SqlException ex)
+                {
+                    // Log the exception (replace Console.WriteLine with your logging framework)
+                    //viewDefinition = $"-- SQL Error getting view definition for {fullViewName}: {ex.Message}";
+                }
+                catch (Exception ex)
+                {
+                    // Handle other potential exceptions
+                    //viewDefinition = $"-- Error getting view definition for {fullViewName}: {ex.Message}";
+                }
             }
 
-            return viewDefinition;
+            if (string.IsNullOrEmpty(viewDefinition))
+            {
+                // If no definition was found, return an empty string or a comment indicating no definition
+                //return $"-- No definition found for view {fullViewName}";
+                return string.Empty; // Return empty if no definition found
+            }
+            else
+            {
+                // Ensure the definition ends with a newline for better readability
+                return viewDefinition.TrimEnd('\r', '\n', ' ', '\t') + Environment.NewLine;
+            }
         }
 
         /// <summary>
@@ -405,6 +396,10 @@ GO";
             createScript.AppendLine($"GO");
 
             var script = await GetFunctionDefinitionAsync(objectName);
+            if (string.IsNullOrEmpty(script))
+            {
+                return string.Empty;
+            }
             createScript.Append(script);
             createScript.AppendLine($"GO");
             return createScript.ToString();
@@ -435,15 +430,6 @@ GO";
             if (string.IsNullOrEmpty(script))
             {
                 return string.Empty;
-            }
-
-            // remove the space at the end of the script
-            script = script.TrimEnd('\r', '\n', ' ', '\t');
-
-            // add new line if the script is not end with new line
-            if (!script.EndsWith(Environment.NewLine))
-            {
-                script += Environment.NewLine;
             }
 
             createScript.Append(script);
@@ -556,7 +542,7 @@ GO";
                 createScript.AppendLine(defaultConstraints);
             }
 
-            var indexScript =await table.GetCreateIndexesScript();
+            var indexScript = await table.GetCreateIndexesScript();
             if (!string.IsNullOrEmpty(indexScript))
             {
                 // remove the new line at the end of the script
@@ -592,6 +578,10 @@ GO";
             }
 
             var script = await GetViewDefinitionAsync(objectName);
+            if (string.IsNullOrEmpty(script))
+            {
+                return string.Empty;
+            }
             createScript.Append(script);
             createScript.AppendLine($"GO");
             return createScript.ToString();
@@ -602,59 +592,55 @@ GO";
         /// </summary>
         /// <param name="objectName">The object name.</param>
         /// <returns>A Task.</returns>
-        private static async Task<string?> GetFunctionDefinitionAsync(ObjectName objectName)
+        private static async Task<string> GetFunctionDefinitionAsync(ObjectName objectName)
         {
             string fnName = objectName.FullName;
 
+            string definition = string.Empty;
+
             // Validate the single full name parameter
-            if (string.IsNullOrWhiteSpace(fnName))
-                throw new ArgumentNullException(nameof(fnName));
-
-            // The SQL query remains the same, using OBJECT_ID which handles schema-qualified names
-            const string query = @"SELECT sm.definition
-FROM sys.sql_modules sm
-WHERE sm.object_id = OBJECT_ID(@SchemaQualifiedName);";
-            // Optional: Add explicit type check if necessary
-            // AND EXISTS (SELECT 1 FROM sys.objects o WHERE o.object_id = sm.object_id AND o.type = 'V');";
-
-            string? definition = null;
-
-            try
+            if (!string.IsNullOrWhiteSpace(fnName))
             {
-                // Use 'await using' for automatic disposal
-                await using var connection = new SqlConnection(Properties.Settings.Default.dbConnectionString);
-                await using var command = new SqlCommand(query, connection);
-                // Use the provided fnName directly as the parameter value
-                command.Parameters.AddWithValue("@SchemaQualifiedName", fnName);
-
-                await connection.OpenAsync();
-
-                // ExecuteScalarAsync is efficient for retrieving a single value
-                object? result = await command.ExecuteScalarAsync();
-
-                // Check if a result was returned and it's not DBNull
-                if (result != null && result != DBNull.Value)
+                try
                 {
-                    definition = result.ToString();
+                    // The SQL query remains the same, using OBJECT_ID which handles schema-qualified names
+                    string query = $@"SELECT sm.definition
+FROM sys.sql_modules sm
+WHERE sm.object_id = OBJECT_ID('{objectName.FullName}');";
+
+                    // ExecuteScalarAsync is efficient for retrieving a single value
+                    object? result = await DatabaseHelper.ExecuteScalarAsync(query);
+
+                    // Check if a result was returned and it's not DBNull
+                    if (result != null && result != DBNull.Value)
+                    {
+                        definition = result.ToString().TrimStart('\r', '\n', ' ', '\t');
+                    }
+                    // Command is disposed here
+                    // Connection is disposed here
                 }
-                // Command is disposed here
-                // Connection is disposed here
-            }
-            catch (SqlException ex)
-            {
-                // Log the exception (replace Console.WriteLine with your logging framework)
-                Console.WriteLine($"SQL Error getting view definition for {fnName}: {ex.Message}");
-                // Depending on requirements, you might re-throw, return null, or handle differently
-                // throw; // Uncomment to propagate the exception
-            }
-            catch (Exception ex)
-            {
-                // Handle other potential exceptions
-                Console.WriteLine($"Error getting view definition for {fnName}: {ex.Message}");
-                // throw; // Uncomment to propagate the exception
+                catch (SqlException ex)
+                {
+                    // Log the exception (replace Console.WriteLine with your logging framework)
+                    //definition = $"-- SQL Error getting view definition for {fnName}: {ex.Message}";
+                }
+                catch (Exception ex)
+                {
+                    // Handle other potential exceptions
+                    //definition = $"-- Error getting view definition for {fnName}: {ex.Message}";
+                }
             }
 
-            return definition;
+            if (string.IsNullOrEmpty(definition))
+            {
+                // If no definition was found, return an empty string or a comment indicating no definition
+                return string.Empty;
+            }
+            else
+            {                
+                // Ensure the definition ends with a newline for better readability
+                return definition.TrimEnd('\r', '\n', ' ', '\t') + Environment.NewLine;
+            }
         }
 
         /// <summary>
@@ -665,56 +651,50 @@ WHERE sm.object_id = OBJECT_ID(@SchemaQualifiedName);";
         private static async Task<string?> GetStoredProcedureDefinitionAsync(ObjectName objectName)
         {
             string spName = objectName.FullName;
+            string? definition = string.Empty;
 
             // Validate the single full name parameter
-            if (string.IsNullOrWhiteSpace(spName))
-                throw new ArgumentNullException(nameof(spName));
-
-            // The SQL query remains the same, using OBJECT_ID which handles schema-qualified names
-            const string query = @"SELECT sm.definition
+            if (!string.IsNullOrWhiteSpace(spName))
+            {
+                // The SQL query remains the same, using OBJECT_ID which handles schema-qualified names
+                string query = $@"SELECT sm.definition
 FROM sys.sql_modules sm
-WHERE sm.object_id = OBJECT_ID(@SchemaQualifiedName);";
-            // Optional: Add explicit type check if necessary
-            // AND EXISTS (SELECT 1 FROM sys.objects o WHERE o.object_id = sm.object_id AND o.type = 'V');";
+WHERE sm.object_id = OBJECT_ID('{objectName.FullName}')";
 
-            string? definition = null;
-
-            try
-            {
-                // Use 'await using' for automatic disposal
-                await using var connection = new SqlConnection(Properties.Settings.Default.dbConnectionString);
-                await using var command = new SqlCommand(query, connection);
-                // Use the provided spName directly as the parameter value
-                command.Parameters.AddWithValue("@SchemaQualifiedName", spName);
-
-                await connection.OpenAsync();
-
-                // ExecuteScalarAsync is efficient for retrieving a single value
-                object? result = await command.ExecuteScalarAsync();
-
-                // Check if a result was returned and it's not DBNull
-                if (result != null && result != DBNull.Value)
+                try
                 {
-                    definition = result.ToString();
+                    // ExecuteScalarAsync is efficient for retrieving a single value
+                    object? result = await DatabaseHelper.ExecuteScalarAsync(query);
+
+                    // Check if a result was returned and it's not DBNull
+                    if (result != null && result != DBNull.Value)
+                    {
+                        definition = result.ToString().TrimStart('\r', '\n', ' ', '\t');
+                    }
                 }
-                // Command is disposed here
-                // Connection is disposed here
-            }
-            catch (SqlException ex)
-            {
-                // Log the exception (replace Console.WriteLine with your logging framework)
-                Console.WriteLine($"SQL Error getting view definition for {spName}: {ex.Message}");
-                // Depending on requirements, you might re-throw, return null, or handle differently
-                // throw; // Uncomment to propagate the exception
-            }
-            catch (Exception ex)
-            {
-                // Handle other potential exceptions
-                Console.WriteLine($"Error getting view definition for {spName}: {ex.Message}");
-                // throw; // Uncomment to propagate the exception
+                catch (SqlException ex)
+                {
+                    // Log the exception (replace Console.WriteLine with your logging framework)
+                    //definition = $"-- SQL Error getting view definition for {spName}: {ex.Message}";
+                }
+                catch (Exception ex)
+                {
+                    // Handle other potential exceptions
+                    //definition = $"-- Error getting view definition for {spName}: {ex.Message}";
+                }
             }
 
-            return definition;
+            if (string.IsNullOrEmpty(definition))
+            {
+                // If no definition was found, return an empty string or a comment indicating no definition
+                //return $"-- No definition found for stored procedure {spName}";
+                return string.Empty; // Return empty if no definition found
+            }
+            else
+            {
+                // Ensure the definition ends with a newline for better readability
+                return definition.TrimEnd('\r', '\n', ' ', '\t') + Environment.NewLine;
+            }
         }
     }
 }
