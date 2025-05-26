@@ -95,23 +95,79 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Gets the catelog.
+        /// </summary>
+        public string? Catelog { get; private set; } 
+
+        /// <summary>
         /// Gets the full name.
         /// </summary>
         public string FullName
         {
             get
             {
-                if (_schema.Length > 0)
+                if (!string.IsNullOrEmpty(Catelog))
                 {
-                    return $"[{_schema}].[{_name}]";
+                    return $"{Catelog.QuotedName()}.{Schema.QuotedName()}.{Name.QuotedName()}";
                 }
-                if (_name.Length > 0)
+                else if (!string.IsNullOrEmpty(Schema))
                 {
-                    return $"[{_name}]";
+                    return $"{Schema.QuotedName()}.{Name.QuotedName()}";
+                }
+                else if (!string.IsNullOrEmpty(Name))
+                {
+                    return Name.QuotedName();
+                }
+                return string.Empty;
+            }
+            set
+            {
+                Catelog = "";
+                Schema = "";
+                Name = "";
+                //Parse table name
+                string[] tableElements = value.Split('.');
+                if (tableElements.Length == 1)
+                {
+                    Name = value.RemoveQuote();
+                }
+                else if (tableElements.Length == 2)
+                {
+                    Schema = tableElements[0].RemoveQuote();
+                    Name = tableElements[1].RemoveQuote();
+                }
+                else if (tableElements.Length == 3)
+                {
+                    Catelog = tableElements[0].RemoveQuote();
+                    Schema = tableElements[1].RemoveQuote();
+                    Name = tableElements[2].RemoveQuote();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Get table full name without quotation
+        /// </summary>
+        public string FullNameNoQuote
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(Catelog))
+                {
+                    return $"{Catelog}.{Schema}.{Name}";
+                }
+                else if (!string.IsNullOrEmpty(Schema))
+                {
+                    return $"{Schema}.{Name}";
+                }
+                else if (!string.IsNullOrEmpty(Name))
+                {
+                    return Name;
                 }
                 return string.Empty;
             }
         }
+
 
         /// <summary>
         /// Gets or sets the name.
@@ -134,6 +190,22 @@ namespace SQL_Document_Builder
         {
             get { return _schema; }
             set { _schema = RemoveQuota(value); }
+        }
+
+        /// <summary>
+        /// Return a copy of the class
+        /// </summary>
+        /// <returns></returns>
+        public ObjectName Copy()
+        {
+            ObjectName result = new()
+            {
+                Catelog = this.Catelog,
+                Schema = this.Schema,
+                Name = this.Name,
+                ObjectType = this.ObjectType
+            };
+            return result;
         }
 
         /// <summary>
@@ -172,7 +244,7 @@ namespace SQL_Document_Builder
         /// <returns>A bool.</returns>
         public bool IsEmpty()
         {
-            return _name.Length == 0 || _schema.Length == 0;
+            return string.IsNullOrEmpty(Name);
         }
 
         /// <summary>
