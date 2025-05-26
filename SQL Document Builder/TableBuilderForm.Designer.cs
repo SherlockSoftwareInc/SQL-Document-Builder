@@ -39,6 +39,9 @@
             copyToolStripButton = new System.Windows.Forms.ToolStripButton();
             pasteToolStripButton = new System.Windows.Forms.ToolStripButton();
             toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
+            toolStripLabel1 = new System.Windows.Forms.ToolStripLabel();
+            dataSourcesToolStripComboBox = new System.Windows.Forms.ToolStripComboBox();
+            toolStripSeparator20 = new System.Windows.Forms.ToolStripSeparator();
             tableWikiToolStripButton = new System.Windows.Forms.ToolStripButton();
             valuesWikiToolStripButton = new System.Windows.Forms.ToolStripButton();
             toolStripButton1 = new System.Windows.Forms.ToolStripButton();
@@ -207,7 +210,7 @@
             // toolStrip1
             // 
             toolStrip1.ImageScalingSize = new System.Drawing.Size(20, 20);
-            toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { newToolStripButton1, openToolStripButton, saveToolStripButton, toolStripSeparator, cutToolStripButton, copyToolStripButton, pasteToolStripButton, toolStripSeparator3, tableWikiToolStripButton, valuesWikiToolStripButton, toolStripButton1, toolStripSeparator2, toolStripDropDownButton1, primaryKeyToolStripButton, indexToolStripButton, createTableToolStripButton, insertToolStripButton, toolStripSeparator15, exeToolStripDropDownButton });
+            toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { newToolStripButton1, openToolStripButton, saveToolStripButton, toolStripSeparator, cutToolStripButton, copyToolStripButton, pasteToolStripButton, toolStripSeparator3, toolStripLabel1, dataSourcesToolStripComboBox, toolStripSeparator20, tableWikiToolStripButton, valuesWikiToolStripButton, toolStripButton1, toolStripSeparator2, toolStripDropDownButton1, primaryKeyToolStripButton, indexToolStripButton, createTableToolStripButton, insertToolStripButton, toolStripSeparator15, exeToolStripDropDownButton });
             toolStrip1.Location = new System.Drawing.Point(0, 24);
             toolStrip1.Name = "toolStrip1";
             toolStrip1.Padding = new System.Windows.Forms.Padding(0, 0, 2, 0);
@@ -284,6 +287,24 @@
             // 
             toolStripSeparator3.Name = "toolStripSeparator3";
             toolStripSeparator3.Size = new System.Drawing.Size(6, 27);
+            // 
+            // toolStripLabel1
+            // 
+            toolStripLabel1.Name = "toolStripLabel1";
+            toolStripLabel1.Size = new System.Drawing.Size(72, 24);
+            toolStripLabel1.Text = "Data source:";
+            // 
+            // dataSourcesToolStripComboBox
+            // 
+            dataSourcesToolStripComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            dataSourcesToolStripComboBox.Name = "dataSourcesToolStripComboBox";
+            dataSourcesToolStripComboBox.Size = new System.Drawing.Size(250, 27);
+            dataSourcesToolStripComboBox.SelectedIndexChanged += DataSourcesToolStripComboBox_SelectedIndexChanged;
+            // 
+            // toolStripSeparator20
+            // 
+            toolStripSeparator20.Name = "toolStripSeparator20";
+            toolStripSeparator20.Size = new System.Drawing.Size(6, 27);
             // 
             // tableWikiToolStripButton
             // 
@@ -1750,5 +1771,8 @@
         private System.Windows.Forms.TextBox replaceReplaceTextBox;
         private System.Windows.Forms.TextBox replaceSearchTextBox;
         private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.ToolStripLabel toolStripLabel1;
+        private System.Windows.Forms.ToolStripComboBox dataSourcesToolStripComboBox;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator20;
     }
 }

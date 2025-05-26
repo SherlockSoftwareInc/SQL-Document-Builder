@@ -283,6 +283,8 @@ namespace SQL_Document_Builder
 
                 _connections.Save();
 
+                dataSourcesToolStripComboBox.Items.Add(connection);
+
                 var submenuitem = new ConnectionMenuItem(connection)
                 {
                     Name = string.Format("ConnectionMenuItem{0}", _connectionCount++),
@@ -296,6 +298,48 @@ namespace SQL_Document_Builder
                 return true;
             }
             return false;
+        }
+
+        /// <summary>
+        /// Handles data source combo box selected index change event: Change the data source
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void DataSourcesToolStripComboBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (dataSourcesToolStripComboBox.SelectedItem != null && !_ignoreConnectionComboBoxIndexChange)
+            {
+                Cursor = Cursors.WaitCursor;
+                Application.DoEvents();
+
+                if (dataSourcesToolStripComboBox.SelectedItem is SQLDatabaseConnectionItem selectedItem)
+                {
+                    //await ChangeDBConnectionAsync(selectedItem);
+
+                    // find the menu item
+                    foreach (ToolStripMenuItem item in connectToToolStripMenuItem.DropDown.Items)
+                    {
+                        if (item is ConnectionMenuItem connectionMenuItem)
+                        {
+                            if (connectionMenuItem.Connection.GUID == selectedItem.GUID)
+                            {
+                                connectionMenuItem.Checked = true;
+                                // perform menu item click event to update the connection
+                                _ignoreConnectionComboBoxIndexChange = true;
+                                OnConnectionToolStripMenuItem_Click(connectionMenuItem, EventArgs.Empty);
+                                _ignoreConnectionComboBoxIndexChange = false;
+                            }
+                            else
+                            {
+                                connectionMenuItem.Checked = false;
+                            }
+                        }
+                    }
+                }
+
+                Cursor = Cursors.Default;
+                statusToolStripStatusLabe.Text = "";
+            }
         }
 
         /// <summary>
@@ -366,7 +410,7 @@ namespace SQL_Document_Builder
                 }
             }
 
-            ToolStripMenuItem tabItem = new ToolStripMenuItem(name) { Tag = id, ToolTipText = tooltipText };
+            ToolStripMenuItem tabItem = new(name) { Tag = id, ToolTipText = tooltipText };
             tabItem.Click += WindowItem_Click;
 
             windowsToolStripMenuItem.DropDownItems.Add(tabItem);
@@ -469,7 +513,7 @@ namespace SQL_Document_Builder
                         {
                             submenuitem.Checked = true;
 
-                            Properties.Settings.Default.LastAccessConnectionIndex = i;
+                            Properties.Settings.Default.LastAccessConnection = submenuitem.Connection.GUID;
                             Properties.Settings.Default.Save();
                         }
                         else
@@ -987,8 +1031,7 @@ namespace SQL_Document_Builder
                     TabPage tabPage = tabControl1.TabPages[i];
                     if (tabPage != null)
                     {
-                        var queryTextBox = tabPage.Controls[0] as SqlEditBox;
-                        if (queryTextBox != null && editBox.ID == queryTextBox.ID)
+                        if (tabPage.Controls[0] is SqlEditBox queryTextBox && editBox.ID == queryTextBox.ID)
                         {
                             // Set tab text to the title, or "new {index}" if empty
                             tabPage.Text = string.IsNullOrEmpty(queryTextBox.Title)
@@ -1315,7 +1358,7 @@ namespace SQL_Document_Builder
         /// Headers the text.
         /// </summary>
         /// <returns>A string.</returns>
-        private string HeaderText()
+        private static string HeaderText()
         {
             string result = string.Empty;
             //if (headerTextBox.Text.Length > 0)
@@ -1514,7 +1557,7 @@ namespace SQL_Document_Builder
         /// Checks if the usp_AddObjectDescription stored procedure exists in the database.
         /// </summary>
         /// <returns>A Task.</returns>
-        private async Task<bool> IsAddObjectDescriptionSPExists(string connectionString)
+        private static async Task<bool> IsAddObjectDescriptionSPExists(string connectionString)
         {
             string sql = "select ROUTINE_NAME from INFORMATION_SCHEMA.ROUTINES where ROUTINE_SCHEMA = 'dbo' and ROUTINE_NAME = 'usp_AddObjectDescription'";
             var returnValue = await DatabaseHelper.ExecuteScalarAsync(sql, connectionString);
@@ -1539,6 +1582,8 @@ namespace SQL_Document_Builder
                 frm.ShowDialog();
 
                 await PopulateConnections();
+
+                RestoreLastConnection();
             }
             catch (Exception)
             {
@@ -1553,7 +1598,13 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void NewConnectionToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            await AddConnection();
+            if (await AddConnection())
+            {
+                if (dataSourcesToolStripComboBox.Items.Count > 0)
+                {
+                    dataSourcesToolStripComboBox.SelectedIndex = dataSourcesToolStripComboBox.Items.Count - 1;
+                }
+            }
         }
 
         /// <summary>
@@ -1696,6 +1747,9 @@ namespace SQL_Document_Builder
                 Cursor = Cursors.WaitCursor;
 
                 await ChangeDBConnectionAsync(menuItem.Connection);
+
+                if(!_ignoreConnectionComboBoxIndexChange)
+                    SetConnectionComboBox(menuItem.Connection);
 
                 ObjectTypeComboBox_SelectedIndexChanged(sender, e);
 
@@ -1950,11 +2004,18 @@ namespace SQL_Document_Builder
                 connectToToolStripMenuItem.DropDownItems.RemoveAt(i);
             }
 
+            // clear the execution drop down buttons
             for (int i = exeToolStripDropDownButton.DropDown.Items.Count - 1; i >= 0; i--)
             {
                 var submenuitem = exeToolStripDropDownButton.DropDown.Items[i];
                 submenuitem.Click -= OnExecuteToolStripMenuItem_Click;
                 exeToolStripDropDownButton.DropDownItems.RemoveAt(i);
+            }
+
+            // clear connections combobox
+            if (dataSourcesToolStripComboBox.Items.Count > 0)
+            {
+                dataSourcesToolStripComboBox.Items.Clear();
             }
 
             var connections = _connections.Connections;
@@ -1971,6 +2032,10 @@ namespace SQL_Document_Builder
 
                     if (item.ConnectionString?.Length > 1)
                     {
+                        // add connection to the combobox
+                        dataSourcesToolStripComboBox.Items.Add(item);
+
+                        // add ToolStripMenuItem for the Connect to... menu
                         var submenuitem = new ConnectionMenuItem(item)
                         {
                             Name = string.Format("ConnectionMenuItem{0}", i + 1),
@@ -1990,6 +2055,30 @@ namespace SQL_Document_Builder
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Sets the connection combo box.
+        /// </summary>
+        /// <param name="connectionItem">The connection item.</param>
+        private void SetConnectionComboBox(SQLDatabaseConnectionItem connectionItem)
+        {
+            _ignoreConnectionComboBoxIndexChange = true;
+
+            // go through the dataSourcesToolStripComboBox and find the matched item
+            for (int i = 0; i < dataSourcesToolStripComboBox.Items.Count; i++)
+            {
+                if (dataSourcesToolStripComboBox.Items[i] is SQLDatabaseConnectionItem comboItem)
+                {
+                    if (string.Equals(comboItem.GUID, connectionItem.GUID, StringComparison.OrdinalIgnoreCase))
+                    {
+                        dataSourcesToolStripComboBox.SelectedIndex = i;
+                        break;
+                    }
+                }
+            }
+
+            _ignoreConnectionComboBoxIndexChange = false;
         }
 
         /// <summary>
@@ -2411,29 +2500,7 @@ namespace SQL_Document_Builder
             _connections.Load();
             await PopulateConnections();
 
-            var lastConnection = Properties.Settings.Default.LastAccessConnectionIndex;
-            // set lastConnection to 0 if it is not set or out of range
-            if (lastConnection < 0 || lastConnection >= connectToToolStripMenuItem.DropDown.Items.Count)
-                lastConnection = 0;
-
-            //lastConnection = 1;
-            ConnectionMenuItem? selectedItem;
-            if (lastConnection <= 0 || lastConnection >= _connections.Connections.Count)
-            {
-                selectedItem = (ConnectionMenuItem)connectToToolStripMenuItem.DropDown.Items[0];
-            }
-            else
-            {
-                selectedItem = (ConnectionMenuItem)connectToToolStripMenuItem.DropDown.Items[lastConnection];
-            }
-            if (selectedItem != null)
-            {
-                await ChangeDBConnectionAsync(selectedItem.Connection);
-            }
-            else
-            {
-                Close();
-            }
+            RestoreLastConnection();
 
             addDataSourceCheckBox.Checked = Properties.Settings.Default.AddDataSource;
             scriptDropsCheckBox.Checked = Properties.Settings.Default.AddDropStatement;
@@ -2447,6 +2514,49 @@ namespace SQL_Document_Builder
                 collapsibleSplitter1.SplitterDistance = (int)(this.Width * 0.4F);
 
             AddTab("");
+        }
+
+        /// <summary>
+        /// Restores the last connection.
+        /// </summary>
+        private void RestoreLastConnection()
+        {
+            // perform add connection if there is no connections
+            if (_connections.Connections.Count == 0)
+            {
+                newConnectionToolStripMenuItem.PerformClick();
+            }
+
+            // if there are no connections, return
+            if (_connections.Connections.Count == 0)
+            {
+                return;
+            }
+
+            // Restore the last connection from settings
+            ConnectionMenuItem? matchedItems = null;
+            var lastConnection = Properties.Settings.Default.LastAccessConnection;
+            if (!string.IsNullOrEmpty(lastConnection))
+            {
+                // find the connection that matches the last access connection GUID
+                for (int i = 0; i < connectToToolStripMenuItem.DropDown.Items.Count; i++)
+                {
+                    if (connectToToolStripMenuItem.DropDown.Items[i] is ConnectionMenuItem menuItem && menuItem.Connection.GUID == lastConnection)
+                    {
+                        matchedItems = menuItem;
+                        break;
+                    }
+                }
+            }
+
+            // use the first connection if no match found
+            matchedItems ??= connectToToolStripMenuItem.DropDown.Items[0] as ConnectionMenuItem;
+
+            // if matched item is not null, perform click on it
+            if (matchedItems != null)
+            {
+                OnConnectionToolStripMenuItem_Click(matchedItems, EventArgs.Empty);
+            }
         }
 
         /// <summary>
@@ -3003,6 +3113,7 @@ namespace SQL_Document_Builder
         private int _mouseOnTabIndex;
         private bool ReplaceIsOpen = false;
         private bool SearchIsOpen = false;
+        private bool _ignoreConnectionComboBoxIndexChange;
 
         /// <summary>
         /// Handles the click event of the close quick search button.
@@ -3183,6 +3294,7 @@ namespace SQL_Document_Builder
                 });
             }
         }
+
         #endregion Find & Replace Dialog
 
         #region Utils

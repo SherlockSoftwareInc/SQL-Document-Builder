@@ -37,13 +37,13 @@ namespace SQL_Document_Builder.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("0")]
-        public int LastAccessConnectionIndex {
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string LastAccessConnection {
             get {
-                return ((int)(this["LastAccessConnectionIndex"]));
+                return ((string)(this["LastAccessConnection"]));
             }
             set {
-                this["LastAccessConnectionIndex"] = value;
+                this["LastAccessConnection"] = value;
             }
         }
         

@@ -87,7 +87,6 @@ namespace SQL_Document_Builder
                                     }
                                     break;
                             }
-
                             break;
 
                         case "connectionstring":
@@ -133,9 +132,19 @@ namespace SQL_Document_Builder
                             this.Password = ParsePwd(elementValue);
                             break;
 
+                        case "id":
+                            this.GUID = elementValue;
+                            this.HasID = true;
+                            break;
+
                         default:
                             break;
                     }
+                }
+
+                if(string.IsNullOrEmpty(GUID))
+                {
+                    GUID = Guid.NewGuid().ToString();
                 }
 
                 if (this.ConnectionString?.Length == 0 && this.AuthenticationType == 0)
@@ -144,6 +153,11 @@ namespace SQL_Document_Builder
                 }
             }
         }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether has i d.
+        /// </summary>
+        public bool HasID { get; set; } = false;
 
         /// <summary>
         /// Gets or sets the connection type.
@@ -184,7 +198,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Gets the g u i d.
         /// </summary>
-        public string? GUID { get; private set; }
+        public string? GUID { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether is custom.
@@ -333,6 +347,8 @@ namespace SQL_Document_Builder
         public void Write(XmlWriter writer)
         {
             writer.WriteStartElement("ConnectionItem");
+
+            writer.WriteElementString("ID", GUID);
 
             writer.WriteElementString("Name", Name ?? string.Empty);
 

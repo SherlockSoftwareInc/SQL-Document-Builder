@@ -87,6 +87,23 @@ namespace SQL_Document_Builder
                 }
             }
             _tmpFile = Path.GetTempFileName();
+
+            bool hasMissingId = false;
+            // check if id is missing
+            foreach (var item in _connections)
+            {
+                if (!item.HasID)
+                {
+                    hasMissingId = true;
+                    break;
+                }
+            }
+
+            // save the connections settings if has missing id
+            if (hasMissingId)
+            {
+                Save();
+            }
         }
 
         /// <summary>
