@@ -97,7 +97,7 @@
             // 
             filterTextBox.Location = new System.Drawing.Point(105, 70);
             filterTextBox.Name = "filterTextBox";
-            filterTextBox.Size = new System.Drawing.Size(161, 23);
+            filterTextBox.Size = new System.Drawing.Size(160, 23);
             filterTextBox.TabIndex = 5;
             toolTip1.SetToolTip(filterTextBox, "Filter the selectable objects by");
             filterTextBox.TextChanged += FilterTextBox_TextChanged;
@@ -113,7 +113,7 @@
             // 
             // clearButton
             // 
-            clearButton.Location = new System.Drawing.Point(265, 69);
+            clearButton.Location = new System.Drawing.Point(265, 70);
             clearButton.Name = "clearButton";
             clearButton.Size = new System.Drawing.Size(23, 23);
             clearButton.TabIndex = 6;

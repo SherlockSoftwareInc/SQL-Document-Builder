@@ -92,7 +92,7 @@ namespace SQL_Document_Builder
                     if (useExtendedProperties)
                     {
                         // Use sp_addextendedproperty for table description
-                        sb.AppendLine($"EXECUTE sp_addextendedproperty " +
+                        sb.AppendLine($"EXEC sp_addextendedproperty " +
                                       $"@name = N'MS_Description', " +
                                       $"@value = N'{tableDesc.Replace("'", "''")}', " +
                                       $"@level0type = N'SCHEMA', @level0name = N'{objectName.Schema}', " +
@@ -120,7 +120,7 @@ namespace SQL_Document_Builder
                     if (useExtendedProperties)
                     {
                         // Use sp_addextendedproperty for column description
-                        sb.AppendLine($"EXECUTE sp_addextendedproperty " +
+                        sb.AppendLine($"EXEC sp_addextendedproperty " +
                                       $"@name = N'MS_Description', " +
                                       $"@value = N'{colDesc.Replace("'", "''")}', " +
                                       $"@level0type = N'SCHEMA', @level0name = N'{objectName.Schema}', " +
@@ -178,7 +178,7 @@ namespace SQL_Document_Builder
                     if (useExtendedProperties)
                     {
                         // Use sp_addextendedproperty for table description
-                        sb.AppendLine($"EXECUTE sp_addextendedproperty " +
+                        sb.AppendLine($"EXEC sp_addextendedproperty " +
                                       $"@name = N'MS_Description', " +
                                       $"@value = N'{tableDesc.Replace("'", "''")}', " +
                                       $"@level0type = N'SCHEMA', @level0name = N'{objectName.Schema}', " +
@@ -205,7 +205,7 @@ namespace SQL_Document_Builder
                     if (useExtendedProperties)
                     {
                         // Use sp_addextendedproperty for column description
-                        sb.AppendLine($"EXECUTE sp_addextendedproperty " +
+                        sb.AppendLine($"EXEC sp_addextendedproperty " +
                                       $"@name = N'MS_Description', " +
                                       $"@value = N'{colDesc.Replace("'", "''")}', " +
                                       $"@level0type = N'SCHEMA', @level0name = N'{objectName.Schema}', " +

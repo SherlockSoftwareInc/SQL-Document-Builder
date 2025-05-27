@@ -1,9 +1,12 @@
 ﻿using Microsoft.Data.SqlClient;
 using System;
+using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using static SQL_Document_Builder.ObjectName;
 
 namespace SQL_Document_Builder
 {
@@ -73,12 +76,12 @@ WHERE sm.object_id = OBJECT_ID('{objectName.FullName}')";
                         viewDefinition = result.ToString().TrimStart('\r', '\n', ' ', '\t');
                     }
                 }
-                catch (SqlException ex)
+                catch (SqlException)
                 {
                     // Log the exception (replace Console.WriteLine with your logging framework)
                     //viewDefinition = $"-- SQL Error getting view definition for {fullViewName}: {ex.Message}";
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     // Handle other potential exceptions
                     //viewDefinition = $"-- Error getting view definition for {fullViewName}: {ex.Message}";
@@ -285,6 +288,142 @@ WHERE sm.object_id = OBJECT_ID('{objectName.FullName}')";
             var sql = $"select * from {tableName.FullName}";
             var hasIdentity = await DatabaseHelper.HasIdentityColumnAsync(tableName);
             return await QueryDataToInsertStatementAsync(sql, tableName.FullName, hasIdentity);
+        }
+
+        /// <summary>
+        /// Generates the SQL script to recreate all non-primary key, non-unique constraint indexes for the specified table.
+        /// Handles XML indexes with the correct syntax.
+        /// </summary>
+        /// <returns>A string containing the SQL script to recreate the indexes.</returns>
+        internal static async Task<string?> GetCreateIndexesScript(ObjectName objectName)
+        {
+            if (objectName.IsEmpty() ||
+                (objectName.ObjectType != ObjectTypeEnums.Table && objectName.ObjectType != ObjectTypeEnums.View))
+                return string.Empty;
+
+            StringBuilder sb = new();
+
+            string sql = $@"
+SELECT
+    i.name AS IndexName,
+    i.type_desc AS IndexType,
+    i.is_unique AS IsUnique,
+    s.name AS SchemaName,
+    o.name AS ObjectName,
+    STRING_AGG(COL_NAME(ic.object_id, ic.column_id), ',') AS IndexColumns,
+    i.filter_definition AS FilterDefinition,
+    i.is_disabled AS IsDisabled,
+    xi.using_xml_index_id,
+    xi.secondary_type
+FROM sys.indexes i
+INNER JOIN sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id
+INNER JOIN sys.objects o ON i.object_id = o.object_id
+INNER JOIN sys.schemas s ON o.schema_id = s.schema_id
+LEFT JOIN sys.xml_indexes xi ON i.object_id = xi.object_id AND i.index_id = xi.index_id
+WHERE s.name = '{objectName.Schema}'
+  AND o.name = '{objectName.Name}'
+  AND o.type IN ('U', 'V') -- U: Table, V: View
+  AND i.is_primary_key = 0
+  AND i.is_unique_constraint = 0
+  AND i.type_desc <> 'HEAP'
+  AND i.name IS NOT NULL
+GROUP BY i.name, i.type_desc, i.is_unique, s.name, o.name, i.filter_definition, i.is_disabled, xi.using_xml_index_id, xi.secondary_type
+ORDER BY i.name";
+
+            //            string sql = $@"
+            //SELECT
+            //    i.name AS IndexName,
+            //    i.type_desc AS IndexType,
+            //    i.is_unique AS IsUnique,
+            //    s.name AS SchemaName,
+            //    t.name AS TableName,
+            //    STRING_AGG(COL_NAME(ic.object_id, ic.column_id), ',') WITHIN GROUP (ORDER BY ic.key_ordinal) AS IndexColumns,
+            //    i.filter_definition AS FilterDefinition,
+            //    i.is_disabled AS IsDisabled,
+            //    xi.using_xml_index_id,
+            //    xi.secondary_type
+            //FROM sys.indexes i
+            //INNER JOIN sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id
+            //INNER JOIN sys.tables t ON i.object_id = t.object_id
+            //INNER JOIN sys.schemas s ON t.schema_id = s.schema_id
+            //LEFT JOIN sys.xml_indexes xi ON i.object_id = xi.object_id AND i.index_id = xi.index_id
+            //WHERE s.name = '{TableSchema}'
+            //  AND t.name = '{TableName}'
+            //  AND i.is_primary_key = 0
+            //  AND i.is_unique_constraint = 0
+            //  AND i.type_desc <> 'HEAP'
+            //  AND i.name IS NOT NULL
+            //GROUP BY i.name, i.type_desc, i.is_unique, s.name, t.name, i.filter_definition, i.is_disabled, xi.using_xml_index_id, xi.secondary_type
+            //ORDER BY i.name;
+            //";
+
+            var dt = await DatabaseHelper.GetDataTableAsync(sql);
+            if (dt == null || dt.Rows.Count == 0)
+                return string.Empty;
+
+            // Build a lookup for XML primary index names by index_id
+            var xmlPrimaryIndexes = new Dictionary<int, string>();
+            foreach (System.Data.DataRow dr in dt.Rows)
+            {
+                string indexType = dr["IndexType"].ToString() ?? "";
+                string? secondaryType = dr["secondary_type"] as string;
+                if (indexType == "XML" && string.IsNullOrEmpty(secondaryType))
+                {
+                    int indexId = dt.Rows.IndexOf(dr) + 1;
+                    xmlPrimaryIndexes[indexId] = dr["IndexName"].ToString() ?? "";
+                }
+            }
+
+            foreach (System.Data.DataRow dr in dt.Rows)
+            {
+                string indexName = dr["IndexName"].ToString() ?? "";
+                string indexType = dr["IndexType"].ToString() ?? "";
+                bool isUnique = dr["IsUnique"] != DBNull.Value && (bool)dr["IsUnique"];
+                string schema = dr["SchemaName"].ToString() ?? "";
+                string objName = dr["ObjectName"].ToString() ?? "";
+                string columns = dr["IndexColumns"].ToString() ?? "";
+                string? filter = dr["FilterDefinition"] as string;
+                bool isDisabled = dr["IsDisabled"] != DBNull.Value && (bool)dr["IsDisabled"];
+                object usingXmlIndexIdObj = dr["using_xml_index_id"];
+                string? secondaryType = dr["secondary_type"] as string;
+
+                if (indexType == "XML" && !string.IsNullOrEmpty(secondaryType))
+                {
+                    string xmlType = secondaryType.ToUpperInvariant();
+                    string usingXmlIndexName = "";
+                    if (usingXmlIndexIdObj != DBNull.Value)
+                    {
+                        int usingXmlIndexId = Convert.ToInt32(usingXmlIndexIdObj);
+                        xmlPrimaryIndexes.TryGetValue(usingXmlIndexId, out usingXmlIndexName);
+                    }
+                    sb.Append($"CREATE XML INDEX [{indexName}] ON [{schema}].[{objName}] ([{columns.Trim()}]) ");
+                    if (!string.IsNullOrEmpty(usingXmlIndexName))
+                        sb.Append($"USING XML INDEX [{usingXmlIndexName}] ");
+                    sb.Append($"FOR {xmlType};");
+                    if (isDisabled)
+                        sb.Append(" -- Index is disabled");
+                    sb.AppendLine();
+                }
+                else if (indexType == "XML")
+                {
+                    sb.Append($"CREATE PRIMARY XML INDEX [{indexName}] ON [{schema}].[{objName}] ([{columns.Trim()}]);");
+                    if (isDisabled)
+                        sb.Append(" -- Index is disabled");
+                    sb.AppendLine();
+                }
+                else
+                {
+                    sb.Append($"CREATE {(isUnique ? "UNIQUE " : "")}{indexType.Replace("_", " ")} INDEX [{indexName}] ON [{schema}].[{objName}] ({string.Join(", ", columns.Split(',').Select(c => $"[{c.Trim()}]"))})");
+                    if (!string.IsNullOrWhiteSpace(filter))
+                        sb.Append($" WHERE {filter}");
+                    sb.Append(';');
+                    if (isDisabled)
+                        sb.Append(" -- Index is disabled");
+                    sb.AppendLine();
+                }
+            }
+
+            return sb.ToString();
         }
 
         /// <summary>
@@ -542,7 +681,7 @@ GO";
                 createScript.AppendLine(defaultConstraints);
             }
 
-            var indexScript = await table.GetCreateIndexesScript();
+            var indexScript = await GetCreateIndexesScript(objectName);
             if (!string.IsNullOrEmpty(indexScript))
             {
                 // remove the new line at the end of the script
@@ -583,6 +722,16 @@ GO";
                 return string.Empty;
             }
             createScript.Append(script);
+
+            var indexScript = await DatabaseDocBuilder.GetCreateIndexesScript(objectName);
+            if (!string.IsNullOrEmpty(indexScript))
+            {
+                // remove the new line at the end of the script
+                indexScript = indexScript.TrimEnd('\r', '\n');
+
+                createScript.AppendLine(indexScript);
+            }
+
             createScript.AppendLine($"GO");
             return createScript.ToString();
         }
@@ -619,12 +768,12 @@ WHERE sm.object_id = OBJECT_ID('{objectName.FullName}');";
                     // Command is disposed here
                     // Connection is disposed here
                 }
-                catch (SqlException ex)
+                catch (SqlException)
                 {
                     // Log the exception (replace Console.WriteLine with your logging framework)
                     //definition = $"-- SQL Error getting view definition for {fnName}: {ex.Message}";
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     // Handle other potential exceptions
                     //definition = $"-- Error getting view definition for {fnName}: {ex.Message}";
@@ -637,7 +786,7 @@ WHERE sm.object_id = OBJECT_ID('{objectName.FullName}');";
                 return string.Empty;
             }
             else
-            {                
+            {
                 // Ensure the definition ends with a newline for better readability
                 return definition.TrimEnd('\r', '\n', ' ', '\t') + Environment.NewLine;
             }
@@ -672,12 +821,12 @@ WHERE sm.object_id = OBJECT_ID('{objectName.FullName}')";
                         definition = result.ToString().TrimStart('\r', '\n', ' ', '\t');
                     }
                 }
-                catch (SqlException ex)
+                catch (SqlException)
                 {
                     // Log the exception (replace Console.WriteLine with your logging framework)
                     //definition = $"-- SQL Error getting view definition for {spName}: {ex.Message}";
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     // Handle other potential exceptions
                     //definition = $"-- Error getting view definition for {spName}: {ex.Message}";
