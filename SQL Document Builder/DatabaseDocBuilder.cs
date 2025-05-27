@@ -143,10 +143,6 @@ WHERE sm.object_id = OBJECT_ID('{objectName.FullName}')";
                         // add SET IDENTITY_INSERT  ON;
                         sb.AppendLine($"SET IDENTITY_INSERT {tableName} ON;");
                     }
-                    //else
-                    //{
-                    //    sb.AppendLine($"--SET IDENTITY_INSERT {tableName} ON;");
-                    //}
 
                     int batchSize = Properties.Settings.Default.InsertBatchRows;
                     if (batchSize <= 0)
@@ -156,12 +152,6 @@ WHERE sm.object_id = OBJECT_ID('{objectName.FullName}')";
 
                     while (await reader.ReadAsync())
                     {
-                        //// Check if row count exceeds 5000
-                        //if (rowCount >= Properties.Settings.Default.InertMaxRows)
-                        //{
-                        //    return "Exceeded the maximum rows for INSERT statement.";
-                        //}
-
                         // Start a new batch every 50 rows
                         if (rowCount % batchSize == 0)
                         {
@@ -256,10 +246,6 @@ WHERE sm.object_id = OBJECT_ID('{objectName.FullName}')";
                     {
                         sb.AppendLine($"SET IDENTITY_INSERT {tableName} OFF;");
                     }
-                    //else
-                    //{
-                    //    sb.AppendLine($"--SET IDENTITY_INSERT {tableName} OFF;");
-                    //}
                 }
                 else
                 {

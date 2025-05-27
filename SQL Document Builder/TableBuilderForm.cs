@@ -1523,21 +1523,21 @@ namespace SQL_Document_Builder
                     {
                         if (!BeginAddDDLScript()) return;
 
-                        // add SET IDENTITY_INSERT ON if the table has identity column
-                        if (hasIdentityColumn)
-                        {
-                            CurrentEditBox?.AppendText("SET IDENTITY_INSERT " + objectName.FullName + " ON;" + Environment.NewLine + "GO" + Environment.NewLine);
-                        }
+                        //// add SET IDENTITY_INSERT ON if the table has identity column
+                        //if (hasIdentityColumn)
+                        //{
+                        //    CurrentEditBox?.AppendText("SET IDENTITY_INSERT " + objectName.FullName + " ON;" + Environment.NewLine + "GO" + Environment.NewLine);
+                        //}
 
                         // append the insert statement to the script
                         CurrentEditBox?.AppendText(script);
 
                         // add SET IDENTITY_INSERT OFF if the table has identity column
-                        if (hasIdentityColumn)
-                        {
-                            CurrentEditBox?.AppendText("GO" + Environment.NewLine);
-                            CurrentEditBox?.AppendText("SET IDENTITY_INSERT " + objectName.FullName + " OFF;" + Environment.NewLine);
-                        }
+                        //if (hasIdentityColumn)
+                        //{
+                        //    CurrentEditBox?.AppendText("GO" + Environment.NewLine);
+                        //    CurrentEditBox?.AppendText("SET IDENTITY_INSERT " + objectName.FullName + " OFF;" + Environment.NewLine);
+                        //}
 
                         CurrentEditBox?.AppendText("GO" + Environment.NewLine);
 
