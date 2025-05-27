@@ -87,62 +87,6 @@ namespace SQL_Document_Builder
             return string.Empty;
         }
 
-        /*
-        private static async Task<string> ExecuteScriptsAsync(SQLDatabaseConnectionItem connection, string script)
-        {
-            // Start transaction
-            var beginResult = await DatabaseHelper.ExecuteSQLAsync("BEGIN TRANSACTION", connection.ConnectionString);
-            if (!string.IsNullOrEmpty(beginResult))
-                return beginResult;
-
-            // replace "Go" statement with "" in the script
-            script = Regex.Replace(script, @"\bGO\b", string.Empty, RegexOptions.IgnoreCase | RegexOptions.Multiline);
-
-            var result = await DatabaseHelper.ExecuteSQLAsync(script, connection.ConnectionString);
-            if (!string.IsNullOrEmpty(result))
-            {
-                // If error, rollback and return error
-                await DatabaseHelper.ExecuteSQLAsync("ROLLBACK TRANSACTION", connection.ConnectionString);
-                return result;
-            }
-
-            //// Split script into statements
-            //var sqlStatements = Regex.Split(script, @"\bGO\b", RegexOptions.IgnoreCase | RegexOptions.Multiline);
-
-            //// Execute each statement
-            //foreach (var sql in sqlStatements)
-            //{
-            //    if (sql.Trim().Length > 0)
-            //    {
-            //        var result = await DatabaseHelper.ExecuteSQLAsync(sql, connection.ConnectionString);
-            //        if (!string.IsNullOrEmpty(result))
-            //        {
-            //            // If error, rollback and return error
-            //            await DatabaseHelper.ExecuteSQLAsync("ROLLBACK TRANSACTION", connection.ConnectionString);
-            //            return result;
-            //        }
-            //    }
-            //}
-
-            // Ask user to commit or rollback
-            var dialogResult = MessageBox.Show(
-                "Do you want to COMMIT the transaction?\nClick Yes to COMMIT, No to ROLLBACK.",
-                "Transaction Complete",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Question);
-
-            string endTransactionSql = dialogResult == DialogResult.Yes
-                ? "COMMIT TRANSACTION"
-                : "ROLLBACK TRANSACTION";
-
-            var endResult = await DatabaseHelper.ExecuteSQLAsync(endTransactionSql, connection.ConnectionString);
-            if (!string.IsNullOrEmpty(endResult))
-                return endResult;
-
-            return string.Empty;
-        }
-        */
-
         /// <summary>
         /// Files the display name.
         /// </summary>
@@ -231,6 +175,41 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Headers the text.
+        /// </summary>
+        /// <returns>A string.</returns>
+        private static string HeaderText()
+        {
+            string result = string.Empty;
+            //if (headerTextBox.Text.Length > 0)
+            //{
+            //    if (objectsListBox.SelectedItem != null)
+            //    {
+            //        var objectName = (ObjectName)objectsListBox.SelectedItem;
+            //        var objectType = objectName.ObjectType == ObjectName.ObjectTypeEnums.View ? "View" : "Table";
+            //        result = headerTextBox.Text.Replace("$Table", objectType);
+            //    }
+            //}
+            return result;
+        }
+
+        /// <summary>
+        /// Checks if the usp_AddObjectDescription stored procedure exists in the database.
+        /// </summary>
+        /// <returns>A Task.</returns>
+        private static async Task<bool> IsAddObjectDescriptionSPExists(string connectionString)
+        {
+            string sql = "select ROUTINE_NAME from INFORMATION_SCHEMA.ROUTINES where ROUTINE_SCHEMA = 'dbo' and ROUTINE_NAME = 'usp_AddObjectDescription'";
+            var returnValue = await DatabaseHelper.ExecuteScalarAsync(sql, connectionString);
+            if (returnValue == null || returnValue == DBNull.Value)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
         /// Selects the objects.
         /// </summary>
         /// <returns>A List&lt;ObjectName&gt;? .</returns>
@@ -298,48 +277,6 @@ namespace SQL_Document_Builder
                 return true;
             }
             return false;
-        }
-
-        /// <summary>
-        /// Handles data source combo box selected index change event: Change the data source
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void DataSourcesToolStripComboBox_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            if (dataSourcesToolStripComboBox.SelectedItem != null && !_ignoreConnectionComboBoxIndexChange)
-            {
-                Cursor = Cursors.WaitCursor;
-                Application.DoEvents();
-
-                if (dataSourcesToolStripComboBox.SelectedItem is SQLDatabaseConnectionItem selectedItem)
-                {
-                    //await ChangeDBConnectionAsync(selectedItem);
-
-                    // find the menu item
-                    foreach (ToolStripMenuItem item in connectToToolStripMenuItem.DropDown.Items)
-                    {
-                        if (item is ConnectionMenuItem connectionMenuItem)
-                        {
-                            if (connectionMenuItem.Connection.GUID == selectedItem.GUID)
-                            {
-                                connectionMenuItem.Checked = true;
-                                // perform menu item click event to update the connection
-                                _ignoreConnectionComboBoxIndexChange = true;
-                                OnConnectionToolStripMenuItem_Click(connectionMenuItem, EventArgs.Empty);
-                                _ignoreConnectionComboBoxIndexChange = false;
-                            }
-                            else
-                            {
-                                connectionMenuItem.Checked = false;
-                            }
-                        }
-                    }
-                }
-
-                Cursor = Cursors.Default;
-                statusToolStripStatusLabe.Text = "";
-            }
         }
 
         /// <summary>
@@ -1017,6 +954,48 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Handles data source combo box selected index change event: Change the data source
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void DataSourcesToolStripComboBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (dataSourcesToolStripComboBox.SelectedItem != null && !_ignoreConnectionComboBoxIndexChange)
+            {
+                Cursor = Cursors.WaitCursor;
+                Application.DoEvents();
+
+                if (dataSourcesToolStripComboBox.SelectedItem is SQLDatabaseConnectionItem selectedItem)
+                {
+                    //await ChangeDBConnectionAsync(selectedItem);
+
+                    // find the menu item
+                    foreach (ToolStripMenuItem item in connectToToolStripMenuItem.DropDown.Items)
+                    {
+                        if (item is ConnectionMenuItem connectionMenuItem)
+                        {
+                            if (connectionMenuItem.Connection.GUID == selectedItem.GUID)
+                            {
+                                connectionMenuItem.Checked = true;
+                                // perform menu item click event to update the connection
+                                _ignoreConnectionComboBoxIndexChange = true;
+                                OnConnectionToolStripMenuItem_Click(connectionMenuItem, EventArgs.Empty);
+                                _ignoreConnectionComboBoxIndexChange = false;
+                            }
+                            else
+                            {
+                                connectionMenuItem.Checked = false;
+                            }
+                        }
+                    }
+                }
+
+                Cursor = Cursors.Default;
+                statusToolStripStatusLabe.Text = "";
+            }
+        }
+
+        /// <summary>
         /// Edits the box_ file name changed.
         /// </summary>
         /// <param name="sender">The sender.</param>
@@ -1355,25 +1334,6 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Headers the text.
-        /// </summary>
-        /// <returns>A string.</returns>
-        private static string HeaderText()
-        {
-            string result = string.Empty;
-            //if (headerTextBox.Text.Length > 0)
-            //{
-            //    if (objectsListBox.SelectedItem != null)
-            //    {
-            //        var objectName = (ObjectName)objectsListBox.SelectedItem;
-            //        var objectType = objectName.ObjectType == ObjectName.ObjectTypeEnums.View ? "View" : "Table";
-            //        result = headerTextBox.Text.Replace("$Table", objectType);
-            //    }
-            //}
-            return result;
-        }
-
-        /// <summary>
         /// Handles the validated event of the insert batch text box.
         /// </summary>
         /// <param name="sender">The sender.</param>
@@ -1551,22 +1511,6 @@ namespace SQL_Document_Builder
                     }
                 }
             }
-        }
-
-        /// <summary>
-        /// Checks if the usp_AddObjectDescription stored procedure exists in the database.
-        /// </summary>
-        /// <returns>A Task.</returns>
-        private static async Task<bool> IsAddObjectDescriptionSPExists(string connectionString)
-        {
-            string sql = "select ROUTINE_NAME from INFORMATION_SCHEMA.ROUTINES where ROUTINE_SCHEMA = 'dbo' and ROUTINE_NAME = 'usp_AddObjectDescription'";
-            var returnValue = await DatabaseHelper.ExecuteScalarAsync(sql, connectionString);
-            if (returnValue == null || returnValue == DBNull.Value)
-            {
-                return false;
-            }
-
-            return true;
         }
 
         /// <summary>
@@ -1748,7 +1692,7 @@ namespace SQL_Document_Builder
 
                 await ChangeDBConnectionAsync(menuItem.Connection);
 
-                if(!_ignoreConnectionComboBoxIndexChange)
+                if (!_ignoreConnectionComboBoxIndexChange)
                     SetConnectionComboBox(menuItem.Connection);
 
                 ObjectTypeComboBox_SelectedIndexChanged(sender, e);
@@ -1774,7 +1718,7 @@ namespace SQL_Document_Builder
             }
 
             // if the script is empty, show a message box and return
-            if (script?.Length == 0)
+            if (string.IsNullOrEmpty(script))
             {
                 Common.MsgBox("No SQL statements to execute", MessageBoxIcon.Information);
                 return;
@@ -1789,20 +1733,17 @@ namespace SQL_Document_Builder
                 }
             }
 
-            if (sender?.GetType() == typeof(ConnectionMenuItem))
+            // get current connection from dataSourcesToolStripComboBox
+            if (dataSourcesToolStripComboBox.SelectedItem == null)
             {
-                // get the connection from the sender
-                ConnectionMenuItem menuItem = (ConnectionMenuItem)sender;
+                // show a message box if no connection is selected
+                Common.MsgBox("No database connection selected", MessageBoxIcon.Error);
+                return;
+            }
 
-                // get the connection string from the menu item
-                var connection = menuItem.Connection;
-                if (connection == null || string.IsNullOrEmpty(connection?.ConnectionString))
-                {
-                    // show a message box if the connection string is empty
-                    Common.MsgBox("Database connection not available", MessageBoxIcon.Error);
-                    return;
-                }
-
+            // convert the selected item to SQLDatabaseConnectionItem
+            if (dataSourcesToolStripComboBox.SelectedItem is SQLDatabaseConnectionItem connection)
+            {
                 // check if the script contains a 'usp_AddObjectDescription' statement
                 if (script.Contains("usp_AddObjectDescription", StringComparison.CurrentCultureIgnoreCase))
                 {
@@ -1821,7 +1762,7 @@ namespace SQL_Document_Builder
                     }
                 }
 
-                statusToolStripStatusLabe.Text = string.Format("Execute on {0}...", menuItem.ToString());
+                statusToolStripStatusLabe.Text = string.Format("Execute on {0}...", connection.ToString());
                 Cursor = Cursors.WaitCursor;
 
                 var executeResults = await ExecuteScriptsAsync(connection, script);
@@ -2004,14 +1945,6 @@ namespace SQL_Document_Builder
                 connectToToolStripMenuItem.DropDownItems.RemoveAt(i);
             }
 
-            // clear the execution drop down buttons
-            for (int i = exeToolStripDropDownButton.DropDown.Items.Count - 1; i >= 0; i--)
-            {
-                var submenuitem = exeToolStripDropDownButton.DropDown.Items[i];
-                submenuitem.Click -= OnExecuteToolStripMenuItem_Click;
-                exeToolStripDropDownButton.DropDownItems.RemoveAt(i);
-            }
-
             // clear connections combobox
             if (dataSourcesToolStripComboBox.Items.Count > 0)
             {
@@ -2043,42 +1976,9 @@ namespace SQL_Document_Builder
                         };
                         submenuitem.Click += OnConnectionToolStripMenuItem_Click;
                         connectToToolStripMenuItem.DropDown.Items.Add(submenuitem);
-
-                        // add ToolStripMenuItem for the DropDown menu
-                        var executeMenuItem = new ConnectionMenuItem(item)
-                        {
-                            Name = string.Format("ExecuteMenuItem{0}", i + 1),
-                            Size = new Size(300, 26),
-                        };
-                        executeMenuItem.Click += OnExecuteToolStripMenuItem_Click;
-                        exeToolStripDropDownButton.DropDown.Items.Add(executeMenuItem);
                     }
                 }
             }
-        }
-
-        /// <summary>
-        /// Sets the connection combo box.
-        /// </summary>
-        /// <param name="connectionItem">The connection item.</param>
-        private void SetConnectionComboBox(SQLDatabaseConnectionItem connectionItem)
-        {
-            _ignoreConnectionComboBoxIndexChange = true;
-
-            // go through the dataSourcesToolStripComboBox and find the matched item
-            for (int i = 0; i < dataSourcesToolStripComboBox.Items.Count; i++)
-            {
-                if (dataSourcesToolStripComboBox.Items[i] is SQLDatabaseConnectionItem comboItem)
-                {
-                    if (string.Equals(comboItem.GUID, connectionItem.GUID, StringComparison.OrdinalIgnoreCase))
-                    {
-                        dataSourcesToolStripComboBox.SelectedIndex = i;
-                        break;
-                    }
-                }
-            }
-
-            _ignoreConnectionComboBoxIndexChange = false;
         }
 
         /// <summary>
@@ -2182,6 +2082,49 @@ namespace SQL_Document_Builder
                     //e.SuppressKeyPress = true;
                     replaceReplaceTextBox.Focus();
                 }
+            }
+        }
+
+        /// <summary>
+        /// Restores the last connection.
+        /// </summary>
+        private void RestoreLastConnection()
+        {
+            // perform add connection if there is no connections
+            if (_connections.Connections.Count == 0)
+            {
+                newConnectionToolStripMenuItem.PerformClick();
+            }
+
+            // if there are no connections, return
+            if (_connections.Connections.Count == 0)
+            {
+                return;
+            }
+
+            // Restore the last connection from settings
+            ConnectionMenuItem? matchedItems = null;
+            var lastConnection = Properties.Settings.Default.LastAccessConnection;
+            if (!string.IsNullOrEmpty(lastConnection))
+            {
+                // find the connection that matches the last access connection GUID
+                for (int i = 0; i < connectToToolStripMenuItem.DropDown.Items.Count; i++)
+                {
+                    if (connectToToolStripMenuItem.DropDown.Items[i] is ConnectionMenuItem menuItem && menuItem.Connection.GUID == lastConnection)
+                    {
+                        matchedItems = menuItem;
+                        break;
+                    }
+                }
+            }
+
+            // use the first connection if no match found
+            matchedItems ??= connectToToolStripMenuItem.DropDown.Items[0] as ConnectionMenuItem;
+
+            // if matched item is not null, perform click on it
+            if (matchedItems != null)
+            {
+                OnConnectionToolStripMenuItem_Click(matchedItems, EventArgs.Empty);
             }
         }
 
@@ -2309,6 +2252,30 @@ namespace SQL_Document_Builder
             {
                 statusToolStripStatusLabe.Text = "No valid control is focused for select.";
             }
+        }
+
+        /// <summary>
+        /// Sets the connection combo box.
+        /// </summary>
+        /// <param name="connectionItem">The connection item.</param>
+        private void SetConnectionComboBox(SQLDatabaseConnectionItem connectionItem)
+        {
+            _ignoreConnectionComboBoxIndexChange = true;
+
+            // go through the dataSourcesToolStripComboBox and find the matched item
+            for (int i = 0; i < dataSourcesToolStripComboBox.Items.Count; i++)
+            {
+                if (dataSourcesToolStripComboBox.Items[i] is SQLDatabaseConnectionItem comboItem)
+                {
+                    if (string.Equals(comboItem.GUID, connectionItem.GUID, StringComparison.OrdinalIgnoreCase))
+                    {
+                        dataSourcesToolStripComboBox.SelectedIndex = i;
+                        break;
+                    }
+                }
+            }
+
+            _ignoreConnectionComboBoxIndexChange = false;
         }
 
         /// <summary>
@@ -2514,49 +2481,6 @@ namespace SQL_Document_Builder
                 collapsibleSplitter1.SplitterDistance = (int)(this.Width * 0.4F);
 
             AddTab("");
-        }
-
-        /// <summary>
-        /// Restores the last connection.
-        /// </summary>
-        private void RestoreLastConnection()
-        {
-            // perform add connection if there is no connections
-            if (_connections.Connections.Count == 0)
-            {
-                newConnectionToolStripMenuItem.PerformClick();
-            }
-
-            // if there are no connections, return
-            if (_connections.Connections.Count == 0)
-            {
-                return;
-            }
-
-            // Restore the last connection from settings
-            ConnectionMenuItem? matchedItems = null;
-            var lastConnection = Properties.Settings.Default.LastAccessConnection;
-            if (!string.IsNullOrEmpty(lastConnection))
-            {
-                // find the connection that matches the last access connection GUID
-                for (int i = 0; i < connectToToolStripMenuItem.DropDown.Items.Count; i++)
-                {
-                    if (connectToToolStripMenuItem.DropDown.Items[i] is ConnectionMenuItem menuItem && menuItem.Connection.GUID == lastConnection)
-                    {
-                        matchedItems = menuItem;
-                        break;
-                    }
-                }
-            }
-
-            // use the first connection if no match found
-            matchedItems ??= connectToToolStripMenuItem.DropDown.Items[0] as ConnectionMenuItem;
-
-            // if matched item is not null, perform click on it
-            if (matchedItems != null)
-            {
-                OnConnectionToolStripMenuItem_Click(matchedItems, EventArgs.Empty);
-            }
         }
 
         /// <summary>
@@ -3110,10 +3034,10 @@ namespace SQL_Document_Builder
 
         #region Quick Search Bar
 
+        private bool _ignoreConnectionComboBoxIndexChange;
         private int _mouseOnTabIndex;
         private bool ReplaceIsOpen = false;
         private bool SearchIsOpen = false;
-        private bool _ignoreConnectionComboBoxIndexChange;
 
         /// <summary>
         /// Handles the click event of the close quick search button.
