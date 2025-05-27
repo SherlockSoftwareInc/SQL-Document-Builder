@@ -67,6 +67,13 @@ namespace SQL_Document_Builder
         /// </summary>
         private static async Task<string> ExecuteScriptsAsync(SQLDatabaseConnectionItem connection, string script)
         {
+            // perform the syntax check first
+            var syntaxCheckResult = await SyntaxCheckAsync(script, connection.ConnectionString);
+            if (syntaxCheckResult != string.Empty)
+            {
+                return syntaxCheckResult; // return the syntax error message
+            }
+
             // from the CurrentEditBox?.Text, break it into individual SQL statements by the GO keyword
             //var sqlStatements = CurrentEditBox?.Text.Split(["GO"], StringSplitOptions.RemoveEmptyEntries);
             var sqlStatements = Regex.Split(script, @"\bGO\b", RegexOptions.IgnoreCase | RegexOptions.Multiline);
@@ -86,6 +93,33 @@ namespace SQL_Document_Builder
             }
             return string.Empty;
         }
+
+        /// <summary>
+        /// Perform the syntax check for the given script.
+        /// </summary>
+        /// <param name="script">The script.</param>
+        /// <returns>A Task.</returns>
+        private static async Task<string> SyntaxCheckAsync(string script, string connectionString = "")
+        {
+            // from the CurrentEditBox?.Text, break it into individual SQL statements by the GO keyword
+            //var sqlStatements = CurrentEditBox?.Text.Split(["GO"], StringSplitOptions.RemoveEmptyEntries);
+            var sqlStatements = Regex.Split(script, @"\bGO\b", RegexOptions.IgnoreCase | RegexOptions.Multiline);
+            // execute each statement
+            foreach (var sql in sqlStatements)
+            {
+                //Execute(builder.ConnectionString, sql);
+                if (sql.Length > 0)
+                {
+                    var result = await DatabaseHelper.SyntaxCheckAsync(sql, connectionString);
+                    if (result != string.Empty)
+                    {
+                        return result;
+                    }
+                }
+            }
+            return string.Empty;
+        }
+
 
         /// <summary>
         /// Files the display name.

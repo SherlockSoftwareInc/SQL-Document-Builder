@@ -15,7 +15,6 @@ namespace SQL_Document_Builder
     /// </summary>
     internal class DatabaseHelper
     {
-
         /// <summary>
         /// Adds the object description s ps.
         /// </summary>
@@ -573,6 +572,43 @@ END";
             {
                 await conn.CloseAsync();
             }
+        }
+
+        /// <summary>
+        /// Syntaxes the check async.
+        /// </summary>
+        /// <param name="userQuery">The user query.</param>
+        /// <returns>A Task.</returns>
+        internal static async Task<string> SyntaxCheckAsync(string userQuery, string connectionString = "")
+        {
+            string result = string.Empty;
+
+            await ExecuteSQLAsync("SET NOEXEC ON");
+
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                connectionString = Properties.Settings.Default.dbConnectionString;
+            }
+            using SqlConnection connection = new(connectionString);
+            SqlCommand command = new(userQuery, connection);
+
+            try
+            {
+                await connection.OpenAsync();
+                await command.ExecuteNonQueryAsync();
+            }
+            catch (SqlException ex)
+            {
+                result = ex.Message;
+            }
+            finally
+            {
+                await connection.CloseAsync();
+            }
+
+            await ExecuteSQLAsync("SET NOEXEC OFF");
+
+            return result;
         }
 
         /// <summary>
