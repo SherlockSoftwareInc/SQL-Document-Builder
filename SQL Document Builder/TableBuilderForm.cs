@@ -26,6 +26,8 @@ namespace SQL_Document_Builder
         /// </summary>
         private int _connectionCount = 0;
 
+        private ObjectName? _selectedObject;
+
         /// <summary>
         /// The tables.
         /// </summary>
@@ -93,33 +95,6 @@ namespace SQL_Document_Builder
             }
             return string.Empty;
         }
-
-        /// <summary>
-        /// Perform the syntax check for the given script.
-        /// </summary>
-        /// <param name="script">The script.</param>
-        /// <returns>A Task.</returns>
-        private static async Task<string> SyntaxCheckAsync(string script, string connectionString = "")
-        {
-            // from the CurrentEditBox?.Text, break it into individual SQL statements by the GO keyword
-            //var sqlStatements = CurrentEditBox?.Text.Split(["GO"], StringSplitOptions.RemoveEmptyEntries);
-            var sqlStatements = Regex.Split(script, @"\bGO\b", RegexOptions.IgnoreCase | RegexOptions.Multiline);
-            // execute each statement
-            foreach (var sql in sqlStatements)
-            {
-                //Execute(builder.ConnectionString, sql);
-                if (sql.Length > 0)
-                {
-                    var result = await DatabaseHelper.SyntaxCheckAsync(sql, connectionString);
-                    if (result != string.Empty)
-                    {
-                        return result;
-                    }
-                }
-            }
-            return string.Empty;
-        }
-
 
         /// <summary>
         /// Files the display name.
@@ -201,7 +176,7 @@ namespace SQL_Document_Builder
                 {
                     // append the description to the script
                     createScript += description;
-                    createScript += Environment.NewLine + "GO" + Environment.NewLine;
+                    createScript += "GO" + Environment.NewLine;
                 }
             }
 
@@ -255,6 +230,32 @@ namespace SQL_Document_Builder
                 return form.SelectedObjects;
             }
             return null;
+        }
+
+        /// <summary>
+        /// Perform the syntax check for the given script.
+        /// </summary>
+        /// <param name="script">The script.</param>
+        /// <returns>A Task.</returns>
+        private static async Task<string> SyntaxCheckAsync(string script, string connectionString = "")
+        {
+            // from the CurrentEditBox?.Text, break it into individual SQL statements by the GO keyword
+            //var sqlStatements = CurrentEditBox?.Text.Split(["GO"], StringSplitOptions.RemoveEmptyEntries);
+            var sqlStatements = Regex.Split(script, @"\bGO\b", RegexOptions.IgnoreCase | RegexOptions.Multiline);
+            // execute each statement
+            foreach (var sql in sqlStatements)
+            {
+                //Execute(builder.ConnectionString, sql);
+                if (sql.Length > 0)
+                {
+                    var result = await DatabaseHelper.SyntaxCheckAsync(sql, connectionString);
+                    if (result != string.Empty)
+                    {
+                        return result;
+                    }
+                }
+            }
+            return string.Empty;
         }
 
         /// <summary>
@@ -318,10 +319,18 @@ namespace SQL_Document_Builder
         /// </summary>
         private void AddDataSourceText()
         {
+            var editBox = CurrentEditBox;
+            if (editBox == null) return;
+
             // add the data source tag to the document when the document is empty
-            if (string.IsNullOrEmpty(CurrentEditBox?.Text) && Properties.Settings.Default.AddDataSource)
+            if (Properties.Settings.Default.AddDataSource)
             {
-                CurrentEditBox?.AppendText($"-- Data source: {serverToolStripStatusLabel.Text}::{databaseToolStripStatusLabel.Text}" + Environment.NewLine);
+                string dataSourceText = $"{serverToolStripStatusLabel.Text}::{databaseToolStripStatusLabel.Text}";
+                if (string.IsNullOrEmpty(editBox.Text) || editBox.DataSourceName != dataSourceText)
+                {
+                    editBox.DataSourceName = dataSourceText;
+                    editBox.AppendText($"-- Data source: {dataSourceText}" + Environment.NewLine);
+                }
             }
         }
 
@@ -464,8 +473,8 @@ namespace SQL_Document_Builder
                 {
                     serverToolStripStatusLabel.Text = "";
                     databaseToolStripStatusLabel.Text = "";
-                    schemaComboBox.Items.Clear();
-                    searchTextBox.Text = string.Empty;
+                    //schemaComboBox.Items.Clear();
+                    //searchTextBox.Text = string.Empty;
                     objectsListBox.Items.Clear();
 
                     string? connectionString = connection?.ConnectionString?.Length == 0 ? await connection.Login() : connection?.ConnectionString;
@@ -494,7 +503,7 @@ namespace SQL_Document_Builder
                     }
 
                     // set the object type combo box to the first item
-                    objectTypeComboBox.SelectedIndex = 0;
+                    //objectTypeComboBox.SelectedIndex = 0;
                 }
             }
         }
@@ -804,9 +813,15 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void CreateIndexToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            var editBox = CurrentEditBox;
+            if (editBox == null)
+            {
+                return;
+            }
+
             if (BeginAddDDLScript())
             {
-                CurrentEditBox?.AppendText(definitionPanel.CreateIndexScript());
+                editBox.AppendText(definitionPanel.CreateIndexScript());
                 // Move caret to end and scroll to it
                 ScrollToCaret();
             }
@@ -823,6 +838,12 @@ namespace SQL_Document_Builder
             List<ObjectName>? selectedObjects = SelectObjects();
 
             if (selectedObjects == null || selectedObjects.Count == 0)
+            {
+                return;
+            }
+
+            var editBox = CurrentEditBox;
+            if (editBox == null)
             {
                 return;
             }
@@ -844,7 +865,8 @@ namespace SQL_Document_Builder
 
                     // get the object create script
                     var script = await GetObjectCreateScriptAsync(obj);
-                    CurrentEditBox?.AppendText(script);
+                    if (editBox == null) return;
+                    editBox.AppendText(script);
 
                     // Move caret to end and scroll to it
                     ScrollToCaret();
@@ -861,7 +883,8 @@ namespace SQL_Document_Builder
                     else
                     {
                         var insertScript = await DatabaseDocBuilder.TableToInsertStatementAsync(obj);
-                        CurrentEditBox?.AppendText(insertScript + "GO" + Environment.NewLine);
+                        if (editBox == null) return;
+                        editBox.AppendText(insertScript + "GO" + Environment.NewLine);
 
                         // Move caret to end and scroll to it
                         ScrollToCaret();
@@ -879,9 +902,15 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void CreatePrimaryKeyToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            var editBox = CurrentEditBox;
+            if (editBox == null)
+            {
+                return;
+            }
+
             if (BeginAddDDLScript())
             {
-                CurrentEditBox?.AppendText(definitionPanel.PrimaryKeyScript());
+                editBox.AppendText(definitionPanel.PrimaryKeyScript());
 
                 // Move caret to end and scroll to it
                 ScrollToCaret();
@@ -898,6 +927,12 @@ namespace SQL_Document_Builder
         {
             if (objectsListBox.SelectedItem is not ObjectName objectName) return;
 
+            var editBox = CurrentEditBox;
+            if (editBox == null)
+            {
+                return;
+            }
+
             if (!BeginAddDDLScript()) return;
 
             var script = await GetObjectCreateScriptAsync(objectName);
@@ -906,7 +941,7 @@ namespace SQL_Document_Builder
             {
                 AddDataSourceText();
 
-                CurrentEditBox?.AppendText(script);
+                editBox.AppendText(script);
                 // Move caret to end and scroll to it
                 ScrollToCaret();
             }
@@ -927,6 +962,12 @@ namespace SQL_Document_Builder
                 return;
             }
 
+            var editBox = CurrentEditBox;
+            if (editBox == null)
+            {
+                return;
+            }
+
             if (BeginAddDDLScript())
             {
                 StartBuild();
@@ -942,7 +983,8 @@ namespace SQL_Document_Builder
 
                     var script = await GetObjectCreateScriptAsync(selectedObjects[i]);
 
-                    CurrentEditBox?.AppendText(script);
+                    if (editBox == null) return;
+                    editBox?.AppendText(script);
 
                     // Move caret to end and scroll to it
                     ScrollToCaret();
@@ -1122,10 +1164,16 @@ namespace SQL_Document_Builder
                 form.ShowDialog();
                 if (form.ResultDataTable != null)
                 {
-                    CurrentEditBox?.AppendText($"-- Data source: {fileName}" + Environment.NewLine);
+                    var editBox = CurrentEditBox;
+                    if (editBox == null)
+                    {
+                        return;
+                    }
+
+                    editBox.AppendText($"-- Data source: {fileName}" + Environment.NewLine);
 
                     var dataHelper = new ExcelDataHelper(form.ResultDataTable);
-                    CurrentEditBox?.AppendText(dataHelper.GetInsertStatement(form.TableName, form.NullForBlank));
+                    editBox.AppendText(dataHelper.GetInsertStatement(form.TableName, form.NullForBlank));
                     // Move caret to end and scroll to it
                     ScrollToCaret();
                 }
@@ -1503,8 +1551,14 @@ namespace SQL_Document_Builder
                         }
                     }
 
+                    var editBox = CurrentEditBox;
+                    if (editBox == null)
+                    {
+                        return;
+                    }
+
                     // checks if the table has identify column
-                    var hasIdentityColumn = await DatabaseHelper.HasIdentityColumnAsync(objectName);
+                    //var hasIdentityColumn = await DatabaseHelper.HasIdentityColumnAsync(objectName);
 
                     var script = await DatabaseDocBuilder.TableToInsertStatementAsync(objectName);
 
@@ -1517,23 +1571,10 @@ namespace SQL_Document_Builder
                     {
                         if (!BeginAddDDLScript()) return;
 
-                        //// add SET IDENTITY_INSERT ON if the table has identity column
-                        //if (hasIdentityColumn)
-                        //{
-                        //    CurrentEditBox?.AppendText("SET IDENTITY_INSERT " + objectName.FullName + " ON;" + Environment.NewLine + "GO" + Environment.NewLine);
-                        //}
-
                         // append the insert statement to the script
-                        CurrentEditBox?.AppendText(script);
+                        editBox.AppendText(script);
 
-                        // add SET IDENTITY_INSERT OFF if the table has identity column
-                        //if (hasIdentityColumn)
-                        //{
-                        //    CurrentEditBox?.AppendText("GO" + Environment.NewLine);
-                        //    CurrentEditBox?.AppendText("SET IDENTITY_INSERT " + objectName.FullName + " OFF;" + Environment.NewLine);
-                        //}
-
-                        CurrentEditBox?.AppendText("GO" + Environment.NewLine);
+                        editBox.AppendText("GO" + Environment.NewLine);
 
                         // Move caret to end and scroll to it
                         ScrollToCaret();
@@ -1606,6 +1647,12 @@ namespace SQL_Document_Builder
 
             if (selectedObjects == null || selectedObjects.Count == 0) return;
 
+            var editBox = CurrentEditBox;
+            if (editBox == null)
+            {
+                return;
+            }
+
             if (BeginAddDDLScript())
             {
                 StartBuild();
@@ -1626,12 +1673,12 @@ namespace SQL_Document_Builder
                     if (!string.IsNullOrEmpty(script))
                     {
                         script += Environment.NewLine + "GO" + Environment.NewLine;
+                        if (editBox == null) return;
+                        editBox.AppendText(script);
+
+                        // Move caret to end and scroll to it
+                        ScrollToCaret();
                     }
-
-                    CurrentEditBox?.AppendText(script);
-
-                    // Move caret to end and scroll to it
-                    ScrollToCaret();
                 }
 
                 EndBuild();
@@ -1648,8 +1695,8 @@ namespace SQL_Document_Builder
             statusToolStripStatusLabe.Text = string.Empty;
             if (objectsListBox.SelectedItem != null)
             {
-                var objectName = (ObjectName)objectsListBox.SelectedItem;
-                await definitionPanel.OpenAsync(objectName);
+                _selectedObject = (ObjectName)objectsListBox.SelectedItem;
+                await definitionPanel.OpenAsync(_selectedObject);
             }
             else
             {
@@ -1664,6 +1711,9 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void ObjectTypeComboBox_SelectedIndexChanged(object sender, EventArgs e)
         {
+            // keep the selected schema
+            string schemaName = schemaComboBox.Text;
+
             if (objectTypeComboBox.SelectedIndex >= 0)
             {
                 // get the database object by the selected object type
@@ -1689,9 +1739,6 @@ namespace SQL_Document_Builder
                         break;
                 }
 
-                // keep the selected schema
-                string schemaName = schemaComboBox.Text;
-
                 PopulateSchema();
                 if (schemaComboBox.Items.Count > 0)
                 {
@@ -1704,8 +1751,14 @@ namespace SQL_Document_Builder
                             break;
                         }
                     }
-
-                    schemaComboBox.SelectedIndex = index;
+                    if (schemaComboBox.SelectedIndex != index)
+                    {
+                        schemaComboBox.SelectedIndex = index;
+                    }
+                    else
+                    {
+                        SchemaComboBox_SelectedIndexChanged(sender, e); // re-populate the object list box
+                    }
                 }
             }
         }
@@ -1724,13 +1777,48 @@ namespace SQL_Document_Builder
                 statusToolStripStatusLabe.Text = string.Format("Connect to {0}...", menuItem.ToString());
                 Cursor = Cursors.WaitCursor;
 
+                _populating = true;
+
+                // keep the current selection in the combo boxes
+                var selectedObjectType = objectTypeComboBox.Text;
+                //var selectedSchema = schemaComboBox.Text;
+
+                // clean up the schema and object list boxes
+                //schemaComboBox.Items.Clear();
+                objectsListBox.Items.Clear();
+
                 await ChangeDBConnectionAsync(menuItem.Connection);
 
                 if (!_ignoreConnectionComboBoxIndexChange)
                     SetConnectionComboBox(menuItem.Connection);
 
-                ObjectTypeComboBox_SelectedIndexChanged(sender, e);
+                // restore the object type
+                if (!string.IsNullOrEmpty(selectedObjectType))
+                {
+                    int objectTypeIndex = objectTypeComboBox.Items.Count > 0 ? 0 : -1;
+                    for (int i = 0; i < objectTypeComboBox.Items.Count; i++)
+                    {
+                        if (objectTypeComboBox.Items[i].ToString().Equals(selectedObjectType, StringComparison.CurrentCultureIgnoreCase))
+                        {
+                            objectTypeIndex = i;
+                            break;
+                        }
+                    }
+                    if (objectTypeComboBox.SelectedIndex == objectTypeIndex)
+                    {
+                        ObjectTypeComboBox_SelectedIndexChanged(sender, e); // re-populate the object list box
+                    }
+                    else
+                    {
+                        objectTypeComboBox.SelectedIndex = objectTypeIndex;
+                    }
+                }
+                else
+                {
+                    objectTypeComboBox.SelectedIndex = 0; // default to the first item
+                }
 
+                _populating = false;
                 Cursor = Cursors.Default;
                 statusToolStripStatusLabe.Text = "";
             }
@@ -1856,7 +1944,7 @@ namespace SQL_Document_Builder
         {
             Properties.Settings.Default.AddDataSource = addDataSourceCheckBox.Checked;
             Properties.Settings.Default.AddDropStatement = scriptDropsCheckBox.Checked;
-            Properties.Settings.Default.UseExtendedProperties = extendedPropertiesCheckBox.Checked;
+            Properties.Settings.Default.UseExtendedProperties = useExtendedPropertyRadioButton.Checked;
             Properties.Settings.Default.Save();
         }
 
@@ -1921,7 +2009,7 @@ namespace SQL_Document_Builder
             await definitionPanel.OpenAsync(null);
             string schemaName = string.Empty;
             if (schemaComboBox.SelectedIndex > 0)
-                schemaName = schemaComboBox.Items[schemaComboBox.SelectedIndex].ToString();
+                schemaName = schemaComboBox.Text;
 
             if (_tables != null)
             {
@@ -1959,9 +2047,28 @@ namespace SQL_Document_Builder
                     }
                 }
 
+                // find the selected object in the list box if it is not null
                 if (objectsListBox.Items.Count > 0)
                 {
-                    objectsListBox.SelectedIndex = 0;
+                    if (_selectedObject != null)
+                    {
+                        if (_selectedObject is ObjectName prevSelected)
+                        {
+                            for (int i = 0; i < objectsListBox.Items.Count; i++)
+                            {
+                                if (objectsListBox.Items[i] is ObjectName obj && obj.Equals(prevSelected))
+                                {
+                                    objectsListBox.SelectedIndex = i;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // select the first item in the list box if no object is selected
+                        objectsListBox.SelectedIndex = 0;
+                    }
                 }
             }
         }
@@ -2058,6 +2165,12 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void QueryInsertToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            var editBox = CurrentEditBox;
+            if (editBox == null)
+            {
+                return;
+            }
+
             if (BeginAddDDLScript())
             {
                 using var form = new QueryDataToTableForm()
@@ -2071,7 +2184,7 @@ namespace SQL_Document_Builder
                 {
                     AddDataSourceText();
 
-                    CurrentEditBox?.AppendText(sql);
+                    editBox.AppendText(sql);
 
                     // Move caret to end and scroll to it
                     ScrollToCaret();
@@ -2505,7 +2618,11 @@ namespace SQL_Document_Builder
 
             addDataSourceCheckBox.Checked = Properties.Settings.Default.AddDataSource;
             scriptDropsCheckBox.Checked = Properties.Settings.Default.AddDropStatement;
-            extendedPropertiesCheckBox.Checked = Properties.Settings.Default.UseExtendedProperties;
+            if (Properties.Settings.Default.UseExtendedProperties)
+                useExtendedPropertyRadioButton.Checked = true;
+            else
+                useUspDescRadioButton.Checked = true;
+
             insertBatchTextBox.Text = Properties.Settings.Default.InsertBatchRows.ToString();
             insertMaxTextBox.Text = Properties.Settings.Default.InertMaxRows.ToString();
 
@@ -2560,23 +2677,36 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void TableDescriptionToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (BeginAddDDLScript())
+            var objectName = objectsListBox.SelectedItem as ObjectName;
+            if (!string.IsNullOrEmpty(objectName?.Name))
             {
-                var objectName = objectsListBox.SelectedItem as ObjectName;
-                if (!string.IsNullOrEmpty(objectName?.Name))
+                var description = await ObjectDescription.BuildObjectDescription(objectName, Properties.Settings.Default.UseExtendedProperties);
+                if (!string.IsNullOrEmpty(description))
                 {
-                    var description = await ObjectDescription.BuildObjectDescription(objectName, Properties.Settings.Default.UseExtendedProperties);
-                    if (!string.IsNullOrEmpty(description))
+                    var editBox = CurrentEditBox;
+                    if (editBox == null)
                     {
-                        CurrentEditBox?.AppendText(description);
+                        return;
+                    }
+
+                    if (BeginAddDDLScript())
+                    {
+                        // add GO statement if the script not empty
+                        description += "GO" + Environment.NewLine;
+                        editBox.AppendText(description);
+
                         // Move caret to end and scroll to it
                         ScrollToCaret();
                     }
-                    else
-                    {
-                        statusToolStripStatusLabe.Text = "No object description found";
-                    }
                 }
+                else
+                {
+                    Common.MsgBox($"No description found for {objectName.FullName}", MessageBoxIcon.Information);
+                }
+            }
+            else
+            {
+                Common.MsgBox("No database object selected.", MessageBoxIcon.Warning);
             }
         }
 
@@ -2666,7 +2796,13 @@ namespace SQL_Document_Builder
                     AddTab("");
                 }
 
-                CurrentEditBox?.AppendText(DatabaseDocBuilder.UspAddObjectDescription());
+                var editBox = CurrentEditBox;
+                if (editBox == null)
+                {
+                    return;
+                }
+
+                editBox.AppendText(DatabaseDocBuilder.UspAddObjectDescription());
                 // Move caret to end and scroll to it
                 ScrollToCaret();
             }
@@ -3070,8 +3206,10 @@ namespace SQL_Document_Builder
 
         private bool _ignoreConnectionComboBoxIndexChange;
         private int _mouseOnTabIndex;
+        private bool _populating = false;
         private bool ReplaceIsOpen = false;
         private bool SearchIsOpen = false;
+        // Indicates if the form is currently populating data sources
 
         /// <summary>
         /// Handles the click event of the close quick search button.

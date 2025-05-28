@@ -14,7 +14,15 @@ namespace SQL_Document_Builder
         /// <summary>
         /// The sql key words 1.
         /// </summary>
-        private const string SQL_KeyWords = "add alter as authorization backup begin bigint binary bit break browse bulk by cascade case catch check checkpoint close clustered column commit compute constraint containstable continue create current cursor cursor database date datetime datetime2 datetimeoffset dbcc deallocate decimal declare default delete deny desc disk distinct distributed double drop dump else end errlvl escape except exec execute exit external fetch file fillfactor float for foreign freetext freetexttable from full function goto grant group having hierarchyid holdlock identity identity_insert identitycol if image index insert int intersect into key kill lineno load merge money national nchar nocheck nocount nolock nonclustered ntext numeric nvarchar of off offsets on open opendatasource openquery openrowset openxml option order over percent plan precision primary print proc procedure public raiserror read readtext real reconfigure references replication restore restrict return revert revoke rollback rowcount rowguidcol rule save schema securityaudit select set setuser shutdown smalldatetime smallint smallmoney sql_variant statistics table table tablesample text textsize then time timestamp tinyint to top tran transaction trigger truncate try union unique uniqueidentifier update updatetext use user values varbinary varchar varying view waitfor when where while with writetext xml go ";
+        private const string SQL_KeyWords = "add alter as authorization backup begin break browse bulk by cascade case catch check checkpoint close clustered column commit compute constraint containstable continue create current cursor database dbcc deallocate declare default delete deny desc disk distinct distributed double drop dump else end errlvl escape except exec execute exit external fetch file fillfactor for foreign freetext freetexttable from full function go goto grant group having holdlock identity identity_insert identitycol if index insert intersect into key kill lineno load merge national nocheck nocount nolock nonclustered of off offsets on open opendatasource openquery openrowset openxml option order over percent plan precision primary print proc procedure public raiserror read readtext reconfigure references replication restore restrict return revert revoke rollback rowcount rowguidcol rule save schema securityaudit select set setuser shutdown statistics table tablesample textsize then to top tran transaction trigger truncate try union unique update updatetext use user values varying view waitfor when where while with writetext ";
+        /// <summary>
+        /// The sql keywords 2.
+        /// </summary>
+        private const string SQL_KeyWords1 = "bigint binary bit char date datetime datetime2 datetimeoffset decimal float geography geometry hierarchyid image int money nchar ntext numeric nvarchar real smalldatetime smallint smallmoney sql_variant text time timestamp tinyint uniqueidentifier varbinary varchar xml ";
+        /// <summary>
+        /// The sql keywords 3.
+        /// </summary>
+        private const string SQL_KeyWords2 = "@@version abs ascii avg cast ceiling char charindex coalesce concat convert count current_timestamp current_user datalength dateadd datediff datename datepart day floor getdate getutcdate isdate isnull isnumeric lag lead left len lower ltrim max min month nchar nullif patindex rand replace right round rtrim session_user sessionproperty sign space str stuff substring sum system_user try_cast try_convert upper user_name year ";
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SqlEditBox"/> class.
@@ -90,6 +98,11 @@ namespace SQL_Document_Builder
         /// Gets or sets the alias.
         /// </summary>
         public string Alias { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets the data source name.
+        /// </summary>
+        public string DataSourceName { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the default style font.
@@ -283,7 +296,9 @@ namespace SQL_Document_Builder
             //       "join inner left right outer on as distinct count avg sum min max cast convert " +
             //       "go exec sp_ execute"); // Add GO, EXEC, sp_ for T-SQL like dialects
 
-            this.SetKeywords(0, SQL_KeyWords); // Add your custom keywords here
+            this.SetKeywords(0, SQL_KeyWords + SQL_KeyWords1); // Add the primary keywords
+            this.SetKeywords(1, SQL_KeyWords2); // Add the data types as secondary keywords
+            //this.SetKeywords(2, ); // Add the functions as tertiary keywords
 
             // Secondary keywords (Data Types, Functions - adjust as needed)
             //this.SetKeywords(1, "int varchar nvarchar char text datetime date time smallint bigint bit decimal numeric float real " +
@@ -292,7 +307,7 @@ namespace SQL_Document_Builder
             //                   "isnull coalesce nullif");
 
             // Word2 = 1
-            this.SetKeywords(1, "ascii cast char charindex ceiling coalesce collate contains convert current_date current_time current_timestamp current_user floor isnull max min nullif object_id session_user substring system_user tsequal ");
+            // this.SetKeywords(1, "ascii cast char charindex ceiling coalesce collate contains convert current_date current_time current_timestamp current_user floor isnull max min nullif object_id session_user substring system_user tsequal ");
             // User1 = 4
             this.SetKeywords(4, "all and any between cross exists in inner is join left like not null or outer pivot right some unpivot ( ) * ");
             // User2 = 5

@@ -26,40 +26,41 @@ namespace SQL_Document_Builder
         #region Assembly Attribute Accessors
 
         /// <summary>
-        /// Gets the assembly title.
+        /// Gets the assembly company.
         /// </summary>
-        public string AssemblyTitle
+        public static string AssemblyCompany
         {
             get
             {
-                object[] attributes = Assembly.GetExecutingAssembly().GetCustomAttributes(typeof(AssemblyTitleAttribute), false);
-                if (attributes.Length > 0)
+                object[] attributes = Assembly.GetExecutingAssembly().GetCustomAttributes(typeof(AssemblyCompanyAttribute), false);
+                if (attributes.Length == 0)
                 {
-                    AssemblyTitleAttribute titleAttribute = (AssemblyTitleAttribute)attributes[0];
-                    if (titleAttribute.Title != "")
-                    {
-                        return titleAttribute.Title;
-                    }
+                    return "";
                 }
-                return System.IO.Path.GetFileNameWithoutExtension(Assembly.GetExecutingAssembly().CodeBase);
+                return ((AssemblyCompanyAttribute)attributes[0]).Company;
             }
         }
 
         /// <summary>
-        /// Gets the assembly version.
+        /// Gets the assembly copyright.
         /// </summary>
-        public string AssemblyVersion
+        public static string AssemblyCopyright
         {
             get
             {
-                return Assembly.GetExecutingAssembly().GetName().Version.ToString();
+                object[] attributes = Assembly.GetExecutingAssembly().GetCustomAttributes(typeof(AssemblyCopyrightAttribute), false);
+                if (attributes.Length == 0)
+                {
+                    return "";
+                }
+                return ((AssemblyCopyrightAttribute)attributes[0]).Copyright;
             }
         }
 
         /// <summary>
         /// Gets the assembly description.
         /// </summary>
-        public string AssemblyDescription
+        public static string AssemblyDescription
         {
             get
             {
@@ -75,7 +76,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Gets the assembly product.
         /// </summary>
-        public string AssemblyProduct
+        public static string AssemblyProduct
         {
             get
             {
@@ -89,34 +90,21 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Gets the assembly copyright.
+        /// Gets the assembly title.
         /// </summary>
-        public string AssemblyCopyright
-        {
-            get
-            {
-                object[] attributes = Assembly.GetExecutingAssembly().GetCustomAttributes(typeof(AssemblyCopyrightAttribute), false);
-                if (attributes.Length == 0)
-                {
-                    return "";
-                }
-                return ((AssemblyCopyrightAttribute)attributes[0]).Copyright;
-            }
-        }
+        public static string AssemblyTitle => "SQL Server Script and Document Builder";
 
         /// <summary>
-        /// Gets the assembly company.
+        /// Gets the assembly version.
         /// </summary>
-        public string AssemblyCompany
+        public static string AssemblyVersion
         {
             get
             {
-                object[] attributes = Assembly.GetExecutingAssembly().GetCustomAttributes(typeof(AssemblyCompanyAttribute), false);
-                if (attributes.Length == 0)
-                {
-                    return "";
-                }
-                return ((AssemblyCompanyAttribute)attributes[0]).Company;
+                var version = Assembly.GetExecutingAssembly().GetName().Version;
+                return version != null
+                    ? $"{version.Major}.{version.Minor}.{version.Build}"
+                    : "1.0.0";
             }
         }
 
@@ -130,7 +118,7 @@ namespace SQL_Document_Builder
         private void AboutBox_Load(object sender, EventArgs e)
         {
             // Set the title of the form with the assembly information.
-            System.Reflection.Assembly assemblyInfo = System.Reflection.Assembly.GetExecutingAssembly();
+            //System.Reflection.Assembly assemblyInfo = System.Reflection.Assembly.GetExecutingAssembly();
             this.Text = String.Format("About {0}", AssemblyTitle);
         }
     }

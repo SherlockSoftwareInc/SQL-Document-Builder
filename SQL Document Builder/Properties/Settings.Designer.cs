@@ -133,7 +133,7 @@ namespace SQL_Document_Builder.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
         public bool UseExtendedProperties {
             get {
                 return ((bool)(this["UseExtendedProperties"]));

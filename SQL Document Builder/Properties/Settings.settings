@@ -40,7 +40,7 @@ Back to [[DW: Database tables|Data warehouse tables]]
       <Value Profile="(Default)" />
     </Setting>
     <Setting Name="UseExtendedProperties" Type="System.Boolean" Scope="User">
-      <Value Profile="(Default)">True</Value>
+      <Value Profile="(Default)">False</Value>
     </Setting>
     <Setting Name="DarkMode" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">True</Value>

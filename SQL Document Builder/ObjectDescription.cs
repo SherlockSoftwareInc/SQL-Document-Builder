@@ -140,7 +140,7 @@ namespace SQL_Document_Builder
             if (script.Length > 0)
             {
                 // Remove the last line break
-                script = script.TrimEnd('\r', '\n', ' ', '\t');
+                script = script.TrimEnd('\r', '\n', ' ', '\t') + Environment.NewLine;
             }
 
             return script;
