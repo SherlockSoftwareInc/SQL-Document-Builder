@@ -679,13 +679,22 @@ GO";
             var triggerScript = await GetCreateTriggersScriptAsync(objectName);
             if (!string.IsNullOrEmpty(triggerScript))
             {
+                // if the createScript does not ended with a line of "GO", add it
+                if (!createScript.ToString().EndsWith(Environment.NewLine + "GO" + Environment.NewLine, StringComparison.OrdinalIgnoreCase))
+                {
+                    createScript.AppendLine($"GO");
+                }
+
                 // remove the new line at the end of the script
                 triggerScript = triggerScript.TrimEnd('\r', '\n');
                 createScript.AppendLine(triggerScript);
             }
 
             // add GO statement
-            createScript.AppendLine($"GO");
+            if (!createScript.ToString().EndsWith(Environment.NewLine + "GO" + Environment.NewLine, StringComparison.OrdinalIgnoreCase))
+            {
+                createScript.AppendLine($"GO");
+            }
 
             return createScript.ToString();
         }
@@ -707,7 +716,7 @@ GO";
 
             // Query to get all triggers for the specified table/view
             string sql = $@"
-SELECT 
+SELECT
     tr.name AS TriggerName,
     s.name AS SchemaName,
     OBJECT_NAME(tr.parent_id) AS ParentObjectName,
