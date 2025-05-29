@@ -69,12 +69,12 @@ namespace SQL_Document_Builder
         /// </summary>
         private static async Task<string> ExecuteScriptsAsync(SQLDatabaseConnectionItem connection, string script)
         {
-            // perform the syntax check first
-            var syntaxCheckResult = await SyntaxCheckAsync(script, connection.ConnectionString);
-            if (syntaxCheckResult != string.Empty)
-            {
-                return syntaxCheckResult; // return the syntax error message
-            }
+            //// perform the syntax check first
+            //var syntaxCheckResult = await SyntaxCheckAsync(script, connection.ConnectionString);
+            //if (syntaxCheckResult != string.Empty)
+            //{
+            //    return syntaxCheckResult; // return the syntax error message
+            //}
 
             // from the CurrentEditBox?.Text, break it into individual SQL statements by the GO keyword
             //var sqlStatements = CurrentEditBox?.Text.Split(["GO"], StringSplitOptions.RemoveEmptyEntries);
@@ -86,11 +86,19 @@ namespace SQL_Document_Builder
                 //Execute(builder.ConnectionString, sql);
                 if (sql.Length > 0)
                 {
+                    //var parseResult = await SyntaxCheckAsync(sql, connection.ConnectionString);
+                    //if(string.IsNullOrEmpty(parseResult))
+                    //{
                     var result = await DatabaseHelper.ExecuteSQLAsync(sql, connection.ConnectionString);
                     if (result != string.Empty)
                     {
                         return result;
                     }
+                    //}
+                    //else
+                    //{
+                    //    return parseResult; // return the syntax error message
+                    //}
                 }
             }
             return string.Empty;
@@ -1866,6 +1874,12 @@ namespace SQL_Document_Builder
             // convert the selected item to SQLDatabaseConnectionItem
             if (dataSourcesToolStripComboBox.SelectedItem is SQLDatabaseConnectionItem connection)
             {
+                if(connection.ConnectionString == null || connection.ConnectionString.Length == 0)
+                {
+                    Common.MsgBox("No database connection selected", MessageBoxIcon.Error);
+                    return;
+                }
+
                 // check if the script contains a 'usp_AddObjectDescription' statement
                 if (script.Contains("usp_AddObjectDescription", StringComparison.CurrentCultureIgnoreCase))
                 {

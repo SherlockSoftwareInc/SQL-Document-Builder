@@ -583,7 +583,7 @@ END";
         {
             string result = string.Empty;
 
-            await ExecuteSQLAsync("SET NOEXEC ON");
+            await ExecuteSQLAsync("SET NOEXEC ON", connectionString);
 
             if (string.IsNullOrEmpty(connectionString))
             {
@@ -606,7 +606,7 @@ END";
                 await connection.CloseAsync();
             }
 
-            await ExecuteSQLAsync("SET NOEXEC OFF");
+            await ExecuteSQLAsync("SET NOEXEC OFF", connectionString);
 
             return result;
         }
