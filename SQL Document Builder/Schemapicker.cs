@@ -20,6 +20,11 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Gets or sets the connection string.
+        /// </summary>
+        public string ConnectionString { get; set; } = string.Empty;
+
+        /// <summary>
         /// Gets or sets the schema.
         /// </summary>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -62,7 +67,7 @@ namespace SQL_Document_Builder
             schemaListBox.Items.Clear();
             schemaListBox.Items.Add("(All)");
 
-            var schemas = await DatabaseHelper.GetSchemasAsync();
+            var schemas = await DatabaseHelper.GetSchemasAsync(ConnectionString);
 
             // Add schemas to the combo box
             foreach (var schema in schemas)

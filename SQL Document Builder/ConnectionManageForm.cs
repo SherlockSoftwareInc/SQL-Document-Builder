@@ -461,9 +461,9 @@ namespace SQL_Document_Builder
         {
             bool result = false;
 
-            if (connection != null || !string.IsNullOrEmpty(connection.ConnectionString))
+            if (connection != null || !string.IsNullOrEmpty(connection?.ConnectionString))
             {
-                result = await DatabaseHelper.TestConnectionAsync(connection.ConnectionString);
+                result = await DatabaseHelper.TestConnectionAsync(connection?.ConnectionString);
             }
 
             return result;

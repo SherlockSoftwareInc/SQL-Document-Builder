@@ -20,7 +20,7 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="dbObject">The database object for which the creation script is to be generated.</param>
         /// <returns>A Task<string?> containing the creation script, or null if the object type is unsupported.</returns>
-        public static async Task<string?> GetCreateObjectScriptAsync(ObjectName dbObject)
+        public static async Task<string?> GetCreateObjectScriptAsync(ObjectName dbObject, string connectionString)
         {
             if (dbObject == null)
             {
@@ -35,10 +35,10 @@ namespace SQL_Document_Builder
             // Determine the object type and retrieve the corresponding creation script
             return dbObject.ObjectType switch
             {
-                ObjectName.ObjectTypeEnums.Table => await GetCreateTableScriptAsync(dbObject),
-                ObjectName.ObjectTypeEnums.View => await GetCreateViewScriptAsync(dbObject),
-                ObjectName.ObjectTypeEnums.StoredProcedure => await GetCreateStoredProcedureScriptAsync(dbObject),
-                ObjectName.ObjectTypeEnums.Function => await GetCreateFunctionScriptAsync(dbObject),
+                ObjectName.ObjectTypeEnums.Table => await GetCreateTableScriptAsync(dbObject, connectionString),
+                ObjectName.ObjectTypeEnums.View => await GetCreateViewScriptAsync(dbObject, connectionString),
+                ObjectName.ObjectTypeEnums.StoredProcedure => await GetCreateStoredProcedureScriptAsync(dbObject, connectionString),
+                ObjectName.ObjectTypeEnums.Function => await GetCreateFunctionScriptAsync(dbObject, connectionString),
                 _ => throw new NotSupportedException($"The object type '{dbObject.ObjectType}' is not supported.")
             };
         }
@@ -52,7 +52,7 @@ namespace SQL_Document_Builder
         /// It assumes the object corresponding to fullViewName is a view or other SQL module.
         /// It does NOT generate CREATE INDEX scripts.
         /// </remarks>
-        public static async Task<string> GetViewDefinitionAsync(ObjectName objectName)
+        public static async Task<string> GetViewDefinitionAsync(ObjectName objectName, string connectionString)
         {
             string fullViewName = objectName.FullName;
 
@@ -69,7 +69,7 @@ FROM sys.sql_modules sm
 WHERE sm.object_id = OBJECT_ID('{objectName.FullName}')";
 
                     // ExecuteScalarAsync is efficient for retrieving a single value
-                    object? result = await DatabaseHelper.ExecuteScalarAsync(query);
+                    object? result = await DatabaseHelper.ExecuteScalarAsync(query, connectionString);
                     // Check if a result was returned and it's not DBNull
                     if (result != null && result != DBNull.Value)
                     {
@@ -113,10 +113,10 @@ WHERE sm.object_id = OBJECT_ID('{objectName.FullName}')";
         /// <param name="sql">The SQL query to fetch data.</param>
         /// <param name="tableName">The table name for the insert statements.</param>
         /// <returns>A Task<string> containing the generated insert statements or a warning if rows exceed 500.</returns>
-        public static async Task<string> QueryDataToInsertStatementAsync(string sql, string tableName = "YourTableName", bool hasIdentity = false)
+        public static async Task<string> QueryDataToInsertStatementAsync(string sql, string connectionString, string tableName = "YourTableName", bool hasIdentity = false)
         {
             var sb = new StringBuilder();
-            var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+            var conn = new SqlConnection(connectionString);
 
             try
             {
@@ -269,11 +269,11 @@ WHERE sm.object_id = OBJECT_ID('{objectName.FullName}')";
         /// </summary>
         /// <param name="tableName">The table name.</param>
         /// <returns>A Task.</returns>
-        public static async Task<string> TableToInsertStatementAsync(ObjectName tableName)
+        public static async Task<string> TableToInsertStatementAsync(ObjectName tableName, string connectionString)
         {
             var sql = $"select * from {tableName.FullName}";
-            var hasIdentity = await DatabaseHelper.HasIdentityColumnAsync(tableName);
-            return await QueryDataToInsertStatementAsync(sql, tableName.FullName, hasIdentity);
+            var hasIdentity = await DatabaseHelper.HasIdentityColumnAsync(tableName, connectionString);
+            return await QueryDataToInsertStatementAsync(sql, connectionString, tableName.FullName, hasIdentity);
         }
 
         /// <summary>
@@ -281,7 +281,7 @@ WHERE sm.object_id = OBJECT_ID('{objectName.FullName}')";
         /// Handles XML indexes with the correct syntax.
         /// </summary>
         /// <returns>A string containing the SQL script to recreate the indexes.</returns>
-        internal static async Task<string?> GetCreateIndexesScript(ObjectName objectName)
+        internal static async Task<string?> GetCreateIndexesScript(ObjectName objectName, string connectionString)
         {
             if (objectName.IsEmpty() ||
                 (objectName.ObjectType != ObjectTypeEnums.Table && objectName.ObjectType != ObjectTypeEnums.View))
@@ -316,34 +316,7 @@ WHERE s.name = '{objectName.Schema}'
 GROUP BY i.name, i.type_desc, i.is_unique, s.name, o.name, i.filter_definition, i.is_disabled, xi.using_xml_index_id, xi.secondary_type
 ORDER BY i.name";
 
-            //            string sql = $@"
-            //SELECT
-            //    i.name AS IndexName,
-            //    i.type_desc AS IndexType,
-            //    i.is_unique AS IsUnique,
-            //    s.name AS SchemaName,
-            //    t.name AS TableName,
-            //    STRING_AGG(COL_NAME(ic.object_id, ic.column_id), ',') WITHIN GROUP (ORDER BY ic.key_ordinal) AS IndexColumns,
-            //    i.filter_definition AS FilterDefinition,
-            //    i.is_disabled AS IsDisabled,
-            //    xi.using_xml_index_id,
-            //    xi.secondary_type
-            //FROM sys.indexes i
-            //INNER JOIN sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id
-            //INNER JOIN sys.tables t ON i.object_id = t.object_id
-            //INNER JOIN sys.schemas s ON t.schema_id = s.schema_id
-            //LEFT JOIN sys.xml_indexes xi ON i.object_id = xi.object_id AND i.index_id = xi.index_id
-            //WHERE s.name = '{TableSchema}'
-            //  AND t.name = '{TableName}'
-            //  AND i.is_primary_key = 0
-            //  AND i.is_unique_constraint = 0
-            //  AND i.type_desc <> 'HEAP'
-            //  AND i.name IS NOT NULL
-            //GROUP BY i.name, i.type_desc, i.is_unique, s.name, t.name, i.filter_definition, i.is_disabled, xi.using_xml_index_id, xi.secondary_type
-            //ORDER BY i.name;
-            //";
-
-            var dt = await DatabaseHelper.GetDataTableAsync(sql);
+            var dt = await DatabaseHelper.GetDataTableAsync(sql, connectionString);
             if (dt == null || dt.Rows.Count == 0)
                 return string.Empty;
 
@@ -507,7 +480,7 @@ GO";
         /// </summary>
         /// <param name="objectName">The object name.</param>
         /// <returns>A Task.</returns>
-        private static async Task<string?> GetCreateFunctionScriptAsync(ObjectName objectName)
+        private static async Task<string?> GetCreateFunctionScriptAsync(ObjectName objectName, string connectionString)
         {
             StringBuilder createScript = new();
 
@@ -520,7 +493,7 @@ GO";
             createScript.AppendLine($"\tDROP FUNCTION {objectName.FullName};");
             createScript.AppendLine($"GO");
 
-            var script = await GetFunctionDefinitionAsync(objectName);
+            var script = await GetFunctionDefinitionAsync(objectName, connectionString);
             if (string.IsNullOrEmpty(script))
             {
                 return string.Empty;
@@ -535,7 +508,7 @@ GO";
         /// </summary>
         /// <param name="objectName">The object name.</param>
         /// <returns>A Task.</returns>
-        private static async Task<string?> GetCreateStoredProcedureScriptAsync(ObjectName objectName)
+        private static async Task<string?> GetCreateStoredProcedureScriptAsync(ObjectName objectName, string connectionString)
         {
             StringBuilder createScript = new();
 
@@ -550,7 +523,7 @@ GO";
                 createScript.AppendLine($"GO");
             }
 
-            var script = await GetStoredProcedureDefinitionAsync(objectName);
+            var script = await GetStoredProcedureDefinitionAsync(objectName, connectionString);
 
             if (string.IsNullOrEmpty(script))
             {
@@ -567,7 +540,7 @@ GO";
         /// </summary>
         /// <param name="dbObject">The db object.</param>
         /// <returns>A Task.</returns>
-        private static async Task<string?> GetCreateTableScriptAsync(ObjectName objectName)
+        private static async Task<string?> GetCreateTableScriptAsync(ObjectName objectName, string connectionString)
         {
             StringBuilder createScript = new();
 
@@ -576,7 +549,7 @@ GO";
 
             // open the table object
             var table = new DBObject();
-            if (!await table.OpenAsync(objectName, Properties.Settings.Default.dbConnectionString))
+            if (!await table.OpenAsync(objectName, connectionString))
             {
                 return string.Empty;
             }
@@ -593,7 +566,7 @@ GO";
             string primaryKeyColumns = table.PrimaryKeyColumns;
 
             // Retrieve identity column details
-            var identityColumns = table.GetIdentityColumns();
+            var identityColumns = table.GetIdentityColumns(connectionString);
 
             // Add the CREATE TABLE statement
             createScript.AppendLine($"CREATE TABLE {objectName.FullName} (");
@@ -667,7 +640,7 @@ GO";
                 createScript.AppendLine(defaultConstraints);
             }
 
-            var indexScript = await GetCreateIndexesScript(objectName);
+            var indexScript = await GetCreateIndexesScript(objectName, connectionString);
             if (!string.IsNullOrEmpty(indexScript))
             {
                 // remove the new line at the end of the script
@@ -676,7 +649,7 @@ GO";
                 createScript.AppendLine(indexScript);
             }
 
-            var triggerScript = await GetCreateTriggersScriptAsync(objectName);
+            var triggerScript = await GetCreateTriggersScriptAsync(objectName, connectionString);
             if (!string.IsNullOrEmpty(triggerScript))
             {
                 // if the createScript does not ended with a line of "GO", add it
@@ -704,7 +677,7 @@ GO";
         /// </summary>
         /// <param name="objectName">The object name.</param>
         /// <returns>A Task.</returns>
-        private static async Task<string?> GetCreateTriggersScriptAsync(ObjectName objectName)
+        private static async Task<string?> GetCreateTriggersScriptAsync(ObjectName objectName, string connectionString)
         {
             // Only tables and views can have DML triggers
             if (objectName.IsEmpty() ||
@@ -730,7 +703,7 @@ WHERE s.name = '{objectName.Schema}'
   AND o.name = '{objectName.Name}'
 ORDER BY tr.name;";
 
-            var dt = await DatabaseHelper.GetDataTableAsync(sql);
+            var dt = await DatabaseHelper.GetDataTableAsync(sql, connectionString);
             if (dt == null || dt.Rows.Count == 0)
                 return string.Empty;
 
@@ -773,7 +746,7 @@ ORDER BY tr.name;";
         /// </summary>
         /// <param name="objectName">The object name.</param>
         /// <returns>A Task.</returns>
-        private static async Task<string?> GetCreateViewScriptAsync(ObjectName objectName)
+        private static async Task<string?> GetCreateViewScriptAsync(ObjectName objectName, string connectionString)
         {
             StringBuilder createScript = new();
 
@@ -788,14 +761,14 @@ ORDER BY tr.name;";
                 createScript.AppendLine($"GO");
             }
 
-            var script = await GetViewDefinitionAsync(objectName);
+            var script = await GetViewDefinitionAsync(objectName, connectionString);
             if (string.IsNullOrEmpty(script))
             {
                 return string.Empty;
             }
             createScript.Append(script);
 
-            var indexScript = await DatabaseDocBuilder.GetCreateIndexesScript(objectName);
+            var indexScript = await DatabaseDocBuilder.GetCreateIndexesScript(objectName, connectionString);
             if (!string.IsNullOrEmpty(indexScript))
             {
                 // remove the new line at the end of the script
@@ -813,7 +786,7 @@ ORDER BY tr.name;";
         /// </summary>
         /// <param name="objectName">The object name.</param>
         /// <returns>A Task.</returns>
-        private static async Task<string> GetFunctionDefinitionAsync(ObjectName objectName)
+        private static async Task<string> GetFunctionDefinitionAsync(ObjectName objectName, string connectionString)
         {
             string fnName = objectName.FullName;
 
@@ -830,7 +803,7 @@ FROM sys.sql_modules sm
 WHERE sm.object_id = OBJECT_ID('{objectName.FullName}');";
 
                     // ExecuteScalarAsync is efficient for retrieving a single value
-                    object? result = await DatabaseHelper.ExecuteScalarAsync(query);
+                    object? result = await DatabaseHelper.ExecuteScalarAsync(query, connectionString);
 
                     // Check if a result was returned and it's not DBNull
                     if (result != null && result != DBNull.Value)
@@ -869,7 +842,7 @@ WHERE sm.object_id = OBJECT_ID('{objectName.FullName}');";
         /// </summary>
         /// <param name="objectName">The object name.</param>
         /// <returns>A Task.</returns>
-        private static async Task<string?> GetStoredProcedureDefinitionAsync(ObjectName objectName)
+        private static async Task<string?> GetStoredProcedureDefinitionAsync(ObjectName objectName, string connectionString)
         {
             string spName = objectName.FullName;
             string? definition = string.Empty;
@@ -885,7 +858,7 @@ WHERE sm.object_id = OBJECT_ID('{objectName.FullName}')";
                 try
                 {
                     // ExecuteScalarAsync is efficient for retrieving a single value
-                    object? result = await DatabaseHelper.ExecuteScalarAsync(query);
+                    object? result = await DatabaseHelper.ExecuteScalarAsync(query, connectionString);
 
                     // Check if a result was returned and it's not DBNull
                     if (result != null && result != DBNull.Value)

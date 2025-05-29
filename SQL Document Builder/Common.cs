@@ -48,11 +48,11 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="sql">The SQL query to fetch data.</param>
         /// <returns>A Task<string> containing the HTML table.</returns>
-        public static async Task<string> QueryDataToHTMLTableAsync(string sql)
+        public static async Task<string> QueryDataToHTMLTableAsync(string sql, string connectionString)
         {
             var sb = new StringBuilder();
 
-            var dt = await DatabaseHelper.GetDataTableAsync(sql);
+            var dt = await DatabaseHelper.GetDataTableAsync(sql, connectionString);
 
             if (dt != null && dt.Rows.Count > 0)
             {

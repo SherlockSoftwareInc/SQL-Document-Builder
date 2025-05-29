@@ -24,7 +24,7 @@ namespace SQL_Document_Builder
         /// <param name="schemaName">The schema name.</param>
         /// <param name="progress">The progress.</param>
         /// <returns>A Task.</returns>
-        internal async Task<string> BuildTableList(string schemaName, IProgress<int> progress)
+        internal async Task<string> BuildTableList(string schemaName, string connectionString, IProgress<int> progress)
         {
             _md.Clear();
 
@@ -32,7 +32,7 @@ namespace SQL_Document_Builder
                 ? "SELECT SCHEMA_NAME(schema_id) AS table_schema, name AS table_name FROM sys.tables ORDER BY table_schema, table_name"
                 : $"SELECT SCHEMA_NAME(schema_id) AS table_schema, name AS table_name FROM sys.tables WHERE SCHEMA_NAME(schema_id) = N'{schemaName}' ORDER BY table_schema, table_name";
 
-            DataTable? dt = await DatabaseHelper.GetDataTableAsync(sql);
+            DataTable? dt = await DatabaseHelper.GetDataTableAsync(sql, connectionString);
 
             if (dt?.Rows.Count > 0)
             {
@@ -50,7 +50,9 @@ namespace SQL_Document_Builder
                     DataRow dr = dt.Rows[i];
                     string tableSchema = (string)dr[0];
                     string tableName = (string)dr[1];
-                    string description = await DatabaseHelper.GetTableDescriptionAsync(new ObjectName() { Schema = tableSchema, Name = tableName });
+                    string description = await DatabaseHelper.GetTableDescriptionAsync(
+                        new ObjectName() { Schema = tableSchema, Name = tableName }
+                        , connectionString);
                     AppendLine($"| {tableSchema} | `{tableName}` | {description} |");
                 }
             }
@@ -64,7 +66,7 @@ namespace SQL_Document_Builder
         /// <param name="schemaName">The schema name.</param>
         /// <param name="progress">The progress.</param>
         /// <returns>A Task.</returns>
-        internal async Task<string> BuildViewListAsync(string schemaName, IProgress<int> progress)
+        internal async Task<string> BuildViewListAsync(string schemaName, string connectionString, IProgress<int> progress)
         {
             _md.Clear();
 
@@ -72,7 +74,7 @@ namespace SQL_Document_Builder
                 ? "SELECT SCHEMA_NAME(schema_id) AS table_schema, name AS table_name FROM sys.views ORDER BY table_schema, table_name"
                 : $"SELECT SCHEMA_NAME(schema_id) AS table_schema, name AS table_name FROM sys.views WHERE SCHEMA_NAME(schema_id) = N'{schemaName}' ORDER BY table_schema, table_name";
 
-            DataTable? dt = await DatabaseHelper.GetDataTableAsync(sql);
+            DataTable? dt = await DatabaseHelper.GetDataTableAsync(sql, connectionString);
 
             if (dt?.Rows.Count > 0)
             {
@@ -90,7 +92,9 @@ namespace SQL_Document_Builder
                     DataRow dr = dt.Rows[i];
                     string tableSchema = (string)dr[0];
                     string viewName = (string)dr[1];
-                    string description = await DatabaseHelper.GetTableDescriptionAsync(new ObjectName() { Schema = tableSchema, Name = viewName, ObjectType = ObjectName.ObjectTypeEnums.View });
+                    string description = await DatabaseHelper.GetTableDescriptionAsync(
+                        new ObjectName() { Schema = tableSchema, Name = viewName, ObjectType = ObjectName.ObjectTypeEnums.View }
+                        , connectionString);
                     AppendLine($"| {tableSchema} | `{viewName}` | {description} |");
                 }
             }
@@ -104,13 +108,13 @@ namespace SQL_Document_Builder
         /// <param name="schemaName">The schema name.</param>
         /// <param name="progress">The progress.</param>
         /// <returns>A Task.</returns>
-        internal async Task<string> BuildSPListAsync(string schemaName, IProgress<int> progress)
+        internal async Task<string> BuildSPListAsync(string schemaName, string connectionString, IProgress<int> progress)
         {
             _md.Clear();
 
             string sql = "SELECT ROUTINE_SCHEMA, ROUTINE_NAME FROM information_schema.routines WHERE routine_type = 'PROCEDURE' AND LEFT(Routine_Name, 3) NOT IN ('sp_', 'xp_', 'ms_') ORDER BY ROUTINE_NAME";
 
-            DataTable? dt = await DatabaseHelper.GetDataTableAsync(sql);
+            DataTable? dt = await DatabaseHelper.GetDataTableAsync(sql, connectionString);
 
             if (dt?.Rows.Count > 0)
             {
@@ -150,13 +154,13 @@ namespace SQL_Document_Builder
         /// <param name="schemaName">The schema name.</param>
         /// <param name="progress">The progress.</param>
         /// <returns>A Task.</returns>
-        internal async Task<string> BuildFunctionListAsync(string schemaName, IProgress<int> progress)
+        internal async Task<string> BuildFunctionListAsync(string schemaName, string connectionString, IProgress<int> progress)
         {
             _md.Clear();
 
             string sql = "SELECT ROUTINE_SCHEMA, ROUTINE_NAME FROM information_schema.routines WHERE routine_type = 'FUNCTION' ORDER BY ROUTINE_NAME";
 
-            DataTable? dt = await DatabaseHelper.GetDataTableAsync(sql);
+            DataTable? dt = await DatabaseHelper.GetDataTableAsync(sql, connectionString);
 
             if (dt?.Rows.Count > 0)
             {
@@ -195,7 +199,7 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="objectName">The object name.</param>
         /// <returns>A Task.</returns>
-        internal async Task<string> GetTableDef(ObjectName objectName)
+        internal async Task<string> GetTableDef(ObjectName objectName, string connectionString)
         {
             _md.Clear();
 
@@ -206,7 +210,7 @@ namespace SQL_Document_Builder
                 AppendLine($"# VIEW NAME: `{objectName.Schema}.{objectName.Name}`");
 
             // Description
-            var objectDesc = await DatabaseHelper.GetTableDescriptionAsync(objectName);
+            var objectDesc = await DatabaseHelper.GetTableDescriptionAsync(objectName, connectionString);
             if (!string.IsNullOrWhiteSpace(objectDesc))
                 AppendLine($"\n> {objectDesc}\n");
 
@@ -216,7 +220,7 @@ namespace SQL_Document_Builder
             AppendLine("|--------|------|-----------|-------------|");
 
             string sql = $"SELECT ORDINAL_POSITION, COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = N'{objectName.Schema}' AND TABLE_NAME = N'{objectName.Name}' ORDER BY ORDINAL_POSITION";
-            DataTable? dt = await DatabaseHelper.GetDataTableAsync(sql);
+            DataTable? dt = await DatabaseHelper.GetDataTableAsync(sql, connectionString);
 
             if (dt != null)
             {
@@ -227,7 +231,7 @@ namespace SQL_Document_Builder
                     string dataType = dr["DATA_TYPE"].ToString() ?? "";
                     if (dr["CHARACTER_MAXIMUM_LENGTH"] != DBNull.Value)
                         dataType += $"({dr["CHARACTER_MAXIMUM_LENGTH"]})";
-                    string colDesc = await DatabaseHelper.GetColumnDescriptionAsync(objectName, colName);
+                    string colDesc = await DatabaseHelper.GetColumnDescriptionAsync(objectName, colName, connectionString);
                     AppendLine($"| {colID} | `{colName}` | {dataType} | {colDesc} |");
                 }
             }
@@ -242,14 +246,14 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="fullName">The full name.</param>
         /// <returns>A Task.</returns>
-        internal async Task<string> GetTableValuesAsync(string fullName)
+        internal async Task<string> GetTableValuesAsync(string fullName, string connectionString)
         {
             _md.Clear();
 
             AppendLine($"## Table Values for `{fullName}`\n");
 
             string sql = $"SELECT * FROM {fullName}";
-            DataTable? dt = await DatabaseHelper.GetDataTableAsync(sql);
+            DataTable? dt = await DatabaseHelper.GetDataTableAsync(sql, connectionString);
 
             if (dt != null && dt.Rows.Count > 0)
             {

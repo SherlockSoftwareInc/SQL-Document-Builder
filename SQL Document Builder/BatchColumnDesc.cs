@@ -24,6 +24,11 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Gets or sets the connection string.
+        /// </summary>
+        public string ConnectionString { get; set; } = string.Empty;
+
+        /// <summary>
         /// Handles the click event of the apply button
         ///     apply the column description for selected objects
         /// </summary>
@@ -74,7 +79,7 @@ namespace SQL_Document_Builder
                 if (item != null)
                 {
                     var objectName = item.ToString();
-                    await DatabaseHelper.SaveColumnDescAsync(objectName, columnName, desc);
+                    await DatabaseHelper.SaveColumnDescAsync(objectName, columnName, desc, ConnectionString);
                 }
             }
         }
@@ -86,7 +91,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void BatchColumnDesc_Load(object sender, EventArgs e)
         {
-            _tables = await DatabaseHelper.GetDataTableAsync($"SELECT * FROM INFORMATION_SCHEMA.TABLES ORDER BY TABLE_SCHEMA, TABLE_NAME");
+            _tables = await DatabaseHelper.GetDataTableAsync($"SELECT * FROM INFORMATION_SCHEMA.TABLES ORDER BY TABLE_SCHEMA, TABLE_NAME", ConnectionString);
             PopulateSchema();
         }
 
@@ -105,17 +110,9 @@ namespace SQL_Document_Builder
 
             // replace single quotes with double quotes
             searchFor = searchFor.Replace("'", "''");
-            string sql;
-            //if (searchFor.Contains('%'))
-            //{
-            //    sql = $"SELECT DISTINCT TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, 'BASE TABLE' TABLE_TYPE, COLUMN_NAME FROM information_schema.columns WHERE column_name LIKE '{searchFor}' ORDER BY TABLE_NAME";
-            //}
-            //else
-            //{
-            sql = $"SELECT DISTINCT TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, 'BASE TABLE' TABLE_TYPE, COLUMN_NAME FROM information_schema.columns WHERE column_name = '{searchFor}' ORDER BY TABLE_NAME";
-            //}
+            string sql = $"SELECT DISTINCT TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, 'BASE TABLE' TABLE_TYPE, COLUMN_NAME FROM information_schema.columns WHERE column_name = '{searchFor}' ORDER BY TABLE_NAME";
 
-            var dt = await DatabaseHelper.GetDataTableAsync(sql);
+            var dt = await DatabaseHelper.GetDataTableAsync(sql, ConnectionString);
 
             if (dt?.Rows.Count > 0)
             {

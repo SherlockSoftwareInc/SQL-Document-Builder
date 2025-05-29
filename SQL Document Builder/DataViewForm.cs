@@ -17,7 +17,6 @@ namespace SQL_Document_Builder
     public partial class DataViewForm : Form
     {
         private CancellationTokenSource? cancellationTokenSource;
-        private string connectionString = string.Empty;
         private readonly DataTable? data;
         private int databaseIndex = 0;
 
@@ -37,24 +36,17 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Gets or sets the connection string.
+        /// </summary>
+        public string ConnectionString { get; set; } = string.Empty;
+
+        /// <summary>
         /// Indicates which database to access: 0 = cvi-source, 1 = EDW
         /// </summary>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int DatabaseIndex
         {
-            set
-            {
-                if (value != 0)
-                {
-                    databaseIndex = 1;
-                    connectionString = Properties.Settings.Default.dbConnectionString;
-                }
-                else
-                {
-                    databaseIndex = 0;
-                    connectionString = Properties.Settings.Default.dbConnectionString;
-                }
-            }
+            set => databaseIndex = value != 0 ? 1 : 0;
         }
 
         /// <summary>
@@ -350,7 +342,7 @@ namespace SQL_Document_Builder
 
             try
             {
-                using var conn = new SqlConnection(connectionString);
+                using var conn = new SqlConnection(ConnectionString);
                 using var cmd = new SqlCommand(sql, conn)
                 {
                     CommandType = System.Data.CommandType.Text,
@@ -397,60 +389,13 @@ namespace SQL_Document_Builder
             }
             return dt;
         }
-        //private async Task<DataTable?> GetDataAsync(string sql, CancellationToken cancellationToken)
-        //{
-        //    DataTable dt = new();
-
-        //    try
-        //    {
-        //        using var conn = new SqlConnection(connectionString);
-        //        using var cmd = new SqlCommand(sql, conn)
-        //        {
-        //            CommandType = System.Data.CommandType.Text,
-        //            CommandTimeout = 50000
-        //        };
-
-        //        await conn.OpenAsync(cancellationToken);
-        //        using var crt = cancellationToken.Register(() => cmd.Cancel());
-
-        //        using var dr = await cmd.ExecuteReaderAsync(cancellationToken);
-
-        //        // Load the schema from the data reader and create DataTable columns
-        //        for (int i = 0; i < dr.FieldCount; i++)
-        //        {
-        //            dt.Columns.Add(dr.GetName(i), dr.GetFieldType(i));
-        //        }
-
-        //        // Read rows one by one, checking for cancellation
-        //        while (await dr.ReadAsync(cancellationToken))
-        //        {
-        //            DataRow row = dt.NewRow();
-        //            for (int i = 0; i < dr.FieldCount; i++)
-        //            {
-        //                row[i] = dr.IsDBNull(i) ? DBNull.Value : dr.GetValue(i);
-        //            }
-        //            dt.Rows.Add(row);
-
-        //            // Check for cancellation request
-        //            cancellationToken.ThrowIfCancellationRequested();
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        // show error message and close the form
-        //        MessageBox.Show(ex.Message, "Failed to load data",
-        //            MessageBoxButtons.OK, MessageBoxIcon.Error);
-        //        return null;
-        //    }
-        //    return dt;
-        //}
 
         /// <summary>
         /// Fetch the data and populates the data grid view
         /// </summary>
         private async Task OpenAsync()
         {
-            if (SQL.Length > 0 && connectionString.Length > 0)
+            if (SQL.Length > 0 && ConnectionString.Length > 0)
             {
                 // build the SQL statement based on the selected top value
                 var sql = SQL;
@@ -620,7 +565,8 @@ namespace SQL_Document_Builder
                     EnableValueFrequency = false,
                     DatabaseIndex = 0,
                     MultipleValue = false,
-                    MaximizeForm = false
+                    MaximizeForm = false,
+                    ConnectionString = ConnectionString
                 };
                 dlg.ShowDialog();
             }
@@ -642,7 +588,8 @@ namespace SQL_Document_Builder
                         EnableValueFrequency = false,
                         DatabaseIndex = 0,
                         MultipleValue = false,
-                        MaximizeForm = false
+                        MaximizeForm = false,
+                        ConnectionString = ConnectionString
                     };
                     dlg.ShowDialog();
                 }

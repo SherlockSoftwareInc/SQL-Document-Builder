@@ -26,7 +26,7 @@ namespace SQL_Document_Builder
         /// <param name="schemaName">The schema name.</param>
         /// <param name="progress">The progress.</param>
         /// <returns>A Task.</returns>
-        public async Task<string> BuildTableListAsync(string schemaName, IProgress<int> progress)
+        public async Task<string> BuildTableListAsync(string schemaName, string connectionString, IProgress<int> progress)
         {
             _script.Clear();
 
@@ -36,7 +36,7 @@ namespace SQL_Document_Builder
                     ? "SELECT SCHEMA_NAME(schema_id) AS table_schema, name AS table_name FROM sys.tables ORDER BY table_schema, table_name"
                     : $"SELECT SCHEMA_NAME(schema_id) AS table_schema, name AS table_name FROM sys.tables WHERE SCHEMA_NAME(schema_id) = N'{schemaName}' ORDER BY table_schema, table_name";
 
-                DataTable? dt = await DatabaseHelper.GetDataTableAsync(sql);
+                DataTable? dt = await DatabaseHelper.GetDataTableAsync(sql, connectionString);
 
                 if (dt?.Rows.Count > 0)
                 {
@@ -68,6 +68,7 @@ namespace SQL_Document_Builder
 
                         string description = await DatabaseHelper.GetTableDescriptionAsync(
                             new ObjectName { Schema = tableSchema, Name = tableName }
+                            , connectionString
                         );
 
                         AppendLine($"""
@@ -93,7 +94,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Scan user view in the database and generate the creation script for them
         /// </summary>
-        public async Task<string> BuildViewListAsync(string schemaName, IProgress<int> progress)
+        public async Task<string> BuildViewListAsync(string schemaName, string connectionString, IProgress<int> progress)
         {
             _script.Clear();
 
@@ -103,7 +104,7 @@ namespace SQL_Document_Builder
                     ? "SELECT SCHEMA_NAME(schema_id) AS table_schema, name AS table_name FROM sys.views ORDER BY table_schema, table_name"
                     : $"SELECT SCHEMA_NAME(schema_id) AS table_schema, name AS table_name FROM sys.views WHERE SCHEMA_NAME(schema_id) = N'{schemaName}' ORDER BY table_schema, table_name";
 
-                DataTable? dt = await DatabaseHelper.GetDataTableAsync(sql);
+                DataTable? dt = await DatabaseHelper.GetDataTableAsync(sql, connectionString);
 
                 if (dt?.Rows.Count > 0)
                 {
@@ -138,6 +139,7 @@ namespace SQL_Document_Builder
                                 Name = tableName,
                                 ObjectType = ObjectName.ObjectTypeEnums.View
                             }
+                            , connectionString
                         );
 
                         AppendLine($"""
@@ -163,7 +165,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Scan user view in the database and generate the creation script for them
         /// </summary>
-        public async Task<string> BuildSPList(string schemaName)
+        public async Task<string> BuildSPList(string schemaName, string connectionString)
         {
             _script.Clear();
 
@@ -173,7 +175,7 @@ namespace SQL_Document_Builder
                     ? "SELECT ROUTINE_SCHEMA, ROUTINE_NAME FROM information_schema.routines WHERE routine_type = 'PROCEDURE' AND LEFT(Routine_Name, 3) NOT IN ('sp_', 'xp_', 'ms_') ORDER BY ROUTINE_SCHEMA, ROUTINE_NAME"
                     : $"SELECT ROUTINE_SCHEMA, ROUTINE_NAME FROM information_schema.routines WHERE routine_type = 'PROCEDURE' AND ROUTINE_SCHEMA = N'{schemaName}' AND LEFT(Routine_Name, 3) NOT IN ('sp_', 'xp_', 'ms_') ORDER BY ROUTINE_SCHEMA, ROUTINE_NAME";
 
-                var dt = await DatabaseHelper.GetDataTableAsync(sql);
+                var dt = await DatabaseHelper.GetDataTableAsync(sql, connectionString);
 
                 if (dt?.Rows.Count > 0)
                 {
@@ -218,7 +220,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Scan user functions in the database and generate the creation script for them
         /// </summary>
-        public async Task<string> BuildFunctionList(string schemaName)
+        public async Task<string> BuildFunctionList(string schemaName, string connectionString)
         {
             _script.Clear();
 
@@ -228,7 +230,7 @@ namespace SQL_Document_Builder
                     ? "SELECT ROUTINE_SCHEMA, ROUTINE_NAME FROM information_schema.routines WHERE routine_type = 'FUNCTION' ORDER BY ROUTINE_SCHEMA, ROUTINE_NAME"
                     : $"SELECT ROUTINE_SCHEMA, ROUTINE_NAME FROM information_schema.routines WHERE routine_type = 'FUNCTION' AND ROUTINE_SCHEMA = N'{schemaName}' ORDER BY ROUTINE_SCHEMA, ROUTINE_NAME";
 
-                DataTable? dt = await DatabaseHelper.GetDataTableAsync(sql);
+                DataTable? dt = await DatabaseHelper.GetDataTableAsync(sql, connectionString);
 
                 if (dt?.Rows.Count > 0)
                 {
@@ -321,11 +323,11 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="tableSchema"></param>
         /// <param name="tableName"></param>
-        public async Task<string> GetTableDef(ObjectName objectName)
+        public async Task<string> GetTableDef(ObjectName objectName, string connectionString)
         {
             _script.Clear();
             AppendLine($"<h1>{(objectName.ObjectType == ObjectName.ObjectTypeEnums.Table ? "TABLE" : "VIEW")} NAME: {objectName.Schema}.{objectName.Name}</h1>");
-            var objectDesc = await DatabaseHelper.GetTableDescriptionAsync(objectName);
+            var objectDesc = await DatabaseHelper.GetTableDescriptionAsync(objectName, connectionString);
             if (objectDesc.Length > 0)
             {
                 AppendLine("<p>" + objectDesc + "</p>");
@@ -343,7 +345,7 @@ namespace SQL_Document_Builder
         </tr>
 """);
 
-            await GetTableDefinition(objectName);
+            await GetTableDefinition(objectName, connectionString);
 
             AppendLine("\t</tbody>");
             AppendLine("\t</table>");
@@ -420,7 +422,7 @@ namespace SQL_Document_Builder
         //private void BuildTargetTables(ObjectName objectName)
         //{
         //    string targetTables = string.Empty;
-        //    var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+        //    var conn = new SqlConnection(connectionString);
         //    try
         //    {
         //        string sql = string.Format("SELECT DISTINCT TargetTable FROM ETL.vw_MappingControl WHERE L1TableName = '{0}'", objectName.Name);
@@ -467,7 +469,7 @@ namespace SQL_Document_Builder
         //    AppendLine("</div>");
 
         //    string sql = string.Format("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE COLUMN_NAME NOT IN ('EpisodeID', 'FormID', 'ParentFormID', 'CardID') AND TABLE_SCHEMA = '{0}' AND TABLE_NAME = '{1}' ORDER BY ORDINAL_POSITION", objectName.Schema, objectName.Name);
-        //    var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+        //    var conn = new SqlConnection(connectionString);
         //    try
         //    {
         //        var cmd = new SqlCommand(sql, conn) { CommandType = CommandType.Text };
@@ -496,7 +498,7 @@ namespace SQL_Document_Builder
         //    AppendLine("<h2>ETL Process of Each Column</h2>");
 
         //    string sql = string.Format("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE COLUMN_NAME NOT IN ('EpisodeID', 'FormID', 'ParentFormID', 'CardID') AND TABLE_SCHEMA = 'PCR' AND TABLE_NAME = '{0}' ORDER BY ORDINAL_POSITION", objectName.Name);
-        //    var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+        //    var conn = new SqlConnection(connectionString);
         //    try
         //    {
         //        var cmd = new SqlCommand(sql, conn) { CommandType = CommandType.Text };
@@ -533,7 +535,7 @@ namespace SQL_Document_Builder
         //    AppendLine(string.Format("\t\t<h3>Column: {0}</h3>", columnName));
 
         //    string sql = string.Format("SELECT FormName [Form Name], QuestionnaireId, LinkId, QuestionTitle [Front-End Field Name], SourceDataType [CVI Data Type] FROM ETL.vw_MappingControl WHERE L1TableName = '{0}' AND L1ColumnName = '{1}' ORDER BY LinkID, FormName", tableName, columnName);
-        //    var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+        //    var conn = new SqlConnection(connectionString);
         //    try
         //    {
         //        var cmd = new SqlCommand(sql, conn)
@@ -573,7 +575,7 @@ namespace SQL_Document_Builder
         //private string BuildColumnChoiceOptions(string tableName, string columnName)
         //{
         //    var sb = new System.Text.StringBuilder();
-        //    var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+        //    var conn = new SqlConnection(connectionString);
         //    try
         //    {
         //        var cmd = new SqlCommand("Dict.usp_GetQuestionnaireItemChoices", conn)
@@ -640,7 +642,7 @@ namespace SQL_Document_Builder
         //    {
         //        bool result = false;
 
-        //        var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+        //        var conn = new SqlConnection(connectionString);
         //        try
         //        {
         //            var cmd = new SqlCommand("DICT.usp_GetETLImtemsByTargetColumn", conn)
@@ -796,7 +798,7 @@ namespace SQL_Document_Builder
         /// <param name="TableSchema">Schame name</param>
         /// <param name="TableName">Table name</param>
         /// <returns></returns>
-        private async Task GetTableDefinition(ObjectName objectName)
+        private async Task GetTableDefinition(ObjectName objectName, string connectionString)
         {
             try
             {
@@ -806,7 +808,7 @@ FROM INFORMATION_SCHEMA.COLUMNS
 WHERE TABLE_SCHEMA = N'{objectName.Schema}' AND TABLE_NAME = N'{objectName.Name}'
 ORDER BY ORDINAL_POSITION";
 
-                DataTable? dt = await DatabaseHelper.GetDataTableAsync(sql);
+                DataTable? dt = await DatabaseHelper.GetDataTableAsync(sql, connectionString);
 
                 if (dt?.Rows.Count > 0)
                 {
@@ -815,7 +817,7 @@ ORDER BY ORDINAL_POSITION";
                     for (int i = 0; i < dt.Rows.Count; i++)
                     {
                         string colName = dt.Rows[i]["COLUMN_NAME"]?.ToString() ?? string.Empty;
-                        descTasks[i] = DatabaseHelper.GetColumnDescriptionAsync(objectName, colName);
+                        descTasks[i] = DatabaseHelper.GetColumnDescriptionAsync(objectName, colName, connectionString);
                     }
                     var descriptions = await Task.WhenAll(descTasks);
 
@@ -851,7 +853,7 @@ ORDER BY ORDINAL_POSITION";
         /// Build value list of the given table for wiki
         /// </summary>
         /// <param name="tableName"></param>
-        public async Task<string> GetTableValuesAsync(string tableName)
+        public async Task<string> GetTableValuesAsync(string tableName, string connectionString)
         {
             _script.Clear();
             AppendLine("<div>");
@@ -859,7 +861,7 @@ ORDER BY ORDINAL_POSITION";
             try
             {
                 string sql = string.Format("SELECT * FROM {0}", tableName);
-                AppendLine(await Common.QueryDataToHTMLTableAsync(sql));
+                AppendLine(await Common.QueryDataToHTMLTableAsync(sql, connectionString));
             }
             catch (Exception ex)
             {

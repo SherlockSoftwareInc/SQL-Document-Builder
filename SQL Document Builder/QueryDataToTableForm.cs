@@ -20,6 +20,11 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Gets or sets the connection string.
+        /// </summary>
+        public string ConnectionString { get; set; } = string.Empty;
+
+        /// <summary>
         /// Gets or sets the INSERT statement.
         /// </summary>
         public string DocumentBody { get; set; } = string.Empty;
@@ -31,7 +36,7 @@ namespace SQL_Document_Builder
         public bool InsertStatement { get; set; } = false;
 
         /// <summary>
-        /// Copies the tool strip button_ click.
+        /// Handles the click event of the Copy tool strip menu item.
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
@@ -47,7 +52,7 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Executes the tool strip button_ click.
+        /// Handles the click event of the execute tool strip button.
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
@@ -61,11 +66,11 @@ namespace SQL_Document_Builder
                 {
                     if (InsertStatement)
                     {
-                        htmlTextBox.Text = await DatabaseDocBuilder.QueryDataToInsertStatementAsync(sqlTextBox.Text);
+                        htmlTextBox.Text = await DatabaseDocBuilder.QueryDataToInsertStatementAsync(sqlTextBox.Text, ConnectionString);
                     }
                     else
                     {
-                        htmlTextBox.Text = await Common.QueryDataToHTMLTableAsync(sqlTextBox.Text);
+                        htmlTextBox.Text = await Common.QueryDataToHTMLTableAsync(sqlTextBox.Text, ConnectionString);
                     }
 
                     DocumentBody = htmlTextBox.Text;
@@ -88,7 +93,7 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Exits the tool strip menu item_ click.
+        /// Handles the click event of the exit tool strip menu item.
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
@@ -98,7 +103,7 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// News the tool strip button_ click.
+        /// Handles the click event of the new tool strip button.
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
@@ -108,7 +113,7 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Pastes the tool strip button_ click.
+        /// Handles the click event of the paste tool strip button.
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
@@ -138,7 +143,7 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Selects the all tool strip menu item_ click.
+        /// Handles the click event of the select all tool strip menu item.
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
@@ -152,7 +157,7 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Sqls the text box_ text changed.
+        /// Handles the text changed event of the SQL text box.
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>

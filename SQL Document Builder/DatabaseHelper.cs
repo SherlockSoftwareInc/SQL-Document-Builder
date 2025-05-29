@@ -47,13 +47,13 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="sql">The sql.</param>
         /// <returns>A Task.</returns>
-        internal static async Task<object?> ExecuteScalarAsync(string sql, string connectionString = "")
+        internal static async Task<object?> ExecuteScalarAsync(string sql, string connectionString)
         {
             object? value;
 
             if (string.IsNullOrEmpty(connectionString))
             {
-                connectionString = Properties.Settings.Default.dbConnectionString;
+                return DBNull.Value;
             }
 
             using var connection = new SqlConnection(connectionString);
@@ -86,10 +86,10 @@ namespace SQL_Document_Builder
         /// <param name="sql">The SQL statement to execute.</param>
         /// <param name="connectionString">The connection string. If not provided, the default connection string is used.</param>
         /// <returns>A Task representing the asynchronous operation.</returns>
-        internal static async Task<string> ExecuteSQLAsync(string sql, string connectionString = "")
+        internal static async Task<string> ExecuteSQLAsync(string sql, string connectionString)
         {
             if (string.IsNullOrEmpty(connectionString))
-                connectionString = Properties.Settings.Default.dbConnectionString;
+                return "No database connection specified.";
 
             using var conn = new SqlConnection(connectionString);
             try
@@ -121,7 +121,7 @@ namespace SQL_Document_Builder
         /// <param name="objectName">The object name.</param>
         /// <param name="column">The column.</param>
         /// <returns>A string.</returns>
-        internal static async Task<string> GetColumnDescriptionAsync(ObjectName objectName, string column)
+        internal static async Task<string> GetColumnDescriptionAsync(ObjectName objectName, string column, string connectionString)
         {
             string result = string.Empty;
             string sql;
@@ -133,7 +133,7 @@ namespace SQL_Document_Builder
             {
                 sql = $"SELECT E.value Description FROM sys.schemas S INNER JOIN sys.tables T ON S.schema_id = T.schema_id INNER JOIN sys.columns C ON T.object_id = C.object_id INNER JOIN sys.extended_properties E ON T.object_id = E.major_id AND C.column_id = E.minor_id AND E.name = 'MS_Description' AND S.name = '{objectName.Schema}' AND T.name = '{objectName.Name}' AND C.name = '{column}'";
             }
-            var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+            var conn = new SqlConnection(connectionString);
             try
             {
                 await conn.OpenAsync();
@@ -167,16 +167,16 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="tableType">The type of database object (e.g., Table, View, StoredProcedure, Function).</param>
         /// <returns>A Task containing a list of ObjectName objects.</returns>
-        internal static async Task<List<ObjectName>> GetDatabaseObjectsAsync(ObjectTypeEnums tableType)
+        internal static async Task<List<ObjectName>> GetDatabaseObjectsAsync(ObjectTypeEnums tableType, string connectionString)
         {
             try
             {
                 return tableType switch
                 {
-                    ObjectTypeEnums.Table => await GetTablesAsync(),
-                    ObjectTypeEnums.View => await GetViewsAsync(),
-                    ObjectTypeEnums.StoredProcedure => await GetStoredProceduresAsync(),
-                    ObjectTypeEnums.Function => await GetFunctionsAsync(),
+                    ObjectTypeEnums.Table => await GetTablesAsync(connectionString),
+                    ObjectTypeEnums.View => await GetViewsAsync(connectionString),
+                    ObjectTypeEnums.StoredProcedure => await GetStoredProceduresAsync(connectionString),
+                    ObjectTypeEnums.Function => await GetFunctionsAsync(connectionString),
                     _ => throw new NotSupportedException($"Unsupported object type: {tableType}.")
                 };
             }
@@ -248,10 +248,10 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="sql">The sql.</param>
         /// <returns>A DataTable? .</returns>
-        internal static async Task<DataTable?> GetDataTableAsync(string sql)
+        internal static async Task<DataTable?> GetDataTableAsync(string sql, string connectionString)
         {
             var tables = new DataTable();
-            using var connection = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+            using var connection = new SqlConnection(connectionString);
             try
             {
                 await using var command = new SqlCommand(sql, connection)
@@ -282,7 +282,7 @@ namespace SQL_Document_Builder
         /// Gets the functions async.
         /// </summary>
         /// <returns>A Task.</returns>
-        internal static async Task<List<ObjectName>> GetFunctionsAsync()
+        internal static async Task<List<ObjectName>> GetFunctionsAsync(string connectionString)
         {
             var objects = new List<ObjectName>();
 
@@ -295,7 +295,7 @@ JOIN sys.schemas s ON o.schema_id = s.schema_id
 WHERE o.type IN ('FN', 'IF', 'TF')
 ORDER BY s.name, o.name;";
 
-            using var connection = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+            using var connection = new SqlConnection(connectionString);
             using var command = new SqlCommand(query, connection)
             {
                 CommandType = CommandType.Text,
@@ -317,12 +317,12 @@ ORDER BY s.name, o.name;";
         /// </summary>
         /// <param name="fullName">The full name of the object.</param>
         /// <returns>A Task<int> representing the row count.</returns>
-        internal static async Task<int> GetRowCountAsync(string fullName)
+        internal static async Task<int> GetRowCountAsync(string fullName, string connectionString)
         {
             var sql = $"SELECT COUNT(*) FROM {fullName}";
             try
             {
-                using var connection = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+                using var connection = new SqlConnection(connectionString);
                 using var command = new SqlCommand(sql, connection)
                 {
                     CommandType = CommandType.Text,
@@ -345,11 +345,11 @@ ORDER BY s.name, o.name;";
         /// Gets the schemas async.
         /// </summary>
         /// <returns>A Task.</returns>
-        internal static async Task<List<string>> GetSchemasAsync()
+        internal static async Task<List<string>> GetSchemasAsync(string connectionString)
         {
             var schemas = new List<string>();
             var query = "SELECT name FROM sys.schemas ORDER BY name";
-            using var connection = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+            using var connection = new SqlConnection(connectionString);
             using var command = new SqlCommand(query, connection)
             {
                 CommandType = CommandType.Text,
@@ -383,7 +383,7 @@ ORDER BY s.name, o.name;";
         /// Gets the stored procedures async.
         /// </summary>
         /// <returns>A Task.</returns>
-        internal static async Task<List<ObjectName>> GetStoredProceduresAsync()
+        internal static async Task<List<ObjectName>> GetStoredProceduresAsync(string connectionString)
         {
             var objects = new List<ObjectName>();
 
@@ -394,7 +394,7 @@ FROM sys.procedures p
 JOIN sys.schemas s ON p.schema_id = s.schema_id
 ORDER BY s.name, p.name;";
 
-            using var connection = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+            using var connection = new SqlConnection(connectionString);
             using var command = new SqlCommand(query, connection) { CommandType = CommandType.Text, CommandTimeout = 50000 };
             await connection.OpenAsync();
 
@@ -412,12 +412,12 @@ ORDER BY s.name, p.name;";
         /// </summary>
         /// <param name="objectName">The object name.</param>
         /// <returns>A Task<string> containing the description.</returns>
-        internal static async Task<string> GetTableDescriptionAsync(ObjectName objectName)
+        internal static async Task<string> GetTableDescriptionAsync(ObjectName objectName, string connectionString)
         {
             string result = string.Empty;
             string sql = $"SELECT value FROM fn_listextendedproperty (NULL, 'schema', N'{objectName.Schema}', '{(objectName.ObjectType == ObjectName.ObjectTypeEnums.View ? "view" : "table")}', N'{objectName.Name}', default, default) WHERE name = N'MS_Description'";
 
-            await using var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+            await using var conn = new SqlConnection(connectionString);
             try
             {
                 await conn.OpenAsync();
@@ -448,7 +448,7 @@ ORDER BY s.name, p.name;";
         /// Gets the tables async.
         /// </summary>
         /// <returns>A Task.</returns>
-        internal static async Task<List<ObjectName>> GetTablesAsync()
+        internal static async Task<List<ObjectName>> GetTablesAsync(string connectionString)
         {
             var objects = new List<ObjectName>();
 
@@ -460,7 +460,7 @@ ORDER BY s.name, p.name;";
                 WHERE TABLE_TYPE = 'BASE TABLE'
                 ORDER BY TABLE_SCHEMA, TABLE_NAME";
 
-            using var connection = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+            using var connection = new SqlConnection(connectionString);
             using var command = new SqlCommand(query, connection) { CommandType = CommandType.Text, CommandTimeout = 50000 };
             await connection.OpenAsync();
 
@@ -478,7 +478,7 @@ ORDER BY s.name, p.name;";
         /// </summary>
         /// <param name="objectName">The object name.</param>
         /// <returns>The identity column name, or null.</returns>
-        internal static async Task<bool> HasIdentityColumnAsync(ObjectName objectName)
+        internal static async Task<bool> HasIdentityColumnAsync(ObjectName objectName, string connectionString)
         {
             bool result = false;
             string sql = @"
@@ -490,7 +490,7 @@ INNER JOIN sys.identity_columns AS ic ON t.object_id = ic.object_id
 WHERE t.name = @TableName
 AND s.name = @SchemaName;";
 
-            await using var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+            await using var conn = new SqlConnection(connectionString);
             try
             {
                 await conn.OpenAsync();
@@ -523,7 +523,7 @@ AND s.name = @SchemaName;";
         /// <summary>
         /// Save the description of the selected column
         /// </summary>
-        internal static async Task SaveColumnDescAsync(string? objectName, string columnName, string desc)
+        internal static async Task SaveColumnDescAsync(string? objectName, string columnName, string desc, string connectionString)
         {
             const string sql = @"
 IF EXISTS (SELECT name
@@ -553,7 +553,7 @@ BEGIN
             @level1type = @ObjectType, @level1name = @ObjectName,
             @level2type = N'COLUMN', @level2name = @ColumnName
 END";
-            await using var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+            await using var conn = new SqlConnection(connectionString);
             try
             {
                 await using var cmd = new SqlCommand(sql, conn) { CommandType = CommandType.Text, CommandTimeout = 5000 };
@@ -579,16 +579,17 @@ END";
         /// </summary>
         /// <param name="userQuery">The user query.</param>
         /// <returns>A Task.</returns>
-        internal static async Task<string> SyntaxCheckAsync(string userQuery, string connectionString = "")
+        internal static async Task<string> SyntaxCheckAsync(string userQuery, string connectionString)
         {
             string result = string.Empty;
 
-            await ExecuteSQLAsync("SET NOEXEC ON", connectionString);
-
             if (string.IsNullOrEmpty(connectionString))
             {
-                connectionString = Properties.Settings.Default.dbConnectionString;
+                return "No database connection specified.";
             }
+
+            await ExecuteSQLAsync("SET NOEXEC ON", connectionString);
+
             using SqlConnection connection = new(connectionString);
             SqlCommand command = new(userQuery, connection);
 
@@ -635,7 +636,7 @@ END";
         /// Gets the views async.
         /// </summary>
         /// <returns>A Task.</returns>
-        private static async Task<List<ObjectName>> GetViewsAsync()
+        private static async Task<List<ObjectName>> GetViewsAsync(string connectionString)
         {
             var objects = new List<ObjectName>();
 
@@ -647,7 +648,7 @@ END";
                 WHERE TABLE_TYPE = 'View'
                 ORDER BY TABLE_SCHEMA, TABLE_NAME";
 
-            using var connection = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+            using var connection = new SqlConnection(connectionString);
             using var command = new SqlCommand(query, connection)
             {
                 CommandType = CommandType.Text,

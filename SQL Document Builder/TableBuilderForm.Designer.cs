@@ -412,6 +412,7 @@
             // 
             objectsListBox.Dock = System.Windows.Forms.DockStyle.Fill;
             objectsListBox.FormattingEnabled = true;
+            objectsListBox.IntegralHeight = false;
             objectsListBox.ItemHeight = 15;
             objectsListBox.Location = new System.Drawing.Point(3, 138);
             objectsListBox.Name = "objectsListBox";

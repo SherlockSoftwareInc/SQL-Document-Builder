@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -72,7 +71,7 @@ namespace SQL_Document_Builder
         /// <param name="tableName">The name of the table to check.</param>
         /// <param name="schemaName">The schema name of the table.</param>
         /// <returns>A list of tuples containing the view name and schema name.</returns>
-        public static async Task<List<(string ViewName, string SchemaName)>> GetViewsUsingTableAsync(string? schemaName, string? tableName)
+        internal static async Task<List<(string ViewName, string SchemaName)>> GetViewsUsingTableAsync(string? schemaName, string? tableName, string connectionString)
         {
             var views = new List<(string ViewName, string SchemaName)>();
             if (string.IsNullOrEmpty(tableName))
@@ -96,7 +95,7 @@ WHERE
     o.name = @TableName AND
     s.name = @SchemaName;";
 
-            using (var connection = new SqlConnection(Properties.Settings.Default.dbConnectionString))
+            using (var connection = new SqlConnection(connectionString))
             {
                 try
                 {
@@ -131,7 +130,7 @@ WHERE
         /// </summary>
         /// <param name="columnName">The column name.</param>
         /// <returns>A DBColumn? .</returns>
-        public DBColumn? GetColumn(string columnName)
+        internal DBColumn? GetColumn(string columnName)
         {
             foreach (var col in Columns)
             {
@@ -147,7 +146,7 @@ WHERE
         /// Retrieves identity column details for the current table.
         /// </summary>
         /// <returns>A dictionary where the key is the column name and the value is a tuple containing seed and increment values.</returns>
-        public Dictionary<string, (int SeedValue, int IncrementValue)> GetIdentityColumns()
+        internal Dictionary<string, (int SeedValue, int IncrementValue)> GetIdentityColumns(string connectionString)
         {
             var identityColumns = new Dictionary<string, (int SeedValue, int IncrementValue)>();
 
@@ -162,7 +161,7 @@ INNER JOIN sys.identity_columns AS ic ON t.object_id = ic.object_id
 WHERE t.name = '{TableName}'
 AND s.name = '{TableSchema}';";
 
-            using (var connection = new SqlConnection(Properties.Settings.Default.dbConnectionString))
+            using (var connection = new SqlConnection(connectionString))
             {
                 connection.Open();
                 using var command = new SqlCommand(identityQuery, connection);
@@ -288,7 +287,7 @@ ELSE
 		@level0type = N'SCHEMA', @level0name = '{ObjectName.Schema}',
 		@level1type = @ObjectType, @level1name = '{ObjectName.Name}';";
 
-                var result = await DatabaseHelper.ExecuteSQLAsync(sql);
+                var result = await DatabaseHelper.ExecuteSQLAsync(sql, ConnectionString);
                 if (result != string.Empty)
                 {
                     Common.MsgBox("Failed to update table description." + Environment.NewLine + result, MessageBoxIcon.Error);
@@ -319,7 +318,7 @@ WHERE s.name = '{TableSchema}' AND t.name = '{TableName}'
 ORDER BY cc.name;
 ";
 
-            var dt = await DatabaseHelper.GetDataTableAsync(sql);
+            var dt = await DatabaseHelper.GetDataTableAsync(sql, ConnectionString);
             if (dt == null || dt.Rows.Count == 0)
                 return string.Empty;
 
@@ -363,7 +362,7 @@ WHERE s.name = '{TableSchema}' AND t.name = '{TableName}'
 ORDER BY dc.name;
 ";
 
-            var dt = await DatabaseHelper.GetDataTableAsync(sql);
+            var dt = await DatabaseHelper.GetDataTableAsync(sql, ConnectionString);
             if (dt == null || dt.Rows.Count == 0)
                 return string.Empty;
 
@@ -418,7 +417,7 @@ ORDER BY fk.name, fkc.constraint_column_id;
 ";
 
             // Use DatabaseHelper to get the data as a DataTable
-            var dt = await DatabaseHelper.GetDataTableAsync(sql);
+            var dt = await DatabaseHelper.GetDataTableAsync(sql, ConnectionString);
             if (dt == null || dt.Rows.Count == 0)
                 return string.Empty;
 
@@ -470,6 +469,7 @@ ORDER BY fk.name, fkc.constraint_column_id;
         internal async Task<bool> OpenAsync(ObjectName objectName, string connectionString)
         {
             this.ObjectName = objectName;
+            this.ConnectionString = connectionString;
 
             var objectType = objectName.ObjectType;
             if (objectType == ObjectTypeEnums.None)
@@ -515,8 +515,7 @@ ORDER BY fk.name, fkc.constraint_column_id;
             TableName = tableName ?? string.Empty;
             TableSchema = schemaName ?? string.Empty;
             TableType = objectType;
-
-            ConnectionString = connectionString ?? string.Empty;
+            ConnectionString = connectionString;
             Columns.Clear();
 
             if (ConnectionString.Length > 0 && TableName.Length > 0)
@@ -624,7 +623,7 @@ INNER JOIN sys.schemas s ON t.schema_id = s.schema_id
 WHERE s.name = '{tableSchema}'
 AND t.name = '{tableName}'";
 
-            var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+            var conn = new SqlConnection(ConnectionString);
             try
             {
                 await using var cmd = new SqlCommand()
@@ -673,7 +672,7 @@ AND t.name = '{tableName}'";
             PrimaryKeyColumns = string.Empty;
 
             var sql = $"SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE WHERE OBJECTPROPERTY(OBJECT_ID(CONSTRAINT_SCHEMA + '.' + CONSTRAINT_NAME), 'IsPrimaryKey') = 1 AND TABLE_NAME = '{tableName}' AND TABLE_SCHEMA = '{schemaName}'";
-            var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+            var conn = new SqlConnection(ConnectionString);
             try
             {
                 await using var cmd = new SqlCommand()
@@ -726,7 +725,7 @@ AND t.name = '{tableName}'";
             {
                 string sql = string.Format(String.Format("SELECT value FROM fn_listextendedproperty (NULL, 'schema', '{0}', '{2}', '{1}', default, default) WHERE name = N'MS_Description'", ObjectName.Schema, ObjectName.Name, (ObjectName.ObjectType == ObjectName.ObjectTypeEnums.View ? "view" : "table")));
 
-                var conn = new SqlConnection(Properties.Settings.Default.dbConnectionString);
+                var conn = new SqlConnection(ConnectionString);
                 try
                 {
                     await using var cmd = new SqlCommand()

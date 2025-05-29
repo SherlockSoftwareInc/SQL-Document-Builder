@@ -26,6 +26,8 @@ namespace SQL_Document_Builder
         /// </summary>
         private int _connectionCount = 0;
 
+        private string _connectionString = string.Empty;
+
         private ObjectName? _selectedObject;
 
         /// <summary>
@@ -150,12 +152,12 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="objectName">The object name.</param>
         /// <returns>A Task.</returns>
-        private static async Task<string> GetObjectCreateScriptAsync(ObjectName objectName)
+        private static async Task<string> GetObjectCreateScriptAsync(ObjectName objectName, string connectionString)
         {
             string? createScript = string.Empty;
             if (objectName != null)
             {
-                createScript = await DatabaseDocBuilder.GetCreateObjectScriptAsync(objectName);
+                createScript = await DatabaseDocBuilder.GetCreateObjectScriptAsync(objectName, connectionString);
             }
 
             if (string.IsNullOrEmpty(createScript))
@@ -179,7 +181,7 @@ namespace SQL_Document_Builder
             // get the object description for table and view
             if (objectName?.ObjectType == ObjectName.ObjectTypeEnums.Table || objectName?.ObjectType == ObjectName.ObjectTypeEnums.View)
             {
-                var description = await ObjectDescription.BuildObjectDescription(objectName, Properties.Settings.Default.UseExtendedProperties);
+                var description = await ObjectDescription.BuildObjectDescription(objectName, connectionString, Properties.Settings.Default.UseExtendedProperties);
                 if (description.Length > 0)
                 {
                     // append the description to the script
@@ -230,9 +232,12 @@ namespace SQL_Document_Builder
         /// Selects the objects.
         /// </summary>
         /// <returns>A List&lt;ObjectName&gt;? .</returns>
-        private static List<ObjectName>? SelectObjects()
+        private List<ObjectName>? SelectObjects()
         {
-            var form = new DBObjectsSelectForm();
+            var form = new DBObjectsSelectForm()
+            { 
+                ConnectionString = _connectionString,
+            };
             if (form.ShowDialog() == DialogResult.OK)
             {
                 return form.SelectedObjects;
@@ -427,7 +432,7 @@ namespace SQL_Document_Builder
                 string contents = String.Empty;
                 await Task.Run(() =>
                 {
-                    contents = builder.SchemaContent(Properties.Settings.Default.dbConnectionString, progress);
+                    contents = builder.SchemaContent(_connectionString, progress);
                 });
 
                 CurrentEditBox?.AppendText(contents);
@@ -450,7 +455,10 @@ namespace SQL_Document_Builder
         /// <param name="e">The E.</param>
         private void BatchToolStripButton_Click(object sender, EventArgs e)
         {
-            using var frm = new BatchColumnDesc();
+            using var frm = new BatchColumnDesc()
+            {
+                ConnectionString = _connectionString
+            };
             frm.ShowDialog();
         }
 
@@ -492,6 +500,7 @@ namespace SQL_Document_Builder
                         serverToolStripStatusLabel.Text = connection?.ServerName;
                         databaseToolStripStatusLabel.Text = connection?.Database;
                         Properties.Settings.Default.dbConnectionString = connectionString;
+                        _connectionString = connectionString;
                     }
 
                     for (int i = 0; i < connectToToolStripMenuItem.DropDown.Items.Count; i++)
@@ -509,10 +518,11 @@ namespace SQL_Document_Builder
                             submenuitem.Checked = false;
                         }
                     }
-
-                    // set the object type combo box to the first item
-                    //objectTypeComboBox.SelectedIndex = 0;
                 }
+            }
+            else
+            {
+                _connectionString = string.Empty;
             }
         }
 
@@ -873,7 +883,7 @@ namespace SQL_Document_Builder
                     var obj = selectedObjects[i];
 
                     // get the object create script
-                    var script = await GetObjectCreateScriptAsync(obj);
+                    var script = await GetObjectCreateScriptAsync(obj, _connectionString);
                     if (editBox == null) return;
                     editBox.AppendText(script);
 
@@ -882,7 +892,7 @@ namespace SQL_Document_Builder
 
                     // get the insert statement for the object
                     // get the number of rows in the table
-                    var rowCount = await DatabaseHelper.GetRowCountAsync(obj.FullName);
+                    var rowCount = await DatabaseHelper.GetRowCountAsync(obj.FullName, _connectionString);
 
                     // confirm if the user wants to continue when the number of rows is too much
                     if (rowCount > Properties.Settings.Default.InertMaxRows)
@@ -891,7 +901,7 @@ namespace SQL_Document_Builder
                     }
                     else
                     {
-                        var insertScript = await DatabaseDocBuilder.TableToInsertStatementAsync(obj);
+                        var insertScript = await DatabaseDocBuilder.TableToInsertStatementAsync(obj, _connectionString);
                         if (editBox == null) return;
                         editBox.AppendText(insertScript + "GO" + Environment.NewLine);
 
@@ -947,7 +957,7 @@ namespace SQL_Document_Builder
             if (!BeginAddDDLScript()) return;
 
             editBox.Cursor = Cursors.WaitCursor;
-            var script = await GetObjectCreateScriptAsync(objectName);
+            var script = await GetObjectCreateScriptAsync(objectName, _connectionString);
 
             if (!string.IsNullOrEmpty(script))
             {
@@ -986,6 +996,9 @@ namespace SQL_Document_Builder
             {
                 StartBuild();
 
+                // get the current connection string
+                string connectionString = _connectionString;
+
                 for (int i = 0; i < selectedObjects.Count; i++)
                 {
                     int percentComplete = (i * 100) / selectedObjects.Count;
@@ -995,7 +1008,7 @@ namespace SQL_Document_Builder
                     }
                     statusToolStripStatusLabe.Text = $"Processing {percentComplete}%...";
 
-                    var script = await GetObjectCreateScriptAsync(selectedObjects[i]);
+                    var script = await GetObjectCreateScriptAsync(selectedObjects[i], connectionString);
 
                     if (editBox == null) return;
                     editBox?.AppendText(script);
@@ -1260,11 +1273,11 @@ namespace SQL_Document_Builder
         {
             if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Html) != DialogResult.Yes) return;
 
-            using var dlg = new Schemapicker();
+            using var dlg = new Schemapicker() { ConnectionString = _connectionString };
             if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
             {
                 var builder = new SharePointBuilder();
-                var scripts = await builder.BuildFunctionList(dlg.Schema);
+                var scripts = await builder.BuildFunctionList(dlg.Schema, _connectionString);
 
                 CurrentEditBox?.AppendText(scripts);
 
@@ -1556,7 +1569,7 @@ namespace SQL_Document_Builder
                     }
 
                     // get the number of rows in the table
-                    var rowCount = await DatabaseHelper.GetRowCountAsync(objectName.FullName);
+                    var rowCount = await DatabaseHelper.GetRowCountAsync(objectName.FullName, _connectionString);
 
                     // confirm if the user wants to continue when the number of rows is too much
                     if (rowCount > 1000)
@@ -1578,7 +1591,7 @@ namespace SQL_Document_Builder
                     // checks if the table has identify column
                     //var hasIdentityColumn = await DatabaseHelper.HasIdentityColumnAsync(objectName);
 
-                    var script = await DatabaseDocBuilder.TableToInsertStatementAsync(objectName);
+                    var script = await DatabaseDocBuilder.TableToInsertStatementAsync(objectName, _connectionString);
 
                     if (script == "Too much rows")
                     {
@@ -1687,7 +1700,7 @@ namespace SQL_Document_Builder
                     statusToolStripStatusLabe.Text = $"Processing {percentComplete}%...";
 
                     var obj = selectedObjects[i];
-                    var script = await ObjectDescription.BuildObjectDescription(obj, Properties.Settings.Default.UseExtendedProperties);
+                    var script = await ObjectDescription.BuildObjectDescription(obj, _connectionString, Properties.Settings.Default.UseExtendedProperties);
 
                     // add "GO" and new line after each object description if it is not empty
                     if (!string.IsNullOrEmpty(script))
@@ -1718,11 +1731,11 @@ namespace SQL_Document_Builder
             if (objectsListBox.SelectedItem != null)
             {
                 _selectedObject = (ObjectName)objectsListBox.SelectedItem;
-                await definitionPanel.OpenAsync(_selectedObject);
+                await definitionPanel.OpenAsync(_selectedObject, _connectionString);
             }
             else
             {
-                await definitionPanel.OpenAsync(null);
+                await definitionPanel.OpenAsync(null, _connectionString);
             }
         }
 
@@ -1742,19 +1755,19 @@ namespace SQL_Document_Builder
                 switch (objectTypeComboBox.SelectedIndex)
                 {
                     case 0:
-                        _tables = await DatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.Table);
+                        _tables = await DatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.Table, _connectionString);
                         break;
 
                     case 1:
-                        _tables = await DatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.View);
+                        _tables = await DatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.View, _connectionString);
                         break;
 
                     case 2:
-                        _tables = await DatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.StoredProcedure);
+                        _tables = await DatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.StoredProcedure, _connectionString);
                         break;
 
                     case 3:
-                        _tables = await DatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.Function);
+                        _tables = await DatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.Function, _connectionString);
                         break;
 
                     default:
@@ -1888,7 +1901,7 @@ namespace SQL_Document_Builder
             // convert the selected item to SQLDatabaseConnectionItem
             if (dataSourcesToolStripComboBox.SelectedItem is SQLDatabaseConnectionItem connection)
             {
-                if(connection.ConnectionString == null || connection.ConnectionString.Length == 0)
+                if (connection.ConnectionString == null || connection.ConnectionString.Length == 0)
                 {
                     Common.MsgBox("No database connection selected", MessageBoxIcon.Error);
                     return;
@@ -2034,7 +2047,7 @@ namespace SQL_Document_Builder
         /// </summary>
         private async Task PopulateAsync()
         {
-            await definitionPanel.OpenAsync(null);
+            await definitionPanel.OpenAsync(null, _connectionString);
             string schemaName = string.Empty;
             if (schemaComboBox.SelectedIndex > 0)
                 schemaName = schemaComboBox.Text;
@@ -2175,7 +2188,7 @@ namespace SQL_Document_Builder
         {
             if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Html) != DialogResult.Yes) return;
 
-            using var form = new QueryDataToTableForm();
+            using var form = new QueryDataToTableForm() { ConnectionString = _connectionString};
             form.ShowDialog();
             if (!string.IsNullOrEmpty(form.DocumentBody))
             {
@@ -2203,6 +2216,7 @@ namespace SQL_Document_Builder
             {
                 using var form = new QueryDataToTableForm()
                 {
+                    ConnectionString = _connectionString,
                     InsertStatement = true
                 };
                 form.ShowDialog();
@@ -2478,11 +2492,12 @@ namespace SQL_Document_Builder
         {
             if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Html) != DialogResult.Yes) return;
 
-            using var dlg = new Schemapicker();
+            using var dlg = new Schemapicker() { ConnectionString = _connectionString };
+
             if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
             {
                 var builder = new SharePointBuilder();
-                var scripts = await builder.BuildSPList(dlg.Schema);
+                var scripts = await builder.BuildSPList(dlg.Schema, _connectionString);
 
                 CurrentEditBox?.AppendText(scripts);
 
@@ -2681,7 +2696,7 @@ namespace SQL_Document_Builder
                 }
 
                 var builder = new SharePointBuilder();
-                CurrentEditBox?.AppendText(await builder.GetTableDef(objectName));
+                CurrentEditBox?.AppendText(await builder.GetTableDef(objectName, _connectionString));
 
                 // Move caret to end and scroll to it
                 ScrollToCaret();
@@ -2708,7 +2723,7 @@ namespace SQL_Document_Builder
             var objectName = objectsListBox.SelectedItem as ObjectName;
             if (!string.IsNullOrEmpty(objectName?.Name))
             {
-                var description = await ObjectDescription.BuildObjectDescription(objectName, Properties.Settings.Default.UseExtendedProperties);
+                var description = await ObjectDescription.BuildObjectDescription(objectName, _connectionString, Properties.Settings.Default.UseExtendedProperties);
                 if (!string.IsNullOrEmpty(description))
                 {
                     var editBox = CurrentEditBox;
@@ -2750,7 +2765,7 @@ namespace SQL_Document_Builder
         {
             if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Html) != DialogResult.Yes) return;
 
-            using var dlg = new Schemapicker();
+            using var dlg = new Schemapicker() { ConnectionString = _connectionString };
             if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
             {
                 StartBuild();
@@ -2764,7 +2779,7 @@ namespace SQL_Document_Builder
                 var builder = new SharePointBuilder();
                 await Task.Run(async () =>
                 {
-                    scripts = await builder.BuildTableListAsync(dlg.Schema, progress);
+                    scripts = await builder.BuildTableListAsync(dlg.Schema, _connectionString, progress);
                 });
 
                 CurrentEditBox?.AppendText(scripts);
@@ -2855,7 +2870,7 @@ namespace SQL_Document_Builder
             {
                 var objectName = (ObjectName)objectsListBox.SelectedItem;
                 var builder = new SharePointBuilder();
-                var scripts = await builder.GetTableValuesAsync(objectName.FullName);
+                var scripts = await builder.GetTableValuesAsync(objectName.FullName, _connectionString);
                 CurrentEditBox?.AppendText(scripts);
 
                 // Move caret to end and scroll to it
@@ -2890,7 +2905,7 @@ namespace SQL_Document_Builder
         {
             if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Html) != DialogResult.Yes) return;
 
-            using var dlg = new Schemapicker();
+            using var dlg = new Schemapicker() { ConnectionString = _connectionString };
             if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
             {
                 StartBuild();
@@ -2904,7 +2919,7 @@ namespace SQL_Document_Builder
                 var builder = new SharePointBuilder();
                 await Task.Run(async () =>
                 {
-                    scripts = await builder.BuildViewListAsync(dlg.Schema, progress);
+                    scripts = await builder.BuildViewListAsync(dlg.Schema, _connectionString, progress);
                 });
 
                 CurrentEditBox?.AppendText(scripts);
@@ -3497,7 +3512,7 @@ namespace SQL_Document_Builder
         {
             if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Markdown) != DialogResult.Yes) return;
 
-            using var dlg = new Schemapicker();
+            using var dlg = new Schemapicker() { ConnectionString = _connectionString };
             if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
             {
                 StartBuild();
@@ -3511,7 +3526,7 @@ namespace SQL_Document_Builder
                 var builder = new MarkdownBuilder();
                 await Task.Run(async () =>
                 {
-                    scripts = await builder.BuildFunctionListAsync(dlg.Schema, progress);
+                    scripts = await builder.BuildFunctionListAsync(dlg.Schema, _connectionString, progress);
                 });
 
                 CurrentEditBox?.AppendText(scripts);
@@ -3545,7 +3560,7 @@ namespace SQL_Document_Builder
         {
             if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Markdown) != DialogResult.Yes) return;
 
-            using var dlg = new Schemapicker();
+            using var dlg = new Schemapicker() { ConnectionString = _connectionString };
             if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
             {
                 StartBuild();
@@ -3559,7 +3574,7 @@ namespace SQL_Document_Builder
                 var builder = new MarkdownBuilder();
                 await Task.Run(async () =>
                 {
-                    scripts = await builder.BuildSPListAsync(dlg.Schema, progress);
+                    scripts = await builder.BuildSPListAsync(dlg.Schema, _connectionString, progress);
                 });
 
                 CurrentEditBox?.AppendText(scripts);
@@ -3590,7 +3605,7 @@ namespace SQL_Document_Builder
                 }
 
                 var builder = new MarkdownBuilder();
-                CurrentEditBox?.AppendText(await builder.GetTableDef(objectName));
+                CurrentEditBox?.AppendText(await builder.GetTableDef(objectName, _connectionString));
 
                 // Move caret to end and scroll to it
                 ScrollToCaret();
@@ -3615,7 +3630,7 @@ namespace SQL_Document_Builder
         {
             if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Markdown) != DialogResult.Yes) return;
 
-            using var dlg = new Schemapicker();
+            using var dlg = new Schemapicker() { ConnectionString = _connectionString };
             if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
             {
                 StartBuild();
@@ -3629,7 +3644,7 @@ namespace SQL_Document_Builder
                 var builder = new MarkdownBuilder();
                 await Task.Run(async () =>
                 {
-                    scripts = await builder.BuildTableList(dlg.Schema, progress);
+                    scripts = await builder.BuildTableList(dlg.Schema, _connectionString, progress);
                 });
 
                 CurrentEditBox?.AppendText(scripts);
@@ -3655,7 +3670,7 @@ namespace SQL_Document_Builder
                 var objectName = (ObjectName)objectsListBox.SelectedItem;
 
                 var valueBuilder = new MarkdownBuilder();
-                CurrentEditBox?.AppendText(await valueBuilder.GetTableValuesAsync(objectName.FullName));
+                CurrentEditBox?.AppendText(await valueBuilder.GetTableValuesAsync(objectName.FullName, _connectionString));
 
                 // Move caret to end and scroll to it
                 ScrollToCaret();
@@ -3673,7 +3688,7 @@ namespace SQL_Document_Builder
         {
             if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Markdown) != DialogResult.Yes) return;
 
-            using var dlg = new Schemapicker();
+            using var dlg = new Schemapicker() { ConnectionString = _connectionString };
             if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
             {
                 StartBuild();
@@ -3687,7 +3702,7 @@ namespace SQL_Document_Builder
                 var builder = new MarkdownBuilder();
                 await Task.Run(async () =>
                 {
-                    scripts = await builder.BuildViewListAsync(dlg.Schema, progress);
+                    scripts = await builder.BuildViewListAsync(dlg.Schema, _connectionString, progress);
                 });
 
                 CurrentEditBox?.AppendText(scripts);

@@ -25,6 +25,11 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Gets or sets the connection string.
+        /// </summary>
+        public string ConnectionString { get; set; } = string.Empty;
+
+        /// <summary>
         /// Gets the selected database objects.
         /// </summary>
         public List<ObjectName>? SelectedObjects
@@ -203,7 +208,7 @@ namespace SQL_Document_Builder
                 }
 
                 // Retrieve the database objects asynchronously
-                _selectableObjects = await DatabaseHelper.GetDatabaseObjectsAsync(selectedObjectType);
+                _selectableObjects = await DatabaseHelper.GetDatabaseObjectsAsync(selectedObjectType, ConnectionString);
 
                 // Populate the selectable objects list box
                 PopulateSelectableObjects();
@@ -271,7 +276,7 @@ namespace SQL_Document_Builder
             schemaComboBox.Items.Clear();
             schemaComboBox.Items.Add("(All)");
 
-            var schemas = await DatabaseHelper.GetSchemasAsync();
+            var schemas = await DatabaseHelper.GetSchemasAsync(ConnectionString);
 
             // Add schemas to the combo box
             foreach (var schema in schemas)

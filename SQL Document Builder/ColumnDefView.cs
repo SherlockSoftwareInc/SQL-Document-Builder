@@ -161,9 +161,10 @@ namespace SQL_Document_Builder
         /// Open the database object schema
         /// </summary>
         /// <param name="objectName">The object name.</param>
-        public async Task OpenAsync(ObjectName? objectName)
+        public async Task OpenAsync(ObjectName? objectName, string connectionString)
         {
             Clear();
+            ConnectionString = connectionString;
             SelectedColumnChanged?.Invoke(this, EventArgs.Empty);
 
             if (columnDefDataGridView.DataSource != null)
@@ -186,7 +187,7 @@ namespace SQL_Document_Builder
                     objectName.ObjectType == ObjectName.ObjectTypeEnums.View)
                 {
                     _dbObject = new DBObject();
-                    if (!await _dbObject.OpenAsync(objectName, Properties.Settings.Default.dbConnectionString))
+                    if (!await _dbObject.OpenAsync(objectName, connectionString))
                     {
                         return;
                     }
@@ -392,7 +393,7 @@ GO
         /// <returns>A string.</returns>
         private async Task<string> GetTableDependencyScriptAsync()
         {
-            var viewList = await DBObject.GetViewsUsingTableAsync(Schema, TableName);
+            var viewList = await DBObject.GetViewsUsingTableAsync(Schema, TableName, ConnectionString);
 
             if (viewList != null && viewList.Count > 0)
             {
@@ -433,7 +434,8 @@ GO
                     Text = $"{columnName}",
                     TableName = $"[{Schema}].[{TableName}]",
                     EnableValueFrequency = true,
-                    DatabaseIndex = 0
+                    DatabaseIndex = 0,
+                    ConnectionString = ConnectionString
                 };
                 dlg.ShowDialog();
             }
@@ -499,7 +501,8 @@ GO
                 Text = $"{TableName}",
                 TableName = $"[{Schema}].[{TableName}]",
                 EnableValueFrequency = true,
-                DatabaseIndex = 0
+                DatabaseIndex = 0,
+                ConnectionString = ConnectionString
             };
             dlg.ShowDialog();
         }
