@@ -856,6 +856,7 @@ namespace SQL_Document_Builder
                 return;
             }
 
+            Cursor = Cursors.WaitCursor;
             if (BeginAddDDLScript())
             {
                 StartBuild();
@@ -901,6 +902,8 @@ namespace SQL_Document_Builder
 
                 EndBuild();
             }
+
+            Cursor = Cursors.Default;
         }
 
         /// <summary>
@@ -943,6 +946,7 @@ namespace SQL_Document_Builder
 
             if (!BeginAddDDLScript()) return;
 
+            editBox.Cursor = Cursors.WaitCursor;
             var script = await GetObjectCreateScriptAsync(objectName);
 
             if (!string.IsNullOrEmpty(script))
@@ -953,6 +957,7 @@ namespace SQL_Document_Builder
                 // Move caret to end and scroll to it
                 ScrollToCaret();
             }
+            editBox.Cursor = Cursors.Default;
         }
 
         /// <summary>
@@ -976,6 +981,7 @@ namespace SQL_Document_Builder
                 return;
             }
 
+            Cursor = Cursors.WaitCursor;
             if (BeginAddDDLScript())
             {
                 StartBuild();
@@ -1000,6 +1006,8 @@ namespace SQL_Document_Builder
 
                 EndBuild();
             }
+
+            Cursor = Cursors.Default;
         }
 
         /// <summary>
@@ -1565,6 +1573,8 @@ namespace SQL_Document_Builder
                         return;
                     }
 
+                    Cursor = Cursors.WaitCursor;
+
                     // checks if the table has identify column
                     //var hasIdentityColumn = await DatabaseHelper.HasIdentityColumnAsync(objectName);
 
@@ -1594,6 +1604,7 @@ namespace SQL_Document_Builder
                     }
                 }
             }
+            Cursor = Cursors.Default;
         }
 
         /// <summary>
@@ -1661,6 +1672,7 @@ namespace SQL_Document_Builder
                 return;
             }
 
+            Cursor = Cursors.WaitCursor;
             if (BeginAddDDLScript())
             {
                 StartBuild();
@@ -1691,6 +1703,8 @@ namespace SQL_Document_Builder
 
                 EndBuild();
             }
+
+            Cursor = Cursors.Default;
         }
 
         /// <summary>
@@ -2347,7 +2361,9 @@ namespace SQL_Document_Builder
         /// <param name="e">The E.</param>
         private async void SchemaComboBox_SelectedIndexChanged(object sender, EventArgs e)
         {
+            Cursor = Cursors.WaitCursor;
             await PopulateAsync();
+            Cursor = Cursors.Default;
         }
 
         /// <summary>
@@ -2446,9 +2462,7 @@ namespace SQL_Document_Builder
         {
             if (CurrentEditBox == null) return;
 
-            this.Cursor = Cursors.WaitCursor;
             CurrentEditBox.Enabled = false;
-            CurrentEditBox.Cursor = Cursors.WaitCursor;
             statusToolStripStatusLabe.Text = "Please wait while generate the scripts";
             progressBar.Maximum = 100;
             progressBar.Value = 0;
@@ -2703,6 +2717,7 @@ namespace SQL_Document_Builder
                         return;
                     }
 
+                    Cursor = Cursors.WaitCursor;
                     if (BeginAddDDLScript())
                     {
                         // add GO statement if the script not empty
@@ -2722,6 +2737,8 @@ namespace SQL_Document_Builder
             {
                 Common.MsgBox("No database object selected.", MessageBoxIcon.Warning);
             }
+
+            Cursor = Cursors.Default;
         }
 
         /// <summary>
@@ -2791,8 +2808,11 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void Timer1_Tick(object sender, EventArgs e)
         {
+            Cursor = Cursors.WaitCursor;
             timer1.Stop();
             await PopulateAsync();
+
+            Cursor = Cursors.Default;
         }
 
         /// <summary>
