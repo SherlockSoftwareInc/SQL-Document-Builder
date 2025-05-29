@@ -676,10 +676,87 @@ GO";
                 createScript.AppendLine(indexScript);
             }
 
+            var triggerScript = await GetCreateTriggersScriptAsync(objectName);
+            if (!string.IsNullOrEmpty(triggerScript))
+            {
+                // remove the new line at the end of the script
+                triggerScript = triggerScript.TrimEnd('\r', '\n');
+                createScript.AppendLine(triggerScript);
+            }
+
             // add GO statement
             createScript.AppendLine($"GO");
 
             return createScript.ToString();
+        }
+
+        /// <summary>
+        /// Gets the create triggers script async.
+        /// </summary>
+        /// <param name="objectName">The object name.</param>
+        /// <returns>A Task.</returns>
+        private static async Task<string?> GetCreateTriggersScriptAsync(ObjectName objectName)
+        {
+            // Only tables and views can have DML triggers
+            if (objectName.IsEmpty() ||
+                (objectName.ObjectType != ObjectName.ObjectTypeEnums.Table &&
+                 objectName.ObjectType != ObjectName.ObjectTypeEnums.View))
+                return string.Empty;
+
+            StringBuilder sb = new();
+
+            // Query to get all triggers for the specified table/view
+            string sql = $@"
+SELECT 
+    tr.name AS TriggerName,
+    s.name AS SchemaName,
+    OBJECT_NAME(tr.parent_id) AS ParentObjectName,
+    sm.definition AS TriggerDefinition,
+    tr.is_disabled
+FROM sys.triggers tr
+INNER JOIN sys.objects o ON tr.parent_id = o.object_id
+INNER JOIN sys.schemas s ON o.schema_id = s.schema_id
+INNER JOIN sys.sql_modules sm ON tr.object_id = sm.object_id
+WHERE s.name = '{objectName.Schema}'
+  AND o.name = '{objectName.Name}'
+ORDER BY tr.name;";
+
+            var dt = await DatabaseHelper.GetDataTableAsync(sql);
+            if (dt == null || dt.Rows.Count == 0)
+                return string.Empty;
+
+            foreach (DataRow dr in dt.Rows)
+            {
+                string triggerName = dr["TriggerName"].ToString() ?? "";
+                string schema = dr["SchemaName"].ToString() ?? "";
+                string parentName = dr["ParentObjectName"].ToString() ?? "";
+                string definition = dr["TriggerDefinition"].ToString() ?? "";
+                bool isDisabled = dr["is_disabled"] != DBNull.Value && (bool)dr["is_disabled"];
+
+                // Add header
+                sb.AppendLine($"/****** Object:  Trigger [{schema}].[{triggerName}] on [{schema}].[{parentName}] ******/");
+
+                // Add drop statement if configured
+                if (Properties.Settings.Default.AddDropStatement)
+                {
+                    sb.AppendLine($"IF OBJECT_ID('{schema}.{triggerName}', 'TR') IS NOT NULL");
+                    sb.AppendLine($"\tDROP TRIGGER [{schema}].[{triggerName}];");
+                    sb.AppendLine("GO");
+                }
+
+                // Add the trigger definition
+                sb.Append(definition.TrimEnd('\r', '\n', ' ', '\t') + Environment.NewLine);
+                sb.AppendLine("GO");
+
+                // Optionally, add DISABLE TRIGGER if the trigger is disabled
+                if (isDisabled)
+                {
+                    sb.AppendLine($"ALTER TABLE [{schema}].[{parentName}] DISABLE TRIGGER [{triggerName}];");
+                    sb.AppendLine("GO");
+                }
+            }
+
+            return sb.ToString();
         }
 
         /// <summary>
