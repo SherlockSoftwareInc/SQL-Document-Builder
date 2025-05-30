@@ -11,18 +11,7 @@ namespace SQL_Document_Builder
     /// </summary>
     internal class SqlEditBox : ScintillaNET.Scintilla
     {
-        /// <summary>
-        /// The sql key words 1.
-        /// </summary>
-        private const string SQL_KeyWords = "add alter as authorization backup begin break browse bulk by cascade case catch check checkpoint close clustered column commit compute constraint containstable continue create current cursor database dbcc deallocate declare default delete deny desc disk distinct distributed double drop dump else end errlvl escape except exec execute exit external fetch file fillfactor for foreign freetext freetexttable from full function go goto grant group having holdlock identity identity_insert identitycol if index insert intersect into key kill lineno load merge national nocheck nocount nolock nonclustered of off offsets on open opendatasource openquery openrowset openxml option order over percent plan precision primary print proc procedure public raiserror read readtext reconfigure references replication restore restrict return revert revoke rollback rowcount rowguidcol rule save schema securityaudit select set setuser shutdown statistics table tablesample textsize then to top tran transaction trigger truncate try union unique update updatetext use user values varying view waitfor when where while with writetext ";
-        /// <summary>
-        /// The sql keywords 2.
-        /// </summary>
-        private const string SQL_KeyWords1 = "bigint binary bit char date datetime datetime2 datetimeoffset decimal float geography geometry hierarchyid image int money nchar ntext numeric nvarchar real smalldatetime smallint smallmoney sql_variant text time timestamp tinyint uniqueidentifier varbinary varchar xml ";
-        /// <summary>
-        /// The sql keywords 3.
-        /// </summary>
-        private const string SQL_KeyWords2 = "@@version abs ascii avg cast ceiling char charindex coalesce concat convert count current_timestamp current_user datalength dateadd datediff datename datepart day floor getdate getutcdate isdate isnull isnumeric lag lead left len lower ltrim max min month nchar nullif patindex rand replace right round rtrim session_user sessionproperty sign space str stuff substring sum system_user try_cast try_convert upper user_name year ";
+        private DocumentTypeEnums _documentType = DocumentTypeEnums.empty;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SqlEditBox"/> class.
@@ -35,7 +24,7 @@ namespace SQL_Document_Builder
 
             // STYLING
             InitColors();
-            InitSyntaxColoring();
+            InitSyntaxColoringSQL();
 
             // NUMBER MARGIN
             InitNumberMargin();
@@ -128,7 +117,44 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Gets or sets the document type.
         /// </summary>
-        public DocumentTypeEnums DocumentType { get; set; } = DocumentTypeEnums.empty;
+        public DocumentTypeEnums DocumentType
+        {
+            get => _documentType;
+            set
+            {
+                if (_documentType != value)
+                {
+                    _documentType = value;
+                    switch (_documentType)
+                    {
+                        case DocumentTypeEnums.Sql:
+                            InitSyntaxColoringSQL();
+                            break;
+
+                        case DocumentTypeEnums.Html:
+                        case DocumentTypeEnums.Xml:
+                            InitSyntaxColoringHtml();
+                            break;
+
+                        case DocumentTypeEnums.Markdown:
+                            InitSyntaxColoringMarkdown();
+                            break;
+
+                        default:
+                            InitSyntaxColoringDefault();
+                            break;
+                    }
+                }
+                // NUMBER MARGIN
+                InitNumberMargin();
+
+                // BOOKMARK MARGIN
+                InitBookmarkMargin();
+
+                // CODE FOLDING MARGIN
+                InitCodeFolding();
+            }
+        }
 
         /// <summary>
         /// File name of current query script
@@ -179,18 +205,13 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Gets or sets a value indicating whether text changed.
-        /// </summary>
-        internal bool Changed { get; set; } = false;
-
-        /// <summary>
         /// Handles the text changed event of the SQL text box:
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
         internal void OnTextChanged(object sender, EventArgs e)
         {
-            Changed = true;
+            //Changed = true;
             //statusToolStripStatusLabe.Text = string.Empty;
 
             SetColumnMargins();
@@ -231,11 +252,110 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Initializes syntax coloring for default/plain text documents.
+        /// </summary>
+        private void InitSyntaxColoringDefault()
+        {
+            // Use the null lexer for plain text
+            this.LexerName = "null";
+
+            // Configure the default style
+            this.StyleResetDefault();
+            this.Styles[Style.Default].Font = "Cascadia Mono";
+            this.Styles[Style.Default].Size = 10;
+            this.Styles[Style.Default].BackColor = IntToColor(0x212121);
+            this.Styles[Style.Default].ForeColor = IntToColor(0xFFFFFF);
+            this.StyleClearAll();
+
+            this.CaretForeColor = Color.White;
+        }
+
+        /// <summary>
+        /// Initializes syntax coloring for HTML documents.
+        /// </summary>
+        private void InitSyntaxColoringHtml()
+        {
+            // Use the HTML lexer
+            this.LexerName = "xml";
+
+            // Configure the default style
+            this.StyleResetDefault();
+            this.Styles[Style.Default].Font = "Cascadia Mono";
+            this.Styles[Style.Default].Size = 10;
+            this.Styles[Style.Default].BackColor = IntToColor(0x212121);
+            this.Styles[Style.Default].ForeColor = IntToColor(0xFFFFFF);
+            this.StyleClearAll();
+
+            // HTML styles
+            this.Styles[Style.Html.Default].ForeColor = Color.White;
+            this.Styles[Style.Html.Tag].ForeColor = Color.DeepSkyBlue;           // <tag>
+            this.Styles[Style.Html.TagEnd].ForeColor = Color.DeepSkyBlue;        // </tag>
+            this.Styles[Style.Html.TagUnknown].ForeColor = Color.Red;
+            this.Styles[Style.Html.Attribute].ForeColor = Color.Orange;          // attribute=
+            this.Styles[Style.Html.AttributeUnknown].ForeColor = Color.Red;
+            this.Styles[Style.Html.Number].ForeColor = Color.LightGreen;
+            this.Styles[Style.Html.DoubleString].ForeColor = Color.LightYellow;  // "string"
+            this.Styles[Style.Html.SingleString].ForeColor = Color.LightYellow;  // 'string'
+            this.Styles[Style.Html.Other].ForeColor = Color.LightGray;
+            this.Styles[Style.Html.Comment].ForeColor = Color.MediumSeaGreen;    // <!-- comment -->
+            this.Styles[Style.Html.Entity].ForeColor = Color.Violet;             // &entity;
+            this.Styles[Style.Html.Value].ForeColor = Color.LightYellow;
+
+            // Script/CSS blocks inside HTML
+            this.Styles[Style.Html.Script].ForeColor = Color.LightPink;
+            this.Styles[Style.Html.Asp].ForeColor = Color.LightSkyBlue;
+            this.Styles[Style.Html.CData].ForeColor = Color.LightSlateGray;
+
+            this.CaretForeColor = Color.White;
+        }
+
+        /// <summary>
+        /// Initializes syntax coloring for Markdown documents.
+        /// </summary>
+        private void InitSyntaxColoringMarkdown()
+        {
+            this.LexerName = "markdown";
+
+            // Configure the default style
+            this.StyleResetDefault();
+            this.Styles[Style.Default].Font = "Cascadia Mono";
+            this.Styles[Style.Default].Size = 10;
+            this.Styles[Style.Default].BackColor = IntToColor(0x212121);
+            this.Styles[Style.Default].ForeColor = IntToColor(0xFFFFFF);
+            this.StyleClearAll();
+
+            // Markdown styles
+            this.Styles[Style.Markdown.Default].ForeColor = Color.White;
+            this.Styles[Style.Markdown.LineBegin].ForeColor = Color.Gray;
+            this.Styles[Style.Markdown.Strong1].ForeColor = Color.Orange;      // Bold **
+            this.Styles[Style.Markdown.Strong2].ForeColor = Color.Orange;      // Bold __
+            this.Styles[Style.Markdown.Em1].ForeColor = Color.Gold;            // Italic *
+            this.Styles[Style.Markdown.Em2].ForeColor = Color.Gold;            // Italic _
+            this.Styles[Style.Markdown.Header1].ForeColor = Color.DeepSkyBlue;
+            this.Styles[Style.Markdown.Header2].ForeColor = Color.DodgerBlue;
+            this.Styles[Style.Markdown.Header3].ForeColor = Color.LightSkyBlue;
+            this.Styles[Style.Markdown.Header4].ForeColor = Color.LightBlue;
+            this.Styles[Style.Markdown.Header5].ForeColor = Color.LightSteelBlue;
+            this.Styles[Style.Markdown.Header6].ForeColor = Color.SkyBlue;
+            this.Styles[Style.Markdown.PreChar].ForeColor = Color.LightGreen;  // Code block marker (`)
+            this.Styles[Style.Markdown.UListItem].ForeColor = Color.LightSalmon;
+            this.Styles[Style.Markdown.OListItem].ForeColor = Color.LightSalmon;
+            this.Styles[Style.Markdown.BlockQuote].ForeColor = Color.MediumSeaGreen;
+            this.Styles[Style.Markdown.Strikeout].ForeColor = Color.LightGray;
+            this.Styles[Style.Markdown.HRule].ForeColor = Color.DarkGray;
+            this.Styles[Style.Markdown.Link].ForeColor = Color.Violet;
+            this.Styles[Style.Markdown.Code].ForeColor = Color.LightGreen;
+            this.Styles[Style.Markdown.Code2].ForeColor = Color.LightGreen;
+            this.Styles[Style.Markdown.CodeBk].BackColor = Color.FromArgb(40, 60, 40);
+
+            this.CaretForeColor = Color.White;
+        }
+
+        /// <summary>
         /// Inits the syntax coloring.
         /// </summary>
-        private void InitSyntaxColoring()
+        private void InitSyntaxColoringSQL()
         {
-            //this.Lexer = Lexer.Sql;
             this.LexerName = "sql";
 
             // Configure the default style
@@ -245,24 +365,6 @@ namespace SQL_Document_Builder
             this.Styles[Style.Default].BackColor = IntToColor(0x212121);
             this.Styles[Style.Default].ForeColor = IntToColor(0xFFFFFF);
             this.StyleClearAll();
-
-            // Configure the CPP (C#) lexer styles
-            //this.Styles[Style.Cpp.Identifier].ForeColor = IntToColor(0xD0DAE2);
-            //this.Styles[Style.Cpp.Comment].ForeColor = IntToColor(0xBD758B);
-            //this.Styles[Style.Cpp.CommentLine].ForeColor = IntToColor(0x40BF57);
-            //this.Styles[Style.Cpp.CommentDoc].ForeColor = IntToColor(0x2FAE35);
-            //this.Styles[Style.Cpp.Number].ForeColor = IntToColor(0xFFFF00);
-            //this.Styles[Style.Cpp.String].ForeColor = IntToColor(0xFFFF00);
-            //this.Styles[Style.Cpp.Character].ForeColor = IntToColor(0xE95454);
-            //this.Styles[Style.Cpp.Preprocessor].ForeColor = IntToColor(0x8AAFEE);
-            //this.Styles[Style.Cpp.Operator].ForeColor = IntToColor(0xE0E0E0);
-            //this.Styles[Style.Cpp.Regex].ForeColor = IntToColor(0xff00ff);
-            //this.Styles[Style.Cpp.CommentLineDoc].ForeColor = IntToColor(0x77A7DB);
-            //this.Styles[Style.Cpp.Word].ForeColor = IntToColor(0x48A8EE);
-            //this.Styles[Style.Cpp.Word2].ForeColor = IntToColor(0xF98906);
-            //this.Styles[Style.Cpp.CommentDocKeyword].ForeColor = IntToColor(0xB3D991);
-            //this.Styles[Style.Cpp.CommentDocKeywordError].ForeColor = IntToColor(0xFF0000);
-            //this.Styles[Style.Cpp.GlobalClass].ForeColor = IntToColor(0x48A8EE);
 
             // Configure the SQL lexer styles
             this.Styles[Style.Sql.Comment].ForeColor = Color.RosyBrown; // IntToColor(0xBD758B);
@@ -290,24 +392,15 @@ namespace SQL_Document_Builder
 
             this.CaretForeColor = Color.White;
 
-            //this.SetKeywords(0, "select from where and or not in is null like between exists all any " +
-            //       "insert into values update set delete truncate create alter drop table view index procedure function trigger " +
-            //       "begin end commit rollback declare case when then else union group by order by having limit " +
-            //       "join inner left right outer on as distinct count avg sum min max cast convert " +
-            //       "go exec sp_ execute"); // Add GO, EXEC, sp_ for T-SQL like dialects
+            const string SQL_KeyWords = "add alter as authorization backup begin break browse bulk by cascade case catch check checkpoint close clustered column commit compute constraint containstable continue create current cursor database dbcc deallocate declare default delete deny desc disk distinct distributed double drop dump else end errlvl escape except exec execute exit external fetch file fillfactor for foreign freetext freetexttable from full function go goto grant group having holdlock identity identity_insert identitycol if index insert intersect into key kill lineno load merge national nocheck nocount nolock nonclustered of off offsets on open opendatasource openquery openrowset openxml option order over percent plan precision primary print proc procedure public raiserror read readtext reconfigure references replication restore restrict return revert revoke rollback rowcount rowguidcol rule save schema securityaudit select set setuser shutdown statistics table tablesample textsize then to top tran transaction trigger truncate try union unique update updatetext use user values varying view waitfor when where while with writetext ";
+
+            const string SQL_KeyWords1 = "bigint binary bit char date datetime datetime2 datetimeoffset decimal float geography geometry hierarchyid image int money nchar ntext numeric nvarchar real smalldatetime smallint smallmoney sql_variant text time timestamp tinyint uniqueidentifier varbinary varchar xml ";
+
+            const string SQL_KeyWords2 = "@@version abs ascii avg cast ceiling char charindex coalesce concat convert count current_timestamp current_user datalength dateadd datediff datename datepart day floor getdate getutcdate isdate isnull isnumeric lag lead left len lower ltrim max min month nchar nullif patindex rand replace right round rtrim session_user sessionproperty sign space str stuff substring sum system_user try_cast try_convert upper user_name year ";
 
             this.SetKeywords(0, SQL_KeyWords + SQL_KeyWords1); // Add the primary keywords
             this.SetKeywords(1, SQL_KeyWords2); // Add the data types as secondary keywords
-            //this.SetKeywords(2, ); // Add the functions as tertiary keywords
 
-            // Secondary keywords (Data Types, Functions - adjust as needed)
-            //this.SetKeywords(1, "int varchar nvarchar char text datetime date time smallint bigint bit decimal numeric float real " +
-            //                   "primary key foreign references constraint unique default check " +
-            //                   "getdate() current_timestamp system_user session_user user " +
-            //                   "isnull coalesce nullif");
-
-            // Word2 = 1
-            // this.SetKeywords(1, "ascii cast char charindex ceiling coalesce collate contains convert current_date current_time current_timestamp current_user floor isnull max min nullif object_id session_user substring system_user tsequal ");
             // User1 = 4
             this.SetKeywords(4, "all and any between cross exists in inner is join left like not null or outer pivot right some unpivot ( ) * ");
             // User2 = 5
@@ -575,7 +668,8 @@ namespace SQL_Document_Builder
             {
                 FileName = fileName;
                 this.Text = System.IO.File.ReadAllText(FileName);
-                this.Changed = false;
+                this.EmptyUndoBuffer(); // Clear undo history so undo can't go back to blank
+                this.SetSavePoint();    // Mark the current state as clean
 
                 // using file extension to set the document type
                 string ext = System.IO.Path.GetExtension(FileName).ToLowerInvariant();
@@ -635,12 +729,6 @@ namespace SQL_Document_Builder
 
                 FileNameChanged?.Invoke(this, EventArgs.Empty);
             }
-
-            //_fileName = oFile.FileName;
-            //SetTitle(_fileName);
-
-            //CurrentEditBox.Text = File.ReadAllText(_fileName);
-            //CurrentEditBox.Changed = false;
         }
 
         /// <summary>
@@ -653,7 +741,7 @@ namespace SQL_Document_Builder
                 if (FileName.Length > 0)
                 {
                     System.IO.File.WriteAllTextAsync(FileName, this.Text);
-                    Changed = false;
+                    this.SetSavePoint();
                 }
                 else
                 {
@@ -709,7 +797,6 @@ namespace SQL_Document_Builder
 
                     System.IO.File.WriteAllText(FileName, Text);
                     this.SetSavePoint();
-                    Changed = false;
                 }
             }
             catch (Exception ex)
@@ -727,7 +814,7 @@ namespace SQL_Document_Builder
         /// <returns></returns>
         internal DialogResult SaveCheck()
         {
-            if (Changed)
+            if (Modified)
             {
                 switch (MessageBox.Show("Do you want to save the changes?", "SQL Document Builder", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question))
                 {

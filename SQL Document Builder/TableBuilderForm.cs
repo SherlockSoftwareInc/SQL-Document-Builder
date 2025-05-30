@@ -651,7 +651,7 @@ namespace SQL_Document_Builder
             var queryTextBox = GetTextBoxAt(tabIndex);
             if (queryTextBox != null)
             {
-                if (queryTextBox.Changed)
+                if (queryTextBox.Modified)
                 {
                     var checkResult = queryTextBox.SaveCheck();
                     if (checkResult == DialogResult.Cancel) return DialogResult.Cancel;
