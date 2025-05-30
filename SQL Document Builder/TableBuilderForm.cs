@@ -235,7 +235,7 @@ namespace SQL_Document_Builder
         private List<ObjectName>? SelectObjects()
         {
             var form = new DBObjectsSelectForm()
-            { 
+            {
                 ConnectionString = _connectionString,
             };
             if (form.ShowDialog() == DialogResult.OK)
@@ -1140,6 +1140,10 @@ namespace SQL_Document_Builder
                         break;
                     }
                 }
+
+                // add the file to the MRU files list
+                _mruFiles.AddFile(editBox.FileName);
+                PopulateMRUFiles();
             }
         }
 
@@ -1953,27 +1957,44 @@ namespace SQL_Document_Builder
         {
             if (CurrentEditBox == null) return;
 
-            var oFile = new OpenFileDialog() { Filter = "SQL script(*.sql)|*.sql|Markdown files(*.md)|*.md|HTML files(*.html)|*.html|Text file(*.txt)|*.txt|All files(*.*)|*.*" };
+            var oFile = new OpenFileDialog()
+            {
+                Filter = "SQL script(*.sql)|*.sql|Markdown files(*.md)|*.md|HTML files(*.html)|*.html|Text file(*.txt)|*.txt|All files(*.*)|*.*",
+                Multiselect = false
+            };
             if (oFile.ShowDialog() == DialogResult.OK)
             {
-                var fileName = oFile.FileName;
-                if (fileName == null) return;
-
-                // checks if the file has already opened
-                for (int i = 0; i < tabControl1.TabCount; i++)
-                {
-                    var queryTextBox = GetTextBoxAt(i);
-                    if (queryTextBox != null && queryTextBox?.FileName == fileName)
-                    {
-                        // if the file is already opened, select the tab and return
-                        tabControl1.SelectedIndex = i;
-                        return;
-                    }
-                }
-
-                // add a new tab with the opened file
-                AddTab(fileName);
+                OpenFile(oFile.FileName);
             }
+        }
+
+        /// <summary>
+        /// Opens the file.
+        /// </summary>
+        /// <param name="fileName">The file name.</param>
+        private void OpenFile(string fileName)
+        {
+            if (string.IsNullOrEmpty(fileName)) return;
+
+            // checks if the file has already opened
+            for (int i = 0; i < tabControl1.TabCount; i++)
+            {
+                var queryTextBox = GetTextBoxAt(i);
+                if (queryTextBox != null && queryTextBox?.FileName == fileName)
+                {
+                    // if the file is already opened, select the tab and return
+                    tabControl1.SelectedIndex = i;
+                    return;
+                }
+            }
+
+            // add a new tab with the opened file
+            AddTab(fileName);
+
+            // add the file to the MRU files list
+            _mruFiles.AddFile(fileName);
+            PopulateMRUFiles();
+
         }
 
         /// <summary>
@@ -2188,7 +2209,7 @@ namespace SQL_Document_Builder
         {
             if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Html) != DialogResult.Yes) return;
 
-            using var form = new QueryDataToTableForm() { ConnectionString = _connectionString};
+            using var form = new QueryDataToTableForm() { ConnectionString = _connectionString };
             form.ShowDialog();
             if (!string.IsNullOrEmpty(form.DocumentBody))
             {
@@ -2673,6 +2694,9 @@ namespace SQL_Document_Builder
             splitContainer1.SplitterDistance = 200;
             if (collapsibleSplitter1 != null)
                 collapsibleSplitter1.SplitterDistance = (int)(this.Width * 0.4F);
+
+            // populate most recent used files
+            PopulateMRUFiles();
 
             AddTab("");
         }
@@ -3715,5 +3739,59 @@ namespace SQL_Document_Builder
         }
 
         #endregion Markdown document builder
+
+        #region "MRU files"
+
+        private MostRecentUsedFiles _mruFiles;
+
+        /// <summary>
+        /// Populate the MRU files to the menu strip
+        /// </summary>
+        private void PopulateMRUFiles()
+        {
+            if (_mruFiles == null)
+            {
+                _mruFiles = new MostRecentUsedFiles();
+                _mruFiles.Load();
+            }
+            else
+            {
+                RemoveMRUFileMenuItems();
+            }
+
+            foreach (string item in _mruFiles?.Files)
+            {
+                ToolStripMenuItem fileRecent = new(item);
+                fileRecent.Click += RecentFile_click;
+
+                recentToolStripMenuItem.DropDownItems.Add(fileRecent);
+            }
+            recentToolStripMenuItem.Enabled = _mruFiles.Files.Length > 0;
+        }
+
+        /// <summary>
+        /// Handles recent file menu item click event: open selected file
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void RecentFile_click(object? sender, EventArgs e)
+        {
+            OpenFile(sender.ToString());
+        }
+
+        /// <summary>
+        /// Remove MRU file list from menu
+        /// </summary>
+        private void RemoveMRUFileMenuItems()
+        {
+            for (int i = 0; i < recentToolStripMenuItem.DropDownItems.Count; i++)
+            {
+                ToolStripMenuItem menuItem = (ToolStripMenuItem)recentToolStripMenuItem.DropDownItems[i];
+                menuItem.Click -= RecentFile_click;
+            }
+            recentToolStripMenuItem.DropDownItems.Clear();
+        }
+
+        #endregion "MRU files"
     }
 }
