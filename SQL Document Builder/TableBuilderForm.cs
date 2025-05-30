@@ -2657,10 +2657,11 @@ namespace SQL_Document_Builder
                 e.Cancel = true;
                 return;
             }
-            Properties.Settings.Default.SplitterDistance = splitContainer1.SplitterDistance;
+            Properties.Settings.Default.LeftSplitterDistance = splitContainer1.SplitterDistance;
+            Properties.Settings.Default.RightSplitterDistance = collapsibleSplitter1.SplitterDistance;
             //Properties.Settings.Default.SchemaSettings = _settingItems.Settings;
             //Properties.Settings.Default.Templetes = templates.TemplatesValue;
-            //Properties.Settings.Default.Save();
+            Properties.Settings.Default.Save();
         }
 
         /// <summary>
@@ -2691,9 +2692,11 @@ namespace SQL_Document_Builder
             insertMaxTextBox.Text = Properties.Settings.Default.InertMaxRows.ToString();
 
             WindowState = FormWindowState.Maximized;
-            if (collapsibleSplitter1 != null)
-                collapsibleSplitter1.SplitterDistance = (int)(this.Width * 0.4F);
-            splitContainer1.SplitterDistance = Properties.Settings.Default.SplitterDistance;
+            //if (collapsibleSplitter1 != null)
+            //    collapsibleSplitter1.SplitterDistance = (int)(this.Width * 0.4F);
+
+            collapsibleSplitter1.SplitterDistance = Properties.Settings.Default.RightSplitterDistance;
+            splitContainer1.SplitterDistance = Properties.Settings.Default.LeftSplitterDistance;
 
             // populate most recent used files
             PopulateMRUFiles();
@@ -3793,5 +3796,6 @@ namespace SQL_Document_Builder
         }
 
         #endregion "MRU files"
+
     }
 }

@@ -218,12 +218,24 @@ namespace SQL_Document_Builder.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("250")]
-        public int SplitterDistance {
+        public int LeftSplitterDistance {
             get {
-                return ((int)(this["SplitterDistance"]));
+                return ((int)(this["LeftSplitterDistance"]));
             }
             set {
-                this["SplitterDistance"] = value;
+                this["LeftSplitterDistance"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("250")]
+        public int RightSplitterDistance {
+            get {
+                return ((int)(this["RightSplitterDistance"]));
+            }
+            set {
+                this["RightSplitterDistance"] = value;
             }
         }
     }

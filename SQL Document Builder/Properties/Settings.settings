@@ -60,7 +60,10 @@ Back to [[DW: Database tables|Data warehouse tables]]
     <Setting Name="AddDropStatement" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">True</Value>
     </Setting>
-    <Setting Name="SplitterDistance" Type="System.Int32" Scope="User">
+    <Setting Name="LeftSplitterDistance" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">250</Value>
+    </Setting>
+    <Setting Name="RightSplitterDistance" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">250</Value>
     </Setting>
   </Settings>
