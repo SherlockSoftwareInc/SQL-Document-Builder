@@ -1994,7 +1994,6 @@ namespace SQL_Document_Builder
             // add the file to the MRU files list
             _mruFiles.AddFile(fileName);
             PopulateMRUFiles();
-
         }
 
         /// <summary>
@@ -2658,6 +2657,7 @@ namespace SQL_Document_Builder
                 e.Cancel = true;
                 return;
             }
+            Properties.Settings.Default.SplitterDistance = splitContainer1.SplitterDistance;
             //Properties.Settings.Default.SchemaSettings = _settingItems.Settings;
             //Properties.Settings.Default.Templetes = templates.TemplatesValue;
             //Properties.Settings.Default.Save();
@@ -2691,9 +2691,9 @@ namespace SQL_Document_Builder
             insertMaxTextBox.Text = Properties.Settings.Default.InertMaxRows.ToString();
 
             WindowState = FormWindowState.Maximized;
-            splitContainer1.SplitterDistance = 200;
             if (collapsibleSplitter1 != null)
                 collapsibleSplitter1.SplitterDistance = (int)(this.Width * 0.4F);
+            splitContainer1.SplitterDistance = Properties.Settings.Default.SplitterDistance;
 
             // populate most recent used files
             PopulateMRUFiles();
