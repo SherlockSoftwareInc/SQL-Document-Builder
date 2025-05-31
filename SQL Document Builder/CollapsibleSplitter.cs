@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
@@ -39,7 +39,7 @@ namespace SQL_Document_Builder
     [ToolboxBitmap(typeof(CollapsibleSplitter))]
     public class CollapsibleSplitter : Splitter
     {
-        public event EventHandler? StateChanged;
+        public event EventHandler StateChanged;
 
         #region Private Properties
 
@@ -48,7 +48,7 @@ namespace SQL_Document_Builder
 
         private readonly Color hotColor = CalculateColor(SystemColors.Highlight, SystemColors.Window, 70);
         private Rectangle rr;
-        private Form? parentForm;
+        private Form parentForm;
         private VisualStyles visualStyle;
 
         // Border added in version 1.3
@@ -63,6 +63,9 @@ namespace SQL_Document_Builder
         private int parentFormHeight;
         private SplitterState currentState = SplitterState.Expanded;
 
+        /// <summary>
+        /// Gets the state.
+        /// </summary>
         public SplitterState State
         {
             get { return currentState; }
@@ -70,6 +73,10 @@ namespace SQL_Document_Builder
 
         #endregion Private Properties
 
+        /// <summary>
+        /// Changes the sate.
+        /// </summary>
+        /// <param name="state">The state.</param>
         private void ChangeSate(SplitterState state)
         {
             //if (currentState != state)
@@ -99,7 +106,7 @@ namespace SQL_Document_Builder
         /// </summary>
         [Bindable(true), Category("Collapsing Options"), DefaultValue(""),
         Description("The System.Windows.Forms.Control that the splitter will collapse")]
-        public Control? ControlToHide { get; set; }
+        public Control ControlToHide { get; set; }
 
         /// <summary>
         /// Determines if the collapse and expanding actions will be animated
@@ -162,7 +169,6 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Gets or sets splitter distance (size of the control)
         /// </summary>
-        [DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
         public int SplitterDistance
         {
             get
@@ -173,13 +179,20 @@ namespace SQL_Document_Builder
                 }
                 else
                 {
-                    if (Dock == DockStyle.Left || Dock == DockStyle.Right)
+                    //if (this.currentState == SplitterState.Collapsed)
+                    //{
+                    //    return 0;
+                    //}
+                    //else
                     {
-                        return this.ControlToHide.Width;
-                    }
-                    else
-                    {
-                        return this.ControlToHide.Height;
+                        if (Dock == DockStyle.Left || Dock == DockStyle.Right)
+                        {
+                            return this.ControlToHide.Width;
+                        }
+                        else
+                        {
+                            return this.ControlToHide.Height;
+                        }
                     }
                 }
             }
@@ -187,17 +200,50 @@ namespace SQL_Document_Builder
             {
                 if (this.ControlToHide != null && value >= 0)
                 {
-                    if (this.currentState == SplitterState.Expanded)
+                    if (value == 0)
                     {
-                        if (Dock == DockStyle.Left || Dock == DockStyle.Right)
+                        this.Collapse();
+                    }
+                    else
+                    {
+                        if (!IsCollapsed)   //this.currentState == SplitterState.Expanded
                         {
-                            this.ControlToHide.Width = value;
-                        }
-                        else
-                        {
-                            this.ControlToHide.Height = value;
+                            if (Dock == DockStyle.Left || Dock == DockStyle.Right)
+                            {
+                                this.ControlToHide.Width = value;
+                            }
+                            else
+                            {
+                                this.ControlToHide.Height = value;
+                            }
                         }
                     }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Sets the splitter distance (size of the control) without animation
+        /// </summary>
+        /// <param name="distance"></param>
+        public void SetSplitterDistance(int distance)
+        {
+            if (this.ControlToHide != null)
+            {
+                if (distance > 0)
+                {
+                    if (Dock == DockStyle.Left || Dock == DockStyle.Right)
+                    {
+                        this.ControlToHide.Width = distance;
+                    }
+                    else
+                    {
+                        this.ControlToHide.Height = distance;
+                    }
+                }
+                else
+                {
+                    this.Collapse();
                 }
             }
         }
@@ -214,7 +260,7 @@ namespace SQL_Document_Builder
         public void Collapse()
         {
             //if (currentState != SplitterState.Collapsed && ControlToHide != null)
-            if (!IsCollapsed && ControlToHide != null)
+            if (!IsCollapsed)
             {
                 //currentState = SplitterState.Collapsed;
                 ControlToHide.Visible = false;
@@ -239,22 +285,19 @@ namespace SQL_Document_Builder
             //if (currentState != SplitterState.Expanded && ControlToHide != null)
             {
                 //currentState = SplitterState.Expanded;
-                if (ControlToHide != null)
+                ControlToHide.Visible = true;
+                if (ExpandParentForm && parentForm != null)
                 {
-                    ControlToHide.Visible = true;
-                    if (ExpandParentForm && parentForm != null)
+                    if (Dock == DockStyle.Left || Dock == DockStyle.Right)
                     {
-                        if (Dock == DockStyle.Left || Dock == DockStyle.Right)
-                        {
-                            parentForm.Width += ControlToHide.Width;
-                        }
-                        else
-                        {
-                            parentForm.Width += ControlToHide.Height;
-                        }
+                        parentForm.Width += ControlToHide.Width;
                     }
-                    ChangeSate(SplitterState.Expanded);
+                    else
+                    {
+                        parentForm.Width += ControlToHide.Height;
+                    }
                 }
+                ChangeSate(SplitterState.Expanded);
             }
         }
 
@@ -311,6 +354,10 @@ namespace SQL_Document_Builder
 
         #region Event Handlers
 
+        /// <summary>
+        /// Ons the mouse down.
+        /// </summary>
+        /// <param name="e">The e.</param>
         protected override void OnMouseDown(MouseEventArgs e)
         {
             // if the hider control isn't hot, let the base resize action occur
@@ -323,14 +370,23 @@ namespace SQL_Document_Builder
             }
         }
 
-        private void OnResize(object? sender, System.EventArgs e)
+        /// <summary>
+        /// Ons the resize.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void OnResize(object sender, System.EventArgs e)
         {
             this.Invalidate();
         }
 
+        /// <summary>
         // this method was updated in version 1.11 to fix a flickering problem
         // discovered by John O'Byrne
-        private void OnMouseMove(object? sender, System.Windows.Forms.MouseEventArgs e)
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void OnMouseMove(object sender, System.Windows.Forms.MouseEventArgs e)
         {
             // check to see if the mouse cursor position is within the bounds of our control
             if (e.X >= rr.X && e.X <= rr.X + rr.Width && e.Y >= rr.Y && e.Y <= rr.Y + rr.Height)
@@ -373,14 +429,24 @@ namespace SQL_Document_Builder
             }
         }
 
-        private void OnMouseLeave(object? sender, System.EventArgs e)
+        /// <summary>
+        /// Ons the mouse leave.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void OnMouseLeave(object sender, System.EventArgs e)
         {
             // ensure that the hot state is removed
             this.hot = false;
             this.Invalidate();
         }
 
-        private void OnClick(object? sender, System.EventArgs e)
+        /// <summary>
+        /// Ons the click.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void OnClick(object sender, System.EventArgs e)
         {
             if (ControlToHide != null && hot &&
                 currentState != SplitterState.Collapsing &&
@@ -390,6 +456,9 @@ namespace SQL_Document_Builder
             }
         }
 
+        /// <summary>
+        /// Toggles the splitter.
+        /// </summary>
         private void ToggleSplitter()
         {
             // if an animation is currently in progress for this control, drop out
@@ -398,94 +467,91 @@ namespace SQL_Document_Builder
                 return;
             }
 
-            if (ControlToHide != null)
+            controlWidth = ControlToHide.Width;
+            controlHeight = ControlToHide.Height;
+
+            if (ControlToHide.Visible)
             {
-                controlWidth = ControlToHide.Width;
-                controlHeight = ControlToHide.Height;
-
-                if (ControlToHide.Visible)
+                if (UseAnimations)
                 {
-                    if (UseAnimations)
-                    {
-                        currentState = SplitterState.Collapsing;
+                    currentState = SplitterState.Collapsing;
 
-                        if (parentForm != null)
-                        {
-                            if (this.Dock == DockStyle.Left || this.Dock == DockStyle.Right)
-                            {
-                                parentFormWidth = parentForm.Width - controlWidth;
-                            }
-                            else
-                            {
-                                parentFormHeight = parentForm.Height - controlHeight;
-                            }
-                        }
-
-                        this.animationTimer.Enabled = true;
-                    }
-                    else
+                    if (parentForm != null)
                     {
-                        // no animations, so just toggle the visible state
-                        //currentState = SplitterState.Collapsed;
-                        ControlToHide.Visible = false;
-                        if (ExpandParentForm && parentForm != null)
-                        {
-                            if (this.Dock == DockStyle.Left || this.Dock == DockStyle.Right)
-                            {
-                                parentForm.Width -= ControlToHide.Width;
-                            }
-                            else
-                            {
-                                parentForm.Height -= ControlToHide.Height;
-                            }
-                        }
-                        ChangeSate(SplitterState.Collapsed);
-                    }
-                }
-                else
-                {
-                    // control to hide is collapsed
-                    if (UseAnimations)
-                    {
-                        currentState = SplitterState.Expanding;
-
                         if (this.Dock == DockStyle.Left || this.Dock == DockStyle.Right)
                         {
-                            if (parentForm != null)
-                            {
-                                parentFormWidth = parentForm.Width + controlWidth;
-                            }
-                            ControlToHide.Width = 0;
+                            parentFormWidth = parentForm.Width - controlWidth;
                         }
                         else
                         {
-                            if (parentForm != null)
-                            {
-                                parentFormHeight = parentForm.Height + controlHeight;
-                            }
-                            ControlToHide.Height = 0;
+                            parentFormHeight = parentForm.Height - controlHeight;
                         }
-                        ControlToHide.Visible = true;
-                        this.animationTimer.Enabled = true;
+                    }
+
+                    this.animationTimer.Enabled = true;
+                }
+                else
+                {
+                    // no animations, so just toggle the visible state
+                    //currentState = SplitterState.Collapsed;
+                    ControlToHide.Visible = false;
+                    if (ExpandParentForm && parentForm != null)
+                    {
+                        if (this.Dock == DockStyle.Left || this.Dock == DockStyle.Right)
+                        {
+                            parentForm.Width -= ControlToHide.Width;
+                        }
+                        else
+                        {
+                            parentForm.Height -= ControlToHide.Height;
+                        }
+                    }
+                    ChangeSate(SplitterState.Collapsed);
+                }
+            }
+            else
+            {
+                // control to hide is collapsed
+                if (UseAnimations)
+                {
+                    currentState = SplitterState.Expanding;
+
+                    if (this.Dock == DockStyle.Left || this.Dock == DockStyle.Right)
+                    {
+                        if (parentForm != null)
+                        {
+                            parentFormWidth = parentForm.Width + controlWidth;
+                        }
+                        ControlToHide.Width = 0;
                     }
                     else
                     {
-                        // no animations, so just toggle the visible state
-                        //currentState = SplitterState.Expanded;
-                        ControlToHide.Visible = true;
-                        if (ExpandParentForm && parentForm != null)
+                        if (parentForm != null)
                         {
-                            if (this.Dock == DockStyle.Left || this.Dock == DockStyle.Right)
-                            {
-                                parentForm.Width += ControlToHide.Width;
-                            }
-                            else
-                            {
-                                parentForm.Height += ControlToHide.Height;
-                            }
+                            parentFormHeight = parentForm.Height + controlHeight;
                         }
-                        ChangeSate(SplitterState.Expanded);
+                        ControlToHide.Height = 0;
                     }
+                    ControlToHide.Visible = true;
+                    this.animationTimer.Enabled = true;
+                }
+                else
+                {
+                    // no animations, so just toggle the visible state
+                    //currentState = SplitterState.Expanded;
+                    ControlToHide.Visible = true;
+                    if (ExpandParentForm && parentForm != null)
+                    {
+                        if (this.Dock == DockStyle.Left || this.Dock == DockStyle.Right)
+                        {
+                            parentForm.Width += ControlToHide.Width;
+                        }
+                        else
+                        {
+                            parentForm.Height += ControlToHide.Height;
+                        }
+                    }
+                    ChangeSate(SplitterState.Expanded);
                 }
             }
         }
@@ -496,128 +562,125 @@ namespace SQL_Document_Builder
 
         #region Animation Timer Tick
 
-        private void AnimationTimerTick(object? sender, System.EventArgs e)
+        private void AnimationTimerTick(object sender, System.EventArgs e)
         {
-            if (ControlToHide != null && parentForm != null)
+            switch (currentState)
             {
-                switch (currentState)
-                {
-                    case SplitterState.Collapsing:
+                case SplitterState.Collapsing:
 
-                        if (this.Dock == DockStyle.Left || this.Dock == DockStyle.Right)
+                    if (this.Dock == DockStyle.Left || this.Dock == DockStyle.Right)
+                    {
+                        // vertical splitter
+                        if (ControlToHide.Width > AnimationStep)
                         {
-                            // vertical splitter
-                            if (ControlToHide.Width > AnimationStep)
+                            if (ExpandParentForm && parentForm.WindowState != FormWindowState.Maximized
+                                && parentForm != null)
                             {
-                                if (ExpandParentForm && parentForm.WindowState != FormWindowState.Maximized
-                                    && parentForm != null)
-                                {
-                                    parentForm.Width -= AnimationStep;
-                                }
-                                ControlToHide.Width -= AnimationStep;
+                                parentForm.Width -= AnimationStep;
                             }
-                            else
-                            {
-                                if (ExpandParentForm && parentForm.WindowState != FormWindowState.Maximized
-                                    && parentForm != null)
-                                {
-                                    parentForm.Width = parentFormWidth;
-                                }
-                                ControlToHide.Visible = false;
-                                animationTimer.Enabled = false;
-                                ControlToHide.Width = controlWidth;
-                                //currentState = SplitterState.Collapsed;
-                                ChangeSate(SplitterState.Collapsed);
-                                this.Invalidate();
-                            }
+                            ControlToHide.Width -= AnimationStep;
                         }
                         else
                         {
-                            // horizontal splitter
-                            if (ControlToHide.Height > AnimationStep)
+                            if (ExpandParentForm && parentForm.WindowState != FormWindowState.Maximized
+                                && parentForm != null)
                             {
-                                if (ExpandParentForm && parentForm.WindowState != FormWindowState.Maximized
-                                    && parentForm != null)
-                                {
-                                    parentForm.Height -= AnimationStep;
-                                }
-                                ControlToHide.Height -= AnimationStep;
+                                parentForm.Width = parentFormWidth;
                             }
-                            else
-                            {
-                                if (ExpandParentForm && parentForm.WindowState != FormWindowState.Maximized
-                                    && parentForm != null)
-                                {
-                                    parentForm.Height = parentFormHeight;
-                                }
-                                ControlToHide.Visible = false;
-                                animationTimer.Enabled = false;
-                                ControlToHide.Height = controlHeight;
-                                //currentState = SplitterState.Collapsed;
-                                ChangeSate(SplitterState.Collapsed);
-                                this.Invalidate();
-                            }
+                            ControlToHide.Visible = false;
+                            animationTimer.Enabled = false;
+                            ControlToHide.Width = controlWidth;
+                            //currentState = SplitterState.Collapsed;
+                            ChangeSate(SplitterState.Collapsed);
+                            this.Invalidate();
                         }
-                        break;
-
-                    case SplitterState.Expanding:
-
-                        if (this.Dock == DockStyle.Left || this.Dock == DockStyle.Right)
+                    }
+                    else
+                    {
+                        // horizontal splitter
+                        if (ControlToHide.Height > AnimationStep)
                         {
-                            // vertical splitter
-                            if (ControlToHide.Width < (controlWidth - AnimationStep))
+                            if (ExpandParentForm && parentForm.WindowState != FormWindowState.Maximized
+                                && parentForm != null)
                             {
-                                if (ExpandParentForm && parentForm.WindowState != FormWindowState.Maximized
-                                    && parentForm != null)
-                                {
-                                    parentForm.Width += AnimationStep;
-                                }
-                                ControlToHide.Width += AnimationStep;
+                                parentForm.Height -= AnimationStep;
                             }
-                            else
-                            {
-                                if (ExpandParentForm && parentForm.WindowState != FormWindowState.Maximized
-                                    && parentForm != null)
-                                {
-                                    parentForm.Width = parentFormWidth;
-                                }
-                                ControlToHide.Width = controlWidth;
-                                ControlToHide.Visible = true;
-                                animationTimer.Enabled = false;
-                                //currentState = SplitterState.Expanded;
-                                ChangeSate(SplitterState.Expanded);
-                                this.Invalidate();
-                            }
+                            ControlToHide.Height -= AnimationStep;
                         }
                         else
                         {
-                            // horizontal splitter
-                            if (ControlToHide.Height < (controlHeight - AnimationStep))
+                            if (ExpandParentForm && parentForm.WindowState != FormWindowState.Maximized
+                                && parentForm != null)
                             {
-                                if (ExpandParentForm && parentForm.WindowState != FormWindowState.Maximized
-                                    && parentForm != null)
-                                {
-                                    parentForm.Height += AnimationStep;
-                                }
-                                ControlToHide.Height += AnimationStep;
+                                parentForm.Height = parentFormHeight;
                             }
-                            else
-                            {
-                                if (ExpandParentForm && parentForm.WindowState != FormWindowState.Maximized
-                                    && parentForm != null)
-                                {
-                                    parentForm.Height = parentFormHeight;
-                                }
-                                ControlToHide.Height = controlHeight;
-                                ControlToHide.Visible = true;
-                                animationTimer.Enabled = false;
-                                //currentState = SplitterState.Expanded;
-                                ChangeSate(SplitterState.Expanded);
-                                this.Invalidate();
-                            }
+                            ControlToHide.Visible = false;
+                            animationTimer.Enabled = false;
+                            ControlToHide.Height = controlHeight;
+                            //currentState = SplitterState.Collapsed;
+                            ChangeSate(SplitterState.Collapsed);
+                            this.Invalidate();
                         }
-                        break;
-                }
+                    }
+                    break;
+
+                case SplitterState.Expanding:
+
+                    if (this.Dock == DockStyle.Left || this.Dock == DockStyle.Right)
+                    {
+                        // vertical splitter
+                        if (ControlToHide.Width < (controlWidth - AnimationStep))
+                        {
+                            if (ExpandParentForm && parentForm.WindowState != FormWindowState.Maximized
+                                && parentForm != null)
+                            {
+                                parentForm.Width += AnimationStep;
+                            }
+                            ControlToHide.Width += AnimationStep;
+                        }
+                        else
+                        {
+                            if (ExpandParentForm && parentForm.WindowState != FormWindowState.Maximized
+                                && parentForm != null)
+                            {
+                                parentForm.Width = parentFormWidth;
+                            }
+                            ControlToHide.Width = controlWidth;
+                            ControlToHide.Visible = true;
+                            animationTimer.Enabled = false;
+                            //currentState = SplitterState.Expanded;
+                            ChangeSate(SplitterState.Expanded);
+                            this.Invalidate();
+                        }
+                    }
+                    else
+                    {
+                        // horizontal splitter
+                        if (ControlToHide.Height < (controlHeight - AnimationStep))
+                        {
+                            if (ExpandParentForm && parentForm.WindowState != FormWindowState.Maximized
+                                && parentForm != null)
+                            {
+                                parentForm.Height += AnimationStep;
+                            }
+                            ControlToHide.Height += AnimationStep;
+                        }
+                        else
+                        {
+                            if (ExpandParentForm && parentForm.WindowState != FormWindowState.Maximized
+                                && parentForm != null)
+                            {
+                                parentForm.Height = parentFormHeight;
+                            }
+                            ControlToHide.Height = controlHeight;
+                            ControlToHide.Visible = true;
+                            animationTimer.Enabled = false;
+                            //currentState = SplitterState.Expanded;
+                            ChangeSate(SplitterState.Expanded);
+                            this.Invalidate();
+                        }
+                    }
+                    break;
             }
         }
 
@@ -976,22 +1039,4 @@ namespace SQL_Document_Builder
 
         #endregion Implementation
     }
-
-    ///// <summary>
-    ///// A simple designer class for the CollapsibleSplitter control to remove
-    ///// unwanted properties at design time.
-    ///// </summary>
-    //public class CollapsibleSplitterDesigner : System.Windows.Forms.Design.ControlDesigner
-    //{
-    //    public CollapsibleSplitterDesigner()
-    //    {
-    //    }
-
-    //    protected override void PreFilterProperties(System.Collections.IDictionary properties)
-    //    {
-    //        properties.Remove("IsCollapsed");
-    //        properties.Remove("BorderStyle");
-    //        properties.Remove("Size");
-    //    }
-    //}
 }

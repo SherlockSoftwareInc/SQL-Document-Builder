@@ -88,7 +88,7 @@ namespace SQL_Document_Builder
         /// </summary>
         public void Clear()
         {
-            tablenameLabel.Text = "";
+            namePanel.Clear();
             SelectedColumn = "";
             if (columnDefDataGridView.DataSource != null)
             {
@@ -164,6 +164,8 @@ namespace SQL_Document_Builder
         public async Task OpenAsync(ObjectName? objectName, string connectionString)
         {
             Clear();
+            namePanel.Open(objectName);
+
             ConnectionString = connectionString;
             SelectedColumnChanged?.Invoke(this, EventArgs.Empty);
 
@@ -181,8 +183,6 @@ namespace SQL_Document_Builder
             }
             else
             {
-                tablenameLabel.Text = objectName.FullName;
-
                 if (objectName.ObjectType == ObjectName.ObjectTypeEnums.Table ||
                     objectName.ObjectType == ObjectName.ObjectTypeEnums.View)
                 {

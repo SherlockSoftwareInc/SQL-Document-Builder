@@ -180,7 +180,7 @@
             prevSearchButton = new System.Windows.Forms.Button();
             searchSQLTextBox = new System.Windows.Forms.TextBox();
             definitionPanel = new ColumnDefView();
-            collapsibleSplitter1 = new CollapsibleSplitter();
+            defiCollapsibleSplitter = new CollapsibleSplitter();
             timer1 = new System.Windows.Forms.Timer(components);
             splitContainer1 = new System.Windows.Forms.SplitContainer();
             replacePanel = new System.Windows.Forms.Panel();
@@ -394,8 +394,8 @@
             objectsTabControl.Location = new System.Drawing.Point(0, 0);
             objectsTabControl.Name = "objectsTabControl";
             objectsTabControl.SelectedIndex = 0;
-            objectsTabControl.Size = new System.Drawing.Size(214, 676);
-            objectsTabControl.TabIndex = 2;
+            objectsTabControl.Size = new System.Drawing.Size(213, 676);
+            objectsTabControl.TabIndex = 0;
             // 
             // tabPage1
             // 
@@ -404,7 +404,7 @@
             tabPage1.Location = new System.Drawing.Point(4, 24);
             tabPage1.Name = "tabPage1";
             tabPage1.Padding = new System.Windows.Forms.Padding(3);
-            tabPage1.Size = new System.Drawing.Size(206, 648);
+            tabPage1.Size = new System.Drawing.Size(205, 648);
             tabPage1.TabIndex = 0;
             tabPage1.Text = "Objects";
             tabPage1.UseVisualStyleBackColor = true;
@@ -417,8 +417,8 @@
             objectsListBox.ItemHeight = 15;
             objectsListBox.Location = new System.Drawing.Point(3, 138);
             objectsListBox.Name = "objectsListBox";
-            objectsListBox.Size = new System.Drawing.Size(200, 507);
-            objectsListBox.TabIndex = 3;
+            objectsListBox.Size = new System.Drawing.Size(199, 507);
+            objectsListBox.TabIndex = 0;
             objectsListBox.SelectedIndexChanged += ObjectsListBox_SelectedIndexChanged;
             // 
             // panel2
@@ -433,8 +433,8 @@
             panel2.Dock = System.Windows.Forms.DockStyle.Top;
             panel2.Location = new System.Drawing.Point(3, 3);
             panel2.Name = "panel2";
-            panel2.Size = new System.Drawing.Size(200, 135);
-            panel2.TabIndex = 8;
+            panel2.Size = new System.Drawing.Size(199, 135);
+            panel2.TabIndex = 1;
             panel2.Resize += Panel2_Resize;
             // 
             // clearSerachButton
@@ -443,7 +443,7 @@
             clearSerachButton.Location = new System.Drawing.Point(123, 107);
             clearSerachButton.Name = "clearSerachButton";
             clearSerachButton.Size = new System.Drawing.Size(23, 23);
-            clearSerachButton.TabIndex = 3;
+            clearSerachButton.TabIndex = 0;
             clearSerachButton.Text = "X";
             clearSerachButton.UseVisualStyleBackColor = true;
             clearSerachButton.Click += ClearSerachButton_Click;
@@ -453,7 +453,7 @@
             searchTextBox.Location = new System.Drawing.Point(3, 107);
             searchTextBox.Name = "searchTextBox";
             searchTextBox.Size = new System.Drawing.Size(114, 23);
-            searchTextBox.TabIndex = 0;
+            searchTextBox.TabIndex = 6;
             searchTextBox.TextChanged += SearchTextBox_TextChanged;
             // 
             // schemaLabel
@@ -462,7 +462,7 @@
             schemaLabel.Location = new System.Drawing.Point(3, 47);
             schemaLabel.Name = "schemaLabel";
             schemaLabel.Size = new System.Drawing.Size(52, 15);
-            schemaLabel.TabIndex = 2;
+            schemaLabel.TabIndex = 3;
             schemaLabel.Text = "Schema:";
             // 
             // searchLabel
@@ -471,7 +471,7 @@
             searchLabel.Location = new System.Drawing.Point(3, 89);
             searchLabel.Name = "searchLabel";
             searchLabel.Size = new System.Drawing.Size(60, 15);
-            searchLabel.TabIndex = 2;
+            searchLabel.TabIndex = 5;
             searchLabel.Text = "Search for";
             // 
             // objectTypeComboBox
@@ -482,7 +482,7 @@
             objectTypeComboBox.Location = new System.Drawing.Point(3, 21);
             objectTypeComboBox.Name = "objectTypeComboBox";
             objectTypeComboBox.Size = new System.Drawing.Size(168, 23);
-            objectTypeComboBox.TabIndex = 1;
+            objectTypeComboBox.TabIndex = 2;
             objectTypeComboBox.SelectedIndexChanged += ObjectTypeComboBox_SelectedIndexChanged;
             // 
             // schemaComboBox
@@ -493,7 +493,7 @@
             schemaComboBox.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             schemaComboBox.Name = "schemaComboBox";
             schemaComboBox.Size = new System.Drawing.Size(171, 23);
-            schemaComboBox.TabIndex = 1;
+            schemaComboBox.TabIndex = 4;
             schemaComboBox.SelectedIndexChanged += SchemaComboBox_SelectedIndexChanged;
             // 
             // label1
@@ -502,7 +502,7 @@
             label1.Location = new System.Drawing.Point(3, 3);
             label1.Name = "label1";
             label1.Size = new System.Drawing.Size(71, 15);
-            label1.TabIndex = 0;
+            label1.TabIndex = 1;
             label1.Text = "Object type:";
             // 
             // tabPage2
@@ -518,7 +518,7 @@
             tabPage2.Location = new System.Drawing.Point(4, 24);
             tabPage2.Name = "tabPage2";
             tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            tabPage2.Size = new System.Drawing.Size(206, 648);
+            tabPage2.Size = new System.Drawing.Size(293, 648);
             tabPage2.TabIndex = 1;
             tabPage2.Text = "Output options";
             tabPage2.UseVisualStyleBackColor = true;
@@ -1339,7 +1339,7 @@
             statusStrip1.Location = new System.Drawing.Point(0, 725);
             statusStrip1.Name = "statusStrip1";
             statusStrip1.Size = new System.Drawing.Size(1267, 22);
-            statusStrip1.TabIndex = 6;
+            statusStrip1.TabIndex = 2;
             statusStrip1.Text = "statusStrip1";
             // 
             // progressBar
@@ -1379,7 +1379,7 @@
             searchPanel.Location = new System.Drawing.Point(343, 3);
             searchPanel.Name = "searchPanel";
             searchPanel.Size = new System.Drawing.Size(240, 29);
-            searchPanel.TabIndex = 2;
+            searchPanel.TabIndex = 0;
             searchPanel.Visible = false;
             // 
             // closeSearchButton
@@ -1442,22 +1442,23 @@
             definitionPanel.Size = new System.Drawing.Size(360, 676);
             definitionPanel.TabIndex = 4;
             // 
-            // collapsibleSplitter1
+            // defiCollapsibleSplitter
             // 
-            collapsibleSplitter1.AnimationDelay = 20;
-            collapsibleSplitter1.AnimationStep = 20;
-            collapsibleSplitter1.BorderStyle3D = System.Windows.Forms.Border3DStyle.Flat;
-            collapsibleSplitter1.ControlToHide = definitionPanel;
-            collapsibleSplitter1.Dock = System.Windows.Forms.DockStyle.Right;
-            collapsibleSplitter1.ExpandParentForm = false;
-            collapsibleSplitter1.Location = new System.Drawing.Point(899, 49);
-            collapsibleSplitter1.Name = "collapsibleSplitter1";
-            collapsibleSplitter1.Size = new System.Drawing.Size(8, 676);
-            collapsibleSplitter1.SplitterDistance = 360;
-            collapsibleSplitter1.TabIndex = 3;
-            collapsibleSplitter1.TabStop = false;
-            collapsibleSplitter1.UseAnimations = false;
-            collapsibleSplitter1.VisualStyle = VisualStyles.Mozilla;
+            defiCollapsibleSplitter.AnimationDelay = 2;
+            defiCollapsibleSplitter.AnimationStep = 100;
+            defiCollapsibleSplitter.BorderStyle3D = System.Windows.Forms.Border3DStyle.Flat;
+            defiCollapsibleSplitter.ControlToHide = definitionPanel;
+            defiCollapsibleSplitter.Cursor = System.Windows.Forms.Cursors.VSplit;
+            defiCollapsibleSplitter.Dock = System.Windows.Forms.DockStyle.Right;
+            defiCollapsibleSplitter.ExpandParentForm = false;
+            defiCollapsibleSplitter.Location = new System.Drawing.Point(899, 49);
+            defiCollapsibleSplitter.Name = "defiCollapsibleSplitter";
+            defiCollapsibleSplitter.Size = new System.Drawing.Size(8, 676);
+            defiCollapsibleSplitter.SplitterDistance = 360;
+            defiCollapsibleSplitter.TabIndex = 3;
+            defiCollapsibleSplitter.TabStop = false;
+            defiCollapsibleSplitter.UseAnimations = true;
+            defiCollapsibleSplitter.VisualStyle = VisualStyles.Mozilla;
             // 
             // timer1
             // 
@@ -1480,7 +1481,7 @@
             splitContainer1.Panel2.Controls.Add(searchPanel);
             splitContainer1.Panel2.Controls.Add(tabControl1);
             splitContainer1.Size = new System.Drawing.Size(899, 676);
-            splitContainer1.SplitterDistance = 214;
+            splitContainer1.SplitterDistance = 213;
             splitContainer1.TabIndex = 18;
             // 
             // replacePanel
@@ -1494,7 +1495,7 @@
             replacePanel.Location = new System.Drawing.Point(285, 203);
             replacePanel.Name = "replacePanel";
             replacePanel.Size = new System.Drawing.Size(240, 60);
-            replacePanel.TabIndex = 19;
+            replacePanel.TabIndex = 1;
             replacePanel.Visible = false;
             // 
             // button1
@@ -1506,7 +1507,7 @@
             button1.Location = new System.Drawing.Point(214, 2);
             button1.Name = "button1";
             button1.Size = new System.Drawing.Size(23, 23);
-            button1.TabIndex = 5;
+            button1.TabIndex = 2;
             button1.Text = "❌";
             toolTip1.SetToolTip(button1, "Close");
             button1.UseVisualStyleBackColor = false;
@@ -1521,7 +1522,7 @@
             replaceAllButton.Location = new System.Drawing.Point(214, 31);
             replaceAllButton.Name = "replaceAllButton";
             replaceAllButton.Size = new System.Drawing.Size(23, 23);
-            replaceAllButton.TabIndex = 4;
+            replaceAllButton.TabIndex = 5;
             replaceAllButton.Tag = "Find previous (Shift+Enter)";
             toolTip1.SetToolTip(replaceAllButton, "Replace All");
             replaceAllButton.UseVisualStyleBackColor = false;
@@ -1536,7 +1537,7 @@
             replaceButton.Location = new System.Drawing.Point(188, 31);
             replaceButton.Name = "replaceButton";
             replaceButton.Size = new System.Drawing.Size(23, 23);
-            replaceButton.TabIndex = 3;
+            replaceButton.TabIndex = 4;
             replaceButton.Tag = "Find previous (Shift+Enter)";
             toolTip1.SetToolTip(replaceButton, "Replace");
             replaceButton.UseVisualStyleBackColor = false;
@@ -1550,7 +1551,7 @@
             findNextButton.Location = new System.Drawing.Point(188, 2);
             findNextButton.Name = "findNextButton";
             findNextButton.Size = new System.Drawing.Size(23, 23);
-            findNextButton.TabIndex = 2;
+            findNextButton.TabIndex = 1;
             findNextButton.Tag = "Find previous (Shift+Enter)";
             findNextButton.Text = "🠞";
             toolTip1.SetToolTip(findNextButton, "Find next");
@@ -1562,7 +1563,7 @@
             replaceReplaceTextBox.Location = new System.Drawing.Point(3, 32);
             replaceReplaceTextBox.Name = "replaceReplaceTextBox";
             replaceReplaceTextBox.Size = new System.Drawing.Size(182, 23);
-            replaceReplaceTextBox.TabIndex = 1;
+            replaceReplaceTextBox.TabIndex = 3;
             replaceReplaceTextBox.KeyDown += ReplaceReplaceTextBox_KeyDown;
             // 
             // replaceSearchTextBox
@@ -1580,8 +1581,8 @@
             tabControl1.Location = new System.Drawing.Point(0, 0);
             tabControl1.Name = "tabControl1";
             tabControl1.SelectedIndex = 0;
-            tabControl1.Size = new System.Drawing.Size(681, 676);
-            tabControl1.TabIndex = 18;
+            tabControl1.Size = new System.Drawing.Size(682, 676);
+            tabControl1.TabIndex = 2;
             tabControl1.DrawItem += TabControl1_DrawItem;
             tabControl1.SelectedIndexChanged += TabControl1_SelectedIndexChanged;
             tabControl1.MouseUp += TabControl1_MouseUp;
@@ -1620,7 +1621,7 @@
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             ClientSize = new System.Drawing.Size(1267, 747);
             Controls.Add(splitContainer1);
-            Controls.Add(collapsibleSplitter1);
+            Controls.Add(defiCollapsibleSplitter);
             Controls.Add(definitionPanel);
             Controls.Add(statusStrip1);
             Controls.Add(toolStrip1);
@@ -1716,7 +1717,7 @@
         private System.Windows.Forms.ToolStripMenuItem aboutToolStripMenuItem;
         private System.Windows.Forms.ToolStripProgressBar progressBar;
         private ColumnDefView definitionPanel;
-        private CollapsibleSplitter collapsibleSplitter1;
+        private CollapsibleSplitter defiCollapsibleSplitter;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
         private System.Windows.Forms.ToolStripMenuItem batchColumnDescToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator11;

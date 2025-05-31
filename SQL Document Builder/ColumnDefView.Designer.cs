@@ -1,4 +1,6 @@
-﻿namespace SQL_Document_Builder
+﻿using SQL_Document_Builder.Properties;
+
+namespace SQL_Document_Builder
 {
     partial class ColumnDefView
     {
@@ -29,9 +31,8 @@
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
-            panel1 = new System.Windows.Forms.Panel();
+            namePanel = new ObjectNamePanel();
             openButton = new System.Windows.Forms.Button();
-            tablenameLabel = new System.Windows.Forms.Label();
             openTableContextMenuStrip = new System.Windows.Forms.ContextMenuStrip(components);
             openToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             tableDescTextBox = new System.Windows.Forms.TextBox();
@@ -43,27 +44,29 @@
             columnDefDataGridView = new System.Windows.Forms.DataGridView();
             columnContextMenuStrip = new System.Windows.Forms.ContextMenuStrip(components);
             columnValueFrequencyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            panel1.SuspendLayout();
+            namePanel.SuspendLayout();
             openTableContextMenuStrip.SuspendLayout();
             tableContextMenuStrip.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)columnDefDataGridView).BeginInit();
             columnContextMenuStrip.SuspendLayout();
             SuspendLayout();
             // 
-            // panel1
+            // namePanel
             // 
-            panel1.BackColor = System.Drawing.SystemColors.ControlDarkDark;
-            panel1.Controls.Add(openButton);
-            panel1.Controls.Add(tablenameLabel);
-            panel1.Dock = System.Windows.Forms.DockStyle.Top;
-            panel1.Location = new System.Drawing.Point(0, 0);
-            panel1.Name = "panel1";
-            panel1.Size = new System.Drawing.Size(529, 30);
-            panel1.TabIndex = 0;
+            namePanel.BackColor = System.Drawing.SystemColors.ControlDarkDark;
+            namePanel.Controls.Add(openButton);
+            namePanel.Dock = System.Windows.Forms.DockStyle.Top;
+            namePanel.Font = new System.Drawing.Font("Segoe UI", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
+            namePanel.Location = new System.Drawing.Point(0, 0);
+            namePanel.Name = "namePanel";
+            namePanel.Size = new System.Drawing.Size(529, 30);
+            namePanel.TabIndex = 0;
             // 
             // openButton
             // 
             openButton.Dock = System.Windows.Forms.DockStyle.Right;
+            openButton.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            openButton.Font = new System.Drawing.Font("Segoe UI", 9F);
             openButton.Location = new System.Drawing.Point(499, 0);
             openButton.Name = "openButton";
             openButton.Padding = new System.Windows.Forms.Padding(3);
@@ -72,17 +75,6 @@
             openButton.Text = "📂";
             openButton.UseVisualStyleBackColor = true;
             openButton.Click += OpenToolStripMenuItem_Click;
-            // 
-            // tablenameLabel
-            // 
-            tablenameLabel.AutoSize = true;
-            tablenameLabel.ContextMenuStrip = openTableContextMenuStrip;
-            tablenameLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F);
-            tablenameLabel.ForeColor = System.Drawing.SystemColors.HighlightText;
-            tablenameLabel.Location = new System.Drawing.Point(6, 6);
-            tablenameLabel.Name = "tablenameLabel";
-            tablenameLabel.Size = new System.Drawing.Size(0, 18);
-            tablenameLabel.TabIndex = 0;
             // 
             // openTableContextMenuStrip
             // 
@@ -178,11 +170,10 @@
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             Controls.Add(columnDefDataGridView);
             Controls.Add(tableDescTextBox);
-            Controls.Add(panel1);
+            Controls.Add(namePanel);
             Name = "ColumnDefView";
             Size = new System.Drawing.Size(529, 626);
-            panel1.ResumeLayout(false);
-            panel1.PerformLayout();
+            namePanel.ResumeLayout(false);
             openTableContextMenuStrip.ResumeLayout(false);
             tableContextMenuStrip.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)columnDefDataGridView).EndInit();
@@ -193,10 +184,9 @@
 
         #endregion
 
-        private System.Windows.Forms.Panel panel1;
+        private ObjectNamePanel namePanel;
         private System.Windows.Forms.TextBox tableDescTextBox;
         private System.Windows.Forms.DataGridView columnDefDataGridView;
-        private System.Windows.Forms.Label tablenameLabel;
         private System.Windows.Forms.ContextMenuStrip columnContextMenuStrip;
         private System.Windows.Forms.ToolStripMenuItem columnValueFrequencyToolStripMenuItem;
         private System.Windows.Forms.ContextMenuStrip tableContextMenuStrip;

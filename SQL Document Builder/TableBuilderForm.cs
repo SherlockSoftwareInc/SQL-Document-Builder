@@ -2658,7 +2658,7 @@ namespace SQL_Document_Builder
                 return;
             }
             Properties.Settings.Default.LeftSplitterDistance = splitContainer1.SplitterDistance;
-            Properties.Settings.Default.RightSplitterDistance = collapsibleSplitter1.SplitterDistance;
+            Properties.Settings.Default.RightSplitterDistance = defiCollapsibleSplitter.SplitterDistance;
             //Properties.Settings.Default.SchemaSettings = _settingItems.Settings;
             //Properties.Settings.Default.Templetes = templates.TemplatesValue;
             Properties.Settings.Default.Save();
@@ -2695,7 +2695,7 @@ namespace SQL_Document_Builder
             //if (collapsibleSplitter1 != null)
             //    collapsibleSplitter1.SplitterDistance = (int)(this.Width * 0.4F);
 
-            collapsibleSplitter1.SplitterDistance = Properties.Settings.Default.RightSplitterDistance;
+            defiCollapsibleSplitter.SplitterDistance = Properties.Settings.Default.RightSplitterDistance;
             splitContainer1.SplitterDistance = Properties.Settings.Default.LeftSplitterDistance;
 
             // populate most recent used files
