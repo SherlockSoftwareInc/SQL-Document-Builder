@@ -268,95 +268,159 @@ namespace SQL_Document_Builder.Template
   <TemplateItem>
     <DocumentType>Markdown</DocumentType>
     <ObjectType>Table</ObjectType>
-    <Body># Table: `[ObjectFullName]`
+    <Body># Table: `~ObjectFullName~`
 
-&gt; [Description]
+&gt; ~Description~
 
 **Columns:**
-[Columns]
+~Columns~
 
 **Indexes:**
-[Indexes]
+~Indexes~
 
 **Constraints:**
-[Constraints]
+~Constraints~
 ---
 </Body>
   </TemplateItem>
   <TemplateItem>
     <DocumentType>Markdown</DocumentType>
     <ObjectType>View</ObjectType>
-    <Body># View: `[ObjectFullName]`
+    <Body># View: `~ObjectFullName~`
 
-&gt; [Description]
+&gt; ~Description~
 
 **Columns:**
-[Columns]
+~Columns~
 
 **Indexes:**
-[Indexes]
+~Indexes~
 
 **SQL Definition:**
 ```sql
-[Definition]
+~Definition~
 ```</Body>
   </TemplateItem>
   <TemplateItem>
     <DocumentType>Markdown</DocumentType>
     <ObjectType>StoredProcedure</ObjectType>
-    <Body># Stored Procedure: `[ObjectFullName]`
+    <Body># Stored Procedure: `~ObjectFullName~`
 
-&gt; [Description]
+&gt; ~Description~
 
 ## Parameters
-[Parameters]
+~Parameters~
 
 ## SQL Code
 ```sql
-[Definition]
+~Definition~
 ```
 </Body>
   </TemplateItem>
   <TemplateItem>
     <DocumentType>Markdown</DocumentType>
     <ObjectType>Function</ObjectType>
-    <Body># Function: `[ObjectFullName]`
+    <Body># Function: `~ObjectFullName~`
 
-&gt; [Description]
+&gt; ~Description~
 
 ## Parameters
-[Parameters]
+~Parameters~
 
 ## SQL Code
 ```sql
-[Definition]
+~Definition~
 ```
 </Body>
   </TemplateItem>
   <TemplateItem>
     <DocumentType>SharePoint</DocumentType>
     <ObjectType>Table</ObjectType>
-    <Body>&lt;h1&gt;TABLE NAME: [ObjectFullName]&lt;/h1&gt;
-&lt;p&gt;[Description]&lt;/p&gt;
+    <Body>&lt;h1&gt;TABLE NAME: ~ObjectFullName~&lt;/h1&gt;
+&lt;p&gt;~Description~&lt;/p&gt;
 &lt;div&gt;
-    [Columns]
+~Columns~
 &lt;/div&gt;
+&lt;div&gt;
+&lt;h2&gt;Indexes:&lt;/h2&gt;
+~Indexes~
+&lt;/div&gt;
+&lt;div&gt;
+&lt;h2&gt;Constraints:&lt;/h2&gt;
+~Constraints~
+&lt;/div&gt;
+&lt;hr/&gt;
+&lt;div&gt;Back to [[Home]]&lt;/div&gt; 
 </Body>
   </TemplateItem>
   <TemplateItem>
     <DocumentType>Markdown</DocumentType>
     <ObjectType>Trigger</ObjectType>
-    <Body># Trigger: `[ObjectFullName]`
+    <Body># Trigger: `~ObjectFullName~`
 
-&gt; [Description]
+&gt; ~Description~
 
 ## Parameters
-[Parameters]
+~Parameters~
 
 ## Trigger SQL Code
 ```sql
-[Definition]
+~Definition~
 ```
+</Body>
+  </TemplateItem>
+  <TemplateItem>
+    <DocumentType>SharePoint</DocumentType>
+    <ObjectType>View</ObjectType>
+    <Body>&lt;h1&gt;VIEW NAME: ~ObjectFullName~&lt;/h1&gt;
+&lt;p&gt;~Description~&lt;/p&gt;
+&lt;div&gt;
+~Columns~
+&lt;/div&gt;
+&lt;div&gt;
+&lt;h2&gt;Indexes:&lt;/h2&gt;
+~Indexes~
+&lt;/div&gt;
+&lt;div&gt;
+&lt;h2&gt;Code to build the view&lt;/h2&gt;
+~Definition~
+&lt;/div&gt;
+&lt;hr/&gt;
+&lt;div&gt;Back to [[Home]]&lt;/div&gt; 
+</Body>
+  </TemplateItem>
+  <TemplateItem>
+    <DocumentType>SharePoint</DocumentType>
+    <ObjectType>Function</ObjectType>
+    <Body>&lt;h1&gt;FUNCTION NAME: ~ObjectFullName~&lt;/h1&gt;
+&lt;p&gt;~Description~&lt;/p&gt;
+&lt;div&gt;
+&lt;h2&gt;Parameters:&lt;/h2&gt;
+~Parameters~
+&lt;/div&gt;
+&lt;div&gt;
+&lt;h2&gt;Source code&lt;/h2&gt;
+~Definition~
+&lt;/div&gt;
+&lt;hr/&gt;
+&lt;div&gt;Back to [[Home]]&lt;/div&gt; 
+</Body>
+  </TemplateItem>
+  <TemplateItem>
+    <DocumentType>SharePoint</DocumentType>
+    <ObjectType>StoredProcedure</ObjectType>
+    <Body>&lt;h1&gt;PROCEDURE NAME: ~ObjectFullName~&lt;/h1&gt;
+&lt;p&gt;~Description~&lt;/p&gt;
+&lt;div&gt;
+&lt;h2&gt;Parameters:&lt;/h2&gt;
+~Parameters~
+&lt;/div&gt;
+&lt;div&gt;
+&lt;h2&gt;Source code&lt;/h2&gt;
+~Definition~
+&lt;/div&gt;
+&lt;hr/&gt;
+&lt;div&gt;Back to [[Home]]&lt;/div&gt; 
 </Body>
   </TemplateItem>
 </root>";

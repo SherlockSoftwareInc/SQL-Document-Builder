@@ -1,5 +1,6 @@
 ﻿using System;
-using System.Data;
+using System.Collections.Generic;
+using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -15,259 +16,10 @@ namespace SQL_Document_Builder
         //private int _connectionCount = 0;
         private readonly string? _database = string.Empty;
 
-        //private SQLDatabaseConnectionItem? _selectedConnection;
-        private readonly string? _server = string.Empty;
-
         private readonly System.Text.StringBuilder _script = new();
 
-        /// <summary>
-        /// Builds the table list async.
-        /// </summary>
-        /// <param name="schemaName">The schema name.</param>
-        /// <param name="progress">The progress.</param>
-        /// <returns>A Task.</returns>
-        public async Task<string> BuildTableListAsync(string schemaName, string connectionString, IProgress<int> progress)
-        {
-            _script.Clear();
-
-            try
-            {
-                string sql = schemaName.Length == 0
-                    ? "SELECT SCHEMA_NAME(schema_id) AS table_schema, name AS table_name FROM sys.tables ORDER BY table_schema, table_name"
-                    : $"SELECT SCHEMA_NAME(schema_id) AS table_schema, name AS table_name FROM sys.tables WHERE SCHEMA_NAME(schema_id) = N'{schemaName}' ORDER BY table_schema, table_name";
-
-                DataTable? dt = await DatabaseHelper.GetDataTableAsync(sql, connectionString);
-
-                if (dt?.Rows.Count > 0)
-                {
-                    AppendLine("""
-<table class="wikitable" style="margin: 1em 0px; border: 1px solid #a2a9b1; color: #202122; font-family: sans-serif; font-size: 14px; background-color: #f8f9fa;">
-<tbody>
-    <tr>
-        <th style="padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;">Schema</th>
-        <th style="padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;">Table Name</th>
-        <th style="padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;">Description</th>
-    </tr>
-""");
-
-                    // Optionally, batch-fetch all descriptions here for better performance
-                    // For now, process sequentially
-                    int lastPercent = -1;
-                    for (int i = 0; i < dt.Rows.Count; i++)
-                    {
-                        int percentComplete = (i * 100) / dt.Rows.Count;
-                        if (percentComplete != lastPercent && percentComplete % 2 == 0)
-                        {
-                            progress.Report(percentComplete + 1);
-                            lastPercent = percentComplete;
-                        }
-
-                        DataRow dr = dt.Rows[i];
-                        string tableSchema = dr["table_schema"]?.ToString() ?? string.Empty;
-                        string tableName = dr["table_name"]?.ToString() ?? string.Empty;
-
-                        string description = await DatabaseHelper.GetTableDescriptionAsync(
-                            new ObjectName { Schema = tableSchema, Name = tableName }
-                            , connectionString
-                        );
-
-                        AppendLine($"""
-    <tr>
-        <td style="padding: 0.2em 0.4em; border: 1px solid #a2a9b1;">{tableSchema}</td>
-        <td style="padding: 0.2em 0.4em; border: 1px solid #a2a9b1;">[[{tableSchema}.{tableName}|{tableName}]]</td>
-        <td style="padding: 0.2em 0.4em; border: 1px solid #a2a9b1;">{description}</td>
-    </tr>
-""");
-                    }
-                    AppendLine("</tbody>");
-                    AppendLine("</table>");
-                }
-            }
-            catch (Exception ex)
-            {
-                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
-            }
-
-            return _script.ToString();
-        }
-
-        /// <summary>
-        /// Scan user view in the database and generate the creation script for them
-        /// </summary>
-        public async Task<string> BuildViewListAsync(string schemaName, string connectionString, IProgress<int> progress)
-        {
-            _script.Clear();
-
-            try
-            {
-                string sql = schemaName.Length == 0
-                    ? "SELECT SCHEMA_NAME(schema_id) AS table_schema, name AS table_name FROM sys.views ORDER BY table_schema, table_name"
-                    : $"SELECT SCHEMA_NAME(schema_id) AS table_schema, name AS table_name FROM sys.views WHERE SCHEMA_NAME(schema_id) = N'{schemaName}' ORDER BY table_schema, table_name";
-
-                DataTable? dt = await DatabaseHelper.GetDataTableAsync(sql, connectionString);
-
-                if (dt?.Rows.Count > 0)
-                {
-                    AppendLine("""
-<table class="wikitable" style="margin: 1em 0px; border: 1px solid #a2a9b1; color: #202122; font-family: sans-serif; font-size: 14px; background-color: #f8f9fa;">
-<tbody>
-    <tr>
-        <th style="padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;">Schema</th>
-        <th style="padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;">View Name</th>
-        <th style="padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;">Description</th>
-    </tr>
-""");
-
-                    int lastPercent = -1;
-                    for (int i = 0; i < dt.Rows.Count; i++)
-                    {
-                        int percentComplete = (i * 100) / dt.Rows.Count;
-                        if (percentComplete != lastPercent && percentComplete % 2 == 0)
-                        {
-                            progress.Report(percentComplete + 1);
-                            lastPercent = percentComplete;
-                        }
-
-                        DataRow dr = dt.Rows[i];
-                        string tableSchema = dr["table_schema"]?.ToString() ?? string.Empty;
-                        string tableName = dr["table_name"]?.ToString() ?? string.Empty;
-
-                        string description = await DatabaseHelper.GetTableDescriptionAsync(
-                            new ObjectName
-                            {
-                                Schema = tableSchema,
-                                Name = tableName,
-                                ObjectType = ObjectName.ObjectTypeEnums.View
-                            }
-                            , connectionString
-                        );
-
-                        AppendLine($"""
-    <tr>
-        <td style="padding: 0.2em 0.4em; border: 1px solid #a2a9b1;">{tableSchema}</td>
-        <td style="padding: 0.2em 0.4em; border: 1px solid #a2a9b1;">[[{tableSchema}.{tableName}|{tableName}]]</td>
-        <td style="padding: 0.2em 0.4em; border: 1px solid #a2a9b1;">{description}</td>
-    </tr>
-""");
-                    }
-                    AppendLine("</tbody>");
-                    AppendLine("</table>");
-                }
-            }
-            catch (Exception ex)
-            {
-                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
-            }
-
-            return _script.ToString();
-        }
-
-        /// <summary>
-        /// Scan user view in the database and generate the creation script for them
-        /// </summary>
-        public async Task<string> BuildSPList(string schemaName, string connectionString)
-        {
-            _script.Clear();
-
-            try
-            {
-                string sql = schemaName.Length == 0
-                    ? "SELECT ROUTINE_SCHEMA, ROUTINE_NAME FROM information_schema.routines WHERE routine_type = 'PROCEDURE' AND LEFT(Routine_Name, 3) NOT IN ('sp_', 'xp_', 'ms_') ORDER BY ROUTINE_SCHEMA, ROUTINE_NAME"
-                    : $"SELECT ROUTINE_SCHEMA, ROUTINE_NAME FROM information_schema.routines WHERE routine_type = 'PROCEDURE' AND ROUTINE_SCHEMA = N'{schemaName}' AND LEFT(Routine_Name, 3) NOT IN ('sp_', 'xp_', 'ms_') ORDER BY ROUTINE_SCHEMA, ROUTINE_NAME";
-
-                var dt = await DatabaseHelper.GetDataTableAsync(sql, connectionString);
-
-                if (dt?.Rows.Count > 0)
-                {
-                    AppendLine("""
-<table class="wikitable" style="margin: 1em 0px; border: 1px solid #a2a9b1; color: #202122; font-family: sans-serif; font-size: 14px; background-color: #f8f9fa;">
-<tbody>
-    <tr>
-        <th style="padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;">Schema</th>
-        <th style="padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;">Stored Procedure</th>
-        <th style="padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;">Description</th>
-    </tr>
-""");
-
-                    for (int i = 0; i < dt.Rows.Count; i++)
-                    {
-                        string routineSchema = dt.Rows[i]["ROUTINE_SCHEMA"]?.ToString() ?? string.Empty;
-                        string routineName = dt.Rows[i]["ROUTINE_NAME"]?.ToString() ?? string.Empty;
-
-                        AppendLine($"""
-    <tr>
-        <td style="padding: 0.2em 0.4em; border: 1px solid #a2a9b1;">{routineSchema}</td>
-        <td style="padding: 0.2em 0.4em; border: 1px solid #a2a9b1;">[[{routineSchema}.{routineName}|{routineName}]]</td>
-        <td style="padding: 0.2em 0.4em; border: 1px solid #a2a9b1;"></td>
-    </tr>
-""");
-                    }
-                    AppendLine("</tbody>");
-                    AppendLine("</table>");
-                }
-            }
-            catch (Exception ex)
-            {
-                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
-            }
-
-            return _script.ToString();
-        }
-
-        /// <summary>
-        /// Scan user view in the database and generate the creation script for them
-        /// </summary>
-        /// <summary>
-        /// Scan user functions in the database and generate the creation script for them
-        /// </summary>
-        public async Task<string> BuildFunctionList(string schemaName, string connectionString)
-        {
-            _script.Clear();
-
-            try
-            {
-                string sql = schemaName.Length == 0
-                    ? "SELECT ROUTINE_SCHEMA, ROUTINE_NAME FROM information_schema.routines WHERE routine_type = 'FUNCTION' ORDER BY ROUTINE_SCHEMA, ROUTINE_NAME"
-                    : $"SELECT ROUTINE_SCHEMA, ROUTINE_NAME FROM information_schema.routines WHERE routine_type = 'FUNCTION' AND ROUTINE_SCHEMA = N'{schemaName}' ORDER BY ROUTINE_SCHEMA, ROUTINE_NAME";
-
-                DataTable? dt = await DatabaseHelper.GetDataTableAsync(sql, connectionString);
-
-                if (dt?.Rows.Count > 0)
-                {
-                    AppendLine("""
-<table class="wikitable" style="margin: 1em 0px; border: 1px solid #a2a9b1; color: #202122; font-family: sans-serif; font-size: 14px; background-color: #f8f9fa;">
-<tbody>
-    <tr>
-        <th style="padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;">Schema</th>
-        <th style="padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;">Function</th>
-        <th style="padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;">Description</th>
-    </tr>
-""");
-
-                    for (int i = 0; i < dt.Rows.Count; i++)
-                    {
-                        string routineSchema = dt.Rows[i]["ROUTINE_SCHEMA"]?.ToString() ?? string.Empty;
-                        string routineName = dt.Rows[i]["ROUTINE_NAME"]?.ToString() ?? string.Empty;
-
-                        AppendLine($"""
-    <tr>
-        <td style="padding: 0.2em 0.4em; border: 1px solid #a2a9b1;">{routineSchema}</td>
-        <td style="padding: 0.2em 0.4em; border: 1px solid #a2a9b1;">[[{routineSchema}.{routineName}|{routineName}]]</td>
-        <td style="padding: 0.2em 0.4em; border: 1px solid #a2a9b1;"></td>
-    </tr>
-""");
-                    }
-                    AppendLine("</tbody>");
-                    AppendLine("</table>");
-                }
-            }
-            catch (Exception ex)
-            {
-                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
-            }
-
-            return _script.ToString();
-        }
+        //private SQLDatabaseConnectionItem? _selectedConnection;
+        private readonly string? _server = string.Empty;
 
         /// <summary>
         /// Texts the to table.
@@ -309,105 +61,75 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Append text to the bottom of the text box
+        /// Builds the table list as an HTML table.
         /// </summary>
-        /// <param name="text"></param>
-        private void AppendLine(string text)
-        {
-            //sqlTextBox.AppendText(text + Environment.NewLine);
-            _script.AppendLine(text);
-        }
-
-        /// <summary>
-        /// Generate contect for wiki of the give table
-        /// </summary>
-        /// <param name="tableSchema"></param>
-        /// <param name="tableName"></param>
-        public async Task<string> GetTableViewDef(ObjectName objectName, string connectionString)
+        /// <param name="selectedObjects">The selected objects</param>
+        /// <param name="connectionString">The connection string.</param>
+        /// <param name="progress">The progress reporter.</param>
+        /// <returns>A Task returning the HTML table of tables.</returns>
+        public async Task<string> BuildTableListAsync(List<ObjectName> selectedObjects, string connectionString, IProgress<int> progress)
         {
             _script.Clear();
-            AppendLine($"<h1>{(objectName.ObjectType == ObjectName.ObjectTypeEnums.Table ? "TABLE" : "VIEW")} NAME: {objectName.Schema}.{objectName.Name}</h1>");
-            var objectDesc = await DatabaseHelper.GetTableDescriptionAsync(objectName, connectionString);
-            if (objectDesc.Length > 0)
-            {
-                AppendLine("<p>" + objectDesc + "</p>");
-            }
 
-            AppendLine("""
-<div>
-    <table class="wikitable" style="margin: 1em 0px; border: 1px solid #a2a9b1; color: #202122; font-family: sans-serif; font-size: 14px; background-color: #f8f9fa;">
-    <tbody>
-        <tr>
-            <th style="padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;">Col ID</th>
-            <th style="padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;">Name</th>
-            <th style="padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;">Data Type</th>
-            <th style="padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;">Description</th>
-        </tr>
-""");
-
-            await GetTableDefinition(objectName, connectionString);
-
-            AppendLine("\t</tbody>");
-            AppendLine("\t</table>");
-            AppendLine("</div>");
-
-            return _script.ToString();
-        }
-
-        /// <summary>
-        /// Get table structure for wiki
-        /// </summary>
-        /// <param name="TableSchema">Schame name</param>
-        /// <param name="TableName">Table name</param>
-        /// <returns></returns>
-        private async Task GetTableDefinition(ObjectName objectName, string connectionString)
-        {
             try
             {
-                string sql = $@"
-SELECT ORDINAL_POSITION, COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH
-FROM INFORMATION_SCHEMA.COLUMNS
-WHERE TABLE_SCHEMA = N'{objectName.Schema}' AND TABLE_NAME = N'{objectName.Name}'
-ORDER BY ORDINAL_POSITION";
-
-                DataTable? dt = await DatabaseHelper.GetDataTableAsync(sql, connectionString);
-
-                if (dt?.Rows.Count > 0)
+                if (selectedObjects.Count > 0)
                 {
-                    // Fetch all column descriptions in parallel
-                    var descTasks = new Task<string>[dt.Rows.Count];
-                    for (int i = 0; i < dt.Rows.Count; i++)
-                    {
-                        string colName = dt.Rows[i]["COLUMN_NAME"]?.ToString() ?? string.Empty;
-                        descTasks[i] = DatabaseHelper.GetColumnDescriptionAsync(objectName, colName, connectionString);
-                    }
-                    var descriptions = await Task.WhenAll(descTasks);
+                    _script.AppendLine(@"<table class=""wikitable"" style=""margin: 1em 0px; border: 1px solid #a2a9b1; color: #202122; font-family: sans-serif; font-size: 14px; background-color: #f8f9fa;"">");
+                    _script.AppendLine("<tbody>");
+                    _script.AppendLine(@"    <tr>
+        <th style=""padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;"">Schema</th>
+        <th style=""padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;"">Name</th>
+        <th style=""padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;"">Description</th>
+    </tr>");
 
-                    for (int i = 0; i < dt.Rows.Count; i++)
+                    int lastPercent = -1;
+                    for (int i = 0; i < selectedObjects.Count; i++)
                     {
-                        var dr = dt.Rows[i];
-                        string ord = dr["ORDINAL_POSITION"]?.ToString() ?? string.Empty;
-                        string colName = dr["COLUMN_NAME"]?.ToString() ?? string.Empty;
-                        string dataType = dr["DATA_TYPE"]?.ToString() ?? string.Empty;
-                        if (dr["CHARACTER_MAXIMUM_LENGTH"] != DBNull.Value && dr["CHARACTER_MAXIMUM_LENGTH"] != null)
+                        int percentComplete = (i * 100) / selectedObjects.Count;
+                        if (percentComplete != lastPercent && percentComplete % 2 == 0)
                         {
-                            dataType += $"({dr["CHARACTER_MAXIMUM_LENGTH"]})";
+                            progress?.Report(percentComplete + 1);
+                            lastPercent = percentComplete;
                         }
-                        string colDesc = descriptions[i];
 
-                        AppendLine($@"        <tr>
-            <td style=""padding: 0.2em 0.4em; border: 1px solid #a2a9b1;"">{ord}</td>
-            <td style=""padding: 0.2em 0.4em; border: 1px solid #a2a9b1;"">{colName}</td>
-            <td style=""padding: 0.2em 0.4em; border: 1px solid #a2a9b1;"">{dataType}</td>
-            <td style=""padding: 0.2em 0.4em; border: 1px solid #a2a9b1;"">{colDesc}</td>
-        </tr>");
+                        ObjectName dr = selectedObjects[i];
+                        string tableSchema = System.Net.WebUtility.HtmlEncode(dr.Schema ?? string.Empty);
+                        string tableName = System.Net.WebUtility.HtmlEncode(dr.Name ?? string.Empty);
+
+                        string description = "&nbsp;";
+                        try
+                        {
+                            // Fetch description if available
+                            string desc = await DatabaseHelper.GetTableDescriptionAsync(dr, connectionString);
+                            if (!string.IsNullOrWhiteSpace(desc))
+                                description = System.Net.WebUtility.HtmlEncode(desc);
+                        }
+                        catch
+                        {
+                            // If description fetch fails, leave as &nbsp;
+                        }
+
+                        _script.AppendLine($@"    <tr>
+        <td style=""padding: 0.2em 0.4em; border: 1px solid #a2a9b1;"">{tableSchema}</td>
+        <td style=""padding: 0.2em 0.4em; border: 1px solid #a2a9b1;"">[[{tableSchema}.{tableName}|{tableName}]]</td>
+        <td style=""padding: 0.2em 0.4em; border: 1px solid #a2a9b1;"">{description}</td>
+    </tr>");
                     }
+                    _script.AppendLine("</tbody>");
+                    _script.AppendLine("</table>");
+                }
+                else
+                {
+                    _script.AppendLine("<p><em>No tables found.</em></p>");
                 }
             }
             catch (Exception ex)
             {
                 Common.MsgBox(ex.Message, MessageBoxIcon.Error);
             }
+
+            return _script.ToString();
         }
 
         /// <summary>
@@ -431,6 +153,287 @@ ORDER BY ORDINAL_POSITION";
             AppendLine("</div>");
 
             return _script.ToString();
+        }
+
+        /// <summary>
+        /// Generate content for wiki of the given table or view, with HTML output for all sections.
+        /// </summary>
+        /// <param name="objectName">The object name.</param>
+        /// <param name="connectionString">The connection string.</param>
+        /// <param name="templateBody">The template body.</param>
+        /// <returns>HTML documentation for the table/view.</returns>
+        public async Task<string> GetTableViewDef(ObjectName objectName, string connectionString, string templateBody)
+        {
+            string doc = templateBody;
+
+            // Open the database object
+            var tableView = new DBObject();
+            await tableView.OpenAsync(objectName, connectionString);
+
+            // Replace placeholders with actual values (HTML-encoded where appropriate)
+            doc = doc.Replace("~ObjectName~", System.Net.WebUtility.HtmlEncode(objectName.Name));
+            doc = doc.Replace("~ObjectSchema~", System.Net.WebUtility.HtmlEncode(objectName.Schema));
+            doc = doc.Replace("~ObjectFullName~", System.Net.WebUtility.HtmlEncode(objectName.FullName));
+            doc = doc.Replace("~ObjectType~", System.Net.WebUtility.HtmlEncode(ObjectTypeToString(objectName.ObjectType)));
+
+            doc = doc.Replace("~Description~", string.IsNullOrWhiteSpace(tableView.Description) ? "&nbsp;" : System.Net.WebUtility.HtmlEncode(tableView.Description));
+            doc = doc.Replace("~Definition~", $"<pre style=\"white-space: pre-wrap;\">{System.Net.WebUtility.HtmlEncode(tableView.Definition)}</pre>");
+
+            // Build the columns table (HTML)
+            if (doc.Contains("~Columns~"))
+            {
+                var columnBody = GetColumnsBody(tableView.Columns);
+                doc = doc.Replace("~Columns~", columnBody);
+            }
+
+            // Build the indexes table (HTML)
+            if (doc.Contains("~Indexes~"))
+            {
+                var indexBody = GetIndexesBody(tableView.Indexes);
+                doc = doc.Replace("~Indexes~", indexBody);
+            }
+
+            // Build the constraints table (HTML)
+            if (doc.Contains("~Constraints~"))
+            {
+                var constraintBody = GetConstraintsBody(tableView.Constraints);
+                doc = doc.Replace("~Constraints~", constraintBody);
+            }
+
+            return doc;
+        }
+
+        /// <summary>
+        /// Gets the function or procedure definition and parameters as an HTML table.
+        /// </summary>
+        /// <param name="objectName">The object name.</param>
+        /// <param name="connectionString">The connection string.</param>
+        /// <param name="templateBody">The template body.</param>
+        /// <returns>A Task returning the HTML-formatted documentation.</returns>
+        internal async Task<string> GetFunctionProcedureDef(ObjectName objectName, string connectionString, string templateBody)
+        {
+            string doc = templateBody;
+
+            // Open the database object
+            var func = new DBObject();
+            await func.OpenAsync(objectName, connectionString);
+
+            // Replace placeholders with HTML-encoded values
+            doc = doc.Replace("~ObjectName~", System.Net.WebUtility.HtmlEncode(objectName.Name));
+            doc = doc.Replace("~ObjectSchema~", System.Net.WebUtility.HtmlEncode(objectName.Schema));
+            doc = doc.Replace("~ObjectFullName~", System.Net.WebUtility.HtmlEncode(objectName.FullName));
+            doc = doc.Replace("~ObjectType~", System.Net.WebUtility.HtmlEncode(ObjectTypeToString(objectName.ObjectType)));
+            doc = doc.Replace("~Description~", string.IsNullOrWhiteSpace(func.Description) ? "&nbsp;" : System.Net.WebUtility.HtmlEncode(func.Description));
+            doc = doc.Replace("~Definition~", $"<pre style=\"white-space: pre-wrap;\">{System.Net.WebUtility.HtmlEncode(func.Definition)}</pre>");
+
+            // Build the Parameters table (HTML)
+            if (doc.Contains("~Parameters~"))
+            {
+                var paraBody = GetParametersBody(func.Parameters);
+                doc = doc.Replace("~Parameters~", paraBody);
+            }
+
+            return doc;
+        }
+
+        /// <summary>
+        /// Gets the columns body as an HTML table.
+        /// </summary>
+        /// <param name="columns">The columns.</param>
+        /// <returns>A string.</returns>
+        private static string GetColumnsBody(List<DBColumn> columns)
+        {
+            var sb = new StringBuilder();
+            if (columns != null && columns.Count > 0)
+            {
+                sb.AppendLine(@"<table class=""wikitable"" style=""margin: 1em 0px; border: 1px solid #a2a9b1; color: #202122; font-family: sans-serif; font-size: 14px; background-color: #f8f9fa;"">");
+                sb.AppendLine("<tbody>");
+                sb.AppendLine(@"    <tr>
+        <th style=""padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;"">Ord</th>
+        <th style=""padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;"">Name</th>
+        <th style=""padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;"">Data Type</th>
+        <th style=""padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;"">Nullable</th>
+        <th style=""padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;"">Description</th>
+    </tr>");
+
+                foreach (DBColumn col in columns)
+                {
+                    string ord = System.Net.WebUtility.HtmlEncode(col.Ord ?? string.Empty);
+                    string colName = System.Net.WebUtility.HtmlEncode(string.IsNullOrEmpty(col.ColumnName) ? " " : col.ColumnName);
+                    string dataType = System.Net.WebUtility.HtmlEncode(col.DataType);
+                    string nullable = col.Nullable ? "Yes" : "No";
+                    string description = System.Net.WebUtility.HtmlEncode(col.Description);
+
+                    sb.AppendLine($@"    <tr>
+        <td style=""padding: 0.2em 0.4em; border: 1px solid #a2a9b1;"">{ord}</td>
+        <td style=""padding: 0.2em 0.4em; border: 1px solid #a2a9b1;"">{colName}</td>
+        <td style=""padding: 0.2em 0.4em; border: 1px solid #a2a9b1;"">{dataType}</td>
+        <td style=""padding: 0.2em 0.4em; border: 1px solid #a2a9b1;"">{nullable}</td>
+        <td style=""padding: 0.2em 0.4em; border: 1px solid #a2a9b1;"">{description}</td>
+    </tr>");
+                }
+                sb.AppendLine("</tbody>");
+                sb.AppendLine("</table>");
+
+                return sb.ToString().TrimEnd('\r', '\n', '\t', ' ');
+            }
+            else
+            {
+                return "_No columns found_";
+            }
+        }
+
+        /// <summary>
+        /// Gets the constraints body as an HTML table.
+        /// </summary>
+        /// <param name="constraints">The constraints.</param>
+        /// <returns>An HTML string representing the constraints table.</returns>
+        private static string GetConstraintsBody(List<ConstraintItem> constraints)
+        {
+            if (constraints == null || constraints.Count == 0)
+            {
+                return "_No constraints found_";
+            }
+
+            var sb = new StringBuilder();
+            sb.AppendLine(@"<table class=""wikitable"" style=""margin: 1em 0px; border: 1px solid #a2a9b1; color: #202122; font-family: sans-serif; font-size: 14px; background-color: #f8f9fa;"">");
+            sb.AppendLine("<tbody>");
+            sb.AppendLine(@"    <tr>
+        <th style=""padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;"">Constraint Name</th>
+        <th style=""padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;"">Type</th>
+        <th style=""padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;"">Column(s)</th>
+    </tr>");
+
+            foreach (var constraint in constraints)
+            {
+                string name = System.Net.WebUtility.HtmlEncode(constraint.Name);
+                string type = System.Net.WebUtility.HtmlEncode(constraint.Type);
+                string column = System.Net.WebUtility.HtmlEncode(constraint.Column);
+
+                sb.AppendLine($@"    <tr>
+        <td style=""padding: 0.2em 0.4em; border: 1px solid #a2a9b1;""><code>{name}</code></td>
+        <td style=""padding: 0.2em 0.4em; border: 1px solid #a2a9b1;"">{type}</td>
+        <td style=""padding: 0.2em 0.4em; border: 1px solid #a2a9b1;"">{column}</td>
+    </tr>");
+            }
+
+            sb.AppendLine("</tbody>");
+            sb.AppendLine("</table>");
+            return sb.ToString().TrimEnd('\r', '\n', '\t', ' ');
+        }
+
+        /// <summary>
+        /// Gets the indexes body as an HTML table.
+        /// </summary>
+        /// <param name="indexes">The indexes.</param>
+        /// <returns>An HTML string representing the indexes table.</returns>
+        private static string GetIndexesBody(List<IndexItem> indexes)
+        {
+            var sb = new StringBuilder();
+
+            if (indexes != null && indexes.Count > 0)
+            {
+                sb.AppendLine(@"<table class=""wikitable"" style=""margin: 1em 0px; border: 1px solid #a2a9b1; color: #202122; font-family: sans-serif; font-size: 14px; background-color: #f8f9fa;"">");
+                sb.AppendLine("<tbody>");
+                sb.AppendLine(@"    <tr>
+        <th style=""padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;"">Index Name</th>
+        <th style=""padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;"">Type</th>
+        <th style=""padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;"">Columns</th>
+        <th style=""padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;"">Unique</th>
+    </tr>");
+
+                foreach (var index in indexes)
+                {
+                    string idxName = System.Net.WebUtility.HtmlEncode(index.Name);
+                    string type = System.Net.WebUtility.HtmlEncode(index.Type);
+                    string columns = System.Net.WebUtility.HtmlEncode(index.Columns);
+                    string unique = index.IsUnique ? "Yes" : "No";
+                    sb.AppendLine($@"    <tr>
+        <td style=""padding: 0.2em 0.4em; border: 1px solid #a2a9b1;""><code>{idxName}</code></td>
+        <td style=""padding: 0.2em 0.4em; border: 1px solid #a2a9b1;"">{type}</td>
+        <td style=""padding: 0.2em 0.4em; border: 1px solid #a2a9b1;"">{columns}</td>
+        <td style=""padding: 0.2em 0.4em; border: 1px solid #a2a9b1;"">{unique}</td>
+    </tr>");
+                }
+
+                sb.AppendLine("</tbody>");
+                sb.AppendLine("</table>");
+                return sb.ToString().TrimEnd('\r', '\n', '\t', ' ');
+            }
+            else
+            {
+                return "_No indexes found_";
+            }
+        }
+
+        /// <summary>
+        /// Gets the parameters body.
+        /// </summary>
+        /// <param name="paramDt">The param dt.</param>
+        /// <returns>A string.</returns>
+        private static string GetParametersBody(List<DBParameter> paramDt)
+        {
+            if (paramDt != null && paramDt.Count > 0)
+            {
+                var sb = new StringBuilder();
+                sb.AppendLine(@"<table class=""wikitable"" style=""margin: 1em 0px; border: 1px solid #a2a9b1; color: #202122; font-family: sans-serif; font-size: 14px; background-color: #f8f9fa;"">");
+                sb.AppendLine("<tbody>");
+                sb.AppendLine(@"    <tr>
+        <th style=""padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;"">Ord</th>
+        <th style=""padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;"">Name</th>
+        <th style=""padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;"">Data Type</th>
+        <th style=""padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;"">Direction</th>
+        <th style=""padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;"">Description</th>
+    </tr>");
+                foreach (DBParameter dr in paramDt)
+                {
+                    string ord = System.Net.WebUtility.HtmlEncode(dr.Ord);
+                    string name = System.Net.WebUtility.HtmlEncode(string.IsNullOrEmpty(dr.Name) ? " " : dr.Name);
+                    string dataType = System.Net.WebUtility.HtmlEncode(dr.DataType);
+                    string direction = System.Net.WebUtility.HtmlEncode(dr.Mode);
+                    string description = System.Net.WebUtility.HtmlEncode(dr.Description ?? string.Empty);
+                    sb.AppendLine($@"    <tr>
+        <td style=""padding: 0.2em 0.4em; border: 1px solid #a2a9b1;"">{ord}</td>
+        <td style=""padding: 0.2em 0.4em; border: 1px solid #a2a9b1;""><code>{name}</code></td>
+        <td style=""padding: 0.2em 0.4em; border: 1px solid #a2a9b1;"">{dataType}</td>
+        <td style=""padding: 0.2em 0.4em; border: 1px solid #a2a9b1;"">{direction}</td>
+        <td style=""padding: 0.2em 0.4em; border: 1px solid #a2a9b1;"">{description}</td>
+    </tr>");
+                }
+                sb.AppendLine("</tbody>");
+                sb.AppendLine("</table>");
+
+                return sb.ToString().TrimEnd('\r', '\n', '\t', ' ');
+            }
+
+            return "_No parameters_";
+        }
+
+        /// <summary>
+        /// Objects the type to string.
+        /// </summary>
+        /// <param name="objectType">The object type.</param>
+        /// <returns>A string.</returns>
+        private static string ObjectTypeToString(ObjectName.ObjectTypeEnums objectType)
+        {
+            return objectType switch
+            {
+                ObjectName.ObjectTypeEnums.Table => "Table",
+                ObjectName.ObjectTypeEnums.View => "View",
+                ObjectName.ObjectTypeEnums.Function => "Function",
+                ObjectName.ObjectTypeEnums.StoredProcedure => "Stored Procedure",
+                _ => "Unknown"
+            };
+        }
+
+        /// <summary>
+        /// Append text to the bottom of the text box
+        /// </summary>
+        /// <param name="text"></param>
+        private void AppendLine(string text)
+        {
+            //sqlTextBox.AppendText(text + Environment.NewLine);
+            _script.AppendLine(text);
         }
     }
 }

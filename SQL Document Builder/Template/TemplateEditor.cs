@@ -63,7 +63,7 @@ namespace SQL_Document_Builder.Template
         /// <param name="e">The e.</param>
         private void ColumnsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            InsertText("[Columns]");
+            InsertText("~Columns~");
         }
 
         /// <summary>
@@ -73,7 +73,7 @@ namespace SQL_Document_Builder.Template
         /// <param name="e">The e.</param>
         private void ConstraintsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            InsertText("[Constraints]");
+            InsertText("~Constraints~");
         }
 
         /// <summary>
@@ -126,7 +126,7 @@ namespace SQL_Document_Builder.Template
         /// <param name="e">The e.</param>
         private void IndexesToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            InsertText("[Indexes]");
+            InsertText("~Indexes~");
         }
 
         /// <summary>
@@ -153,7 +153,7 @@ namespace SQL_Document_Builder.Template
         /// <param name="e">The e.</param>
         private void ObjectDefinitionToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            InsertText("[Definition]");
+            InsertText("~Definition~");
         }
 
         /// <summary>
@@ -163,7 +163,7 @@ namespace SQL_Document_Builder.Template
         /// <param name="e">The e.</param>
         private void ObjectDescriptionToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            InsertText("[Description]");
+            InsertText("~Description~");
         }
 
         /// <summary>
@@ -173,7 +173,7 @@ namespace SQL_Document_Builder.Template
         /// <param name="e">The e.</param>
         private void ObjectFullNameToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            InsertText("[ObjectFullName]");
+            InsertText("~ObjectFullName~");
         }
 
         /// <summary>
@@ -183,7 +183,7 @@ namespace SQL_Document_Builder.Template
         /// <param name="e">The e.</param>
         private void ObjectNameToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            InsertText("[ObjectName]");
+            InsertText("~ObjectName~");
         }
 
         /// <summary>
@@ -193,7 +193,7 @@ namespace SQL_Document_Builder.Template
         /// <param name="e">The e.</param>
         private void ObjectSchemaToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            InsertText("[ObjectSchema]");
+            InsertText("~ObjectSchema~");
         }
 
         /// <summary>
@@ -262,7 +262,7 @@ namespace SQL_Document_Builder.Template
         /// <param name="e">The e.</param>
         private void ParametersToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            InsertText("[Parameters]");
+            InsertText("~Parameters~");
         }
 
         /// <summary>
@@ -293,7 +293,7 @@ namespace SQL_Document_Builder.Template
         /// <param name="e">The e.</param>
         private void RelationshipsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            InsertText("[Relationships]");
+            InsertText("~Relationships~");
         }
 
         /// <summary>
@@ -360,7 +360,7 @@ namespace SQL_Document_Builder.Template
         /// <param name="e">The e.</param>
         private void TriggersToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            InsertText("[Triggers]");
+            InsertText("~Triggers~");
         }
 
         /// <summary>

@@ -5,7 +5,6 @@ using SQL_Document_Builder.Template;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Security.AccessControl;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -1265,30 +1264,6 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Handles the "Function list" tool strip menu item click:
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The E.</param>
-        private async void FunctionListToolStripMenuItem1_Click(object sender, EventArgs e)
-        {
-            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Html) != DialogResult.Yes) return;
-
-            using var dlg = new Schemapicker() { ConnectionString = _connectionString };
-            if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
-            {
-                var builder = new SharePointBuilder();
-                var scripts = await builder.BuildFunctionList(dlg.Schema, _connectionString);
-
-                CurrentEditBox?.AppendText(scripts);
-
-                // Move caret to end and scroll to it
-                ScrollToCaret();
-
-                EndBuild();
-            }
-        }
-
-        /// <summary>
         /// Get next available empty new query edit box, add one if there is no empty
         /// </summary>
         /// <returns></returns>
@@ -2545,31 +2520,6 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Handles the "Stored procedure list" tool strip menu item click:
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The E.</param>
-        private async void StoredProcedureListToolStripMenuItem1_Click(object sender, EventArgs e)
-        {
-            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Html) != DialogResult.Yes) return;
-
-            using var dlg = new Schemapicker() { ConnectionString = _connectionString };
-
-            if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
-            {
-                var builder = new SharePointBuilder();
-                var scripts = await builder.BuildSPList(dlg.Schema, _connectionString);
-
-                CurrentEditBox?.AppendText(scripts);
-
-                // Move caret to end and scroll to it
-                ScrollToCaret();
-
-                EndBuild();
-            }
-        }
-
-        /// <summary>
         /// Handles the click event of the tab alias tool strip menu item:
         /// </summary>
         /// <param name="sender">The sender.</param>
@@ -2763,19 +2713,32 @@ namespace SQL_Document_Builder
                     CurrentEditBox?.AppendText(header + Environment.NewLine);
                 }
 
+                var template = GetTemplateText(TemplateItem.DocumentTypeEnums.SharePoint, objectName.ObjectType);
+
+                if (string.IsNullOrWhiteSpace(template))
+                {
+                    Common.MsgBox($"No template found for {objectName.ObjectType} in SharePoint format.", MessageBoxIcon.Warning);
+                    return;
+                }
+
                 var builder = new SharePointBuilder();
-                CurrentEditBox?.AppendText(await builder.GetTableViewDef(objectName, _connectionString));
+                var scripts = objectName.ObjectType switch
+                {
+                    ObjectTypeEnums.Table or ObjectTypeEnums.View => await builder.GetTableViewDef(objectName, _connectionString, template),
+                    ObjectTypeEnums.StoredProcedure or ObjectTypeEnums.Function => await builder.GetFunctionProcedureDef(objectName, _connectionString, template),
+                    _ => string.Empty
+                };
+
+                if (scripts.Length == 0)
+                {
+                    Common.MsgBox($"No definition found for {objectName.FullName}", MessageBoxIcon.Information);
+                    return;
+                }
+                CurrentEditBox?.AppendText(scripts);
 
                 // Move caret to end and scroll to it
                 ScrollToCaret();
 
-                //if ((objectName.Name.StartsWith("LT_")) || (objectName.Name.StartsWith("AT_")))
-                //{
-                //    var valueBuilder = new SharePointBuilder();
-                //    CurrentEditBox?.AppendText(await valueBuilder.GetTableValuesAsync(objectName.FullName));
-                //}
-
-                //CurrentEditBox?.AppendText(FooterText() + Environment.NewLine);
                 EndBuild();
             }
         }
@@ -2833,30 +2796,33 @@ namespace SQL_Document_Builder
         {
             if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Html) != DialogResult.Yes) return;
 
-            using var dlg = new Schemapicker() { ConnectionString = _connectionString };
-            if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
+            List<ObjectName>? selectedObjects = SelectObjects();
+
+            if (selectedObjects == null || selectedObjects.Count == 0)
             {
-                StartBuild();
-
-                var progress = new Progress<int>(value =>
-                {
-                    progressBar.Value = value;
-                });
-
-                string scripts = String.Empty;
-                var builder = new SharePointBuilder();
-                await Task.Run(async () =>
-                {
-                    scripts = await builder.BuildTableListAsync(dlg.Schema, _connectionString, progress);
-                });
-
-                CurrentEditBox?.AppendText(scripts);
-
-                // Move caret to end and scroll to it
-                ScrollToCaret();
-
-                EndBuild();
+                return;
             }
+
+            StartBuild();
+
+            var progress = new Progress<int>(value =>
+            {
+                progressBar.Value = value;
+            });
+
+            string scripts = String.Empty;
+            var builder = new SharePointBuilder();
+            await Task.Run(async () =>
+            {
+                scripts = await builder.BuildTableListAsync(selectedObjects, _connectionString, progress);
+            });
+
+            CurrentEditBox?.AppendText(scripts);
+
+            // Move caret to end and scroll to it
+            ScrollToCaret();
+
+            EndBuild();
         }
 
         /// <summary>
@@ -2937,6 +2903,14 @@ namespace SQL_Document_Builder
             if (objectsListBox.SelectedItem != null)
             {
                 var objectName = (ObjectName)objectsListBox.SelectedItem;
+
+                // check if the object is a table or view
+                if (objectName.ObjectType != ObjectTypeEnums.Table && objectName.ObjectType != ObjectTypeEnums.View)
+                {
+                    Common.MsgBox($"The feature is for Table or View only.", MessageBoxIcon.Warning);
+                    return;
+                }
+
                 var builder = new SharePointBuilder();
                 var scripts = await builder.GetTableValuesAsync(objectName.FullName, _connectionString);
                 CurrentEditBox?.AppendText(scripts);
@@ -2962,41 +2936,6 @@ namespace SQL_Document_Builder
             //    CurrentEditBox?.Text = builder.GetTableValues(objectName.FullName);
             //    Clipboard.SetText(CurrentEditBox?.Text);
             //}
-        }
-
-        /// <summary>
-        /// Handles the "View list" tool strip menu item click:
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The E.</param>
-        private async void ViewListToolStripMenuItem1_Click(object sender, EventArgs e)
-        {
-            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Html) != DialogResult.Yes) return;
-
-            using var dlg = new Schemapicker() { ConnectionString = _connectionString };
-            if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
-            {
-                StartBuild();
-
-                var progress = new Progress<int>(value =>
-                {
-                    progressBar.Value = value;
-                });
-
-                string scripts = String.Empty;
-                var builder = new SharePointBuilder();
-                await Task.Run(async () =>
-                {
-                    scripts = await builder.BuildViewListAsync(dlg.Schema, _connectionString, progress);
-                });
-
-                CurrentEditBox?.AppendText(scripts);
-
-                // Move caret to end and scroll to it
-                ScrollToCaret();
-
-                EndBuild();
-            }
         }
 
         /// <summary>
@@ -3063,8 +3002,10 @@ namespace SQL_Document_Builder
             {
                 Common.MsgBox($"Template for {docType} and {objType} is not defined.", MessageBoxIcon.Information);
                 using var templateForm = new TemplateEditor()
-                { DocumentType = docType, 
-                  ObjectType =  objectType};
+                {
+                    DocumentType = docType,
+                    ObjectType = objectType
+                };
                 templateForm.ShowDialog();
 
                 // get the template text again after editing
@@ -3623,41 +3564,6 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Handles the click event of the function list tool strip menu item.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private async void FunctionListToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Markdown) != DialogResult.Yes) return;
-
-            using var dlg = new Schemapicker() { ConnectionString = _connectionString };
-            if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
-            {
-                StartBuild();
-
-                var progress = new Progress<int>(value =>
-                {
-                    progressBar.Value = value;
-                });
-
-                string scripts = String.Empty;
-                var builder = new MarkdownBuilder();
-                await Task.Run(async () =>
-                {
-                    scripts = await builder.BuildFunctionListAsync(dlg.Schema, _connectionString, progress);
-                });
-
-                CurrentEditBox?.AppendText(scripts);
-
-                // Move caret to end and scroll to it
-                ScrollToCaret();
-
-                EndBuild();
-            }
-        }
-
-        /// <summary>
         /// Handles the click event of the query data to table tool strip menu item.
         /// </summary>
         /// <param name="sender">The sender.</param>
@@ -3668,41 +3574,6 @@ namespace SQL_Document_Builder
 
             // Move caret to end and scroll to it
             ScrollToCaret();
-        }
-
-        /// <summary>
-        /// Handles the click event of the stored procedure list tool strip menu item.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private async void StoredProcedureListToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Markdown) != DialogResult.Yes) return;
-
-            using var dlg = new Schemapicker() { ConnectionString = _connectionString };
-            if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
-            {
-                StartBuild();
-
-                var progress = new Progress<int>(value =>
-                {
-                    progressBar.Value = value;
-                });
-
-                string scripts = String.Empty;
-                var builder = new MarkdownBuilder();
-                await Task.Run(async () =>
-                {
-                    scripts = await builder.BuildProcedureListAsync(dlg.Schema, _connectionString, progress);
-                });
-
-                CurrentEditBox?.AppendText(scripts);
-
-                // Move caret to end and scroll to it
-                ScrollToCaret();
-
-                EndBuild();
-            }
         }
 
         /// <summary>
@@ -3723,7 +3594,7 @@ namespace SQL_Document_Builder
                     CurrentEditBox?.AppendText(header + Environment.NewLine);
                 }
 
-                var template = GetTemplateText( TemplateItem.DocumentTypeEnums.Markdown, objectName.ObjectType);
+                var template = GetTemplateText(TemplateItem.DocumentTypeEnums.Markdown, objectName.ObjectType);
 
                 if (string.IsNullOrWhiteSpace(template))
                 {
@@ -3749,13 +3620,6 @@ namespace SQL_Document_Builder
                 // Move caret to end and scroll to it
                 ScrollToCaret();
 
-                //if ((objectName.Name.StartsWith("LT_")) || (objectName.Name.StartsWith("AT_")))
-                //{
-                //    var valueBuilder = new MarkdownBuilder();
-                //    CurrentEditBox?.AppendText(await valueBuilder.GetTableValuesAsync(objectName.FullName));
-                //}
-
-                //CurrentEditBox?.AppendText(FooterText() + Environment.NewLine);
                 EndBuild();
             }
         }
@@ -3769,30 +3633,33 @@ namespace SQL_Document_Builder
         {
             if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Markdown) != DialogResult.Yes) return;
 
-            using var dlg = new Schemapicker() { ConnectionString = _connectionString };
-            if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
+            List<ObjectName>? selectedObjects = SelectObjects();
+
+            if (selectedObjects == null || selectedObjects.Count == 0)
             {
-                StartBuild();
-
-                var progress = new Progress<int>(value =>
-                {
-                    progressBar.Value = value;
-                });
-
-                string scripts = String.Empty;
-                var builder = new MarkdownBuilder();
-                await Task.Run(async () =>
-                {
-                    scripts = await builder.BuildTableList(dlg.Schema, _connectionString, progress);
-                });
-
-                CurrentEditBox?.AppendText(scripts);
-
-                // Move caret to end and scroll to it
-                ScrollToCaret();
-
-                EndBuild();
+                return;
             }
+
+            StartBuild();
+
+            var progress = new Progress<int>(value =>
+            {
+                progressBar.Value = value;
+            });
+
+            string scripts = String.Empty;
+            var builder = new MarkdownBuilder();
+            await Task.Run(async () =>
+            {
+                scripts = await builder.BuildObjectList(selectedObjects, _connectionString, progress);
+            });
+
+            CurrentEditBox?.AppendText(scripts);
+
+            // Move caret to end and scroll to it
+            ScrollToCaret();
+
+            EndBuild();
         }
 
         /// <summary>
@@ -3808,43 +3675,15 @@ namespace SQL_Document_Builder
             {
                 var objectName = (ObjectName)objectsListBox.SelectedItem;
 
+                // check if the object is a table or view
+                if (objectName.ObjectType != ObjectTypeEnums.Table && objectName.ObjectType != ObjectTypeEnums.View)
+                {
+                    Common.MsgBox($"The feature is for Table or View only.", MessageBoxIcon.Warning);
+                    return;
+                }
+
                 var valueBuilder = new MarkdownBuilder();
                 CurrentEditBox?.AppendText(await valueBuilder.GetTableValuesAsync(objectName.FullName, _connectionString));
-
-                // Move caret to end and scroll to it
-                ScrollToCaret();
-
-                EndBuild();
-            }
-        }
-
-        /// <summary>
-        /// Handles the click event of the view list tool strip menu item.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private async void ViewListToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Markdown) != DialogResult.Yes) return;
-
-            using var dlg = new Schemapicker() { ConnectionString = _connectionString };
-            if (dlg.ShowDialog() == DialogResult.OK && dlg.Schema != null)
-            {
-                StartBuild();
-
-                var progress = new Progress<int>(value =>
-                {
-                    progressBar.Value = value;
-                });
-
-                string scripts = String.Empty;
-                var builder = new MarkdownBuilder();
-                await Task.Run(async () =>
-                {
-                    scripts = await builder.BuildViewListAsync(dlg.Schema, _connectionString, progress);
-                });
-
-                CurrentEditBox?.AppendText(scripts);
 
                 // Move caret to end and scroll to it
                 ScrollToCaret();
