@@ -414,8 +414,31 @@ ORDER BY s.name, p.name;";
         /// <returns>A Task<string> containing the description.</returns>
         internal static async Task<string> GetTableDescriptionAsync(ObjectName objectName, string connectionString)
         {
+            if (objectName == null || objectName.ObjectType == ObjectTypeEnums.None)
+                return string.Empty;
+
             string result = string.Empty;
-            string sql = $"SELECT value FROM fn_listextendedproperty (NULL, 'schema', N'{objectName.Schema}', '{(objectName.ObjectType == ObjectName.ObjectTypeEnums.View ? "view" : "table")}', N'{objectName.Name}', default, default) WHERE name = N'MS_Description'";
+
+            // Map object type to the correct level1type for fn_listextendedproperty
+            string level1Type = objectName.ObjectType switch
+            {
+                ObjectTypeEnums.Table => "table",
+                ObjectTypeEnums.View => "view",
+                ObjectTypeEnums.StoredProcedure => "procedure",
+                ObjectTypeEnums.Function => "function",
+                ObjectTypeEnums.Trigger => "trigger",
+                _ => throw new NotSupportedException($"Unsupported object type: {objectName.ObjectType}.")
+            };
+
+            // Build the SQL for all supported object types
+            string sql = $@"SELECT value 
+FROM fn_listextendedproperty (
+    NULL, 
+    'schema', N'{objectName.Schema}', 
+    '{level1Type}', N'{objectName.Name}', 
+    default, default
+) 
+WHERE name = N'MS_Description'";
 
             await using var conn = new SqlConnection(connectionString);
             try
@@ -664,5 +687,19 @@ END";
 
             return objects;
         }
+
+        /// <summary>
+        /// Gets the object definition async.
+        /// </summary>
+        /// <param name="objectName">The object name.</param>
+        /// <param name="connectionString">The connection string.</param>
+        /// <returns>A Task.</returns>
+        internal static async Task<string> GetObjectDefinitionAsync(ObjectName objectName, string connectionString)
+        {
+            string query = $@"SELECT sm.definition FROM sys.sql_modules sm WHERE sm.object_id = OBJECT_ID('{objectName.FullName}')";
+            var result = await ExecuteScalarAsync(query, connectionString);
+            return result != null && result != DBNull.Value ? result.ToString() ?? string.Empty : string.Empty;
+        }
+
     }
 }

@@ -43,11 +43,11 @@
             dataSourcesToolStripComboBox = new System.Windows.Forms.ToolStripComboBox();
             toolStripSeparator20 = new System.Windows.Forms.ToolStripSeparator();
             tableWikiToolStripButton = new System.Windows.Forms.ToolStripButton();
-            valuesWikiToolStripButton = new System.Windows.Forms.ToolStripButton();
+            htmlValuesToolStripButton = new System.Windows.Forms.ToolStripButton();
+            toolStripSeparator22 = new System.Windows.Forms.ToolStripSeparator();
+            toolStripButton1 = new System.Windows.Forms.ToolStripButton();
+            mdValuesToolStripButton = new System.Windows.Forms.ToolStripButton();
             toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
-            toolStripDropDownButton1 = new System.Windows.Forms.ToolStripDropDownButton();
-            tableToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            valuesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             createTableToolStripButton = new System.Windows.Forms.ToolStripButton();
             insertToolStripButton = new System.Windows.Forms.ToolStripButton();
             descToolStripButton = new System.Windows.Forms.ToolStripButton();
@@ -84,6 +84,7 @@
             azureToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             newConnectionToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             manageConnectionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            manageTemplateToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             toolStripSeparator4 = new System.Windows.Forms.ToolStripSeparator();
             newToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             openToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -118,7 +119,7 @@
             functionListToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             toolStripSeparator9 = new System.Windows.Forms.ToolStripSeparator();
             tableSchemaToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            tableValuesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            htmlValuesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             toolStripSeparator10 = new System.Windows.Forms.ToolStripSeparator();
             clipboardToTableToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             queryDataToTableToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -129,7 +130,7 @@
             functionListToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             toolStripSeparator7 = new System.Windows.Forms.ToolStripSeparator();
             tableDefinitionToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            tableValuesToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            mdValuesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             toolStripSeparator17 = new System.Windows.Forms.ToolStripSeparator();
             clipboardToTableToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             queryDataToTableToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
@@ -140,7 +141,7 @@
             batchColumnDescToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             databaseDDLToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             cREATEToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
-            iNSERTToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            insertToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             tableDescriptionToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             toolStripSeparator13 = new System.Windows.Forms.ToolStripSeparator();
             createPrimaryKeyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -216,7 +217,7 @@
             // 
             // toolStrip1
             // 
-            toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { newToolStripButton1, openToolStripButton, saveToolStripButton, toolStripSeparator, cutToolStripButton, copyToolStripButton, pasteToolStripButton, toolStripSeparator3, toolStripLabel1, dataSourcesToolStripComboBox, toolStripSeparator20, tableWikiToolStripButton, valuesWikiToolStripButton, toolStripSeparator2, toolStripDropDownButton1, createTableToolStripButton, insertToolStripButton, descToolStripButton });
+            toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { newToolStripButton1, openToolStripButton, saveToolStripButton, toolStripSeparator, cutToolStripButton, copyToolStripButton, pasteToolStripButton, toolStripSeparator3, toolStripLabel1, dataSourcesToolStripComboBox, toolStripSeparator20, tableWikiToolStripButton, htmlValuesToolStripButton, toolStripSeparator22, toolStripButton1, mdValuesToolStripButton, toolStripSeparator2, createTableToolStripButton, insertToolStripButton, descToolStripButton });
             toolStrip1.Location = new System.Drawing.Point(0, 24);
             toolStrip1.Name = "toolStrip1";
             toolStrip1.Padding = new System.Windows.Forms.Padding(0, 0, 2, 0);
@@ -314,50 +315,53 @@
             // 
             // tableWikiToolStripButton
             // 
-            tableWikiToolStripButton.Image = Properties.Resources.doc_html;
+            tableWikiToolStripButton.Image = Properties.Resources.html_doc16;
             tableWikiToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             tableWikiToolStripButton.Name = "tableWikiToolStripButton";
             tableWikiToolStripButton.Size = new System.Drawing.Size(76, 22);
             tableWikiToolStripButton.Text = "Table Def";
+            tableWikiToolStripButton.ToolTipText = "Table Definition (SharePoint)";
             tableWikiToolStripButton.Click += TableDefinitionToolStripMenuItem_Click;
             // 
-            // valuesWikiToolStripButton
+            // htmlValuesToolStripButton
             // 
-            valuesWikiToolStripButton.Image = Properties.Resources.doc_html;
-            valuesWikiToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
-            valuesWikiToolStripButton.Name = "valuesWikiToolStripButton";
-            valuesWikiToolStripButton.Size = new System.Drawing.Size(81, 22);
-            valuesWikiToolStripButton.Text = "Values List";
-            valuesWikiToolStripButton.Click += ValueListToolStripMenuItem_Click;
+            htmlValuesToolStripButton.Image = Properties.Resources.html_doc16;
+            htmlValuesToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            htmlValuesToolStripButton.Name = "htmlValuesToolStripButton";
+            htmlValuesToolStripButton.Size = new System.Drawing.Size(60, 22);
+            htmlValuesToolStripButton.Text = "Values";
+            htmlValuesToolStripButton.ToolTipText = "Table Values (SharePoint)";
+            htmlValuesToolStripButton.Click += ValueListToolStripMenuItem_Click;
+            // 
+            // toolStripSeparator22
+            // 
+            toolStripSeparator22.Name = "toolStripSeparator22";
+            toolStripSeparator22.Size = new System.Drawing.Size(6, 25);
+            // 
+            // toolStripButton1
+            // 
+            toolStripButton1.Image = Properties.Resources.markdown;
+            toolStripButton1.ImageTransparentColor = System.Drawing.Color.Magenta;
+            toolStripButton1.Name = "toolStripButton1";
+            toolStripButton1.Size = new System.Drawing.Size(109, 22);
+            toolStripButton1.Text = "Definition (MD)";
+            toolStripButton1.ToolTipText = "Table Definition (Markdown)";
+            toolStripButton1.Click += TableDefinitionToolStripMenuItem_Click_1;
+            // 
+            // mdValuesToolStripButton
+            // 
+            mdValuesToolStripButton.Image = Properties.Resources.markdown;
+            mdValuesToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            mdValuesToolStripButton.Name = "mdValuesToolStripButton";
+            mdValuesToolStripButton.Size = new System.Drawing.Size(90, 22);
+            mdValuesToolStripButton.Text = "Values (MD)";
+            mdValuesToolStripButton.ToolTipText = "Table values (Markdown)";
+            mdValuesToolStripButton.Click += TableValuesMDToolStripMenuItem_Click;
             // 
             // toolStripSeparator2
             // 
             toolStripSeparator2.Name = "toolStripSeparator2";
             toolStripSeparator2.Size = new System.Drawing.Size(6, 25);
-            // 
-            // toolStripDropDownButton1
-            // 
-            toolStripDropDownButton1.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { tableToolStripMenuItem, valuesToolStripMenuItem });
-            toolStripDropDownButton1.Image = (System.Drawing.Image)resources.GetObject("toolStripDropDownButton1.Image");
-            toolStripDropDownButton1.ImageTransparentColor = System.Drawing.Color.Magenta;
-            toolStripDropDownButton1.Name = "toolStripDropDownButton1";
-            toolStripDropDownButton1.Size = new System.Drawing.Size(59, 22);
-            toolStripDropDownButton1.Text = "Wiki";
-            toolStripDropDownButton1.Visible = false;
-            // 
-            // tableToolStripMenuItem
-            // 
-            tableToolStripMenuItem.Name = "tableToolStripMenuItem";
-            tableToolStripMenuItem.Size = new System.Drawing.Size(157, 22);
-            tableToolStripMenuItem.Text = "Table Definition";
-            tableToolStripMenuItem.Click += TableWikiToolStripButton_Click;
-            // 
-            // valuesToolStripMenuItem
-            // 
-            valuesToolStripMenuItem.Name = "valuesToolStripMenuItem";
-            valuesToolStripMenuItem.Size = new System.Drawing.Size(157, 22);
-            valuesToolStripMenuItem.Text = "Value List";
-            valuesToolStripMenuItem.Click += ValuesWikiToolStripButton_Click;
             // 
             // createTableToolStripButton
             // 
@@ -518,7 +522,7 @@
             tabPage2.Location = new System.Drawing.Point(4, 24);
             tabPage2.Name = "tabPage2";
             tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            tabPage2.Size = new System.Drawing.Size(293, 648);
+            tabPage2.Size = new System.Drawing.Size(205, 648);
             tabPage2.TabIndex = 1;
             tabPage2.Text = "Output options";
             tabPage2.UseVisualStyleBackColor = true;
@@ -592,10 +596,10 @@
             useUspDescRadioButton.AutoSize = true;
             useUspDescRadioButton.Location = new System.Drawing.Point(6, 47);
             useUspDescRadioButton.Name = "useUspDescRadioButton";
-            useUspDescRadioButton.Size = new System.Drawing.Size(188, 19);
+            useUspDescRadioButton.Size = new System.Drawing.Size(221, 19);
             useUspDescRadioButton.TabIndex = 0;
             useUspDescRadioButton.TabStop = true;
-            useUspDescRadioButton.Text = "Use usp_AddObjectDescription";
+            useUspDescRadioButton.Text = "Use usp_addupdateextendedproperty";
             useUspDescRadioButton.UseVisualStyleBackColor = true;
             useUspDescRadioButton.CheckedChanged += Options_Changed;
             // 
@@ -698,7 +702,7 @@
             // 
             // fileToolStripMenuItem
             // 
-            fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { connectToToolStripMenuItem, newConnectionToolStripMenuItem, manageConnectionsToolStripMenuItem, toolStripSeparator4, newToolStripMenuItem1, openToolStripMenuItem, saveToolStripMenuItem, saveAsToolStripMenuItem, closeToolStripMenuItem1, closeAllToolStripMenuItem, toolStripSeparator21, recentToolStripMenuItem, toolStripSeparator5, assistantContentToolStripMenuItem, toolStripSeparator11, exitToolStripMenuItem });
+            fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { connectToToolStripMenuItem, newConnectionToolStripMenuItem, manageConnectionsToolStripMenuItem, manageTemplateToolStripMenuItem, toolStripSeparator4, newToolStripMenuItem1, openToolStripMenuItem, saveToolStripMenuItem, saveAsToolStripMenuItem, closeToolStripMenuItem1, closeAllToolStripMenuItem, toolStripSeparator21, recentToolStripMenuItem, toolStripSeparator5, assistantContentToolStripMenuItem, toolStripSeparator11, exitToolStripMenuItem });
             fileToolStripMenuItem.Name = "fileToolStripMenuItem";
             fileToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
             fileToolStripMenuItem.Text = "&File";
@@ -736,6 +740,13 @@
             manageConnectionsToolStripMenuItem.Size = new System.Drawing.Size(185, 22);
             manageConnectionsToolStripMenuItem.Text = "Manage connections";
             manageConnectionsToolStripMenuItem.Click += ManageConnectionsToolStripMenuItem_Click;
+            // 
+            // manageTemplateToolStripMenuItem
+            // 
+            manageTemplateToolStripMenuItem.Name = "manageTemplateToolStripMenuItem";
+            manageTemplateToolStripMenuItem.Size = new System.Drawing.Size(185, 22);
+            manageTemplateToolStripMenuItem.Text = "Manage template";
+            manageTemplateToolStripMenuItem.Click += ManageTemplateToolStripMenuItem_Click;
             // 
             // toolStripSeparator4
             // 
@@ -948,7 +959,7 @@
             // 
             // sharePointToolStripMenuItem
             // 
-            sharePointToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { tableListToolStripMenuItem1, viewListToolStripMenuItem1, storedProcedureListToolStripMenuItem1, functionListToolStripMenuItem1, toolStripSeparator9, tableSchemaToolStripMenuItem, tableValuesToolStripMenuItem, toolStripSeparator10, clipboardToTableToolStripMenuItem, queryDataToTableToolStripMenuItem });
+            sharePointToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { tableListToolStripMenuItem1, viewListToolStripMenuItem1, storedProcedureListToolStripMenuItem1, functionListToolStripMenuItem1, toolStripSeparator9, tableSchemaToolStripMenuItem, htmlValuesToolStripMenuItem, toolStripSeparator10, clipboardToTableToolStripMenuItem, queryDataToTableToolStripMenuItem });
             sharePointToolStripMenuItem.Name = "sharePointToolStripMenuItem";
             sharePointToolStripMenuItem.Size = new System.Drawing.Size(76, 20);
             sharePointToolStripMenuItem.Text = "&SharePoint";
@@ -993,12 +1004,12 @@
             tableSchemaToolStripMenuItem.Text = "Table Definition";
             tableSchemaToolStripMenuItem.Click += TableDefinitionToolStripMenuItem_Click;
             // 
-            // tableValuesToolStripMenuItem
+            // htmlValuesToolStripMenuItem
             // 
-            tableValuesToolStripMenuItem.Name = "tableValuesToolStripMenuItem";
-            tableValuesToolStripMenuItem.Size = new System.Drawing.Size(186, 22);
-            tableValuesToolStripMenuItem.Text = "Table Values";
-            tableValuesToolStripMenuItem.Click += ValueListToolStripMenuItem_Click;
+            htmlValuesToolStripMenuItem.Name = "htmlValuesToolStripMenuItem";
+            htmlValuesToolStripMenuItem.Size = new System.Drawing.Size(186, 22);
+            htmlValuesToolStripMenuItem.Text = "Table Values";
+            htmlValuesToolStripMenuItem.Click += ValueListToolStripMenuItem_Click;
             // 
             // toolStripSeparator10
             // 
@@ -1021,7 +1032,7 @@
             // 
             // markdownToolStripMenuItem
             // 
-            markdownToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { tableListToolStripMenuItem, viewListToolStripMenuItem, storedProcedureListToolStripMenuItem, functionListToolStripMenuItem, toolStripSeparator7, tableDefinitionToolStripMenuItem, tableValuesToolStripMenuItem1, toolStripSeparator17, clipboardToTableToolStripMenuItem1, queryDataToTableToolStripMenuItem1 });
+            markdownToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { tableListToolStripMenuItem, viewListToolStripMenuItem, storedProcedureListToolStripMenuItem, functionListToolStripMenuItem, toolStripSeparator7, tableDefinitionToolStripMenuItem, mdValuesToolStripMenuItem, toolStripSeparator17, clipboardToTableToolStripMenuItem1, queryDataToTableToolStripMenuItem1 });
             markdownToolStripMenuItem.Name = "markdownToolStripMenuItem";
             markdownToolStripMenuItem.Size = new System.Drawing.Size(76, 20);
             markdownToolStripMenuItem.Text = "Markdown";
@@ -1066,12 +1077,12 @@
             tableDefinitionToolStripMenuItem.Text = "Table Definition";
             tableDefinitionToolStripMenuItem.Click += TableDefinitionToolStripMenuItem_Click_1;
             // 
-            // tableValuesToolStripMenuItem1
+            // mdValuesToolStripMenuItem
             // 
-            tableValuesToolStripMenuItem1.Name = "tableValuesToolStripMenuItem1";
-            tableValuesToolStripMenuItem1.Size = new System.Drawing.Size(183, 22);
-            tableValuesToolStripMenuItem1.Text = "Table Values";
-            tableValuesToolStripMenuItem1.Click += TableValuesMDToolStripMenuItem_Click;
+            mdValuesToolStripMenuItem.Name = "mdValuesToolStripMenuItem";
+            mdValuesToolStripMenuItem.Size = new System.Drawing.Size(183, 22);
+            mdValuesToolStripMenuItem.Text = "Table Values";
+            mdValuesToolStripMenuItem.Click += TableValuesMDToolStripMenuItem_Click;
             // 
             // toolStripSeparator17
             // 
@@ -1126,7 +1137,7 @@
             // 
             // databaseDDLToolStripMenuItem
             // 
-            databaseDDLToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { cREATEToolStripMenuItem1, iNSERTToolStripMenuItem, tableDescriptionToolStripMenuItem, toolStripSeparator13, createPrimaryKeyToolStripMenuItem, createIndexToolStripMenuItem, toolStripSeparator14, uspToolStripMenuItem, toolStripSeparator12, queryInsertToolStripMenuItem, excelToINSERTToolStripMenuItem, toolStripSeparator15, batchToolStripMenuItem });
+            databaseDDLToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { cREATEToolStripMenuItem1, insertToolStripMenuItem, tableDescriptionToolStripMenuItem, toolStripSeparator13, createPrimaryKeyToolStripMenuItem, createIndexToolStripMenuItem, toolStripSeparator14, uspToolStripMenuItem, toolStripSeparator12, queryInsertToolStripMenuItem, excelToINSERTToolStripMenuItem, toolStripSeparator15, batchToolStripMenuItem });
             databaseDDLToolStripMenuItem.Name = "databaseDDLToolStripMenuItem";
             databaseDDLToolStripMenuItem.Size = new System.Drawing.Size(92, 20);
             databaseDDLToolStripMenuItem.Text = "Database DDL";
@@ -1138,12 +1149,12 @@
             cREATEToolStripMenuItem1.Text = "CREATE Statement";
             cREATEToolStripMenuItem1.Click += CreateTableToolStripButton_Click;
             // 
-            // iNSERTToolStripMenuItem
+            // insertToolStripMenuItem
             // 
-            iNSERTToolStripMenuItem.Name = "iNSERTToolStripMenuItem";
-            iNSERTToolStripMenuItem.Size = new System.Drawing.Size(190, 22);
-            iNSERTToolStripMenuItem.Text = "INSERT Statement";
-            iNSERTToolStripMenuItem.Click += InsertToolStripButton_Click;
+            insertToolStripMenuItem.Name = "insertToolStripMenuItem";
+            insertToolStripMenuItem.Size = new System.Drawing.Size(190, 22);
+            insertToolStripMenuItem.Text = "INSERT Statement";
+            insertToolStripMenuItem.Click += InsertToolStripButton_Click;
             // 
             // tableDescriptionToolStripMenuItem
             // 
@@ -1179,8 +1190,8 @@
             // uspToolStripMenuItem
             // 
             uspToolStripMenuItem.Name = "uspToolStripMenuItem";
-            uspToolStripMenuItem.Size = new System.Drawing.Size(190, 22);
-            uspToolStripMenuItem.Text = "usp_objectdescription";
+            uspToolStripMenuItem.Size = new System.Drawing.Size(248, 22);
+            uspToolStripMenuItem.Text = "usp_addupdateextendedproperty";
             uspToolStripMenuItem.Click += UspToolStripMenuItem_Click;
             // 
             // toolStripSeparator12
@@ -1439,6 +1450,7 @@
             definitionPanel.Location = new System.Drawing.Point(907, 49);
             definitionPanel.Margin = new System.Windows.Forms.Padding(6);
             definitionPanel.Name = "definitionPanel";
+            definitionPanel.SelectedParameter = null;
             definitionPanel.Size = new System.Drawing.Size(360, 676);
             definitionPanel.TabIndex = 4;
             // 
@@ -1677,12 +1689,9 @@
         private System.Windows.Forms.TextBox searchTextBox;
         private System.Windows.Forms.Label searchLabel;
         private System.Windows.Forms.ToolStripButton tableWikiToolStripButton;
-        private System.Windows.Forms.ToolStripButton valuesWikiToolStripButton;
+        private System.Windows.Forms.ToolStripButton htmlValuesToolStripButton;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
         private System.Windows.Forms.ComboBox schemaComboBox;
-        private System.Windows.Forms.ToolStripDropDownButton toolStripDropDownButton1;
-        private System.Windows.Forms.ToolStripMenuItem tableToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem valuesToolStripMenuItem;
         private System.Windows.Forms.MenuStrip menuStrip1;
         private System.Windows.Forms.ToolStripMenuItem fileToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem connectToToolStripMenuItem;
@@ -1760,7 +1769,7 @@
         private System.Windows.Forms.ToolStripMenuItem databaseDDLToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator10;
         private System.Windows.Forms.ToolStripMenuItem tableSchemaToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem tableValuesToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem htmlValuesToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem markdownToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem tableListToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem viewListToolStripMenuItem;
@@ -1781,7 +1790,7 @@
         private System.Windows.Forms.Button nextSearchButton;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator17;
         private System.Windows.Forms.ToolStripMenuItem tableDefinitionToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem tableValuesToolStripMenuItem1;
+        private System.Windows.Forms.ToolStripMenuItem mdValuesToolStripMenuItem;
         private System.Windows.Forms.TextBox insertMaxTextBox;
         private System.Windows.Forms.TextBox insertBatchTextBox;
         private System.Windows.Forms.Label label3;
@@ -1821,7 +1830,7 @@
         private System.Windows.Forms.ToolStripMenuItem executeToolStripMenuItem;
         private System.Windows.Forms.ToolStripButton descToolStripButton;
         private System.Windows.Forms.ToolStripMenuItem cREATEToolStripMenuItem1;
-        private System.Windows.Forms.ToolStripMenuItem iNSERTToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem insertToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator15;
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.RadioButton useUspDescRadioButton;
@@ -1829,5 +1838,9 @@
         private System.Windows.Forms.GroupBox groupBox2;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator21;
         private System.Windows.Forms.ToolStripMenuItem recentToolStripMenuItem;
+        private System.Windows.Forms.ToolStripButton toolStripButton1;
+        private System.Windows.Forms.ToolStripButton mdValuesToolStripButton;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator22;
+        private System.Windows.Forms.ToolStripMenuItem manageTemplateToolStripMenuItem;
     }
 }

@@ -1,9 +1,11 @@
 ﻿using DarkModeForms;
 using ScintillaNET;
 using SQL_Document_Builder.ScintillaNetUtils;
+using SQL_Document_Builder.Template;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Security.AccessControl;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -179,15 +181,12 @@ namespace SQL_Document_Builder
             }
 
             // get the object description for table and view
-            if (objectName?.ObjectType == ObjectName.ObjectTypeEnums.Table || objectName?.ObjectType == ObjectName.ObjectTypeEnums.View)
+            var description = await ObjectDescription.BuildObjectDescription(objectName, connectionString, Properties.Settings.Default.UseExtendedProperties);
+            if (description.Length > 0)
             {
-                var description = await ObjectDescription.BuildObjectDescription(objectName, connectionString, Properties.Settings.Default.UseExtendedProperties);
-                if (description.Length > 0)
-                {
-                    // append the description to the script
-                    createScript += description;
-                    createScript += "GO" + Environment.NewLine;
-                }
+                // append the description to the script
+                createScript += description;
+                createScript += "GO" + Environment.NewLine;
             }
 
             return createScript;
@@ -213,12 +212,12 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Checks if the usp_AddObjectDescription stored procedure exists in the database.
+        /// Checks if the usp_addupdateextendedproperty stored procedure exists in the database.
         /// </summary>
         /// <returns>A Task.</returns>
         private static async Task<bool> IsAddObjectDescriptionSPExists(string connectionString)
         {
-            string sql = "select ROUTINE_NAME from INFORMATION_SCHEMA.ROUTINES where ROUTINE_SCHEMA = 'dbo' and ROUTINE_NAME = 'usp_AddObjectDescription'";
+            string sql = "select ROUTINE_NAME from INFORMATION_SCHEMA.ROUTINES where ROUTINE_SCHEMA = 'dbo' and ROUTINE_NAME = 'usp_addupdateextendedproperty'";
             var returnValue = await DatabaseHelper.ExecuteScalarAsync(sql, connectionString);
             if (returnValue == null || returnValue == DBNull.Value)
             {
@@ -226,23 +225,6 @@ namespace SQL_Document_Builder
             }
 
             return true;
-        }
-
-        /// <summary>
-        /// Selects the objects.
-        /// </summary>
-        /// <returns>A List&lt;ObjectName&gt;? .</returns>
-        private List<ObjectName>? SelectObjects()
-        {
-            var form = new DBObjectsSelectForm()
-            {
-                ConnectionString = _connectionString,
-            };
-            if (form.ShowDialog() == DialogResult.OK)
-            {
-                return form.SelectedObjects;
-            }
-            return null;
         }
 
         /// <summary>
@@ -595,7 +577,7 @@ namespace SQL_Document_Builder
                 if (metaData.Length > 1)
                 {
                     var builder = new SharePointBuilder();
-                    var scripts = builder.TextToTable(metaData);
+                    var scripts = SharePointBuilder.TextToTable(metaData);
                     CurrentEditBox?.AppendText(scripts);
 
                     // Move caret to end and scroll to it
@@ -1148,6 +1130,20 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Enables the table value generation buttons/menu items.
+        /// </summary>
+        /// <param name="enabled">If true, enabled.</param>
+        private void EnableTableValue(bool enabled)
+        {
+            mdValuesToolStripButton.Enabled = enabled;
+            htmlValuesToolStripButton.Enabled = enabled;
+            mdValuesToolStripMenuItem.Enabled = enabled;
+            htmlValuesToolStripMenuItem.Enabled = enabled;
+            insertToolStripButton.Enabled = enabled;
+            insertToolStripMenuItem.Enabled = enabled;
+        }
+
+        /// <summary>
         /// End build.
         /// </summary>
         private void EndBuild()
@@ -1647,6 +1643,17 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Handles the click event of the manage template tool strip menu item.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void ManageTemplateToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using var templateEditor = new TemplateEditor();
+            templateEditor.ShowDialog(this);
+        }
+
+        /// <summary>
         /// Handles the "New connection" tool strip menu item click event.
         /// </summary>
         /// <param name="sender">The sender.</param>
@@ -1760,18 +1767,22 @@ namespace SQL_Document_Builder
                 {
                     case 0:
                         _tables = await DatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.Table, _connectionString);
+                        EnableTableValue(true);
                         break;
 
                     case 1:
                         _tables = await DatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.View, _connectionString);
+                        EnableTableValue(true);
                         break;
 
                     case 2:
                         _tables = await DatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.StoredProcedure, _connectionString);
+                        EnableTableValue(false);
                         break;
 
                     case 3:
                         _tables = await DatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.Function, _connectionString);
+                        EnableTableValue(false);
                         break;
 
                     default:
@@ -1798,6 +1809,12 @@ namespace SQL_Document_Builder
                     {
                         SchemaComboBox_SelectedIndexChanged(sender, e); // re-populate the object list box
                     }
+                }
+
+                // if objects list box is not empty, select the first item
+                if (objectsListBox.Items.Count > 0 && objectsListBox.SelectedItem == null)
+                {
+                    objectsListBox.SelectedIndex = 0;
                 }
             }
         }
@@ -1911,14 +1928,14 @@ namespace SQL_Document_Builder
                     return;
                 }
 
-                // check if the script contains a 'usp_AddObjectDescription' statement
-                if (script.Contains("usp_AddObjectDescription", StringComparison.CurrentCultureIgnoreCase))
+                // check if the script contains a 'usp_addupdateextendedproperty' statement
+                if (script.Contains("usp_addupdateextendedproperty", StringComparison.CurrentCultureIgnoreCase))
                 {
                     bool spExists = await IsAddObjectDescriptionSPExists(connection.ConnectionString);
                     if (!spExists)
                     {
                         // ask for confirmation to execute the script
-                        if (Common.MsgBox("The target database does not contains a usp_AddObjectDescription stored procedure. Do you want to create it?", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
+                        if (Common.MsgBox("The target database does not contains a usp_addupdateextendedproperty stored procedure. Do you want to create it?", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
                         {
                             await DatabaseHelper.AddObjectDescriptionSPs(connection.ConnectionString);
                         }
@@ -1949,26 +1966,6 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Handles the Click event of the OpenToolStripButton control.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void OpenToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (CurrentEditBox == null) return;
-
-            var oFile = new OpenFileDialog()
-            {
-                Filter = "SQL script(*.sql)|*.sql|Markdown files(*.md)|*.md|HTML files(*.html)|*.html|Text file(*.txt)|*.txt|All files(*.*)|*.*",
-                Multiselect = false
-            };
-            if (oFile.ShowDialog() == DialogResult.OK)
-            {
-                OpenFile(oFile.FileName);
-            }
-        }
-
-        /// <summary>
         /// Opens the file.
         /// </summary>
         /// <param name="fileName">The file name.</param>
@@ -1994,6 +1991,26 @@ namespace SQL_Document_Builder
             // add the file to the MRU files list
             _mruFiles.AddFile(fileName);
             PopulateMRUFiles();
+        }
+
+        /// <summary>
+        /// Handles the Click event of the OpenToolStripButton control.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void OpenToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (CurrentEditBox == null) return;
+
+            var oFile = new OpenFileDialog()
+            {
+                Filter = "SQL script(*.sql)|*.sql|Markdown files(*.md)|*.md|HTML files(*.html)|*.html|Text file(*.txt)|*.txt|All files(*.*)|*.*",
+                Multiselect = false
+            };
+            if (oFile.ShowDialog() == DialogResult.OK)
+            {
+                OpenFile(oFile.FileName);
+            }
         }
 
         /// <summary>
@@ -2397,6 +2414,13 @@ namespace SQL_Document_Builder
         {
             Cursor = Cursors.WaitCursor;
             await PopulateAsync();
+
+            // if objects list box is not empty, select the first item
+            if (objectsListBox.Items.Count > 0 && objectsListBox.SelectedItem == null)
+            {
+                objectsListBox.SelectedIndex = 0;
+            }
+
             Cursor = Cursors.Default;
         }
 
@@ -2463,6 +2487,23 @@ namespace SQL_Document_Builder
             {
                 statusToolStripStatusLabe.Text = "No valid control is focused for select.";
             }
+        }
+
+        /// <summary>
+        /// Selects the objects.
+        /// </summary>
+        /// <returns>A List&lt;ObjectName&gt;? .</returns>
+        private List<ObjectName>? SelectObjects()
+        {
+            var form = new DBObjectsSelectForm()
+            {
+                ConnectionString = _connectionString,
+            };
+            if (form.ShowDialog() == DialogResult.OK)
+            {
+                return form.SelectedObjects;
+            }
+            return null;
         }
 
         /// <summary>
@@ -2723,7 +2764,7 @@ namespace SQL_Document_Builder
                 }
 
                 var builder = new SharePointBuilder();
-                CurrentEditBox?.AppendText(await builder.GetTableDef(objectName, _connectionString));
+                CurrentEditBox?.AppendText(await builder.GetTableViewDef(objectName, _connectionString));
 
                 // Move caret to end and scroll to it
                 ScrollToCaret();
@@ -2837,7 +2878,7 @@ namespace SQL_Document_Builder
             //        CurrentEditBox?.Text = String.Empty;
             //    }
             //    var builder = new Wiki();
-            //    CurrentEditBox?.AppendText(builder.GetTableDef(objectName));
+            //    CurrentEditBox?.AppendText(builder.GetTableViewDef(objectName));
             //    AppendLine(footerTextBox.Text);
             //    Clipboard.SetText(CurrentEditBox?.Text);
             //}
@@ -2985,6 +3026,57 @@ namespace SQL_Document_Builder
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Gets the template text.
+        /// </summary>
+        /// <param name="docType">The doc type.</param>
+        /// <param name="objType">The obj type.</param>
+        /// <returns>A string.</returns>
+        private static string GetTemplateText(TemplateItem.DocumentTypeEnums docType, ObjectTypeEnums objType)
+        {
+            string templateText = string.Empty;
+
+            // get the template body
+            TemplateItem.ObjectTypeEnums objectType = objType switch
+            {
+                ObjectTypeEnums.Table => TemplateItem.ObjectTypeEnums.Table,
+                ObjectTypeEnums.View => TemplateItem.ObjectTypeEnums.View,
+                ObjectTypeEnums.StoredProcedure => TemplateItem.ObjectTypeEnums.StoredProcedure,
+                ObjectTypeEnums.Function => TemplateItem.ObjectTypeEnums.Function,
+                _ => TemplateItem.ObjectTypeEnums.Table
+            };
+
+            // get the template text from the templates
+            Templates templates = new();
+            templates.Load();
+
+            var templateItem = templates.GetTemplate(docType, objectType);
+            if (templateItem != null)
+            {
+                templateText = templateItem.Body;
+            }
+
+            // if the template text is empty, show a message box and open the template editor
+            if (string.IsNullOrEmpty(templateText))
+            {
+                Common.MsgBox($"Template for {docType} and {objType} is not defined.", MessageBoxIcon.Information);
+                using var templateForm = new TemplateEditor()
+                { DocumentType = docType, 
+                  ObjectType =  objectType};
+                templateForm.ShowDialog();
+
+                // get the template text again after editing
+                templates.Load();
+                templateItem = templates.GetTemplate(docType, objectType);
+                if (templateItem != null)
+                {
+                    templateText = templateItem.Body;
+                }
+            }
+
+            return templateText;
         }
 
         #region ScintillaNET
@@ -3601,7 +3693,7 @@ namespace SQL_Document_Builder
                 var builder = new MarkdownBuilder();
                 await Task.Run(async () =>
                 {
-                    scripts = await builder.BuildSPListAsync(dlg.Schema, _connectionString, progress);
+                    scripts = await builder.BuildProcedureListAsync(dlg.Schema, _connectionString, progress);
                 });
 
                 CurrentEditBox?.AppendText(scripts);
@@ -3631,8 +3723,28 @@ namespace SQL_Document_Builder
                     CurrentEditBox?.AppendText(header + Environment.NewLine);
                 }
 
+                var template = GetTemplateText( TemplateItem.DocumentTypeEnums.Markdown, objectName.ObjectType);
+
+                if (string.IsNullOrWhiteSpace(template))
+                {
+                    Common.MsgBox($"No template found for {objectName.ObjectType} in Markdown format.", MessageBoxIcon.Warning);
+                    return;
+                }
+
                 var builder = new MarkdownBuilder();
-                CurrentEditBox?.AppendText(await builder.GetTableDef(objectName, _connectionString));
+                var scripts = objectName.ObjectType switch
+                {
+                    ObjectTypeEnums.Table or ObjectTypeEnums.View => await MarkdownBuilder.GetTableViewDef(objectName, _connectionString, template),
+                    ObjectTypeEnums.StoredProcedure or ObjectTypeEnums.Function => await MarkdownBuilder.GetFunctionProcedureDef(objectName, _connectionString, template),
+                    _ => string.Empty
+                };
+
+                if (scripts.Length == 0)
+                {
+                    Common.MsgBox($"No definition found for {objectName.FullName}", MessageBoxIcon.Information);
+                    return;
+                }
+                CurrentEditBox?.AppendText(scripts);
 
                 // Move caret to end and scroll to it
                 ScrollToCaret();
@@ -3796,6 +3908,5 @@ namespace SQL_Document_Builder
         }
 
         #endregion "MRU files"
-
     }
 }

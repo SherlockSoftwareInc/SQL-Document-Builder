@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Xml;
 
@@ -11,7 +12,7 @@ namespace SQL_Document_Builder.Template
     /// </summary>
     internal class Templates
     {
-        private readonly List<TemplateItem> _templates = new();
+        private readonly List<TemplateItem> _templates = [];
         private string _tmpFile = "";   // a temporary file to save the changes during the editing
 
         /// <summary>
@@ -28,19 +29,28 @@ namespace SQL_Document_Builder.Template
         /// <summary>
         /// Add a new Template item
         /// </summary>
-        /// <param name="name">The name.</param>
+        /// <param name="docType">The doc type.</param>
+        /// <param name="objectType">The object type.</param>
         /// <param name="body">The body.</param>
         /// <returns>A TemplateItem? .</returns>
-        public TemplateItem? Add(string name,
-            string body)
+        internal TemplateItem Add(TemplateItem.DocumentTypeEnums docType, TemplateItem.ObjectTypeEnums objectType, string body)
         {
-            var connItem = new TemplateItem()
+            // Assuming _templates is a list of TemplateItem that contains templates
+            var templateItem = TemplateLists.FirstOrDefault(t => t.DocumentType == docType && t.ObjectType == objectType);
+            if (templateItem != null)
             {
-                Name = name,
-                TemplateBody = body
+                // If the template already exists, return it
+                return templateItem;
+            }
+
+            templateItem = new TemplateItem()
+            {
+                DocumentType = docType,
+                ObjectType = objectType,
+                Body = body
             };
-            _templates.Add(connItem);
-            return connItem;
+            _templates.Add(templateItem);
+            return templateItem;
         }
 
         /// <summary>
@@ -50,7 +60,13 @@ namespace SQL_Document_Builder.Template
         {
             string fileName = FilePath();
 
-            if (File.Exists(fileName))
+            // if the file does not exist, use the default templates
+            if (!File.Exists(fileName))
+            {
+                ParseXML(default_templates);
+                Save();
+            }
+            else
             {
                 using var fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
                 using var streamReader = new StreamReader(fileStream);
@@ -88,19 +104,6 @@ namespace SQL_Document_Builder.Template
         public void SaveTemp()
         {
             Save(_tmpFile);
-        }
-
-        /// <summary>
-        /// Adds a Template item to the list
-        /// </summary>
-        /// <param name="Template">The Template.</param>
-        internal void Add(TemplateItem Template)
-        {
-            // add a Template item to the list
-            if (Template != null && Template.Name != null && Template.Name.Length > 0)
-            {
-                _templates.Add(Template);
-            }
         }
 
         /// <summary>
@@ -172,9 +175,8 @@ namespace SQL_Document_Builder.Template
                                 string sNodeName = node.Name;
                                 if (string.Compare(sNodeName, "TemplateItem", true) == 0)
                                 {
-                                    var TemplateItem = new TemplateItem(node);
-                                    if (TemplateItem?.Name?.Length > 0)
-                                        _templates.Add(TemplateItem);
+                                    var item = new TemplateItem(node);
+                                    _templates.Add(item);
                                 }
                             }
                         }
@@ -217,5 +219,147 @@ namespace SQL_Document_Builder.Template
             fileWriter.Flush();
             fileWriter.Close();
         }
+
+        /// <summary>
+        /// Gets the template.
+        /// </summary>
+        /// <param name="documentType">The document type.</param>
+        /// <param name="objectType">The object type.</param>
+        /// <returns>A string.</returns>
+        internal TemplateItem GetTemplate(TemplateItem.DocumentTypeEnums documentType, TemplateItem.ObjectTypeEnums objectType)
+        {
+            // Assuming _templates is a list of TemplateItem that contains templates
+            var templateItem = TemplateLists.FirstOrDefault(t => t.DocumentType == documentType && t.ObjectType == objectType);
+            if (templateItem != null)
+            {
+                // If the template already exists, return it
+                return templateItem;
+            }
+
+            templateItem = new TemplateItem()
+            {
+                DocumentType = documentType,
+                ObjectType = objectType,
+                Body = string.Empty
+            };
+            _templates.Add(templateItem);
+            return templateItem;
+        }
+
+        /// <summary>
+        /// Updates the template.
+        /// </summary>
+        /// <param name="documentType">The document type.</param>
+        /// <param name="objectType">The object type.</param>
+        /// <param name="text">The text.</param>
+        internal void UpdateTemplate(TemplateItem.DocumentTypeEnums documentType, TemplateItem.ObjectTypeEnums objectType, string text)
+        {
+            // Find the template based on documentType and objectType
+            var template = GetTemplate(documentType, objectType);
+            if (template != null)
+            {
+                // Update the template text
+                template.Body = text;
+                Save(); // Save the changes to the file
+            }
+        }
+
+        private const string default_templates = @"<root>
+  <TemplateItem>
+    <DocumentType>Markdown</DocumentType>
+    <ObjectType>Table</ObjectType>
+    <Body># Table: `[ObjectFullName]`
+
+&gt; [Description]
+
+**Columns:**
+[Columns]
+
+**Indexes:**
+[Indexes]
+
+**Constraints:**
+[Constraints]
+---
+</Body>
+  </TemplateItem>
+  <TemplateItem>
+    <DocumentType>Markdown</DocumentType>
+    <ObjectType>View</ObjectType>
+    <Body># View: `[ObjectFullName]`
+
+&gt; [Description]
+
+**Columns:**
+[Columns]
+
+**Indexes:**
+[Indexes]
+
+**SQL Definition:**
+```sql
+[Definition]
+```</Body>
+  </TemplateItem>
+  <TemplateItem>
+    <DocumentType>Markdown</DocumentType>
+    <ObjectType>StoredProcedure</ObjectType>
+    <Body># Stored Procedure: `[ObjectFullName]`
+
+&gt; [Description]
+
+## Parameters
+[Parameters]
+
+## SQL Code
+```sql
+[Definition]
+```
+</Body>
+  </TemplateItem>
+  <TemplateItem>
+    <DocumentType>Markdown</DocumentType>
+    <ObjectType>Function</ObjectType>
+    <Body># Function: `[ObjectFullName]`
+
+&gt; [Description]
+
+## Parameters
+[Parameters]
+
+## SQL Code
+```sql
+[Definition]
+```
+</Body>
+  </TemplateItem>
+  <TemplateItem>
+    <DocumentType>SharePoint</DocumentType>
+    <ObjectType>Table</ObjectType>
+    <Body>&lt;h1&gt;TABLE NAME: [ObjectFullName]&lt;/h1&gt;
+&lt;p&gt;[Description]&lt;/p&gt;
+&lt;div&gt;
+    [Columns]
+&lt;/div&gt;
+</Body>
+  </TemplateItem>
+  <TemplateItem>
+    <DocumentType>Markdown</DocumentType>
+    <ObjectType>Trigger</ObjectType>
+    <Body># Trigger: `[ObjectFullName]`
+
+&gt; [Description]
+
+## Parameters
+[Parameters]
+
+## Trigger SQL Code
+```sql
+[Definition]
+```
+</Body>
+  </TemplateItem>
+</root>";
+
     }
 }

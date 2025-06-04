@@ -4,18 +4,22 @@ using System.Data;
 namespace SQL_Document_Builder
 {
     /// <summary>
-    /// The d b column.
+    /// The d b parameter.
     /// </summary>
-    internal class DBColumn
+    internal class DBParameter
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="DBColumn"/> class.
+        /// Initializes a new instance of the <see cref="DBParameter"/> class.
         /// </summary>
         /// <param name="dr">The dr.</param>
-        public DBColumn(DataRow dr)
+        public DBParameter(DataRow dr)
         {
-            Ord = Convert.ToString(dr["ORDINAL_POSITION"]);
-            ColumnName = (string)dr["COLUMN_NAME"];
+            if (dr == null)
+            {
+                throw new ArgumentNullException(nameof(dr), "DataRow cannot be null");
+            }
+            Ord = dr["ORDINAL_POSITION"] == DBNull.Value ? string.Empty : Convert.ToString(dr["ORDINAL_POSITION"]);
+            Name = (string)dr["PARAMETER_NAME"];
             string dtType = dr["DATA_TYPE"] == DBNull.Value ? string.Empty : (string)dr["DATA_TYPE"];
             string? strMaxLength = dr["CHARACTER_MAXIMUM_LENGTH"].ToString();
             if (strMaxLength?.Length > 0)
@@ -55,19 +59,18 @@ namespace SQL_Document_Builder
             {
                 DataType = dtType;
             }
-
-            Nullable = (dr["IS_NULLABLE"].ToString() == "YES");
+            Mode = dr["PARAMETER_MODE"] == DBNull.Value ? string.Empty : (string)dr["PARAMETER_MODE"];
         }
 
         /// <summary>
         /// Gets or sets column sequence number
         /// </summary>
-        public string? Ord { get; set; } = string.Empty;
+        public string Ord { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets column name
         /// </summary>
-        public string ColumnName { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets column data type
@@ -75,9 +78,9 @@ namespace SQL_Document_Builder
         public string DataType { get; set; } = string.Empty;
 
         /// <summary>
-        /// Gets or sets a value indicates whether column nullable or not
+        /// Gets or sets the mode.
         /// </summary>
-        public bool Nullable { get; set; }
+        public string Mode { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or set column description

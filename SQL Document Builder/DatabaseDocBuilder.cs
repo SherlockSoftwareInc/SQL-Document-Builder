@@ -44,64 +44,6 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Retrieves the T-SQL definition script for a specific view using its fully qualified name.
-        /// </summary>
-        /// <returns>A string containing the view's definition, or null if not found or an error occurs.</returns>
-        /// <remarks>
-        /// This function executes SQL targeting sys.sql_modules for objects identifiable via OBJECT_ID.
-        /// It assumes the object corresponding to fullViewName is a view or other SQL module.
-        /// It does NOT generate CREATE INDEX scripts.
-        /// </remarks>
-        public static async Task<string> GetViewDefinitionAsync(ObjectName objectName, string connectionString)
-        {
-            string fullViewName = objectName.FullName;
-
-            string viewDefinition = string.Empty;
-
-            // Validate the single full name parameter
-            if (!string.IsNullOrWhiteSpace(fullViewName))
-            {
-                try
-                {
-                    // The SQL query remains the same, using OBJECT_ID which handles schema-qualified names
-                    string query = $@"SELECT sm.definition
-FROM sys.sql_modules sm
-WHERE sm.object_id = OBJECT_ID('{objectName.FullName}')";
-
-                    // ExecuteScalarAsync is efficient for retrieving a single value
-                    object? result = await DatabaseHelper.ExecuteScalarAsync(query, connectionString);
-                    // Check if a result was returned and it's not DBNull
-                    if (result != null && result != DBNull.Value)
-                    {
-                        viewDefinition = result.ToString().TrimStart('\r', '\n', ' ', '\t');
-                    }
-                }
-                catch (SqlException)
-                {
-                    // Log the exception (replace Console.WriteLine with your logging framework)
-                    //viewDefinition = $"-- SQL Error getting view definition for {fullViewName}: {ex.Message}";
-                }
-                catch (Exception)
-                {
-                    // Handle other potential exceptions
-                    //viewDefinition = $"-- Error getting view definition for {fullViewName}: {ex.Message}";
-                }
-            }
-
-            if (string.IsNullOrEmpty(viewDefinition))
-            {
-                // If no definition was found, return an empty string or a comment indicating no definition
-                //return $"-- No definition found for view {fullViewName}";
-                return string.Empty; // Return empty if no definition found
-            }
-            else
-            {
-                // Ensure the definition ends with a newline for better readability
-                return viewDefinition.TrimEnd('\r', '\n', ' ', '\t') + Environment.NewLine;
-            }
-        }
-
-        /// <summary>
         /// Queries the data and generates the insert statements.
         /// </summary>
         /// <param name="sql">The SQL query to fetch data.</param>
@@ -391,87 +333,62 @@ ORDER BY i.name";
         /// <returns>A string.</returns>
         internal static string UspAddObjectDescription()
         {
-            return $@"IF OBJECT_ID('dbo.usp_AddObjectDescription', 'P') IS NOT NULL
-	DROP PROCEDURE dbo.usp_AddObjectDescription;
+            return $@"IF OBJECT_ID('dbo.usp_addupdateextendedproperty', 'P') IS NOT NULL
+	DROP PROCEDURE dbo.usp_addupdateextendedproperty;
 GO
-CREATE PROCEDURE usp_AddObjectDescription
-(
-	@TableName sysname,
-	@Description nvarchar(1024)
-)
+/*
+The usp_addupdateextendedproperty is an extension of the native sp_addextendedproperty 
+and sp_updateextendedproperty of SQL Server. Since sp_addextendedproperty can only be used to 
+add ,and sp_updateextendedproperty can only be used to update, the usp_addupdateextendedproperty 
+combines them to ensure that the description of an object can be added to or updated at any time.
+*/
+CREATE PROCEDURE dbo.usp_addupdateextendedproperty
+    @name NVARCHAR(128),
+    @value SQL_VARIANT,
+    @level0type NVARCHAR(128) = NULL,
+    @level0name NVARCHAR(128) = NULL,
+    @level1type NVARCHAR(128) = NULL,
+    @level1name NVARCHAR(128) = NULL,
+    @level2type NVARCHAR(128) = NULL,
+    @level2name NVARCHAR(128) = NULL
 AS
 BEGIN
-    SET NOCOUNT ON
+    SET NOCOUNT ON;
 
-	IF OBJECT_ID(@TableName) IS NOT NULL AND LEN(COALESCE(@Description, '')) > 0
-	BEGIN
-		DECLARE @Schema varchar(100) = OBJECT_SCHEMA_NAME(OBJECT_ID(@TableName));
-		DECLARE @ObjectName varchar(100) = OBJECT_NAME(OBJECT_ID(@TableName));
-		DECLARE @ObjectType varchar(100);
-		SELECT @ObjectType = CASE type_desc WHEN 'USER_TABLE' THEN 'TABLE' ELSE 'VIEW' END
-		  FROM sys.objects
-		 WHERE object_id = OBJECT_ID(@TableName);
-
-		IF EXISTS (	SELECT value
-					FROM sys.extended_properties
-					WHERE class = 1 AND major_id = OBJECT_ID(@TableName)
-						AND minor_id = 0
-						AND name = 'MS_Description')
-			EXEC sp_updateextendedproperty @name = N'MS_Description', @value = @Description,
-				@level0type = N'SCHEMA', @level0name = @Schema,
-				@level1type = @ObjectType, @level1name = @ObjectName;
+    IF EXISTS (
+        SELECT 1
+        FROM fn_listextendedproperty (
+            @name, 
+            @level0type, @level0name, 
+            @level1type, @level1name, 
+            @level2type, @level2name
+        )
+    )
+    BEGIN
+		IF COALESCE(@value, '') = ''
+			EXEC sys.sp_dropextendedproperty 
+				@name = @name,
+                @level0type = @level0type, @level0name = @level0name,
+                @level1type = @level1type, @level1name = @level1name,
+                @level2type = @level2type, @level2name = @level2name;
 		ELSE
-			EXEC sp_addextendedproperty @name = N'MS_Description', @value = @Description,
-				@level0type = N'SCHEMA', @level0name = @Schema,
-				@level1type = @ObjectType, @level1name = @ObjectName;
-
-	END
-END
-GO
-IF OBJECT_ID('dbo.usp_AddColumnDescription', 'P') IS NOT NULL
-	DROP PROCEDURE dbo.usp_AddColumnDescription;
-GO
-CREATE PROCEDURE usp_AddColumnDescription
-(
-	@TableName sysname,
-	@ColumnName varchar(200),
-	@Description nvarchar(1024)
-)
-AS
-BEGIN
-    SET NOCOUNT ON
-
-	IF OBJECT_ID(@TableName) IS NOT NULL AND LEN(COALESCE(@Description, '')) > 0
-		IF EXISTS (SELECT name
-					 FROM sys.columns
-					WHERE object_id = OBJECT_ID(@TableName)
-					  AND name = @ColumnName)
-		BEGIN
-
-			DECLARE @Schema varchar(100) = OBJECT_SCHEMA_NAME(OBJECT_ID(@TableName));
-			DECLARE @ObjectName varchar(100) = OBJECT_NAME(OBJECT_ID(@TableName));
-			DECLARE @ObjectType varchar(100);
-			SELECT @ObjectType = CASE type_desc WHEN 'USER_TABLE' THEN 'TABLE' ELSE 'VIEW' END
-			  FROM sys.objects
-			 WHERE object_id = OBJECT_ID(@TableName);
-
-			IF EXISTS (	SELECT value
-						FROM sys.extended_properties
-						WHERE class = 1 AND major_id = OBJECT_ID(@TableName)
-							AND minor_id = (SELECT column_id FROM sys.columns WHERE name = @ColumnName AND object_id = OBJECT_ID(@TableName))
-							AND name = 'MS_Description')
-				EXEC sp_updateextendedproperty @name = N'MS_Description', @value = @Description,
-					@level0type = N'SCHEMA', @level0name = @Schema,
-					@level1type = @ObjectType, @level1name = @ObjectName,
-					@level2type = N'COLUMN', @level2name = @ColumnName
-			ELSE
-				EXEC sp_addextendedproperty @name = N'MS_Description', @value = @Description,
-					@level0type = N'SCHEMA', @level0name = @Schema,
-					@level1type = @ObjectType, @level1name = @ObjectName,
-					@level2type = N'COLUMN', @level2name = @ColumnName
-
-		END
-END
+            EXEC sys.sp_updateextendedproperty 
+                @name = @name, 
+                @value = @value,
+                @level0type = @level0type, @level0name = @level0name,
+                @level1type = @level1type, @level1name = @level1name,
+                @level2type = @level2type, @level2name = @level2name;
+    END
+    ELSE
+    BEGIN
+        EXEC sys.sp_addextendedproperty 
+            @name = @name, 
+            @value = @value,
+            @level0type = @level0type, @level0name = @level0name,
+            @level1type = @level1type, @level1name = @level1name,
+            @level2type = @level2type, @level2name = @level2name;
+    END
+END;
 GO";
         }
 
@@ -493,7 +410,7 @@ GO";
             createScript.AppendLine($"\tDROP FUNCTION {objectName.FullName};");
             createScript.AppendLine($"GO");
 
-            var script = await GetFunctionDefinitionAsync(objectName, connectionString);
+            var script = await GetDefinitionAsync(objectName, connectionString);
             if (string.IsNullOrEmpty(script))
             {
                 return string.Empty;
@@ -523,7 +440,7 @@ GO";
                 createScript.AppendLine($"GO");
             }
 
-            var script = await GetStoredProcedureDefinitionAsync(objectName, connectionString);
+            var script = await GetDefinitionAsync(objectName, connectionString);
 
             if (string.IsNullOrEmpty(script))
             {
@@ -562,11 +479,11 @@ GO";
                 createScript.AppendLine($"GO");
             }
 
-            // Get the primary key column names that the ColID ends with "🗝"
+            // Get the primary key column names that the Ord ends with "🗝"
             string primaryKeyColumns = table.PrimaryKeyColumns;
 
             // Retrieve identity column details
-            var identityColumns = table.GetIdentityColumns(connectionString);
+            var identityColumns = await table.GetIdentityColumns(connectionString);
 
             // Add the CREATE TABLE statement
             createScript.AppendLine($"CREATE TABLE {objectName.FullName} (");
@@ -761,7 +678,7 @@ ORDER BY tr.name;";
                 createScript.AppendLine($"GO");
             }
 
-            var script = await GetViewDefinitionAsync(objectName, connectionString);
+            var script = await GetDefinitionAsync(objectName, connectionString);
             if (string.IsNullOrEmpty(script))
             {
                 return string.Empty;
@@ -782,112 +699,33 @@ ORDER BY tr.name;";
         }
 
         /// <summary>
-        /// Gets the function definition async.
-        /// </summary>
-        /// <param name="objectName">The object name.</param>
-        /// <returns>A Task.</returns>
-        private static async Task<string> GetFunctionDefinitionAsync(ObjectName objectName, string connectionString)
-        {
-            string fnName = objectName.FullName;
-
-            string definition = string.Empty;
-
-            // Validate the single full name parameter
-            if (!string.IsNullOrWhiteSpace(fnName))
-            {
-                try
-                {
-                    // The SQL query remains the same, using OBJECT_ID which handles schema-qualified names
-                    string query = $@"SELECT sm.definition
-FROM sys.sql_modules sm
-WHERE sm.object_id = OBJECT_ID('{objectName.FullName}');";
-
-                    // ExecuteScalarAsync is efficient for retrieving a single value
-                    object? result = await DatabaseHelper.ExecuteScalarAsync(query, connectionString);
-
-                    // Check if a result was returned and it's not DBNull
-                    if (result != null && result != DBNull.Value)
-                    {
-                        definition = result.ToString().TrimStart('\r', '\n', ' ', '\t');
-                    }
-                    // Command is disposed here
-                    // Connection is disposed here
-                }
-                catch (SqlException)
-                {
-                    // Log the exception (replace Console.WriteLine with your logging framework)
-                    //definition = $"-- SQL Error getting view definition for {fnName}: {ex.Message}";
-                }
-                catch (Exception)
-                {
-                    // Handle other potential exceptions
-                    //definition = $"-- Error getting view definition for {fnName}: {ex.Message}";
-                }
-            }
-
-            if (string.IsNullOrEmpty(definition))
-            {
-                // If no definition was found, return an empty string or a comment indicating no definition
-                return string.Empty;
-            }
-            else
-            {
-                // Ensure the definition ends with a newline for better readability
-                return definition.TrimEnd('\r', '\n', ' ', '\t') + Environment.NewLine;
-            }
-        }
-
-        /// <summary>
         /// Gets the stored procedure definition async.
         /// </summary>
         /// <param name="objectName">The object name.</param>
         /// <returns>A Task.</returns>
-        private static async Task<string?> GetStoredProcedureDefinitionAsync(ObjectName objectName, string connectionString)
+        private static async Task<string?> GetDefinitionAsync(ObjectName objectName, string connectionString)
         {
-            string spName = objectName.FullName;
-            string? definition = string.Empty;
-
             // Validate the single full name parameter
-            if (!string.IsNullOrWhiteSpace(spName))
+            if (!string.IsNullOrWhiteSpace(objectName.FullName))
             {
-                // The SQL query remains the same, using OBJECT_ID which handles schema-qualified names
-                string query = $@"SELECT sm.definition
-FROM sys.sql_modules sm
-WHERE sm.object_id = OBJECT_ID('{objectName.FullName}')";
+                string? definition = await DatabaseHelper.GetObjectDefinitionAsync(objectName, connectionString);
 
-                try
+                if (string.IsNullOrEmpty(definition))
                 {
-                    // ExecuteScalarAsync is efficient for retrieving a single value
-                    object? result = await DatabaseHelper.ExecuteScalarAsync(query, connectionString);
-
-                    // Check if a result was returned and it's not DBNull
-                    if (result != null && result != DBNull.Value)
-                    {
-                        definition = result.ToString().TrimStart('\r', '\n', ' ', '\t');
-                    }
+                    // If no definition was found, return an empty string or a comment indicating no definition
+                    //return $"-- No definition found for stored procedure {spName}";
+                    return string.Empty; // Return empty if no definition found
                 }
-                catch (SqlException)
+                else
                 {
-                    // Log the exception (replace Console.WriteLine with your logging framework)
-                    //definition = $"-- SQL Error getting view definition for {spName}: {ex.Message}";
+                    // Ensure the definition ends with a newline for better readability
+                    return definition.TrimEnd('\r', '\n', ' ', '\t') + Environment.NewLine;
                 }
-                catch (Exception)
-                {
-                    // Handle other potential exceptions
-                    //definition = $"-- Error getting view definition for {spName}: {ex.Message}";
-                }
-            }
-
-            if (string.IsNullOrEmpty(definition))
-            {
-                // If no definition was found, return an empty string or a comment indicating no definition
-                //return $"-- No definition found for stored procedure {spName}";
-                return string.Empty; // Return empty if no definition found
             }
             else
             {
-                // Ensure the definition ends with a newline for better readability
-                return definition.TrimEnd('\r', '\n', ' ', '\t') + Environment.NewLine;
+                // If the full name is empty or null, return an empty string
+                return string.Empty;
             }
         }
     }

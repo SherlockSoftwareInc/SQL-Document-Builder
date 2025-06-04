@@ -200,7 +200,7 @@ namespace SQL_Document_Builder
             {
                 if (columnNameLabel.Text.Length > 0)
                 {
-                    await columnView.UpdateColumnDescAsync(columnNameLabel.Text, descTextBox.Text, columnView.TableType == ObjectName.ObjectTypeEnums.View);
+                    await columnView.UpdateColumnDescAsync(columnNameLabel.Text, descTextBox.Text);
                 }
                 else
                 {

@@ -91,7 +91,8 @@ namespace SQL_Document_Builder
             Table,
             View,
             StoredProcedure,
-            Function
+            Function,
+            Trigger
         }
 
         /// <summary>

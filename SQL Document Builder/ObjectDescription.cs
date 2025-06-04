@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Text;
 using System.Threading.Tasks;
+using static SQL_Document_Builder.ObjectName;
 
 namespace SQL_Document_Builder
 {
@@ -24,6 +25,16 @@ namespace SQL_Document_Builder
             if (await dbTable.OpenAsync(objectName, connectionString))
             {
                 var tableDesc = dbTable.Description;
+                string level1type = objectName.ObjectType switch
+                {
+                    ObjectTypeEnums.Table => "TABLE",
+                    ObjectTypeEnums.View => "VIEW",
+                    ObjectTypeEnums.StoredProcedure => "PROCEDURE",
+                    ObjectTypeEnums.Function => "FUNCTION",
+                    ObjectTypeEnums.Trigger => "TRIGGER",
+                    _ => throw new InvalidOperationException("Unsupported object type for description update.")
+                };
+
                 if (tableDesc.Length > 0)
                 {
                     //sb.AppendLine();
@@ -36,41 +47,93 @@ namespace SQL_Document_Builder
                                       $"@name = N'MS_Description', " +
                                       $"@value = N'{tableDesc.Replace("'", "''")}', " +
                                       $"@level0type = N'SCHEMA', @level0name = N'{objectName.Schema}', " +
-                                      $"@level1type = N'TABLE', @level1name = N'{objectName.Name}';");
+                                      $"@level1type = N'{level1type}', @level1name = N'{objectName.Name}';");
                     }
                     else
                     {
                         // Use the default stored procedure for table description
-                        sb.AppendLine($"EXEC usp_AddObjectDescription '{objectName.Schema}.{objectName.Name}', N'{tableDesc.Replace("'", "''")}';");
+                        sb.AppendLine($"EXEC usp_addupdateextendedproperty " +
+                                      $"@name = N'MS_Description', " +
+                                      $"@value = N'{tableDesc.Replace("'", "''")}', " +
+                                      $"@level0type = N'SCHEMA', @level0name = N'{objectName.Schema}', " +
+                                      $"@level1type = N'{level1type}', @level1name = N'{objectName.Name}';");
+
+                        //sb.AppendLine($"EXEC usp_AddObjectDescription '{objectName.Schema}.{objectName.Name}', N'{tableDesc.Replace("'", "''")}';");
                     }
                 }
-            }
 
-            foreach (var column in dbTable.Columns)
-            {
-                var colDesc = column.Description;
-                if (colDesc.Length > 0)
+                if (objectName.ObjectType == ObjectTypeEnums.Table ||
+                   objectName.ObjectType == ObjectTypeEnums.View)
                 {
-                    if (!spaceAdded)
+                    foreach (var column in dbTable.Columns)
                     {
-                        //sb.AppendLine();
-                        spaceAdded = true;
-                    }
+                        var colDesc = column.Description.Replace("'", "''");
+                        if (colDesc.Length > 0)
+                        {
+                            if (!spaceAdded)
+                            {
+                                //sb.AppendLine();
+                                spaceAdded = true;
+                            }
 
-                    if (useExtendedProperties)
-                    {
-                        // Use sp_addextendedproperty for column description
-                        sb.AppendLine($"EXEC sp_addextendedproperty " +
-                                      $"@name = N'MS_Description', " +
-                                      $"@value = N'{colDesc.Replace("'", "''")}', " +
-                                      $"@level0type = N'SCHEMA', @level0name = N'{objectName.Schema}', " +
-                                      $"@level1type = N'TABLE', @level1name = N'{objectName.Name}', " +
-                                      $"@level2type = N'COLUMN', @level2name = N'{column.ColumnName}';");
+                            if (useExtendedProperties)
+                            {
+                                // Use sp_addextendedproperty for column description
+                                sb.AppendLine($"EXEC sp_addextendedproperty " +
+                                              $"@name = N'MS_Description', " +
+                                              $"@value = N'{colDesc}', " +
+                                              $"@level0type = N'SCHEMA', @level0name = N'{objectName.Schema}', " +
+                                              $"@level1type = N'{level1type}', @level1name = N'{objectName.Name}', " +
+                                              $"@level2type = N'COLUMN', @level2name = N'{column.ColumnName}';");
+                            }
+                            else
+                            {
+                                // Use the default stored procedure for column description
+                                sb.AppendLine($"EXEC usp_addupdateextendedproperty " +
+                                              $"@name = N'MS_Description', " +
+                                              $"@value = N'{colDesc}', " +
+                                              $"@level0type = N'SCHEMA', @level0name = N'{objectName.Schema}', " +
+                                              $"@level1type = N'{level1type}', @level1name = N'{objectName.Name}', " +
+                                              $"@level2type = N'COLUMN', @level2name = N'{column.ColumnName}';");
+                                //sb.AppendLine($"EXEC usp_AddColumnDescription '{objectName.Schema}.{objectName.Name}', '{column.ColumnName}', N'{colDesc.Replace("'", "''")}';");
+                            }
+                        }
                     }
-                    else
+                }
+                else
+                {
+                    foreach (var parameter in dbTable.Parameters)
                     {
-                        // Use the default stored procedure for column description
-                        sb.AppendLine($"EXEC usp_AddColumnDescription '{objectName.Schema}.{objectName.Name}', '{column.ColumnName}', N'{colDesc.Replace("'", "''")}';");
+                        var paraDesc = parameter.Description.Replace("'", "''");
+                        if (paraDesc.Length > 0)
+                        {
+                            if (!spaceAdded)
+                            {
+                                //sb.AppendLine();
+                                spaceAdded = true;
+                            }
+
+                            if (useExtendedProperties)
+                            {
+                                // Use sp_addextendedproperty for column description
+                                sb.AppendLine($"EXEC sp_addextendedproperty " +
+                                              $"@name = N'MS_Description', " +
+                                              $"@value = N'{paraDesc}', " +
+                                              $"@level0type = N'SCHEMA', @level0name = N'{objectName.Schema}', " +
+                                              $"@level1type = N'{level1type}', @level1name = N'{objectName.Name}', " +
+                                              $"@level2type = N'PARAMETER', @level2name = N'{parameter.Name}';");
+                            }
+                            else
+                            {
+                                // Use the default stored procedure for column description
+                                sb.AppendLine($"EXEC usp_addupdateextendedproperty " +
+                                              $"@name = N'MS_Description', " +
+                                              $"@value = N'{paraDesc}', " +
+                                              $"@level0type = N'SCHEMA', @level0name = N'{objectName.Schema}', " +
+                                              $"@level1type = N'{level1type}', @level1name = N'{objectName.Name}', " +
+                                              $"@level2type = N'PARAMETER', @level2name = N'{parameter.Name}';");
+                            }
+                        }
                     }
                 }
             }
@@ -81,91 +144,6 @@ namespace SQL_Document_Builder
             {
                 // Remove the last line break
                 script = script.TrimEnd('\r', '\n', ' ', '\t') + Environment.NewLine;
-            }
-
-            return script;
-        }
-
-        /// <summary>
-        /// Builds the object description asynchronously.
-        /// </summary>
-        /// <param name="objectName">The object name.</param>
-        /// <param name="useExtendedProperties">Whether to use extended properties for descriptions.</param>
-        /// <returns>A Task<string> containing the generated script.</returns>
-        public static async Task<string> BuildObjectDescriptionAsync(ObjectName objectName, string connectionString, bool useExtendedProperties)
-        {
-            if (objectName == null)
-            {
-                throw new ArgumentNullException(nameof(objectName), "The object name cannot be null.");
-            }
-
-            if (objectName.IsEmpty())
-            {
-                throw new InvalidOperationException("The object name must have a valid schema and name.");
-            }
-
-            bool spaceAdded = false;
-            var sb = new StringBuilder();
-
-            var dbTable = new DBObject();
-            if (await dbTable.OpenAsync(objectName, connectionString))
-            {
-                var tableDesc = dbTable.Description;
-                if (!string.IsNullOrEmpty(tableDesc))
-                {
-                    spaceAdded = true;
-
-                    if (useExtendedProperties)
-                    {
-                        // Use sp_addextendedproperty for table description
-                        sb.AppendLine($"EXEC sp_addextendedproperty " +
-                                      $"@name = N'MS_Description', " +
-                                      $"@value = N'{tableDesc.Replace("'", "''")}', " +
-                                      $"@level0type = N'SCHEMA', @level0name = N'{objectName.Schema}', " +
-                                      $"@level1type = N'TABLE', @level1name = N'{objectName.Name}';");
-                    }
-                    else
-                    {
-                        // Use the default stored procedure for table description
-                        sb.AppendLine($"EXEC usp_AddObjectDescription '{objectName.Schema}.{objectName.Name}', N'{tableDesc.Replace("'", "''")}';");
-                    }
-                }
-            }
-
-            foreach (var column in dbTable.Columns)
-            {
-                var colDesc = column.Description;
-                if (!string.IsNullOrEmpty(colDesc))
-                {
-                    if (!spaceAdded)
-                    {
-                        spaceAdded = true;
-                    }
-
-                    if (useExtendedProperties)
-                    {
-                        // Use sp_addextendedproperty for column description
-                        sb.AppendLine($"EXEC sp_addextendedproperty " +
-                                      $"@name = N'MS_Description', " +
-                                      $"@value = N'{colDesc.Replace("'", "''")}', " +
-                                      $"@level0type = N'SCHEMA', @level0name = N'{objectName.Schema}', " +
-                                      $"@level1type = N'TABLE', @level1name = N'{objectName.Name}', " +
-                                      $"@level2type = N'COLUMN', @level2name = N'{column.ColumnName}';");
-                    }
-                    else
-                    {
-                        // Use the default stored procedure for column description
-                        sb.AppendLine($"EXEC usp_AddColumnDescription '{objectName.Schema}.{objectName.Name}', '{column.ColumnName}', N'{colDesc.Replace("'", "''")}';");
-                    }
-                }
-            }
-
-            var script = sb.ToString();
-
-            if (script.Length > 0)
-            {
-                // Remove the last line break
-                script = script.TrimEnd('\r', '\n', ' ', '\t');
             }
 
             return script;
