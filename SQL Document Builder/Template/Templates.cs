@@ -423,6 +423,84 @@ namespace SQL_Document_Builder.Template
 &lt;div&gt;Back to [[Home]]&lt;/div&gt; 
 </Body>
   </TemplateItem>
+  <TemplateItem>
+    <DocumentType>Wiki</DocumentType>
+    <ObjectType>Table</ObjectType>
+    <Body>= Table: '''~ObjectFullName~''' =
+
+&lt;blockquote&gt;
+~Description~
+&lt;/blockquote&gt;
+
+== Columns ==
+~Columns~
+
+== Indexes ==
+~Indexes~
+
+== Constraints ==
+~Constraints~
+
+----
+</Body>
+  </TemplateItem>
+  <TemplateItem>
+    <DocumentType>Wiki</DocumentType>
+    <ObjectType>View</ObjectType>
+    <Body>= View: '''~ObjectFullName~''' =
+
+&lt;blockquote&gt;
+~Description~
+&lt;/blockquote&gt;
+
+== Columns ==
+~Columns~
+
+== Indexes ==
+~Indexes~
+
+== SQL Definition ==
+&lt;syntaxhighlight lang=""sql""&gt;
+~Definition~
+&lt;/syntaxhighlight&gt;
+</Body>
+  </TemplateItem>
+  <TemplateItem>
+    <DocumentType>Wiki</DocumentType>
+    <ObjectType>Function</ObjectType>
+    <Body>= Function: '''~ObjectFullName~''' =
+
+&lt;blockquote&gt;
+~Description~
+&lt;/blockquote&gt;
+
+== Parameters ==
+~Parameters~
+
+== SQL Code ==
+&lt;syntaxhighlight lang=""sql""&gt;
+~Definition~
+&lt;/syntaxhighlight&gt;
+</Body>
+  </TemplateItem>
+  <TemplateItem>
+    <DocumentType>Wiki</DocumentType>
+    <ObjectType>StoredProcedure</ObjectType>
+    <Body>= Stored Procedure: '''~ObjectFullName~''' =
+
+&lt;blockquote&gt;
+~Description~
+&lt;/blockquote&gt;
+
+== Parameters ==
+~Parameters~
+
+== SQL Code ==
+&lt;syntaxhighlight lang=""sql""&gt;
+~Definition~
+&lt;/syntaxhighlight&gt;
+</Body>
+  </TemplateItem>
 </root>";
 
     }
