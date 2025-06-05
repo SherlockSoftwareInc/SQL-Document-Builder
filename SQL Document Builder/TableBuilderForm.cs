@@ -3246,6 +3246,9 @@ namespace SQL_Document_Builder
                     replacePanel.Visible = false;
                 });
             }
+
+            // focus the current edit box if it exists
+            CurrentEditBox?.Focus();
         }
 
         /// <summary>
@@ -3860,7 +3863,7 @@ namespace SQL_Document_Builder
 
                 var scripts = objectName.ObjectType switch
                 {
-                    ObjectTypeEnums.Table => await JsonBuilder.GetViewDef(objectName, _connectionString),
+                    ObjectTypeEnums.Table => await JsonBuilder.GetTableDef(objectName, _connectionString),
                     ObjectTypeEnums.View => await JsonBuilder.GetViewDef(objectName, _connectionString),
                     ObjectTypeEnums.StoredProcedure or ObjectTypeEnums.Function => await JsonBuilder.GetFunctionProcedureDef(objectName, _connectionString),
                     _ => string.Empty

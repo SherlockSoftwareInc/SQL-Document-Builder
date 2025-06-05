@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ScintillaNET;
+using System;
 using System.Data;
 
 namespace SQL_Document_Builder
@@ -60,9 +61,16 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Gets the Ordinal position without primary key and index flag.
+        /// </summary>
+        /// <returns>A string.</returns>
+        internal string OrdinalPosition =>
+            Ord.Replace("🔢", string.Empty).Replace("🗝", string.Empty); 
+
+        /// <summary>
         /// Gets or sets column sequence number
         /// </summary>
-        public string? Ord { get; set; } = string.Empty;
+        public string Ord { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets column name

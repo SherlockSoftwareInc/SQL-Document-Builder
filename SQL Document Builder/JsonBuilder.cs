@@ -30,8 +30,8 @@ namespace SQL_Document_Builder
                 ObjectName = objectName.Name,
                 ObjectSchema = objectName.Schema,
                 ObjectType = ObjectTypeToString(objectName.ObjectType),
-                Description = func.Description,
-                Definition = func.Definition,
+                func.Description,
+                func.Definition,
                 Parameters = func.Parameters?.ConvertAll(dr => new
                 {
                     dr.Ord,
@@ -65,7 +65,7 @@ namespace SQL_Document_Builder
                 Description = string.IsNullOrEmpty(tableView.Description) ? " " : tableView.Description,
                 Columns = tableView.Columns?.ConvertAll(col => new
                 {
-                    col.Ord,
+                    OrdinalPosition = col.OrdinalPosition,
                     col.ColumnName,
                     col.DataType,
                     col.Description
@@ -105,10 +105,10 @@ namespace SQL_Document_Builder
                 ObjectSchema = objectName.Schema,
                 ObjectType = ObjectTypeToString(objectName.ObjectType),
                 Description = string.IsNullOrEmpty(tableView.Description) ? " " : tableView.Description,
-                Definition = tableView.Definition,
+                tableView.Definition,
                 Columns = tableView.Columns?.ConvertAll(col => new
                 {
-                    col.Ord,
+                    OrdinalPosition = col.OrdinalPosition,
                     col.ColumnName,
                     col.DataType,
                     col.Description

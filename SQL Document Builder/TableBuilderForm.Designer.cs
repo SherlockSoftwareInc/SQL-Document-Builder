@@ -432,7 +432,7 @@
             objectsListBox.Location = new System.Drawing.Point(3, 138);
             objectsListBox.Name = "objectsListBox";
             objectsListBox.Size = new System.Drawing.Size(199, 507);
-            objectsListBox.TabIndex = 0;
+            objectsListBox.TabIndex = 1;
             objectsListBox.SelectedIndexChanged += ObjectsListBox_SelectedIndexChanged;
             // 
             // panel2
@@ -448,7 +448,7 @@
             panel2.Location = new System.Drawing.Point(3, 3);
             panel2.Name = "panel2";
             panel2.Size = new System.Drawing.Size(199, 135);
-            panel2.TabIndex = 1;
+            panel2.TabIndex = 0;
             panel2.Resize += Panel2_Resize;
             // 
             // clearSerachButton
@@ -457,7 +457,7 @@
             clearSerachButton.Location = new System.Drawing.Point(123, 107);
             clearSerachButton.Name = "clearSerachButton";
             clearSerachButton.Size = new System.Drawing.Size(23, 23);
-            clearSerachButton.TabIndex = 0;
+            clearSerachButton.TabIndex = 6;
             clearSerachButton.Text = "X";
             clearSerachButton.UseVisualStyleBackColor = true;
             clearSerachButton.Click += ClearSerachButton_Click;
@@ -467,7 +467,7 @@
             searchTextBox.Location = new System.Drawing.Point(3, 107);
             searchTextBox.Name = "searchTextBox";
             searchTextBox.Size = new System.Drawing.Size(114, 23);
-            searchTextBox.TabIndex = 6;
+            searchTextBox.TabIndex = 5;
             searchTextBox.TextChanged += SearchTextBox_TextChanged;
             // 
             // schemaLabel
@@ -476,7 +476,7 @@
             schemaLabel.Location = new System.Drawing.Point(3, 47);
             schemaLabel.Name = "schemaLabel";
             schemaLabel.Size = new System.Drawing.Size(52, 15);
-            schemaLabel.TabIndex = 3;
+            schemaLabel.TabIndex = 2;
             schemaLabel.Text = "Schema:";
             // 
             // searchLabel
@@ -485,7 +485,7 @@
             searchLabel.Location = new System.Drawing.Point(3, 89);
             searchLabel.Name = "searchLabel";
             searchLabel.Size = new System.Drawing.Size(60, 15);
-            searchLabel.TabIndex = 5;
+            searchLabel.TabIndex = 4;
             searchLabel.Text = "Search for";
             // 
             // objectTypeComboBox
@@ -496,7 +496,7 @@
             objectTypeComboBox.Location = new System.Drawing.Point(3, 21);
             objectTypeComboBox.Name = "objectTypeComboBox";
             objectTypeComboBox.Size = new System.Drawing.Size(168, 23);
-            objectTypeComboBox.TabIndex = 2;
+            objectTypeComboBox.TabIndex = 1;
             objectTypeComboBox.SelectedIndexChanged += ObjectTypeComboBox_SelectedIndexChanged;
             // 
             // schemaComboBox
@@ -507,7 +507,7 @@
             schemaComboBox.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             schemaComboBox.Name = "schemaComboBox";
             schemaComboBox.Size = new System.Drawing.Size(171, 23);
-            schemaComboBox.TabIndex = 4;
+            schemaComboBox.TabIndex = 3;
             schemaComboBox.SelectedIndexChanged += SchemaComboBox_SelectedIndexChanged;
             // 
             // label1
@@ -516,7 +516,7 @@
             label1.Location = new System.Drawing.Point(3, 3);
             label1.Name = "label1";
             label1.Size = new System.Drawing.Size(71, 15);
-            label1.TabIndex = 1;
+            label1.TabIndex = 0;
             label1.Text = "Object type:";
             // 
             // tabPage2
@@ -1462,7 +1462,7 @@
             searchPanel.Location = new System.Drawing.Point(343, 3);
             searchPanel.Name = "searchPanel";
             searchPanel.Size = new System.Drawing.Size(240, 29);
-            searchPanel.TabIndex = 0;
+            searchPanel.TabIndex = 1;
             searchPanel.Visible = false;
             // 
             // closeSearchButton
@@ -1579,7 +1579,7 @@
             replacePanel.Location = new System.Drawing.Point(285, 203);
             replacePanel.Name = "replacePanel";
             replacePanel.Size = new System.Drawing.Size(240, 60);
-            replacePanel.TabIndex = 1;
+            replacePanel.TabIndex = 2;
             replacePanel.Visible = false;
             // 
             // button1
@@ -1591,7 +1591,7 @@
             button1.Location = new System.Drawing.Point(214, 2);
             button1.Name = "button1";
             button1.Size = new System.Drawing.Size(23, 23);
-            button1.TabIndex = 2;
+            button1.TabIndex = 3;
             button1.Text = "❌";
             toolTip1.SetToolTip(button1, "Close");
             button1.UseVisualStyleBackColor = false;
@@ -1635,7 +1635,7 @@
             findNextButton.Location = new System.Drawing.Point(188, 2);
             findNextButton.Name = "findNextButton";
             findNextButton.Size = new System.Drawing.Size(23, 23);
-            findNextButton.TabIndex = 1;
+            findNextButton.TabIndex = 2;
             findNextButton.Tag = "Find previous (Shift+Enter)";
             findNextButton.Text = "🠞";
             toolTip1.SetToolTip(findNextButton, "Find next");
@@ -1647,7 +1647,7 @@
             replaceReplaceTextBox.Location = new System.Drawing.Point(3, 32);
             replaceReplaceTextBox.Name = "replaceReplaceTextBox";
             replaceReplaceTextBox.Size = new System.Drawing.Size(182, 23);
-            replaceReplaceTextBox.TabIndex = 3;
+            replaceReplaceTextBox.TabIndex = 1;
             replaceReplaceTextBox.KeyDown += ReplaceReplaceTextBox_KeyDown;
             // 
             // replaceSearchTextBox
@@ -1666,7 +1666,7 @@
             tabControl1.Name = "tabControl1";
             tabControl1.SelectedIndex = 0;
             tabControl1.Size = new System.Drawing.Size(682, 676);
-            tabControl1.TabIndex = 2;
+            tabControl1.TabIndex = 0;
             tabControl1.DrawItem += TabControl1_DrawItem;
             tabControl1.SelectedIndexChanged += TabControl1_SelectedIndexChanged;
             tabControl1.MouseUp += TabControl1_MouseUp;
