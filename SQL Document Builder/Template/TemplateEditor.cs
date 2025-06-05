@@ -104,6 +104,14 @@ namespace SQL_Document_Builder.Template
         /// <param name="e">The e.</param>
         private void DocTypeToolStripComboBox_SelectedIndexChanged(object sender, EventArgs e)
         {
+            // change the sqltext document type based on the selected item
+            templateTextBox.DocumentType = docTypeToolStripComboBox.SelectedItem switch
+            {
+                TemplateItem.DocumentTypeEnums.Markdown => SqlEditBox.DocumentTypeEnums.Markdown,
+                TemplateItem.DocumentTypeEnums.SharePoint => SqlEditBox.DocumentTypeEnums.Html,
+                TemplateItem.DocumentTypeEnums.Wiki => SqlEditBox.DocumentTypeEnums.Wiki,
+                _ => SqlEditBox.DocumentTypeEnums.empty,
+            };
             ChangeTemplate();
         }
 
@@ -208,6 +216,14 @@ namespace SQL_Document_Builder.Template
             // enable/disable the ObjectType ToolStripComboBox based on the selected DocumentType
             if (_init) return; // Prevents re-entrancy during form load
 
+            PopulateTemplateTextBox();
+        }
+
+        /// <summary>
+        /// Populates the template text box.
+        /// </summary>
+        private void PopulateTemplateTextBox()
+        {
             objectDefinitionToolStripMenuItem.Enabled = false;
             columnsToolStripMenuItem.Enabled = false;
             constraintsToolStripMenuItem.Enabled = false;
@@ -373,8 +389,28 @@ namespace SQL_Document_Builder.Template
             templateTextBox.Undo();
         }
 
-        private void objTypeToolStripComboBox_Click(object sender, EventArgs e)
+        /// <summary>
+        /// Handles the Click event of the ResetToDefaultToolStripMenuItem control:
+        /// Resets the template to the default settings.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void ResetToDefaultToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            _init = true;
+            _templates.Reset();
+
+            // get the selected document type and object type using Enum.TryParse
+            if (Enum.TryParse(docTypeToolStripComboBox.Text, out TemplateItem.DocumentTypeEnums docType))
+                _documentType = docType;
+            if (Enum.TryParse(objTypeToolStripComboBox.Text, out TemplateItem.ObjectTypeEnums objType))
+                _objectType = objType;
+
+            templateTextBox.Text = _templates?.GetTemplate(_documentType, _objectType)?.Body;
+            templateTextBox.SetSavePoint();
+            templateTextBox.EmptyUndoBuffer();
+
+            //PopulateTemplateTextBox();
         }
     }
 }

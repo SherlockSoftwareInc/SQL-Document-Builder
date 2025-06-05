@@ -61,6 +61,8 @@
             toolStripSeparator7 = new System.Windows.Forms.ToolStripSeparator();
             exitToolStripButton = new System.Windows.Forms.ToolStripButton();
             templateTextBox = new SqlEditBox();
+            resetToDefaultToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             menuStrip1.SuspendLayout();
             toolStrip1.SuspendLayout();
             SuspendLayout();
@@ -76,7 +78,7 @@
             // 
             // fileToolStripMenuItem
             // 
-            fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { exitToolStripMenuItem });
+            fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { resetToDefaultToolStripMenuItem, toolStripSeparator1, exitToolStripMenuItem });
             fileToolStripMenuItem.Name = "fileToolStripMenuItem";
             fileToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
             fileToolStripMenuItem.Text = "&File";
@@ -84,7 +86,7 @@
             // exitToolStripMenuItem
             // 
             exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            exitToolStripMenuItem.Size = new System.Drawing.Size(92, 22);
+            exitToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             exitToolStripMenuItem.Text = "E&xit";
             exitToolStripMenuItem.Click += ExitToolStripButton_Click;
             // 
@@ -316,6 +318,18 @@
             templateTextBox.Size = new System.Drawing.Size(923, 530);
             templateTextBox.TabIndex = 2;
             // 
+            // resetToDefaultToolStripMenuItem
+            // 
+            resetToDefaultToolStripMenuItem.Name = "resetToDefaultToolStripMenuItem";
+            resetToDefaultToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            resetToDefaultToolStripMenuItem.Text = "Reset to Default";
+            resetToDefaultToolStripMenuItem.Click += ResetToDefaultToolStripMenuItem_Click;
+            // 
+            // toolStripSeparator1
+            // 
+            toolStripSeparator1.Name = "toolStripSeparator1";
+            toolStripSeparator1.Size = new System.Drawing.Size(177, 6);
+            // 
             // TemplateEditor
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -371,5 +385,7 @@
         private System.Windows.Forms.ToolStripMenuItem constraintsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem relationshipsToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator7;
+        private System.Windows.Forms.ToolStripMenuItem resetToDefaultToolStripMenuItem;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
     }
 }

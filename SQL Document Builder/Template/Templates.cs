@@ -264,6 +264,18 @@ namespace SQL_Document_Builder.Template
             }
         }
 
+        /// <summary>
+        /// Resets to the default templates.
+        /// </summary>
+        internal void Reset()
+        {
+            // Clear the templates list to reset the state
+            _templates.Clear();
+
+            ParseXML(default_templates);
+            Save();
+        }
+
         private const string default_templates = @"<root>
   <TemplateItem>
     <DocumentType>Markdown</DocumentType>
