@@ -141,6 +141,10 @@ namespace SQL_Document_Builder
                             InitSyntaxColoringMarkdown();
                             break;
 
+                        case DocumentTypeEnums.Json:
+                            InitSyntaxColoringJson();
+                            break;
+
                         default:
                             InitSyntaxColoringDefault();
                             break;
@@ -310,6 +314,35 @@ namespace SQL_Document_Builder
             this.CaretForeColor = Color.White;
         }
 
+        /// <summary>
+        /// Inits the syntax coloring json.
+        /// </summary>
+        private void InitSyntaxColoringJson()
+        {
+            this.LexerName = "json";
+
+            // Configure the default style
+            this.StyleResetDefault();
+            this.Styles[Style.Default].Font = "Cascadia Mono";
+            this.Styles[Style.Default].Size = 10;
+            this.Styles[Style.Default].BackColor = IntToColor(0x212121);
+            this.Styles[Style.Default].ForeColor = IntToColor(0xFFFFFF);
+            this.StyleClearAll();
+
+            // JSON styles
+            this.Styles[Style.Json.Default].ForeColor = Color.White;
+            this.Styles[Style.Json.Number].ForeColor = Color.LightGreen;
+            this.Styles[Style.Json.String].ForeColor = Color.LightYellow;
+            this.Styles[Style.Json.PropertyName].ForeColor = Color.DeepSkyBlue;
+            this.Styles[Style.Json.EscapeSequence].ForeColor = Color.Violet;
+            this.Styles[Style.Json.Keyword].ForeColor = Color.DodgerBlue; // true, false, null
+            this.Styles[Style.Json.LdKeyword].ForeColor = Color.Orange;   // JSON-LD keywords
+            this.Styles[Style.Json.Operator].ForeColor = Color.LightGray; // : , { } [ ]
+            this.Styles[Style.Json.BlockComment].ForeColor = Color.MediumSeaGreen;
+            this.Styles[Style.Json.LineComment].ForeColor = Color.MediumSeaGreen;
+
+            this.CaretForeColor = Color.White;
+        }
         /// <summary>
         /// Initializes syntax coloring for Markdown documents.
         /// </summary>

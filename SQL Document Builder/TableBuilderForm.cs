@@ -5,7 +5,6 @@ using SQL_Document_Builder.Template;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Security.AccessControl;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -109,7 +108,7 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Files the display name.
+        /// builds the display name for a file by truncating it if necessary.
         /// </summary>
         /// <param name="fileName">The file name.</param>
         /// <returns>A string.</returns>
@@ -117,7 +116,7 @@ namespace SQL_Document_Builder
         {
             if (fileName?.Length > 50)
             {
-                // Show the first 7 chars, then "...", then the last 20 chars
+                // Show the first 7 chars, then "...", then the last 40 chars
                 return string.Concat(fileName.AsSpan(0, 7), "...", fileName.AsSpan(fileName.Length - 40));
             }
             else
@@ -190,25 +189,6 @@ namespace SQL_Document_Builder
             }
 
             return createScript;
-        }
-
-        /// <summary>
-        /// Headers the text.
-        /// </summary>
-        /// <returns>A string.</returns>
-        private static string HeaderText()
-        {
-            string result = string.Empty;
-            //if (headerTextBox.Text.Length > 0)
-            //{
-            //    if (objectsListBox.SelectedItem != null)
-            //    {
-            //        var objectName = (ObjectName)objectsListBox.SelectedItem;
-            //        var objectType = objectName.ObjectType == ObjectName.ObjectTypeEnums.View ? "View" : "Table";
-            //        result = headerTextBox.Text.Replace("$Table", objectType);
-            //    }
-            //}
-            return result;
         }
 
         /// <summary>
@@ -716,22 +696,6 @@ namespace SQL_Document_Builder
         /// <param name="e">The E.</param>
         private void CloseToolStripButton_Click(object sender, EventArgs e)
         {
-            if (CurrentEditBox != null)
-            {
-                //if (CurrentEditBox.Changed)
-                //{
-                //    var result = Common.MsgBox("Do you want to save the changes?", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
-                //    if (result == DialogResult.Yes)
-                //    {
-                //        AppendSave();
-                //    }
-                //    else if (result == DialogResult.Cancel)
-                //    {
-                //        return;
-                //    }
-                //}
-            }
-
             Close();
         }
 
@@ -1141,6 +1105,7 @@ namespace SQL_Document_Builder
             spValuesToolStripMenuItem.Enabled = enabled;
             insertToolStripButton.Enabled = enabled;
             insertToolStripMenuItem.Enabled = enabled;
+            jsonTableViewValuesToolStripMenuItem.Enabled = enabled;
         }
 
         /// <summary>
@@ -2374,16 +2339,6 @@ namespace SQL_Document_Builder
 
             // save the file
             editBox.Save();
-
-            //tabControl1.SelectedIndex = _mouseOnTabIndex;
-            //if (_currentEditBox.FileName.Length > 0)
-            //{
-            //    _currentEditBox.SaveFile();
-            //}
-            //else
-            //{
-            //    SaveAsToolStripMenuItem_Click(sender, e);
-            //}
         }
 
         /// <summary>
@@ -2713,11 +2668,6 @@ namespace SQL_Document_Builder
             if (objectsListBox.SelectedItem != null)
             {
                 var objectName = (ObjectName)objectsListBox.SelectedItem;
-                var header = HeaderText();
-                if (header.Length > 0)
-                {
-                    CurrentEditBox?.AppendText(header + Environment.NewLine);
-                }
 
                 var template = GetTemplateText(TemplateItem.DocumentTypeEnums.SharePoint, objectName.ObjectType);
 
@@ -2832,31 +2782,6 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Handles the "Table SQL" tool strip menu item click:
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The E.</param>
-        private void TableWikiToolStripButton_Click(object sender, EventArgs e)
-        {
-            //if (objectsListBox.SelectedItem != null)
-            //{
-            //    var objectName = (ObjectName)objectsListBox.SelectedItem;
-            //    if (headerTextBox.Text.Length > 0)
-            //    {
-            //        CurrentEditBox?.Text = headerTextBox.Text + "\r\n";
-            //    }
-            //    else
-            //    {
-            //        CurrentEditBox?.Text = String.Empty;
-            //    }
-            //    var builder = new Wiki();
-            //    CurrentEditBox?.AppendText(builder.GetTableViewDef(objectName));
-            //    AppendLine(footerTextBox.Text);
-            //    Clipboard.SetText(CurrentEditBox?.Text);
-            //}
-        }
-
-        /// <summary>
         /// Handles timer tick.
         /// </summary>
         /// <param name="sender">The sender.</param>
@@ -2925,22 +2850,6 @@ namespace SQL_Document_Builder
 
                 EndBuild();
             }
-        }
-
-        /// <summary>
-        /// Handles the "Values wiki" tool strip menu item click:
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The E.</param>
-        private void ValuesWikiToolStripButton_Click(object sender, EventArgs e)
-        {
-            //if (objectsListBox.SelectedItem != null)
-            //{
-            //    var objectName = (ObjectName)objectsListBox.SelectedItem;
-            //    var builder = new Wiki();
-            //    CurrentEditBox?.Text = builder.GetTableValues(objectName.FullName);
-            //    Clipboard.SetText(CurrentEditBox?.Text);
-            //}
         }
 
         /// <summary>
@@ -3059,16 +2968,21 @@ namespace SQL_Document_Builder
 
         #region Main Menu Commands
 
-        private void ClearSelectionToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            CurrentEditBox?.SetEmptySelection(0);
-        }
-
+        /// <summary>
+        /// Handles the click event of the collapse all tool strip menu item.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
         private void CollapseAllToolStripMenuItem_Click(object sender, EventArgs e)
         {
             CurrentEditBox?.FoldAll(FoldAction.Contract);
         }
 
+        /// <summary>
+        /// Handles the click event of the collapse all tool strip menu item:
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
         private void ExpandAllToolStripMenuItem_Click(object sender, EventArgs e)
         {
             CurrentEditBox?.FoldAll(FoldAction.Expand);
@@ -3122,11 +3036,6 @@ namespace SQL_Document_Builder
             }
         }
 
-        private void IndentSelectionToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            Indent();
-        }
-
         /// <summary>
         /// Handles the click event of the lowercase selection tool strip menu item.
         /// </summary>
@@ -3135,11 +3044,6 @@ namespace SQL_Document_Builder
         private void LowercaseSelectionToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Lowercase();
-        }
-
-        private void OutdentSelectionToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            Outdent();
         }
 
         /// <summary>
@@ -3152,14 +3056,6 @@ namespace SQL_Document_Builder
             OpenSearch();
         }
 
-        private void SelectLineToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (CurrentEditBox == null) return;
-
-            Line line = CurrentEditBox.Lines[CurrentEditBox.CurrentLine];
-            CurrentEditBox?.SetSelection(line.Position + line.Length, line.Position);
-        }
-
         /// <summary>
         /// Handles the click event of the upper case selection tool strip menu item.
         /// </summary>
@@ -3168,13 +3064,6 @@ namespace SQL_Document_Builder
         private void UppercaseSelectionToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Uppercase();
-        }
-
-        private void WordWrapToolStripMenuItem1_Click(object sender, EventArgs e)
-        {
-            //// toggle word wrap
-            //wordWrapItem.Checked = !wordWrapItem.Checked;
-            //CurrentEditBox?.WrapMode = wordWrapItem.Checked ? WrapMode.Word : WrapMode.None;
         }
 
         /// <summary>
@@ -3599,11 +3488,6 @@ namespace SQL_Document_Builder
             if (objectsListBox.SelectedItem != null)
             {
                 var objectName = (ObjectName)objectsListBox.SelectedItem;
-                var header = HeaderText();
-                if (header.Length > 0)
-                {
-                    CurrentEditBox?.AppendText(header + Environment.NewLine);
-                }
 
                 var template = GetTemplateText(TemplateItem.DocumentTypeEnums.Markdown, objectName.ObjectType);
 
@@ -3758,6 +3642,8 @@ namespace SQL_Document_Builder
 
         #endregion "MRU files"
 
+        #region Wiki Document Builder
+
         /// <summary>
         /// Handles the click event of the "WkObjectList" tool strip menu item:
         /// Generates a wiki object list for the selected objects.
@@ -3809,11 +3695,6 @@ namespace SQL_Document_Builder
             if (objectsListBox.SelectedItem != null)
             {
                 var objectName = (ObjectName)objectsListBox.SelectedItem;
-                var header = HeaderText();
-                if (header.Length > 0)
-                {
-                    CurrentEditBox?.AppendText(header + Environment.NewLine);
-                }
 
                 var template = GetTemplateText(TemplateItem.DocumentTypeEnums.Wiki, objectName.ObjectType);
 
@@ -3846,7 +3727,7 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Wks the table view values tool strip menu item_ click.
+        /// Handles the click event of the "WkTableViewValues" tool strip menu item:
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
@@ -3921,5 +3802,160 @@ namespace SQL_Document_Builder
                 ScrollToCaret();
             }
         }
+
+        #endregion Wiki Document Builder
+
+        #region Json document builder
+
+        /// <summary>
+        /// Handles the click event of the Json table view values tool strip menu item.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private async void JsonObjectListToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Json) != DialogResult.Yes) return;
+
+            List<ObjectName>? selectedObjects = SelectObjects();
+
+            if (selectedObjects == null || selectedObjects.Count == 0)
+            {
+                return;
+            }
+
+            StartBuild();
+
+            var progress = new Progress<int>(value =>
+            {
+                progressBar.Value = value;
+            });
+
+            string scripts = String.Empty;
+            var builder = new JsonBuilder();
+            await Task.Run(async () =>
+            {
+                scripts = await builder.BuildObjectList(selectedObjects, _connectionString, progress);
+            });
+
+            CurrentEditBox?.AppendText(scripts);
+
+            // Move caret to end and scroll to it
+            ScrollToCaret();
+
+            EndBuild();
+        }
+
+        /// <summary>
+        /// Handles the click event of the Json object definition tool strip menu item.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private async void JsonObjectDefinitionToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Json) != DialogResult.Yes) return;
+
+            if (objectsListBox.SelectedItem != null)
+            {
+                var objectName = (ObjectName)objectsListBox.SelectedItem;
+
+                var scripts = objectName.ObjectType switch
+                {
+                    ObjectTypeEnums.Table => await JsonBuilder.GetViewDef(objectName, _connectionString),
+                    ObjectTypeEnums.View => await JsonBuilder.GetViewDef(objectName, _connectionString),
+                    ObjectTypeEnums.StoredProcedure or ObjectTypeEnums.Function => await JsonBuilder.GetFunctionProcedureDef(objectName, _connectionString),
+                    _ => string.Empty
+                };
+
+                if (scripts.Length == 0)
+                {
+                    Common.MsgBox($"No definition found for {objectName.FullName}", MessageBoxIcon.Information);
+                    return;
+                }
+                CurrentEditBox?.AppendText(scripts);
+
+                // Move caret to end and scroll to it
+                ScrollToCaret();
+
+                EndBuild();
+            }
+        }
+
+        /// <summary>
+        /// Handles the click event of the table or view data to json tool strip menu item.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private async void JsonTableViewValuesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Json) != DialogResult.Yes) return;
+
+            if (objectsListBox.SelectedItem != null)
+            {
+                var objectName = (ObjectName)objectsListBox.SelectedItem;
+
+                // check if the object is a table or view
+                if (objectName.ObjectType != ObjectTypeEnums.Table && objectName.ObjectType != ObjectTypeEnums.View)
+                {
+                    Common.MsgBox($"The feature is for Table or View only.", MessageBoxIcon.Warning);
+                    return;
+                }
+
+                var scripts = await JsonBuilder.GetTableValuesAsync($"select * from {objectName.FullName}", _connectionString);
+                CurrentEditBox?.AppendText(scripts);
+
+                // Move caret to end and scroll to it
+                ScrollToCaret();
+
+                EndBuild();
+            }
+        }
+
+        /// <summary>
+        /// Handles the click event of the Json clipboard to table tool strip menu item.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void JsonClipboardToTableToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Json) != DialogResult.Yes) return;
+
+            if (Clipboard.ContainsText())
+            {
+                var metaData = Clipboard.GetText();
+
+                if (metaData.Length > 1)
+                {
+                    var builder = new JsonBuilder();
+
+                    CurrentEditBox?.AppendText(builder.TextToTable(metaData));
+
+                    // Move caret to end and scroll to it
+                    ScrollToCaret();
+
+                    EndBuild();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Handles the click event of the Json query data to table tool strip menu item.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private async void JsonQueryDataToTableToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Json) != DialogResult.Yes) return;
+
+            using var form = new QueryDataToTableForm() { ConnectionString = _connectionString };
+            if (form.ShowDialog() == DialogResult.OK)
+            {
+                CurrentEditBox?.AppendText(await JsonBuilder.GetTableValuesAsync(form.SQL, _connectionString));
+
+                // Move caret to end and scroll to it
+                ScrollToCaret();
+            }
+        }
+
+        #endregion Json document builder
     }
 }

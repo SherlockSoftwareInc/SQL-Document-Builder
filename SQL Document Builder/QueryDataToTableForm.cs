@@ -45,7 +45,6 @@ namespace SQL_Document_Builder
             // if active control is a text box, copy the text to clipboard
             if (ActiveControl is TextBoxBase textBox)
             {
-                textBox.SelectAll();
                 textBox.Copy();
                 return;
             }
@@ -107,7 +106,7 @@ namespace SQL_Document_Builder
         {
             if (Clipboard.ContainsText())
             {
-                sqlTextBox.Text = Clipboard.GetText();
+                sqlTextBox.Paste();
             }
         }
 
