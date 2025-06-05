@@ -193,7 +193,7 @@ namespace SQL_Document_Builder
                 }
             }
             sb.AppendLine("GO");
-            sb.AppendLine($"SELECT * FROM {objectName.FullName}");
+            //sb.AppendLine($"SELECT * FROM {objectName.FullName}");
 
             return sb.ToString();
         }

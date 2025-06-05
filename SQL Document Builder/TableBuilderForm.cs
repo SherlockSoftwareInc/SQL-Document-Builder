@@ -86,22 +86,15 @@ namespace SQL_Document_Builder
             // execute each statement
             foreach (var sql in sqlStatements)
             {
-                //Execute(builder.ConnectionString, sql);
-                if (sql.Length > 0)
+                var query = sql.Trim(' ', '\t', '\r', '\n'); // Trim whitespace from the start and end of the SQL statement
+
+                if (!string.IsNullOrEmpty(query))
                 {
-                    //var parseResult = await SyntaxCheckAsync(sql, connection.ConnectionString);
-                    //if(string.IsNullOrEmpty(parseResult))
-                    //{
-                    var result = await DatabaseHelper.ExecuteSQLAsync(sql, connection.ConnectionString);
+                    var result = await DatabaseHelper.ExecuteSQLAsync(query, connection.ConnectionString);
                     if (result != string.Empty)
                     {
                         return result;
                     }
-                    //}
-                    //else
-                    //{
-                    //    return parseResult; // return the syntax error message
-                    //}
                 }
             }
             return string.Empty;
@@ -1120,11 +1113,6 @@ namespace SQL_Document_Builder
             {
                 CurrentEditBox.Enabled = true;
                 CurrentEditBox.Cursor = Cursors.Default;
-
-                //if (CurrentEditBox.Text.Length > 0)
-                //{
-                //    Clipboard.SetText(CurrentEditBox.Text);
-                //}
             }
         }
 
@@ -2198,21 +2186,12 @@ namespace SQL_Document_Builder
                 };
                 if (form.ShowDialog() == DialogResult.OK)
                 {
-                    CurrentEditBox?.AppendText(await SharePointBuilder.GetTableValuesAsync(form.SQL, _connectionString));
+                    var insertStatements = await DatabaseDocBuilder.QueryDataToInsertStatementAsync(form.SQL, _connectionString);
+
+                    CurrentEditBox?.AppendText(insertStatements);
 
                     // Move caret to end and scroll to it
                     ScrollToCaret();
-
-                    //var sql = form.SQL;
-                    //if (!string.IsNullOrEmpty(sql))
-                    //{
-                    //    AddDataSourceText();
-
-                    //    editBox.AppendText(sql);
-
-                    //    // Move caret to end and scroll to it
-                    //    ScrollToCaret();
-                    //}
                 }
             }
         }

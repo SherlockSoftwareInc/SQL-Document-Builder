@@ -151,7 +151,6 @@ namespace SQL_Document_Builder
         /// </summary>
         public void Copy()
         {
-            //Clipboard.SetDataObject(columnDefDataGridView.GetClipboardContent());
             var currentControl = this.ActiveControl;
             if (currentControl?.GetType() == typeof(TextBox))
             {

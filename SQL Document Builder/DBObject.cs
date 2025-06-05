@@ -156,8 +156,6 @@ BEGIN
 END;";
             }
 
-            Clipboard.SetText(query);
-
             await DatabaseHelper.ExecuteSQLAsync(query, ConnectionString);
 
             if (objectType == ObjectTypeEnums.Table || objectType == ObjectTypeEnums.View)
