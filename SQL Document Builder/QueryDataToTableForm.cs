@@ -25,15 +25,15 @@ namespace SQL_Document_Builder
         public string ConnectionString { get; set; } = string.Empty;
 
         /// <summary>
-        /// Gets or sets the INSERT statement.
-        /// </summary>
-        public string DocumentBody { get; set; } = string.Empty;
-
-        /// <summary>
         /// Gets or sets a value indicating whether the generated document is a insert statement or not.
         /// </summary>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool InsertStatement { get; set; } = false;
+
+        /// <summary>
+        /// Gets the sql statement.
+        /// </summary>
+        public string SQL { get; private set; }
 
         /// <summary>
         /// Handles the click event of the Copy tool strip menu item.
@@ -58,37 +58,22 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void ExecuteToolStripButton_Click(object sender, EventArgs e)
         {
-            if (sqlTextBox.Text.StartsWith("select ", StringComparison.CurrentCultureIgnoreCase))
+            if (sqlTextBox.Text.Contains("select", StringComparison.CurrentCultureIgnoreCase))
             {
-                DocumentBody = string.Empty;
+                var syntaxCheck = await DatabaseHelper.SyntaxCheckAsync(sqlTextBox.Text, ConnectionString);
 
-                try
+                if (string.IsNullOrEmpty(syntaxCheck))
                 {
-                    if (InsertStatement)
-                    {
-                        htmlTextBox.Text = await DatabaseDocBuilder.QueryDataToInsertStatementAsync(sqlTextBox.Text, ConnectionString);
-                    }
-                    else
-                    {
-                        htmlTextBox.Text = await Common.QueryDataToHTMLTableAsync(sqlTextBox.Text, ConnectionString);
-                    }
+                    SQL = sqlTextBox.Text;
+                    DialogResult = DialogResult.OK;
 
-                    DocumentBody = htmlTextBox.Text;
-
-                    if (!string.IsNullOrEmpty(htmlTextBox.Text))
-                    {
-                        DialogResult = DialogResult.OK;
-                        Close();
-                    }
+                    Close();
                 }
-                catch (Exception ex)
+                else
                 {
-                    messageLabel.Text = ex.Message;
+                    errorTextBox.Text = syntaxCheck;
+                    return;
                 }
-            }
-            else
-            {
-                messageLabel.Text = "Invalid query.";
             }
         }
 
@@ -99,6 +84,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void ExitToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            DialogResult = DialogResult.Cancel;
             Close();
         }
 
@@ -163,7 +149,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void SqlTextBox_TextChanged(object sender, EventArgs e)
         {
-            htmlTextBox.Text = string.Empty;
+            errorTextBox.Text = string.Empty;
         }
     }
 }

@@ -48,7 +48,7 @@
             messageLabel = new System.Windows.Forms.ToolStripStatusLabel();
             splitContainer1 = new System.Windows.Forms.SplitContainer();
             sqlTextBox = new System.Windows.Forms.TextBox();
-            htmlTextBox = new System.Windows.Forms.TextBox();
+            errorTextBox = new System.Windows.Forms.TextBox();
             menuStrip1.SuspendLayout();
             toolStrip1.SuspendLayout();
             statusStrip1.SuspendLayout();
@@ -208,7 +208,7 @@
             // 
             // splitContainer1.Panel2
             // 
-            splitContainer1.Panel2.Controls.Add(htmlTextBox);
+            splitContainer1.Panel2.Controls.Add(errorTextBox);
             splitContainer1.Size = new System.Drawing.Size(800, 379);
             splitContainer1.SplitterDistance = 200;
             splitContainer1.TabIndex = 3;
@@ -224,15 +224,16 @@
             sqlTextBox.TabIndex = 0;
             sqlTextBox.TextChanged += SqlTextBox_TextChanged;
             // 
-            // htmlTextBox
+            // errorTextBox
             // 
-            htmlTextBox.Dock = System.Windows.Forms.DockStyle.Fill;
-            htmlTextBox.Location = new System.Drawing.Point(0, 0);
-            htmlTextBox.Multiline = true;
-            htmlTextBox.Name = "htmlTextBox";
-            htmlTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            htmlTextBox.Size = new System.Drawing.Size(800, 175);
-            htmlTextBox.TabIndex = 1;
+            errorTextBox.Dock = System.Windows.Forms.DockStyle.Fill;
+            errorTextBox.ForeColor = System.Drawing.Color.FromArgb(255, 128, 128);
+            errorTextBox.Location = new System.Drawing.Point(0, 0);
+            errorTextBox.Multiline = true;
+            errorTextBox.Name = "errorTextBox";
+            errorTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+            errorTextBox.Size = new System.Drawing.Size(800, 175);
+            errorTextBox.TabIndex = 1;
             // 
             // QueryDataToTableForm
             // 
@@ -284,7 +285,7 @@
         private System.Windows.Forms.ToolStripStatusLabel messageLabel;
         private System.Windows.Forms.SplitContainer splitContainer1;
         private System.Windows.Forms.TextBox sqlTextBox;
-        private System.Windows.Forms.TextBox htmlTextBox;
+        private System.Windows.Forms.TextBox errorTextBox;
         private System.Windows.Forms.ToolStripButton executeToolStripButton;
     }
 }

@@ -80,7 +80,8 @@ namespace SQL_Document_Builder
             VBScript,
             PowerShell,
             BatchFile,
-            Markdown
+            Markdown,
+            Wiki
         }
 
         /// <summary>

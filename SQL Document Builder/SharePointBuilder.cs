@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using static ScintillaNET.Style;
 
 namespace SQL_Document_Builder
 {
@@ -136,23 +138,35 @@ namespace SQL_Document_Builder
         /// Build value list of the given table for wiki
         /// </summary>
         /// <param name="tableName"></param>
-        public async Task<string> GetTableValuesAsync(string tableName, string connectionString)
+        public static async Task<string> GetTableValuesAsync(string sql, string connectionString)
         {
-            _script.Clear();
-            AppendLine("<div>");
-            AppendLine("<h2>Table Values:</h2>");
-            try
+            DataTable? dt = await DatabaseHelper.GetDataTableAsync(sql, connectionString);
+            if (dt == null || dt.Rows.Count == 0)
             {
-                string sql = string.Format("SELECT * FROM {0}", tableName);
-                AppendLine(await Common.QueryDataToHTMLTableAsync(sql, connectionString));
+                return "''No data found.''";
             }
-            catch (Exception ex)
-            {
-                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
-            }
-            AppendLine("</div>");
+            return DataTableToDoc(dt);
+        }
 
-            return _script.ToString();
+        /// <summary>
+        /// Data the table to doc.
+        /// </summary>
+        /// <param name="data">The data.</param>
+        /// <returns>A string.</returns>
+        internal static string DataTableToDoc(DataTable data)
+        {
+            var sb = new StringBuilder();
+
+            if (data != null && data.Rows.Count > 0)
+            {
+                sb.AppendLine(Common.DataTableToHTML(data));
+            }
+            else
+            {
+                sb.AppendLine("<p>No data found.</p>");
+            }
+
+            return sb.ToString();
         }
 
         /// <summary>

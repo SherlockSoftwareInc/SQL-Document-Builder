@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -604,36 +605,50 @@ END";
         /// <returns>A Task.</returns>
         internal static async Task<string> SyntaxCheckAsync(string userQuery, string connectionString)
         {
-            string result = string.Empty;
-
-            if (string.IsNullOrEmpty(connectionString))
-            {
+            if (string.IsNullOrWhiteSpace(connectionString))
                 return "No database connection specified.";
-            }
 
-            await ExecuteSQLAsync("SET NOEXEC ON", connectionString);
+            await using var connection = new SqlConnection(connectionString);
+            await using var command = new SqlCommand(userQuery, connection);
 
-            using SqlConnection connection = new(connectionString);
-            SqlCommand command = new(userQuery, connection);
+            var resultBuilder = new StringBuilder();
 
             try
             {
                 await connection.OpenAsync();
-                await command.ExecuteNonQueryAsync();
+
+                // Turn NOEXEC ON to check syntax only
+                await using (var setNoExecOn = new SqlCommand("SET NOEXEC ON", connection))
+                {
+                    await setNoExecOn.ExecuteNonQueryAsync();
+                }
+
+                try
+                {
+                    await command.ExecuteNonQueryAsync();
+                }
+                catch (SqlException ex)
+                {
+                    for (int i = 0; i < ex.Errors.Count; i++)
+                    {
+                        resultBuilder.AppendLine(ex.Errors[i].Message);
+                    }
+                }
+                finally
+                {
+                    // Turn NOEXEC OFF
+                    await using var setNoExecOff = new SqlCommand("SET NOEXEC OFF", connection);
+                    await setNoExecOff.ExecuteNonQueryAsync();
+                }
             }
-            catch (SqlException ex)
+            catch (Exception ex)
             {
-                result = ex.Message;
-            }
-            finally
-            {
-                await connection.CloseAsync();
+                resultBuilder.AppendLine("Unhandled error: " + ex.Message);
             }
 
-            await ExecuteSQLAsync("SET NOEXEC OFF", connectionString);
-
-            return result;
+            return resultBuilder.ToString().Trim();
         }
+
 
         /// <summary>
         /// Test connection.

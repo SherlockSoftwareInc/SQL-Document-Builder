@@ -229,47 +229,49 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Gets the table values async.
         /// </summary>
-        /// <param name="fullName">The full name.</param>
+        /// <param name="sql">The full name.</param>
         /// <returns>A Task.</returns>
-        internal async Task<string> GetTableValuesAsync(string fullName, string connectionString)
+        internal static async Task<string> GetTableValuesAsync(string sql, string connectionString)
         {
-            _md.Clear();
-
-            AppendLine($"## Table Values\n");
-
-            string sql = $"SELECT * FROM {fullName}";
             DataTable? dt = await DatabaseHelper.GetDataTableAsync(sql, connectionString);
-
-            if (dt != null && dt.Rows.Count > 0)
+            if (dt == null || dt.Rows.Count == 0)
             {
-                // Header
-                var headers = new StringBuilder("|");
-                var separators = new StringBuilder("|");
+                return "''No data found.''";
+            }
+            return DataTableToDoc(dt);
+        }
+
+        /// <summary>
+        /// Convert the data table to document.
+        /// </summary>
+        /// <param name="dt">The dt.</param>
+        /// <returns>A string.</returns>
+        internal static string DataTableToDoc(DataTable dt)
+        {
+            var sb = new StringBuilder();
+
+            // Header
+            var headers = new StringBuilder("|");
+            var separators = new StringBuilder("|");
+            foreach (DataColumn col in dt.Columns)
+            {
+                headers.Append($" {col.ColumnName} |");
+                separators.Append("------------|");
+            }
+            sb. AppendLine(headers.ToString());
+            sb.AppendLine(separators.ToString());
+
+            // Rows
+            foreach (DataRow dr in dt.Rows)
+            {
+                var row = new StringBuilder("|");
                 foreach (DataColumn col in dt.Columns)
                 {
-                    headers.Append($" {col.ColumnName} |");
-                    separators.Append("------------|");
+                    row.Append($" {dr[col]?.ToString() ?? ""} |");
                 }
-                AppendLine(headers.ToString());
-                AppendLine(separators.ToString());
-
-                // Rows
-                foreach (DataRow dr in dt.Rows)
-                {
-                    var row = new StringBuilder("|");
-                    foreach (DataColumn col in dt.Columns)
-                    {
-                        row.Append($" {dr[col]?.ToString() ?? ""} |");
-                    }
-                    AppendLine(row.ToString());
-                }
+                sb. AppendLine(row.ToString());
             }
-            else
-            {
-                AppendLine("_No data found._");
-            }
-
-            return _md.ToString();
+            return sb.ToString();
         }
 
         /// <summary>

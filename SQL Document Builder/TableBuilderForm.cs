@@ -5,6 +5,7 @@ using SQL_Document_Builder.Template;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Security.AccessControl;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -1137,7 +1138,7 @@ namespace SQL_Document_Builder
             mdValuesToolStripButton.Enabled = enabled;
             htmlValuesToolStripButton.Enabled = enabled;
             mdValuesToolStripMenuItem.Enabled = enabled;
-            htmlValuesToolStripMenuItem.Enabled = enabled;
+            spValuesToolStripMenuItem.Enabled = enabled;
             insertToolStripButton.Enabled = enabled;
             insertToolStripMenuItem.Enabled = enabled;
         }
@@ -2196,15 +2197,14 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The E.</param>
-        private void QueryDataToTableToolStripMenuItem_Click(object sender, EventArgs e)
+        private async void QueryDataToTableToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Html) != DialogResult.Yes) return;
 
             using var form = new QueryDataToTableForm() { ConnectionString = _connectionString };
-            form.ShowDialog();
-            if (!string.IsNullOrEmpty(form.DocumentBody))
+            if (form.ShowDialog() == DialogResult.OK)
             {
-                CurrentEditBox?.AppendText(form.DocumentBody);
+                CurrentEditBox?.AppendText(await SharePointBuilder.GetTableValuesAsync(form.SQL, _connectionString));
 
                 // Move caret to end and scroll to it
                 ScrollToCaret();
@@ -2216,7 +2216,7 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
-        private void QueryInsertToolStripMenuItem_Click(object sender, EventArgs e)
+        private async void QueryInsertToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var editBox = CurrentEditBox;
             if (editBox == null)
@@ -2231,17 +2231,23 @@ namespace SQL_Document_Builder
                     ConnectionString = _connectionString,
                     InsertStatement = true
                 };
-                form.ShowDialog();
-
-                var sql = form.DocumentBody;
-                if (!string.IsNullOrEmpty(sql))
+                if (form.ShowDialog() == DialogResult.OK)
                 {
-                    AddDataSourceText();
-
-                    editBox.AppendText(sql);
+                    CurrentEditBox?.AppendText(await SharePointBuilder.GetTableValuesAsync(form.SQL, _connectionString));
 
                     // Move caret to end and scroll to it
                     ScrollToCaret();
+
+                    //var sql = form.SQL;
+                    //if (!string.IsNullOrEmpty(sql))
+                    //{
+                    //    AddDataSourceText();
+
+                    //    editBox.AppendText(sql);
+
+                    //    // Move caret to end and scroll to it
+                    //    ScrollToCaret();
+                    //}
                 }
             }
         }
@@ -2911,8 +2917,7 @@ namespace SQL_Document_Builder
                     return;
                 }
 
-                var builder = new SharePointBuilder();
-                var scripts = await builder.GetTableValuesAsync(objectName.FullName, _connectionString);
+                var scripts = await SharePointBuilder.GetTableValuesAsync($"select * from {objectName.FullName}", _connectionString);
                 CurrentEditBox?.AppendText(scripts);
 
                 // Move caret to end and scroll to it
@@ -3568,12 +3573,18 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
-        private void QueryDataToTableToolStripMenuItem1_Click(object sender, EventArgs e)
+        private async void QueryDataToTableToolStripMenuItem1_Click(object sender, EventArgs e)
         {
             if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Markdown) != DialogResult.Yes) return;
 
-            // Move caret to end and scroll to it
-            ScrollToCaret();
+            using var form = new QueryDataToTableForm() { ConnectionString = _connectionString };
+            if (form.ShowDialog() == DialogResult.OK)
+            {
+                CurrentEditBox?.AppendText(await MarkdownBuilder.GetTableValuesAsync(form.SQL, _connectionString));
+
+                // Move caret to end and scroll to it
+                ScrollToCaret();
+            }
         }
 
         /// <summary>
@@ -3682,8 +3693,7 @@ namespace SQL_Document_Builder
                     return;
                 }
 
-                var valueBuilder = new MarkdownBuilder();
-                CurrentEditBox?.AppendText(await valueBuilder.GetTableValuesAsync(objectName.FullName, _connectionString));
+                CurrentEditBox?.AppendText(await MarkdownBuilder.GetTableValuesAsync($"select * from {objectName.FullName}", _connectionString));
 
                 // Move caret to end and scroll to it
                 ScrollToCaret();
@@ -3747,5 +3757,169 @@ namespace SQL_Document_Builder
         }
 
         #endregion "MRU files"
+
+        /// <summary>
+        /// Handles the click event of the "WkObjectList" tool strip menu item:
+        /// Generates a wiki object list for the selected objects.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private async void WkObjectListToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Wiki) != DialogResult.Yes) return;
+
+            List<ObjectName>? selectedObjects = SelectObjects();
+
+            if (selectedObjects == null || selectedObjects.Count == 0)
+            {
+                return;
+            }
+
+            StartBuild();
+
+            var progress = new Progress<int>(value =>
+            {
+                progressBar.Value = value;
+            });
+
+            string scripts = String.Empty;
+            var builder = new WikiBuilder();
+            await Task.Run(async () =>
+            {
+                scripts = await builder.BuildObjectList(selectedObjects, _connectionString, progress);
+            });
+
+            CurrentEditBox?.AppendText(scripts);
+
+            // Move caret to end and scroll to it
+            ScrollToCaret();
+
+            EndBuild();
+        }
+
+        /// <summary>
+        /// Handles the click event of the "WkObjectDefinition" tool strip menu item:
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private async void WkObjectDefinitionToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Wiki) != DialogResult.Yes) return;
+
+            if (objectsListBox.SelectedItem != null)
+            {
+                var objectName = (ObjectName)objectsListBox.SelectedItem;
+                var header = HeaderText();
+                if (header.Length > 0)
+                {
+                    CurrentEditBox?.AppendText(header + Environment.NewLine);
+                }
+
+                var template = GetTemplateText(TemplateItem.DocumentTypeEnums.Wiki, objectName.ObjectType);
+
+                if (string.IsNullOrWhiteSpace(template))
+                {
+                    Common.MsgBox($"No template found for {objectName.ObjectType} in Markdown format.", MessageBoxIcon.Warning);
+                    return;
+                }
+
+                var builder = new WikiBuilder();
+                var scripts = objectName.ObjectType switch
+                {
+                    ObjectTypeEnums.Table or ObjectTypeEnums.View => await MarkdownBuilder.GetTableViewDef(objectName, _connectionString, template),
+                    ObjectTypeEnums.StoredProcedure or ObjectTypeEnums.Function => await MarkdownBuilder.GetFunctionProcedureDef(objectName, _connectionString, template),
+                    _ => string.Empty
+                };
+
+                if (scripts.Length == 0)
+                {
+                    Common.MsgBox($"No definition found for {objectName.FullName}", MessageBoxIcon.Information);
+                    return;
+                }
+                CurrentEditBox?.AppendText(scripts);
+
+                // Move caret to end and scroll to it
+                ScrollToCaret();
+
+                EndBuild();
+            }
+        }
+
+        /// <summary>
+        /// Wks the table view values tool strip menu item_ click.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private async void WkTableViewValuesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Wiki) != DialogResult.Yes) return;
+
+            if (objectsListBox.SelectedItem != null)
+            {
+                var objectName = (ObjectName)objectsListBox.SelectedItem;
+
+                // check if the object is a table or view
+                if (objectName.ObjectType != ObjectTypeEnums.Table && objectName.ObjectType != ObjectTypeEnums.View)
+                {
+                    Common.MsgBox($"The feature is for Table or View only.", MessageBoxIcon.Warning);
+                    return;
+                }
+
+                CurrentEditBox?.AppendText(await WikiBuilder.GetTableValuesAsync($"select * from {objectName.FullName}", _connectionString));
+
+                // Move caret to end and scroll to it
+                ScrollToCaret();
+
+                EndBuild();
+            }
+        }
+
+        /// <summary>
+        /// Handles the click event of the "WkClipboardToTable" tool strip menu item:
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void WkClipboardToTableToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Wiki) != DialogResult.Yes) return;
+
+            if (Clipboard.ContainsText())
+            {
+                var metaData = Clipboard.GetText();
+
+                if (metaData.Length > 1)
+                {
+                    var builder = new WikiBuilder();
+
+                    CurrentEditBox?.AppendText(builder.TextToTable(metaData));
+
+                    // Move caret to end and scroll to it
+                    ScrollToCaret();
+
+                    EndBuild();
+                }
+            }
+
+            statusToolStripStatusLabe.Text = "Complete!";
+        }
+
+        /// <summary>
+        /// Handles the click event of the "WkClipboardToTable" tool strip menu item:
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private async void WkQueryDataToTableToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Wiki) != DialogResult.Yes) return;
+
+            using var form = new QueryDataToTableForm() { ConnectionString = _connectionString };
+            if (form.ShowDialog() == DialogResult.OK)
+            {
+                CurrentEditBox?.AppendText(await WikiBuilder.GetTableValuesAsync(form.SQL, _connectionString));
+
+                // Move caret to end and scroll to it
+                ScrollToCaret();
+            }
+        }
     }
 }
