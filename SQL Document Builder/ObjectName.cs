@@ -279,5 +279,36 @@ namespace SQL_Document_Builder
 
             return text;
         }
+
+        /// <summary>
+        /// Tries the parse.
+        /// </summary>
+        /// <param name="name">The name.</param>
+        /// <param name="objName">The obj name.</param>
+        /// <returns>A bool.</returns>
+        internal static bool TryParse(string name, out ObjectName objName)
+        {
+            objName = new ObjectName();
+
+            // Basic validation for the search string
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                return false;
+            }
+
+            // Example parsing logic (this should be adjusted based on actual requirements)
+            // Assuming the searchFor is in the format "schema.table"
+            var parts = name.Split('.');
+            if (parts.Length == 2)
+            {
+                objName.Schema = parts[0];
+                objName.Name = parts[1];
+                objName.ObjectType = ObjectTypeEnums.Table; // defaulting to Table type 
+                return true;
+            }
+
+            // If parsing fails, return false
+            return false;
+        }
     }
 }

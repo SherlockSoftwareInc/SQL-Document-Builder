@@ -2000,6 +2000,17 @@ namespace SQL_Document_Builder
                 objectsListBox.Items.Clear();
                 string searchFor = searchTextBox.Text.Trim();
 
+                if (searchFor.IndexOf('.') > 0)
+                {
+                    // try parse the search string to a valid SQL identifier
+                    if (ObjectName.TryParse(searchFor, out ObjectName objName))
+                    {
+                        schemaName = objName.Schema;
+                        searchFor = objName.Name;
+                    }
+                }
+                searchFor = searchFor.RemoveQuote();
+
                 foreach (var table in _tables)
                 {
                     if (string.IsNullOrEmpty(searchFor))
