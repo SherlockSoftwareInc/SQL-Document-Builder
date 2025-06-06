@@ -74,6 +74,11 @@ namespace SQL_Document_Builder
                     return;
                 }
             }
+            else
+            {
+                errorTextBox.Text = "The SQL statement must contain a SELECT statement.";
+                return;
+            }
         }
 
         /// <summary>
@@ -125,6 +130,7 @@ namespace SQL_Document_Builder
             {
                 Text = "Query to HTML";
             }
+            errorTextBox.ForeColor = System.Drawing.Color.LightCoral;
         }
 
         /// <summary>

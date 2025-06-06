@@ -176,7 +176,7 @@
             executeToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             executeToolStripButton.Name = "executeToolStripButton";
             executeToolStripButton.Size = new System.Drawing.Size(23, 22);
-            executeToolStripButton.Text = "toolStripButton1";
+            executeToolStripButton.Text = "Execute";
             executeToolStripButton.Click += ExecuteToolStripButton_Click;
             // 
             // statusStrip1
@@ -210,7 +210,7 @@
             // 
             splitContainer1.Panel2.Controls.Add(errorTextBox);
             splitContainer1.Size = new System.Drawing.Size(800, 379);
-            splitContainer1.SplitterDistance = 200;
+            splitContainer1.SplitterDistance = 299;
             splitContainer1.TabIndex = 3;
             // 
             // sqlTextBox
@@ -220,19 +220,19 @@
             sqlTextBox.Multiline = true;
             sqlTextBox.Name = "sqlTextBox";
             sqlTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            sqlTextBox.Size = new System.Drawing.Size(800, 200);
+            sqlTextBox.Size = new System.Drawing.Size(800, 299);
             sqlTextBox.TabIndex = 0;
             sqlTextBox.TextChanged += SqlTextBox_TextChanged;
             // 
             // errorTextBox
             // 
             errorTextBox.Dock = System.Windows.Forms.DockStyle.Fill;
-            errorTextBox.ForeColor = System.Drawing.Color.FromArgb(255, 128, 128);
+            errorTextBox.ForeColor = System.Drawing.Color.Red;
             errorTextBox.Location = new System.Drawing.Point(0, 0);
             errorTextBox.Multiline = true;
             errorTextBox.Name = "errorTextBox";
             errorTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Both;
-            errorTextBox.Size = new System.Drawing.Size(800, 175);
+            errorTextBox.Size = new System.Drawing.Size(800, 76);
             errorTextBox.TabIndex = 1;
             // 
             // QueryDataToTableForm

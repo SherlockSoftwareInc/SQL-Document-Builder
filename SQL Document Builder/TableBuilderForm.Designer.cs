@@ -545,7 +545,7 @@
             groupBox2.Controls.Add(insertBatchTextBox);
             groupBox2.Location = new System.Drawing.Point(8, 139);
             groupBox2.Name = "groupBox2";
-            groupBox2.Size = new System.Drawing.Size(230, 113);
+            groupBox2.Size = new System.Drawing.Size(250, 113);
             groupBox2.TabIndex = 20;
             groupBox2.TabStop = false;
             groupBox2.Text = "INSERT statement options";
@@ -596,7 +596,7 @@
             groupBox1.Controls.Add(useExtendedPropertyRadioButton);
             groupBox1.Location = new System.Drawing.Point(8, 56);
             groupBox1.Name = "groupBox1";
-            groupBox1.Size = new System.Drawing.Size(230, 74);
+            groupBox1.Size = new System.Drawing.Size(250, 74);
             groupBox1.TabIndex = 19;
             groupBox1.TabStop = false;
             groupBox1.Text = "Database object description";
@@ -1133,45 +1133,45 @@
             // objectListToolStripMenuItem
             // 
             objectListToolStripMenuItem.Name = "objectListToolStripMenuItem";
-            objectListToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            objectListToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
             objectListToolStripMenuItem.Text = "Object List";
             objectListToolStripMenuItem.Click += JsonObjectListToolStripMenuItem_Click;
             // 
             // toolStripSeparator25
             // 
             toolStripSeparator25.Name = "toolStripSeparator25";
-            toolStripSeparator25.Size = new System.Drawing.Size(177, 6);
+            toolStripSeparator25.Size = new System.Drawing.Size(175, 6);
             // 
             // jsonObjectDefinitionToolStripMenuItem
             // 
             jsonObjectDefinitionToolStripMenuItem.Name = "jsonObjectDefinitionToolStripMenuItem";
-            jsonObjectDefinitionToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            jsonObjectDefinitionToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
             jsonObjectDefinitionToolStripMenuItem.Text = "Object Definition";
             jsonObjectDefinitionToolStripMenuItem.Click += JsonObjectDefinitionToolStripMenuItem_Click;
             // 
             // jsonTableViewValuesToolStripMenuItem
             // 
             jsonTableViewValuesToolStripMenuItem.Name = "jsonTableViewValuesToolStripMenuItem";
-            jsonTableViewValuesToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            jsonTableViewValuesToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
             jsonTableViewValuesToolStripMenuItem.Text = "Table/View Values";
             jsonTableViewValuesToolStripMenuItem.Click += JsonTableViewValuesToolStripMenuItem_Click;
             // 
             // toolStripSeparator26
             // 
             toolStripSeparator26.Name = "toolStripSeparator26";
-            toolStripSeparator26.Size = new System.Drawing.Size(177, 6);
+            toolStripSeparator26.Size = new System.Drawing.Size(175, 6);
             // 
             // jsonClipboardToTableToolStripMenuItem
             // 
             jsonClipboardToTableToolStripMenuItem.Name = "jsonClipboardToTableToolStripMenuItem";
-            jsonClipboardToTableToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            jsonClipboardToTableToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
             jsonClipboardToTableToolStripMenuItem.Text = "Clipboard to JSON";
             jsonClipboardToTableToolStripMenuItem.Click += JsonClipboardToTableToolStripMenuItem_Click;
             // 
             // jsonQueryDataToTableToolStripMenuItem
             // 
             jsonQueryDataToTableToolStripMenuItem.Name = "jsonQueryDataToTableToolStripMenuItem";
-            jsonQueryDataToTableToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            jsonQueryDataToTableToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
             jsonQueryDataToTableToolStripMenuItem.Text = "Query Data to JSON";
             jsonQueryDataToTableToolStripMenuItem.Click += JsonQueryDataToTableToolStripMenuItem_Click;
             // 

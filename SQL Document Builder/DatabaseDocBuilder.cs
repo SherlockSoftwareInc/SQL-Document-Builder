@@ -189,10 +189,6 @@ namespace SQL_Document_Builder
                         sb.AppendLine($"SET IDENTITY_INSERT {tableName} OFF;");
                     }
                 }
-                else
-                {
-                    sb.AppendLine($"-- No data found for the query: {sql}");
-                }
             }
             catch (Exception ex)
             {

@@ -297,7 +297,7 @@ namespace SQL_Document_Builder
                 if (string.IsNullOrEmpty(editBox.Text) || editBox.DataSourceName != dataSourceText)
                 {
                     editBox.DataSourceName = dataSourceText;
-                    editBox.AppendText($"-- Data source: {dataSourceText}" + Environment.NewLine);
+                    AppendText(editBox, $"-- Data source: {dataSourceText}" + Environment.NewLine);
                 }
             }
         }
@@ -375,6 +375,9 @@ namespace SQL_Document_Builder
 
             try
             {
+                var editBox = CurrentEditBox;
+                if (editBox == null) return;
+
                 StartBuild();
 
                 var progress = new Progress<int>(value =>
@@ -390,10 +393,7 @@ namespace SQL_Document_Builder
                     contents = builder.SchemaContent(_connectionString, progress);
                 });
 
-                CurrentEditBox?.AppendText(contents);
-
-                // Move caret to end and scroll to it
-                ScrollToCaret();
+                AppendText(editBox, contents);
 
                 EndBuild();
             }
@@ -549,12 +549,9 @@ namespace SQL_Document_Builder
 
                 if (metaData.Length > 1)
                 {
-                    var builder = new SharePointBuilder();
                     var scripts = SharePointBuilder.TextToTable(metaData);
-                    CurrentEditBox?.AppendText(scripts);
-
-                    // Move caret to end and scroll to it
-                    ScrollToCaret();
+                    
+                    AppendText(CurrentEditBox, scripts);
 
                     EndBuild();
                 }
@@ -778,9 +775,7 @@ namespace SQL_Document_Builder
 
             if (BeginAddDDLScript())
             {
-                editBox.AppendText(definitionPanel.CreateIndexScript());
-                // Move caret to end and scroll to it
-                ScrollToCaret();
+                AppendText(editBox, definitionPanel.CreateIndexScript());
             }
         }
 
@@ -824,10 +819,8 @@ namespace SQL_Document_Builder
                     // get the object create script
                     var script = await GetObjectCreateScriptAsync(obj, _connectionString);
                     if (editBox == null) return;
-                    editBox.AppendText(script);
-
-                    // Move caret to end and scroll to it
-                    ScrollToCaret();
+                    
+                    AppendText(editBox, script);
 
                     // get the insert statement for the object
                     // get the number of rows in the table
@@ -836,16 +829,14 @@ namespace SQL_Document_Builder
                     // confirm if the user wants to continue when the number of rows is too much
                     if (rowCount > Properties.Settings.Default.InertMaxRows)
                     {
-                        CurrentEditBox?.AppendText("-- Too many rows to insert" + Environment.NewLine + Environment.NewLine);
+                        AppendText(editBox, "-- Too many rows to insert" + Environment.NewLine + Environment.NewLine);
                     }
                     else
                     {
                         var insertScript = await DatabaseDocBuilder.TableToInsertStatementAsync(obj, _connectionString);
                         if (editBox == null) return;
-                        editBox.AppendText(insertScript + "GO" + Environment.NewLine);
 
-                        // Move caret to end and scroll to it
-                        ScrollToCaret();
+                        AppendText(editBox, insertScript + "GO" + Environment.NewLine);
                     }
                 }
 
@@ -870,10 +861,7 @@ namespace SQL_Document_Builder
 
             if (BeginAddDDLScript())
             {
-                editBox.AppendText(definitionPanel.PrimaryKeyScript());
-
-                // Move caret to end and scroll to it
-                ScrollToCaret();
+                AppendText(editBox, definitionPanel.PrimaryKeyScript());
             }
         }
 
@@ -902,9 +890,7 @@ namespace SQL_Document_Builder
             {
                 AddDataSourceText();
 
-                editBox.AppendText(script);
-                // Move caret to end and scroll to it
-                ScrollToCaret();
+                AppendText(editBox, script);
             }
             editBox.Cursor = Cursors.Default;
         }
@@ -950,10 +936,8 @@ namespace SQL_Document_Builder
                     var script = await GetObjectCreateScriptAsync(selectedObjects[i], connectionString);
 
                     if (editBox == null) return;
-                    editBox?.AppendText(script);
 
-                    // Move caret to end and scroll to it
-                    ScrollToCaret();
+                    AppendText(editBox, script);
                 }
 
                 EndBuild();
@@ -1152,12 +1136,10 @@ namespace SQL_Document_Builder
                         return;
                     }
 
-                    editBox.AppendText($"-- Data source: {fileName}" + Environment.NewLine);
+                    AppendText(editBox, $"-- Data source: {fileName}" + Environment.NewLine);
 
                     var dataHelper = new ExcelDataHelper(form.ResultDataTable);
-                    editBox.AppendText(dataHelper.GetInsertStatement(form.TableName, form.NullForBlank));
-                    // Move caret to end and scroll to it
-                    ScrollToCaret();
+                    AppendText(editBox, dataHelper.GetInsertStatement(form.TableName, form.NullForBlank));
                 }
             }
         }
@@ -1532,17 +1514,13 @@ namespace SQL_Document_Builder
                         if (!BeginAddDDLScript()) return;
 
                         // append the insert statement to the script
-                        editBox.AppendText(script);
+                        AppendText(editBox, script);
 
-                        editBox.AppendText("GO" + Environment.NewLine);
-
-                        // Move caret to end and scroll to it
-                        ScrollToCaret();
+                        AppendText(editBox, "GO" + Environment.NewLine);
                     }
                     else
                     {
                         Common.MsgBox("No data found", MessageBoxIcon.Information);
-                        return;
                     }
                 }
             }
@@ -1645,12 +1623,11 @@ namespace SQL_Document_Builder
                     // add "GO" and new line after each object description if it is not empty
                     if (!string.IsNullOrEmpty(script))
                     {
-                        script += Environment.NewLine + "GO" + Environment.NewLine;
-                        if (editBox == null) return;
-                        editBox.AppendText(script);
+                        script += "GO" + Environment.NewLine;
 
-                        // Move caret to end and scroll to it
-                        ScrollToCaret();
+                        if (editBox == null) return;
+
+                        AppendText(editBox, script);
                     }
                 }
 
@@ -2157,10 +2134,7 @@ namespace SQL_Document_Builder
             using var form = new QueryDataToTableForm() { ConnectionString = _connectionString };
             if (form.ShowDialog() == DialogResult.OK)
             {
-                CurrentEditBox?.AppendText(await SharePointBuilder.GetTableValuesAsync(form.SQL, _connectionString));
-
-                // Move caret to end and scroll to it
-                ScrollToCaret();
+                AppendText(CurrentEditBox, await SharePointBuilder.GetTableValuesAsync(form.SQL, _connectionString));
             }
         }
 
@@ -2188,10 +2162,7 @@ namespace SQL_Document_Builder
                 {
                     var insertStatements = await DatabaseDocBuilder.QueryDataToInsertStatementAsync(form.SQL, _connectionString);
 
-                    CurrentEditBox?.AppendText(insertStatements);
-
-                    // Move caret to end and scroll to it
-                    ScrollToCaret();
+                    AppendText(CurrentEditBox, insertStatements);
                 }
             }
         }
@@ -2549,7 +2520,7 @@ namespace SQL_Document_Builder
         private void TabControl1_Resize(object sender, EventArgs e)
         {
             searchPanel.Top = tabControl1.Top + 36;
-            searchPanel.Left = tabControl1.Left + tabControl1.Width - searchPanel.Width - 16;
+            searchPanel.Left = tabControl1.Left + tabControl1.Width - searchPanel.Width - 16 - SystemInformation.VerticalScrollBarWidth;
 
             replacePanel.Top = searchPanel.Top;
             replacePanel.Left = searchPanel.Left;
@@ -2669,10 +2640,7 @@ namespace SQL_Document_Builder
                     Common.MsgBox($"No definition found for {objectName.FullName}", MessageBoxIcon.Information);
                     return;
                 }
-                CurrentEditBox?.AppendText(scripts);
-
-                // Move caret to end and scroll to it
-                ScrollToCaret();
+                AppendText(CurrentEditBox, scripts);
 
                 EndBuild();
             }
@@ -2703,10 +2671,7 @@ namespace SQL_Document_Builder
                     {
                         // add GO statement if the script not empty
                         description += "GO" + Environment.NewLine;
-                        editBox.AppendText(description);
-
-                        // Move caret to end and scroll to it
-                        ScrollToCaret();
+                        AppendText(editBox, description);
                     }
                 }
                 else
@@ -2739,6 +2704,7 @@ namespace SQL_Document_Builder
             }
 
             StartBuild();
+            var editBox = CurrentEditBox;
 
             var progress = new Progress<int>(value =>
             {
@@ -2752,12 +2718,25 @@ namespace SQL_Document_Builder
                 scripts = await builder.BuildTableListAsync(selectedObjects, _connectionString, progress);
             });
 
-            CurrentEditBox?.AppendText(scripts);
+            AppendText(editBox, scripts);
+
+            EndBuild();
+        }
+
+        /// <summary>
+        /// Appends the text.
+        /// </summary>
+        /// <param name="editBox">The edit box.</param>
+        /// <param name="text">The text.</param>
+        private void AppendText(SqlEditBox? editBox, string text)
+        {
+            if (editBox == null || string.IsNullOrEmpty(text)) return;
+            editBox.BeginUndoAction();
+            editBox.AppendText(text);
+            editBox.EndUndoAction();
 
             // Move caret to end and scroll to it
             ScrollToCaret();
-
-            EndBuild();
         }
 
         /// <summary>
@@ -2795,9 +2774,7 @@ namespace SQL_Document_Builder
                     return;
                 }
 
-                editBox.AppendText(DatabaseDocBuilder.UspAddObjectDescription());
-                // Move caret to end and scroll to it
-                ScrollToCaret();
+                AppendText(editBox, DatabaseDocBuilder.UspAddObjectDescription());
             }
         }
 
@@ -2822,10 +2799,7 @@ namespace SQL_Document_Builder
                 }
 
                 var scripts = await SharePointBuilder.GetTableValuesAsync($"select * from {objectName.FullName}", _connectionString);
-                CurrentEditBox?.AppendText(scripts);
-
-                // Move caret to end and scroll to it
-                ScrollToCaret();
+                AppendText(CurrentEditBox, scripts);
 
                 EndBuild();
             }
@@ -3427,10 +3401,7 @@ namespace SQL_Document_Builder
                 {
                     var builder = new MarkdownBuilder();
 
-                    CurrentEditBox?.AppendText(builder.TextToTable(metaData));
-
-                    // Move caret to end and scroll to it
-                    ScrollToCaret();
+                    AppendText(CurrentEditBox, builder.TextToTable(metaData));
 
                     EndBuild();
                 }
@@ -3451,10 +3422,7 @@ namespace SQL_Document_Builder
             using var form = new QueryDataToTableForm() { ConnectionString = _connectionString };
             if (form.ShowDialog() == DialogResult.OK)
             {
-                CurrentEditBox?.AppendText(await MarkdownBuilder.GetTableValuesAsync(form.SQL, _connectionString));
-
-                // Move caret to end and scroll to it
-                ScrollToCaret();
+                AppendText(CurrentEditBox, await MarkdownBuilder.GetTableValuesAsync(form.SQL, _connectionString));
             }
         }
 
@@ -3492,10 +3460,8 @@ namespace SQL_Document_Builder
                     Common.MsgBox($"No definition found for {objectName.FullName}", MessageBoxIcon.Information);
                     return;
                 }
-                CurrentEditBox?.AppendText(scripts);
 
-                // Move caret to end and scroll to it
-                ScrollToCaret();
+                AppendText(CurrentEditBox, scripts);
 
                 EndBuild();
             }
@@ -3531,10 +3497,7 @@ namespace SQL_Document_Builder
                 scripts = await builder.BuildObjectList(selectedObjects, _connectionString, progress);
             });
 
-            CurrentEditBox?.AppendText(scripts);
-
-            // Move caret to end and scroll to it
-            ScrollToCaret();
+            AppendText(CurrentEditBox, scripts);
 
             EndBuild();
         }
@@ -3559,10 +3522,7 @@ namespace SQL_Document_Builder
                     return;
                 }
 
-                CurrentEditBox?.AppendText(await MarkdownBuilder.GetTableValuesAsync($"select * from {objectName.FullName}", _connectionString));
-
-                // Move caret to end and scroll to it
-                ScrollToCaret();
+                AppendText(CurrentEditBox, await MarkdownBuilder.GetTableValuesAsync($"select * from {objectName.FullName}", _connectionString));
 
                 EndBuild();
             }
@@ -3657,10 +3617,7 @@ namespace SQL_Document_Builder
                 scripts = await builder.BuildObjectList(selectedObjects, _connectionString, progress);
             });
 
-            CurrentEditBox?.AppendText(scripts);
-
-            // Move caret to end and scroll to it
-            ScrollToCaret();
+            AppendText(CurrentEditBox, scripts);
 
             EndBuild();
         }
@@ -3699,10 +3656,8 @@ namespace SQL_Document_Builder
                     Common.MsgBox($"No definition found for {objectName.FullName}", MessageBoxIcon.Information);
                     return;
                 }
-                CurrentEditBox?.AppendText(scripts);
 
-                // Move caret to end and scroll to it
-                ScrollToCaret();
+                AppendText(CurrentEditBox, scripts);
 
                 EndBuild();
             }
@@ -3728,10 +3683,7 @@ namespace SQL_Document_Builder
                     return;
                 }
 
-                CurrentEditBox?.AppendText(await WikiBuilder.GetTableValuesAsync($"select * from {objectName.FullName}", _connectionString));
-
-                // Move caret to end and scroll to it
-                ScrollToCaret();
+                AppendText(CurrentEditBox, await WikiBuilder.GetTableValuesAsync($"select * from {objectName.FullName}", _connectionString));
 
                 EndBuild();
             }
@@ -3754,10 +3706,7 @@ namespace SQL_Document_Builder
                 {
                     var builder = new WikiBuilder();
 
-                    CurrentEditBox?.AppendText(builder.TextToTable(metaData));
-
-                    // Move caret to end and scroll to it
-                    ScrollToCaret();
+                    AppendText(CurrentEditBox, builder.TextToTable(metaData));
 
                     EndBuild();
                 }
@@ -3778,10 +3727,7 @@ namespace SQL_Document_Builder
             using var form = new QueryDataToTableForm() { ConnectionString = _connectionString };
             if (form.ShowDialog() == DialogResult.OK)
             {
-                CurrentEditBox?.AppendText(await WikiBuilder.GetTableValuesAsync(form.SQL, _connectionString));
-
-                // Move caret to end and scroll to it
-                ScrollToCaret();
+                AppendText(CurrentEditBox, await WikiBuilder.GetTableValuesAsync(form.SQL, _connectionString));
             }
         }
 
@@ -3819,10 +3765,7 @@ namespace SQL_Document_Builder
                 scripts = await builder.BuildObjectList(selectedObjects, _connectionString, progress);
             });
 
-            CurrentEditBox?.AppendText(scripts);
-
-            // Move caret to end and scroll to it
-            ScrollToCaret();
+            AppendText(CurrentEditBox, scripts);
 
             EndBuild();
         }
@@ -3853,10 +3796,7 @@ namespace SQL_Document_Builder
                     Common.MsgBox($"No definition found for {objectName.FullName}", MessageBoxIcon.Information);
                     return;
                 }
-                CurrentEditBox?.AppendText(scripts);
-
-                // Move caret to end and scroll to it
-                ScrollToCaret();
+                AppendText(CurrentEditBox, scripts);
 
                 EndBuild();
             }
@@ -3883,10 +3823,8 @@ namespace SQL_Document_Builder
                 }
 
                 var scripts = await JsonBuilder.GetTableValuesAsync($"select * from {objectName.FullName}", _connectionString);
-                CurrentEditBox?.AppendText(scripts);
 
-                // Move caret to end and scroll to it
-                ScrollToCaret();
+                AppendText(CurrentEditBox, scripts);
 
                 EndBuild();
             }
@@ -3909,10 +3847,7 @@ namespace SQL_Document_Builder
                 {
                     var builder = new JsonBuilder();
 
-                    CurrentEditBox?.AppendText(builder.TextToTable(metaData));
-
-                    // Move caret to end and scroll to it
-                    ScrollToCaret();
+                    AppendText(CurrentEditBox, builder.TextToTable(metaData));
 
                     EndBuild();
                 }
@@ -3931,10 +3866,7 @@ namespace SQL_Document_Builder
             using var form = new QueryDataToTableForm() { ConnectionString = _connectionString };
             if (form.ShowDialog() == DialogResult.OK)
             {
-                CurrentEditBox?.AppendText(await JsonBuilder.GetTableValuesAsync(form.SQL, _connectionString));
-
-                // Move caret to end and scroll to it
-                ScrollToCaret();
+                AppendText(CurrentEditBox, await JsonBuilder.GetTableValuesAsync(form.SQL, _connectionString));
             }
         }
 
