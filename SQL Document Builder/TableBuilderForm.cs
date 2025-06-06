@@ -2000,6 +2000,8 @@ namespace SQL_Document_Builder
                 objectsListBox.Items.Clear();
                 string searchFor = searchTextBox.Text.Trim();
 
+                bool useExactMatch = false;
+
                 if (searchFor.IndexOf('.') > 0)
                 {
                     // try parse the search string to a valid SQL identifier
@@ -2007,7 +2009,14 @@ namespace SQL_Document_Builder
                     {
                         schemaName = objName.Schema;
                         searchFor = objName.Name;
+                        useExactMatch = true; // use exact match if the search string is a valid SQL identifier
                     }
+                }
+
+                // use exact match if the search string is quoted
+                if (searchFor.StartsWith('[') && searchFor.EndsWith(']') || searchFor.StartsWith("'") && searchFor.EndsWith("'"))
+                {
+                    useExactMatch = true;
                 }
                 searchFor = searchFor.RemoveQuote();
 
@@ -2029,15 +2038,37 @@ namespace SQL_Document_Builder
                     {
                         if (string.IsNullOrEmpty(schemaName))
                         {
-                            // Use the LIKE operator to find tables that contain the search string
-                            if (table.Name.Contains(searchFor, StringComparison.CurrentCultureIgnoreCase))
-                                AddListItem(table.ObjectType, table.Schema, table.Name);
+                            // if use exact match, check for exact match of the table name
+                            if (useExactMatch)
+                            {
+                                // Use the Equals method for exact match
+                                if (table.Name.Equals(searchFor, StringComparison.CurrentCultureIgnoreCase))
+                                    AddListItem(table.ObjectType, table.Schema, table.Name);
+                            }
+                            else
+                            {
+                                // Use the LIKE operator to find tables that contain the search string
+                                if (table.Name.Contains(searchFor, StringComparison.CurrentCultureIgnoreCase))
+                                    AddListItem(table.ObjectType, table.Schema, table.Name);
+                            }
                         }
                         else
                         {
-                            if (schemaName.Equals(table.Schema, StringComparison.CurrentCultureIgnoreCase) &&
-                                table.Name.Contains(searchFor, StringComparison.CurrentCultureIgnoreCase))
-                                AddListItem(table.ObjectType, table.Schema, table.Name);
+                            // if use exact match, check for exact match of the table name
+                            if (useExactMatch)
+                            {
+                                // Use the Equals method for exact match
+                                if (table.Schema.Equals(schemaName, StringComparison.CurrentCultureIgnoreCase) &&
+                                    table.Name.Equals(searchFor, StringComparison.CurrentCultureIgnoreCase))
+                                    AddListItem(table.ObjectType, table.Schema, table.Name);
+                            }
+                            else
+                            {
+                                // Use the LIKE operator to find tables that contain the search string
+                                if (schemaName.Equals(table.Schema, StringComparison.CurrentCultureIgnoreCase) &&
+                                    table.Name.Contains(searchFor, StringComparison.CurrentCultureIgnoreCase))
+                                    AddListItem(table.ObjectType, table.Schema, table.Name);
+                            }
                         }
                     }
                 }
