@@ -227,20 +227,50 @@ namespace SQL_Document_Builder
 
             StringBuilder sb = new();
 
-            string sql = $@"
-SELECT
+            //            string sql = $@"
+            //SELECT
+            //    i.name AS IndexName,
+            //    i.type_desc AS IndexType,
+            //    i.is_unique AS IsUnique,
+            //    s.name AS SchemaName,
+            //    o.name AS ObjectName,
+            //    STRING_AGG(COL_NAME(ic.object_id, ic.column_id), ',') AS IndexColumns,
+            //    i.filter_definition AS FilterDefinition,
+            //    i.is_disabled AS IsDisabled,
+            //    xi.using_xml_index_id,
+            //    xi.secondary_type
+            //FROM sys.indexes i
+            //INNER JOIN sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id
+            //INNER JOIN sys.objects o ON i.object_id = o.object_id
+            //INNER JOIN sys.schemas s ON o.schema_id = s.schema_id
+            //LEFT JOIN sys.xml_indexes xi ON i.object_id = xi.object_id AND i.index_id = xi.index_id
+            //WHERE s.name = '{objectName.Schema}'
+            //  AND o.name = '{objectName.Name}'
+            //  AND o.type IN ('U', 'V') -- U: Table, V: View
+            //  AND i.is_primary_key = 0
+            //  AND i.is_unique_constraint = 0
+            //  AND i.type_desc <> 'HEAP'
+            //  AND i.name IS NOT NULL
+            //GROUP BY i.name, i.type_desc, i.is_unique, s.name, o.name, i.filter_definition, i.is_disabled, xi.using_xml_index_id, xi.secondary_type
+            //ORDER BY i.name";
+
+            var sql = $@"SELECT
     i.name AS IndexName,
     i.type_desc AS IndexType,
     i.is_unique AS IsUnique,
     s.name AS SchemaName,
     o.name AS ObjectName,
-    STRING_AGG(COL_NAME(ic.object_id, ic.column_id), ',') AS IndexColumns,
+    STUFF((
+        SELECT ',' + COL_NAME(ic2.object_id, ic2.column_id)
+        FROM sys.index_columns ic2
+        WHERE ic2.object_id = i.object_id AND ic2.index_id = i.index_id
+        ORDER BY ic2.key_ordinal
+        FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 1, '') AS IndexColumns,
     i.filter_definition AS FilterDefinition,
     i.is_disabled AS IsDisabled,
     xi.using_xml_index_id,
     xi.secondary_type
 FROM sys.indexes i
-INNER JOIN sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id
 INNER JOIN sys.objects o ON i.object_id = o.object_id
 INNER JOIN sys.schemas s ON o.schema_id = s.schema_id
 LEFT JOIN sys.xml_indexes xi ON i.object_id = xi.object_id AND i.index_id = xi.index_id
@@ -252,7 +282,7 @@ WHERE s.name = '{objectName.Schema}'
   AND i.type_desc <> 'HEAP'
   AND i.name IS NOT NULL
 GROUP BY i.name, i.type_desc, i.is_unique, s.name, o.name, i.filter_definition, i.is_disabled, xi.using_xml_index_id, xi.secondary_type
-ORDER BY i.name";
+ORDER BY i.name;";
 
             var dt = await DatabaseHelper.GetDataTableAsync(sql, connectionString);
             if (dt == null || dt.Rows.Count == 0)
@@ -333,9 +363,9 @@ ORDER BY i.name";
 	DROP PROCEDURE dbo.usp_addupdateextendedproperty;
 GO
 /*
-The usp_addupdateextendedproperty is an extension of the native sp_addextendedproperty 
-and sp_updateextendedproperty of SQL Server. Since sp_addextendedproperty can only be used to 
-add ,and sp_updateextendedproperty can only be used to update, the usp_addupdateextendedproperty 
+The usp_addupdateextendedproperty is an extension of the native sp_addextendedproperty
+and sp_updateextendedproperty of SQL Server. Since sp_addextendedproperty can only be used to
+add ,and sp_updateextendedproperty can only be used to update, the usp_addupdateextendedproperty
 combines them to ensure that the description of an object can be added to or updated at any time.
 */
 CREATE PROCEDURE dbo.usp_addupdateextendedproperty
@@ -354,22 +384,22 @@ BEGIN
     IF EXISTS (
         SELECT 1
         FROM fn_listextendedproperty (
-            @name, 
-            @level0type, @level0name, 
-            @level1type, @level1name, 
+            @name,
+            @level0type, @level0name,
+            @level1type, @level1name,
             @level2type, @level2name
         )
     )
     BEGIN
 		IF COALESCE(@value, '') = ''
-			EXEC sys.sp_dropextendedproperty 
+			EXEC sys.sp_dropextendedproperty
 				@name = @name,
                 @level0type = @level0type, @level0name = @level0name,
                 @level1type = @level1type, @level1name = @level1name,
                 @level2type = @level2type, @level2name = @level2name;
 		ELSE
-            EXEC sys.sp_updateextendedproperty 
-                @name = @name, 
+            EXEC sys.sp_updateextendedproperty
+                @name = @name,
                 @value = @value,
                 @level0type = @level0type, @level0name = @level0name,
                 @level1type = @level1type, @level1name = @level1name,
@@ -377,8 +407,8 @@ BEGIN
     END
     ELSE
     BEGIN
-        EXEC sys.sp_addextendedproperty 
-            @name = @name, 
+        EXEC sys.sp_addextendedproperty
+            @name = @name,
             @value = @value,
             @level0type = @level0type, @level0name = @level0name,
             @level1type = @level1type, @level1name = @level1name,
