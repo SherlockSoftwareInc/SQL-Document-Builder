@@ -260,12 +260,14 @@ namespace SQL_Document_Builder
     i.is_unique AS IsUnique,
     s.name AS SchemaName,
     o.name AS ObjectName,
-    STUFF((
-        SELECT ',' + COL_NAME(ic2.object_id, ic2.column_id)
-        FROM sys.index_columns ic2
-        WHERE ic2.object_id = i.object_id AND ic2.index_id = i.index_id
-        ORDER BY ic2.key_ordinal
-        FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 1, '') AS IndexColumns,
+    (
+        SELECT STUFF((
+            SELECT ',' + COL_NAME(ic2.object_id, ic2.column_id)
+            FROM sys.index_columns ic2
+            WHERE ic2.object_id = i.object_id AND ic2.index_id = i.index_id
+            ORDER BY ic2.key_ordinal
+            FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 1, '')
+    ) AS IndexColumns,
     i.filter_definition AS FilterDefinition,
     i.is_disabled AS IsDisabled,
     xi.using_xml_index_id,
@@ -281,8 +283,7 @@ WHERE s.name = '{objectName.Schema}'
   AND i.is_unique_constraint = 0
   AND i.type_desc <> 'HEAP'
   AND i.name IS NOT NULL
-GROUP BY i.name, i.type_desc, i.is_unique, s.name, o.name, i.filter_definition, i.is_disabled, xi.using_xml_index_id, xi.secondary_type
-ORDER BY i.name;";
+ORDER BY i.name";
 
             var dt = await DatabaseHelper.GetDataTableAsync(sql, connectionString);
             if (dt == null || dt.Rows.Count == 0)
