@@ -438,7 +438,7 @@ namespace SQL_Document_Builder
 
             try
             {
-                StartBuild();
+                StartBuild(editBox);
 
                 var progress = new Progress<int>(value =>
                 {
@@ -454,13 +454,12 @@ namespace SQL_Document_Builder
                 });
 
                 AppendText(editBox, contents);
-
-                EndBuild();
             }
             catch (Exception ex)
             {
                 Common.MsgBox(ex.Message, MessageBoxIcon.Error);
             }
+            EndBuild(editBox);
         }
 
         /// <summary>
@@ -615,7 +614,7 @@ namespace SQL_Document_Builder
 
                     AppendText(editBox, scripts);
 
-                    EndBuild();
+                    EndBuild(editBox);
                 }
             }
 
@@ -854,7 +853,7 @@ namespace SQL_Document_Builder
             Cursor = Cursors.WaitCursor;
             if (BeginAddDDLScript())
             {
-                StartBuild();
+                StartBuild(editBox);
 
                 for (int i = 0; i < selectedObjects.Count; i++)
                 {
@@ -891,10 +890,9 @@ namespace SQL_Document_Builder
                     }
                 }
 
-                EndBuild();
             }
 
-            Cursor = Cursors.Default;
+            EndBuild(editBox);
         }
 
         /// <summary>
@@ -958,7 +956,7 @@ namespace SQL_Document_Builder
             Cursor = Cursors.WaitCursor;
             if (BeginAddDDLScript())
             {
-                StartBuild();
+                StartBuild(editBox);
 
                 // get the current connection string
                 string connectionString = _connectionString;
@@ -978,11 +976,9 @@ namespace SQL_Document_Builder
 
                     AppendText(editBox, script);
                 }
-
-                EndBuild();
             }
 
-            Cursor = Cursors.Default;
+            EndBuild(editBox);
         }
 
         /// <summary>
@@ -1127,15 +1123,21 @@ namespace SQL_Document_Builder
         /// <summary>
         /// End build.
         /// </summary>
-        private void EndBuild()
+        private void EndBuild(SqlEditBox editBox)
         {
             progressBar.Visible = false;
             statusToolStripStatusLabe.Text = "Complete!";
             this.Cursor = Cursors.Default;
-            if (CurrentEditBox != null)
+            if (editBox != null)
             {
-                CurrentEditBox.Enabled = true;
-                CurrentEditBox.Cursor = Cursors.Default;
+                editBox.Enabled = true;
+                editBox.Cursor = Cursors.Default;
+
+                if (editBox == CurrentEditBox)
+                {
+                    // If the current edit box is the one we just built, set focus to it
+                    editBox.Focus();
+                }
             }
         }
 
@@ -1672,7 +1674,7 @@ namespace SQL_Document_Builder
             Cursor = Cursors.WaitCursor;
             if (BeginAddDDLScript())
             {
-                StartBuild();
+                StartBuild(editBox);
 
                 for (int i = 0; i < selectedObjects.Count; i++)
                 {
@@ -1696,11 +1698,9 @@ namespace SQL_Document_Builder
                         AppendText(editBox, script);
                     }
                 }
-
-                EndBuild();
             }
 
-            Cursor = Cursors.Default;
+            EndBuild(editBox);
         }
 
         /// <summary>
@@ -2540,15 +2540,14 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Start build.
         /// </summary>
-        private void StartBuild()
+        private void StartBuild(SqlEditBox editBox)
         {
-            if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
-
             editBox.Enabled = false;
             statusToolStripStatusLabe.Text = "Please wait while generate the scripts";
             progressBar.Maximum = 100;
             progressBar.Value = 0;
             progressBar.Visible = true;
+            editBox.Cursor = Cursors.WaitCursor;
         }
 
         /// <summary>
@@ -2666,6 +2665,9 @@ namespace SQL_Document_Builder
                 CloseSearch();
                 OpenFindReplace();
             }
+
+            // set the focused control to the current edit box
+            CurrentEditBox?.Focus();
         }
 
         /// <summary>
@@ -2766,7 +2768,7 @@ namespace SQL_Document_Builder
 
                 AppendText(editBox, scripts);
 
-                EndBuild();
+                EndBuild(editBox);
             }
         }
 
@@ -2827,7 +2829,7 @@ namespace SQL_Document_Builder
 
             if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Html) != DialogResult.Yes) return;
 
-            StartBuild();
+            StartBuild(editBox);
 
             var progress = new Progress<int>(value =>
             {
@@ -2843,7 +2845,7 @@ namespace SQL_Document_Builder
 
             AppendText(editBox, scripts);
 
-            EndBuild();
+            EndBuild(editBox);
         }
 
         /// <summary>
@@ -2901,7 +2903,7 @@ namespace SQL_Document_Builder
 
                 AppendText(editBox, scripts);
 
-                EndBuild();
+                EndBuild(editBox);
             }
         }
 
@@ -3482,7 +3484,7 @@ namespace SQL_Document_Builder
 
                     AppendText(editBox, builder.TextToTable(metaData));
 
-                    EndBuild();
+                    EndBuild(editBox);
                 }
             }
 
@@ -3546,7 +3548,7 @@ namespace SQL_Document_Builder
 
                 AppendText(editBox, scripts);
 
-                EndBuild();
+                EndBuild(editBox);
             }
         }
 
@@ -3568,7 +3570,7 @@ namespace SQL_Document_Builder
 
             if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Markdown) != DialogResult.Yes) return;
 
-            StartBuild();
+            StartBuild(editBox);
 
             var progress = new Progress<int>(value =>
             {
@@ -3584,7 +3586,7 @@ namespace SQL_Document_Builder
 
             AppendText(editBox, scripts);
 
-            EndBuild();
+            EndBuild(editBox);
         }
 
         /// <summary>
@@ -3611,7 +3613,7 @@ namespace SQL_Document_Builder
 
                 AppendText(editBox, await MarkdownBuilder.GetTableValuesAsync($"select * from {objectName.FullName}", _connectionString));
 
-                EndBuild();
+                EndBuild(editBox);
             }
         }
 
@@ -3694,7 +3696,7 @@ namespace SQL_Document_Builder
 
                     AppendText(editBox, builder.TextToTable(metaData));
 
-                    EndBuild();
+                    EndBuild(editBox);
                 }
             }
 
@@ -3740,7 +3742,7 @@ namespace SQL_Document_Builder
 
                 AppendText(editBox, scripts);
 
-                EndBuild();
+                EndBuild(editBox);
             }
         }
 
@@ -3763,7 +3765,7 @@ namespace SQL_Document_Builder
 
             if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Wiki) != DialogResult.Yes) return;
 
-            StartBuild();
+            StartBuild(editBox);
 
             var progress = new Progress<int>(value =>
             {
@@ -3779,7 +3781,7 @@ namespace SQL_Document_Builder
 
             AppendText(editBox, scripts);
 
-            EndBuild();
+            EndBuild(editBox);
         }
 
         /// <summary>
@@ -3824,7 +3826,7 @@ namespace SQL_Document_Builder
 
                 AppendText(editBox, await WikiBuilder.GetTableValuesAsync($"select * from {objectName.FullName}", _connectionString));
 
-                EndBuild();
+                EndBuild(editBox);
             }
         }
 
@@ -3853,7 +3855,7 @@ namespace SQL_Document_Builder
 
                     AppendText(editBox, builder.TextToTable(metaData));
 
-                    EndBuild();
+                    EndBuild(editBox);
                 }
             }
         }
@@ -3889,7 +3891,7 @@ namespace SQL_Document_Builder
 
                 AppendText(editBox, scripts);
 
-                EndBuild();
+                EndBuild(editBox);
             }
         }
 
@@ -3911,7 +3913,7 @@ namespace SQL_Document_Builder
 
             if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Json) != DialogResult.Yes) return;
 
-            StartBuild();
+            StartBuild(editBox);
 
             var progress = new Progress<int>(value =>
             {
@@ -3927,7 +3929,7 @@ namespace SQL_Document_Builder
 
             AppendText(editBox, scripts);
 
-            EndBuild();
+            EndBuild(editBox);
         }
 
         /// <summary>
@@ -3974,7 +3976,7 @@ namespace SQL_Document_Builder
 
                 AppendText(editBox, scripts);
 
-                EndBuild();
+                EndBuild(editBox);
             }
         }
 
