@@ -72,15 +72,6 @@ namespace SQL_Document_Builder
         /// </summary>
         private static async Task<string> ExecuteScriptsAsync(SQLDatabaseConnectionItem connection, string script)
         {
-            //// perform the syntax check first
-            //var syntaxCheckResult = await SyntaxCheckAsync(script, connection.ConnectionString);
-            //if (syntaxCheckResult != string.Empty)
-            //{
-            //    return syntaxCheckResult; // return the syntax error message
-            //}
-
-            // from the CurrentEditBox?.Text, break it into individual SQL statements by the GO keyword
-            //var sqlStatements = CurrentEditBox?.Text.Split(["GO"], StringSplitOptions.RemoveEmptyEntries);
             var sqlStatements = Regex.Split(script, @"\bGO\b", RegexOptions.IgnoreCase | RegexOptions.Multiline);
 
             // execute each statement
@@ -185,6 +176,59 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Gets the template text.
+        /// </summary>
+        /// <param name="docType">The doc type.</param>
+        /// <param name="objType">The obj type.</param>
+        /// <returns>A string.</returns>
+        private static string GetTemplateText(TemplateItem.DocumentTypeEnums docType, ObjectTypeEnums objType)
+        {
+            string templateText = string.Empty;
+
+            // get the template body
+            TemplateItem.ObjectTypeEnums objectType = objType switch
+            {
+                ObjectTypeEnums.Table => TemplateItem.ObjectTypeEnums.Table,
+                ObjectTypeEnums.View => TemplateItem.ObjectTypeEnums.View,
+                ObjectTypeEnums.StoredProcedure => TemplateItem.ObjectTypeEnums.StoredProcedure,
+                ObjectTypeEnums.Function => TemplateItem.ObjectTypeEnums.Function,
+                _ => TemplateItem.ObjectTypeEnums.Table
+            };
+
+            // get the template text from the templates
+            Templates templates = new();
+            templates.Load();
+
+            var templateItem = templates.GetTemplate(docType, objectType);
+            if (templateItem != null)
+            {
+                templateText = templateItem.Body;
+            }
+
+            // if the template text is empty, show a message box and open the template editor
+            if (string.IsNullOrEmpty(templateText))
+            {
+                Common.MsgBox($"Template for {docType} and {objType} is not defined.", MessageBoxIcon.Information);
+                using var templateForm = new TemplateEditor()
+                {
+                    DocumentType = docType,
+                    ObjectType = objectType
+                };
+                templateForm.ShowDialog();
+
+                // get the template text again after editing
+                templates.Load();
+                templateItem = templates.GetTemplate(docType, objectType);
+                if (templateItem != null)
+                {
+                    templateText = templateItem.Body;
+                }
+            }
+
+            return templateText;
+        }
+
+        /// <summary>
         /// Checks if the usp_addupdateextendedproperty stored procedure exists in the database.
         /// </summary>
         /// <returns>A Task.</returns>
@@ -207,9 +251,8 @@ namespace SQL_Document_Builder
         /// <returns>A Task.</returns>
         private static async Task<string> SyntaxCheckAsync(string script, string connectionString = "")
         {
-            // from the CurrentEditBox?.Text, break it into individual SQL statements by the GO keyword
-            //var sqlStatements = CurrentEditBox?.Text.Split(["GO"], StringSplitOptions.RemoveEmptyEntries);
             var sqlStatements = Regex.Split(script, @"\bGO\b", RegexOptions.IgnoreCase | RegexOptions.Multiline);
+
             // execute each statement
             foreach (var sql in sqlStatements)
             {
@@ -287,14 +330,16 @@ namespace SQL_Document_Builder
         /// </summary>
         private void AddDataSourceText()
         {
-            var editBox = CurrentEditBox;
-            if (editBox == null) return;
+            if (GetCurrentEditBox(out SqlEditBox editBox) == false)
+            {
+                return; // If we can't get the edit box, exit early
+            }
 
             // add the data source tag to the document when the document is empty
             if (Properties.Settings.Default.AddDataSource)
             {
                 string dataSourceText = $"{serverToolStripStatusLabel.Text}::{databaseToolStripStatusLabel.Text}";
-                if (string.IsNullOrEmpty(editBox.Text) || editBox.DataSourceName != dataSourceText)
+                if (string.IsNullOrEmpty(editBox?.Text) || editBox.DataSourceName != dataSourceText)
                 {
                     editBox.DataSourceName = dataSourceText;
                     AppendText(editBox, $"-- Data source: {dataSourceText}" + Environment.NewLine);
@@ -317,14 +362,14 @@ namespace SQL_Document_Builder
         /// Add a new tab with query edit box
         /// </summary>
         /// <param name="fileName"></param>
-        private bool AddTab(string fileName)
+        private SqlEditBox? AddTab(string fileName)
         {
             // number of tabs is limited to 128
             if (tabControl1.TabPages.Count >= 128)
             {
                 MessageBox.Show("You can open up to 128 editing windows.", "Too many editing windows",
                     MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
-                return false;
+                return null;
             }
 
             var queryTextBox = GetNewTextBox(!(fileName.Length == 0));
@@ -336,9 +381,9 @@ namespace SQL_Document_Builder
 
             AddWindowsMenuItem(queryTextBox.FileName?.Length == 0 ? tabControl1.SelectedTab.Text : FileDisplayName(queryTextBox.FileName), queryTextBox.ID, tabControl1.SelectedTab.ToolTipText);
 
-            CurrentEditBox?.Focus();
+            queryTextBox.Focus();
 
-            return true;
+            return queryTextBox;
         }
 
         /// <summary>
@@ -365,19 +410,34 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Appends the text.
+        /// </summary>
+        /// <param name="editBox">The edit box.</param>
+        /// <param name="text">The text.</param>
+        private void AppendText(SqlEditBox? editBox, string text)
+        {
+            if (editBox == null || string.IsNullOrEmpty(text)) return;
+            editBox.BeginUndoAction();
+            editBox.AppendText(text);
+            editBox.EndUndoAction();
+
+            // Move caret to end and scroll to it
+            ScrollToCaret();
+        }
+
+        /// <summary>
         /// Handles the "Assistant content" tool strip menu item click event:
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
         private async void AssistantContentToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
+
             if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Text) != DialogResult.Yes) return;
 
             try
             {
-                var editBox = CurrentEditBox;
-                if (editBox == null) return;
-
                 StartBuild();
 
                 var progress = new Progress<int>(value =>
@@ -541,17 +601,19 @@ namespace SQL_Document_Builder
         /// <param name="e">The E.</param>
         private void ClipboardToTableToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Html) != DialogResult.Yes) return;
-
             if (Clipboard.ContainsText())
             {
+                if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
+
+                if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Html) != DialogResult.Yes) return;
+
                 var metaData = Clipboard.GetText();
 
                 if (metaData.Length > 1)
                 {
                     var scripts = SharePointBuilder.TextToTable(metaData);
-                    
-                    AppendText(CurrentEditBox, scripts);
+
+                    AppendText(editBox, scripts);
 
                     EndBuild();
                 }
@@ -767,11 +829,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void CreateIndexToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var editBox = CurrentEditBox;
-            if (editBox == null)
-            {
-                return;
-            }
+            if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
 
             if (BeginAddDDLScript())
             {
@@ -789,16 +847,9 @@ namespace SQL_Document_Builder
         {
             List<ObjectName>? selectedObjects = SelectObjects();
 
-            if (selectedObjects == null || selectedObjects.Count == 0)
-            {
-                return;
-            }
+            if (selectedObjects == null || selectedObjects.Count == 0) { return; }
 
-            var editBox = CurrentEditBox;
-            if (editBox == null)
-            {
-                return;
-            }
+            if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
 
             Cursor = Cursors.WaitCursor;
             if (BeginAddDDLScript())
@@ -819,7 +870,7 @@ namespace SQL_Document_Builder
                     // get the object create script
                     var script = await GetObjectCreateScriptAsync(obj, _connectionString);
                     if (editBox == null) return;
-                    
+
                     AppendText(editBox, script);
 
                     // get the insert statement for the object
@@ -853,11 +904,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void CreatePrimaryKeyToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var editBox = CurrentEditBox;
-            if (editBox == null)
-            {
-                return;
-            }
+            if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
 
             if (BeginAddDDLScript())
             {
@@ -875,24 +922,20 @@ namespace SQL_Document_Builder
         {
             if (objectsListBox.SelectedItem is not ObjectName objectName) return;
 
-            var editBox = CurrentEditBox;
-            if (editBox == null)
-            {
-                return;
-            }
-
-            if (!BeginAddDDLScript()) return;
-
-            editBox.Cursor = Cursors.WaitCursor;
+            Cursor = Cursors.WaitCursor;
             var script = await GetObjectCreateScriptAsync(objectName, _connectionString);
 
             if (!string.IsNullOrEmpty(script))
             {
+                if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
+
+                if (!BeginAddDDLScript()) return;
+
                 AddDataSourceText();
 
                 AppendText(editBox, script);
             }
-            editBox.Cursor = Cursors.Default;
+            Cursor = Cursors.Default;
         }
 
         /// <summary>
@@ -910,11 +953,7 @@ namespace SQL_Document_Builder
                 return;
             }
 
-            var editBox = CurrentEditBox;
-            if (editBox == null)
-            {
-                return;
-            }
+            if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
 
             Cursor = Cursors.WaitCursor;
             if (BeginAddDDLScript())
@@ -1130,11 +1169,7 @@ namespace SQL_Document_Builder
                 form.ShowDialog();
                 if (form.ResultDataTable != null)
                 {
-                    var editBox = CurrentEditBox;
-                    if (editBox == null)
-                    {
-                        return;
-                    }
+                    if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
 
                     AppendText(editBox, $"-- Data source: {fileName}" + Environment.NewLine);
 
@@ -1197,6 +1232,45 @@ namespace SQL_Document_Builder
             }
 
             return footerText;
+        }
+
+        /// <summary>
+        /// Gets the current edit box.
+        /// </summary>
+        /// <param name="editBox">The edit box.</param>
+        /// <returns>A bool.</returns>
+        private bool GetCurrentEditBox(out SqlEditBox editBox)
+        {
+            // if no tabs, create a new tab with an empty edit box
+            if (tabControl1.TabCount == 0)
+            {
+                var newEditor = AddTab(string.Empty);
+                if (newEditor == null)
+                {
+                    editBox = new SqlEditBox();
+                    return false;
+                }
+                else
+                {
+                    editBox = newEditor;
+                    return true;
+                }
+            }
+
+            // if no tab is selected, select the last tab
+            if (tabControl1.SelectedTab == null)
+            {
+                tabControl1.SelectedIndex = tabControl1.TabCount - 1;
+            }
+
+            if (CurrentEditBox == null)
+            {
+                MessageBox.Show("No active edit box found.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                editBox = new SqlEditBox();
+                return false;
+            }
+            editBox = CurrentEditBox;
+            return true;
         }
 
         /// <summary>
@@ -1491,12 +1565,6 @@ namespace SQL_Document_Builder
                         }
                     }
 
-                    var editBox = CurrentEditBox;
-                    if (editBox == null)
-                    {
-                        return;
-                    }
-
                     Cursor = Cursors.WaitCursor;
 
                     // checks if the table has identify column
@@ -1511,6 +1579,8 @@ namespace SQL_Document_Builder
                     }
                     else if (!string.IsNullOrEmpty(script))
                     {
+                        if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
+
                         if (!BeginAddDDLScript()) return;
 
                         // append the insert statement to the script
@@ -1597,11 +1667,7 @@ namespace SQL_Document_Builder
 
             if (selectedObjects == null || selectedObjects.Count == 0) return;
 
-            var editBox = CurrentEditBox;
-            if (editBox == null)
-            {
-                return;
-            }
+            if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
 
             Cursor = Cursors.WaitCursor;
             if (BeginAddDDLScript())
@@ -1906,8 +1972,6 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void OpenToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (CurrentEditBox == null) return;
-
             var oFile = new OpenFileDialog()
             {
                 Filter = "SQL script(*.sql)|*.sql|Markdown files(*.md)|*.md|HTML files(*.html)|*.html|Text file(*.txt)|*.txt|All files(*.*)|*.*",
@@ -2171,12 +2235,14 @@ namespace SQL_Document_Builder
         /// <param name="e">The E.</param>
         private async void QueryDataToTableToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Html) != DialogResult.Yes) return;
-
             using var form = new QueryDataToTableForm() { ConnectionString = _connectionString };
             if (form.ShowDialog() == DialogResult.OK)
             {
-                AppendText(CurrentEditBox, await SharePointBuilder.GetTableValuesAsync(form.SQL, _connectionString));
+                if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
+
+                if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Html) != DialogResult.Yes) return;
+
+                AppendText(editBox, await SharePointBuilder.GetTableValuesAsync(form.SQL, _connectionString));
             }
         }
 
@@ -2187,24 +2253,20 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void QueryInsertToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var editBox = CurrentEditBox;
-            if (editBox == null)
+            using var form = new QueryDataToTableForm()
             {
-                return;
-            }
+                ConnectionString = _connectionString,
+                InsertStatement = true
+            };
+            if (form.ShowDialog() == DialogResult.OK)
+            {
+                if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
 
-            if (BeginAddDDLScript())
-            {
-                using var form = new QueryDataToTableForm()
-                {
-                    ConnectionString = _connectionString,
-                    InsertStatement = true
-                };
-                if (form.ShowDialog() == DialogResult.OK)
+                if (BeginAddDDLScript())
                 {
                     var insertStatements = await DatabaseDocBuilder.QueryDataToInsertStatementAsync(form.SQL, _connectionString);
 
-                    AppendText(CurrentEditBox, insertStatements);
+                    AppendText(editBox, insertStatements);
                 }
             }
         }
@@ -2299,7 +2361,8 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void SaveAsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (CurrentEditBox == null) return;
+            if (CurrentEditBox == null) return; // If there is no current edit box, exit early
+
             CurrentEditBox.SaveAs();
             statusToolStripStatusLabe.Text = "Complete";
         }
@@ -2311,8 +2374,8 @@ namespace SQL_Document_Builder
         /// <param name="e">The E.</param>
         private void SaveToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (CurrentEditBox == null) return;
-            CurrentEditBox?.Save();
+            if (CurrentEditBox == null) return; // If there is no current edit box, exit early
+            CurrentEditBox.Save();
         }
 
         /// <summary>
@@ -2463,9 +2526,9 @@ namespace SQL_Document_Builder
         /// </summary>
         private void StartBuild()
         {
-            if (CurrentEditBox == null) return;
+            if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
 
-            CurrentEditBox.Enabled = false;
+            editBox.Enabled = false;
             statusToolStripStatusLabe.Text = "Please wait while generate the scripts";
             progressBar.Maximum = 100;
             progressBar.Value = 0;
@@ -2655,8 +2718,6 @@ namespace SQL_Document_Builder
         /// <param name="e">The E.</param>
         private async void TableDefinitionToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Html) != DialogResult.Yes) return;
-
             if (objectsListBox.SelectedItem != null)
             {
                 var objectName = (ObjectName)objectsListBox.SelectedItem;
@@ -2682,7 +2743,12 @@ namespace SQL_Document_Builder
                     Common.MsgBox($"No definition found for {objectName.FullName}", MessageBoxIcon.Information);
                     return;
                 }
-                AppendText(CurrentEditBox, scripts);
+
+                if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
+
+                if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Html) != DialogResult.Yes) return;
+
+                AppendText(editBox, scripts);
 
                 EndBuild();
             }
@@ -2702,11 +2768,9 @@ namespace SQL_Document_Builder
                 var description = await ObjectDescription.BuildObjectDescription(objectName, _connectionString, Properties.Settings.Default.UseExtendedProperties);
                 if (!string.IsNullOrEmpty(description))
                 {
-                    var editBox = CurrentEditBox;
-                    if (editBox == null)
-                    {
-                        return;
-                    }
+                    if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
+
+                    if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Sql) != DialogResult.Yes) return;
 
                     Cursor = Cursors.WaitCursor;
                     if (BeginAddDDLScript())
@@ -2736,8 +2800,6 @@ namespace SQL_Document_Builder
         /// <param name="e">The E.</param>
         private async void TableListToolStripMenuItem1_Click(object sender, EventArgs e)
         {
-            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Html) != DialogResult.Yes) return;
-
             List<ObjectName>? selectedObjects = SelectObjects();
 
             if (selectedObjects == null || selectedObjects.Count == 0)
@@ -2745,8 +2807,11 @@ namespace SQL_Document_Builder
                 return;
             }
 
+            if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
+
+            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Html) != DialogResult.Yes) return;
+
             StartBuild();
-            var editBox = CurrentEditBox;
 
             var progress = new Progress<int>(value =>
             {
@@ -2763,22 +2828,6 @@ namespace SQL_Document_Builder
             AppendText(editBox, scripts);
 
             EndBuild();
-        }
-
-        /// <summary>
-        /// Appends the text.
-        /// </summary>
-        /// <param name="editBox">The edit box.</param>
-        /// <param name="text">The text.</param>
-        private void AppendText(SqlEditBox? editBox, string text)
-        {
-            if (editBox == null || string.IsNullOrEmpty(text)) return;
-            editBox.BeginUndoAction();
-            editBox.AppendText(text);
-            editBox.EndUndoAction();
-
-            // Move caret to end and scroll to it
-            ScrollToCaret();
         }
 
         /// <summary>
@@ -2802,20 +2851,10 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void UspToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
+
             if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Sql) == DialogResult.Yes)
             {
-                // when the current edit box is not empty, add a tab
-                if (CurrentEditBox?.Text.Length > 0)
-                {
-                    AddTab("");
-                }
-
-                var editBox = CurrentEditBox;
-                if (editBox == null)
-                {
-                    return;
-                }
-
                 AppendText(editBox, DatabaseDocBuilder.UspAddObjectDescription());
             }
         }
@@ -2827,8 +2866,6 @@ namespace SQL_Document_Builder
         /// <param name="e">The E.</param>
         private async void ValueListToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Html) != DialogResult.Yes) return;
-
             if (objectsListBox.SelectedItem != null)
             {
                 var objectName = (ObjectName)objectsListBox.SelectedItem;
@@ -2841,7 +2878,12 @@ namespace SQL_Document_Builder
                 }
 
                 var scripts = await SharePointBuilder.GetTableValuesAsync($"select * from {objectName.FullName}", _connectionString);
-                AppendText(CurrentEditBox, scripts);
+
+                if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
+
+                if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Html) != DialogResult.Yes) return;
+
+                AppendText(editBox, scripts);
 
                 EndBuild();
             }
@@ -2874,59 +2916,6 @@ namespace SQL_Document_Builder
                     }
                 }
             }
-        }
-
-        /// <summary>
-        /// Gets the template text.
-        /// </summary>
-        /// <param name="docType">The doc type.</param>
-        /// <param name="objType">The obj type.</param>
-        /// <returns>A string.</returns>
-        private static string GetTemplateText(TemplateItem.DocumentTypeEnums docType, ObjectTypeEnums objType)
-        {
-            string templateText = string.Empty;
-
-            // get the template body
-            TemplateItem.ObjectTypeEnums objectType = objType switch
-            {
-                ObjectTypeEnums.Table => TemplateItem.ObjectTypeEnums.Table,
-                ObjectTypeEnums.View => TemplateItem.ObjectTypeEnums.View,
-                ObjectTypeEnums.StoredProcedure => TemplateItem.ObjectTypeEnums.StoredProcedure,
-                ObjectTypeEnums.Function => TemplateItem.ObjectTypeEnums.Function,
-                _ => TemplateItem.ObjectTypeEnums.Table
-            };
-
-            // get the template text from the templates
-            Templates templates = new();
-            templates.Load();
-
-            var templateItem = templates.GetTemplate(docType, objectType);
-            if (templateItem != null)
-            {
-                templateText = templateItem.Body;
-            }
-
-            // if the template text is empty, show a message box and open the template editor
-            if (string.IsNullOrEmpty(templateText))
-            {
-                Common.MsgBox($"Template for {docType} and {objType} is not defined.", MessageBoxIcon.Information);
-                using var templateForm = new TemplateEditor()
-                {
-                    DocumentType = docType,
-                    ObjectType = objectType
-                };
-                templateForm.ShowDialog();
-
-                // get the template text again after editing
-                templates.Load();
-                templateItem = templates.GetTemplate(docType, objectType);
-                if (templateItem != null)
-                {
-                    templateText = templateItem.Body;
-                }
-            }
-
-            return templateText;
         }
 
         #region ScintillaNET
@@ -3052,6 +3041,34 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Handles the click event of the redo tool strip menu item.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void RedoToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (CurrentEditBox == null) return; // If there is no current edit box, exit early
+            if (CurrentEditBox.CanRedo)
+            {
+                CurrentEditBox.Redo();
+            }
+        }
+
+        /// <summary>
+        /// Handles the click event of the undo tool strip menu item.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void UndoToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (CurrentEditBox == null) return; // If there is no current edit box, exit early
+            if (CurrentEditBox.CanUndo)
+            {
+                CurrentEditBox.Undo();
+            }
+        }
+
+        /// <summary>
         /// Handles the click event of the upper case selection tool strip menu item.
         /// </summary>
         /// <param name="sender">The sender.</param>
@@ -3100,17 +3117,17 @@ namespace SQL_Document_Builder
         /// </summary>
         private void Lowercase()
         {
-            if (CurrentEditBox == null) return;
+            if (CurrentEditBox == null) return; // If there is no current edit box, exit early
 
             // save the selection
             int start = CurrentEditBox.SelectionStart;
             int end = CurrentEditBox.SelectionEnd;
 
             // modify the selected text
-            CurrentEditBox?.ReplaceSelection(CurrentEditBox?.GetTextRange(start, end - start).ToLower());
+            CurrentEditBox.ReplaceSelection(CurrentEditBox.GetTextRange(start, end - start).ToLower());
 
             // preserve the original selection
-            CurrentEditBox?.SetSelection(start, end);
+            CurrentEditBox.SetSelection(start, end);
         }
 
         /// <summary>
@@ -3118,17 +3135,19 @@ namespace SQL_Document_Builder
         /// </summary>
         private void Uppercase()
         {
-            if (CurrentEditBox == null) return;
+            if (CurrentEditBox == null) return; // If there is no current edit box, exit early
+
+            var editBox = CurrentEditBox;
 
             // save the selection
-            int start = CurrentEditBox.SelectionStart;
-            int end = CurrentEditBox.SelectionEnd;
+            int start = editBox.SelectionStart;
+            int end = editBox.SelectionEnd;
 
             // modify the selected text
-            CurrentEditBox?.ReplaceSelection(CurrentEditBox?.GetTextRange(start, end - start).ToUpper());
+            editBox?.ReplaceSelection(editBox?.GetTextRange(start, end - start).ToUpper());
 
             // preserve the original selection
-            CurrentEditBox?.SetSelection(start, end);
+            editBox?.SetSelection(start, end);
         }
 
         #endregion Uppercase / Lowercase
@@ -3433,17 +3452,19 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void ClipboardToTableToolStripMenuItem1_Click(object sender, EventArgs e)
         {
-            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Markdown) != DialogResult.Yes) return;
-
             if (Clipboard.ContainsText())
             {
+                if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
+
+                if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Markdown) != DialogResult.Yes) return;
+
                 var metaData = Clipboard.GetText();
 
                 if (metaData.Length > 1)
                 {
                     var builder = new MarkdownBuilder();
 
-                    AppendText(CurrentEditBox, builder.TextToTable(metaData));
+                    AppendText(editBox, builder.TextToTable(metaData));
 
                     EndBuild();
                 }
@@ -3459,12 +3480,14 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void QueryDataToTableToolStripMenuItem1_Click(object sender, EventArgs e)
         {
-            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Markdown) != DialogResult.Yes) return;
-
             using var form = new QueryDataToTableForm() { ConnectionString = _connectionString };
             if (form.ShowDialog() == DialogResult.OK)
             {
-                AppendText(CurrentEditBox, await MarkdownBuilder.GetTableValuesAsync(form.SQL, _connectionString));
+                if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
+
+                if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Markdown) != DialogResult.Yes) return;
+
+                AppendText(editBox, await MarkdownBuilder.GetTableValuesAsync(form.SQL, _connectionString));
             }
         }
 
@@ -3475,8 +3498,6 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void TableDefinitionToolStripMenuItem_Click_1(object sender, EventArgs e)
         {
-            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Markdown) != DialogResult.Yes) return;
-
             if (objectsListBox.SelectedItem != null)
             {
                 var objectName = (ObjectName)objectsListBox.SelectedItem;
@@ -3503,7 +3524,11 @@ namespace SQL_Document_Builder
                     return;
                 }
 
-                AppendText(CurrentEditBox, scripts);
+                if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
+
+                if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Markdown) != DialogResult.Yes) return;
+
+                AppendText(editBox, scripts);
 
                 EndBuild();
             }
@@ -3516,14 +3541,16 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void TableListToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Markdown) != DialogResult.Yes) return;
-
             List<ObjectName>? selectedObjects = SelectObjects();
 
             if (selectedObjects == null || selectedObjects.Count == 0)
             {
                 return;
             }
+
+            if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
+
+            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Markdown) != DialogResult.Yes) return;
 
             StartBuild();
 
@@ -3539,7 +3566,7 @@ namespace SQL_Document_Builder
                 scripts = await builder.BuildObjectList(selectedObjects, _connectionString, progress);
             });
 
-            AppendText(CurrentEditBox, scripts);
+            AppendText(editBox, scripts);
 
             EndBuild();
         }
@@ -3551,8 +3578,6 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void TableValuesMDToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Markdown) != DialogResult.Yes) return;
-
             if (objectsListBox.SelectedItem != null)
             {
                 var objectName = (ObjectName)objectsListBox.SelectedItem;
@@ -3564,7 +3589,11 @@ namespace SQL_Document_Builder
                     return;
                 }
 
-                AppendText(CurrentEditBox, await MarkdownBuilder.GetTableValuesAsync($"select * from {objectName.FullName}", _connectionString));
+                if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
+
+                if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Markdown) != DialogResult.Yes) return;
+
+                AppendText(editBox, await MarkdownBuilder.GetTableValuesAsync($"select * from {objectName.FullName}", _connectionString));
 
                 EndBuild();
             }
@@ -3574,7 +3603,7 @@ namespace SQL_Document_Builder
 
         #region "MRU files"
 
-        private MostRecentUsedFiles _mruFiles;
+        private MostRecentUsedFiles? _mruFiles;
 
         /// <summary>
         /// Populate the MRU files to the menu strip
@@ -3629,39 +3658,31 @@ namespace SQL_Document_Builder
         #region Wiki Document Builder
 
         /// <summary>
-        /// Handles the click event of the "WkObjectList" tool strip menu item:
-        /// Generates a wiki object list for the selected objects.
+        /// Handles the click event of the "WkClipboardToTable" tool strip menu item:
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
-        private async void WkObjectListToolStripMenuItem_Click(object sender, EventArgs e)
+        private void WkClipboardToTableToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Wiki) != DialogResult.Yes) return;
-
-            List<ObjectName>? selectedObjects = SelectObjects();
-
-            if (selectedObjects == null || selectedObjects.Count == 0)
+            if (Clipboard.ContainsText())
             {
-                return;
+                var metaData = Clipboard.GetText();
+
+                if (metaData.Length > 1)
+                {
+                    var builder = new WikiBuilder();
+
+                    if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
+
+                    if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Wiki) != DialogResult.Yes) return;
+
+                    AppendText(editBox, builder.TextToTable(metaData));
+
+                    EndBuild();
+                }
             }
 
-            StartBuild();
-
-            var progress = new Progress<int>(value =>
-            {
-                progressBar.Value = value;
-            });
-
-            string scripts = String.Empty;
-            var builder = new WikiBuilder();
-            await Task.Run(async () =>
-            {
-                scripts = await builder.BuildObjectList(selectedObjects, _connectionString, progress);
-            });
-
-            AppendText(CurrentEditBox, scripts);
-
-            EndBuild();
+            statusToolStripStatusLabe.Text = "Complete!";
         }
 
         /// <summary>
@@ -3671,8 +3692,6 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void WkObjectDefinitionToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Wiki) != DialogResult.Yes) return;
-
             if (objectsListBox.SelectedItem != null)
             {
                 var objectName = (ObjectName)objectsListBox.SelectedItem;
@@ -3699,9 +3718,69 @@ namespace SQL_Document_Builder
                     return;
                 }
 
-                AppendText(CurrentEditBox, scripts);
+                if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
+
+                if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Wiki) != DialogResult.Yes) return;
+
+                AppendText(editBox, scripts);
 
                 EndBuild();
+            }
+        }
+
+        /// <summary>
+        /// Handles the click event of the "WkObjectList" tool strip menu item:
+        /// Generates a wiki object list for the selected objects.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private async void WkObjectListToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            List<ObjectName>? selectedObjects = SelectObjects();
+
+            if (selectedObjects == null || selectedObjects.Count == 0)
+            {
+                return;
+            }
+
+            if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
+
+            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Wiki) != DialogResult.Yes) return;
+
+            StartBuild();
+
+            var progress = new Progress<int>(value =>
+            {
+                progressBar.Value = value;
+            });
+
+            string scripts = String.Empty;
+            var builder = new WikiBuilder();
+            await Task.Run(async () =>
+            {
+                scripts = await builder.BuildObjectList(selectedObjects, _connectionString, progress);
+            });
+
+            AppendText(editBox, scripts);
+
+            EndBuild();
+        }
+
+        /// <summary>
+        /// Handles the click event of the "WkClipboardToTable" tool strip menu item:
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private async void WkQueryDataToTableToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using var form = new QueryDataToTableForm() { ConnectionString = _connectionString };
+            if (form.ShowDialog() == DialogResult.OK)
+            {
+                if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
+
+                if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Wiki) != DialogResult.Yes) return;
+
+                AppendText(editBox, await WikiBuilder.GetTableValuesAsync(form.SQL, _connectionString));
             }
         }
 
@@ -3712,8 +3791,6 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void WkTableViewValuesToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Wiki) != DialogResult.Yes) return;
-
             if (objectsListBox.SelectedItem != null)
             {
                 var objectName = (ObjectName)objectsListBox.SelectedItem;
@@ -3725,51 +3802,13 @@ namespace SQL_Document_Builder
                     return;
                 }
 
-                AppendText(CurrentEditBox, await WikiBuilder.GetTableValuesAsync($"select * from {objectName.FullName}", _connectionString));
+                if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
+
+                if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Wiki) != DialogResult.Yes) return;
+
+                AppendText(editBox, await WikiBuilder.GetTableValuesAsync($"select * from {objectName.FullName}", _connectionString));
 
                 EndBuild();
-            }
-        }
-
-        /// <summary>
-        /// Handles the click event of the "WkClipboardToTable" tool strip menu item:
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void WkClipboardToTableToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Wiki) != DialogResult.Yes) return;
-
-            if (Clipboard.ContainsText())
-            {
-                var metaData = Clipboard.GetText();
-
-                if (metaData.Length > 1)
-                {
-                    var builder = new WikiBuilder();
-
-                    AppendText(CurrentEditBox, builder.TextToTable(metaData));
-
-                    EndBuild();
-                }
-            }
-
-            statusToolStripStatusLabe.Text = "Complete!";
-        }
-
-        /// <summary>
-        /// Handles the click event of the "WkClipboardToTable" tool strip menu item:
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private async void WkQueryDataToTableToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Wiki) != DialogResult.Yes) return;
-
-            using var form = new QueryDataToTableForm() { ConnectionString = _connectionString };
-            if (form.ShowDialog() == DialogResult.OK)
-            {
-                AppendText(CurrentEditBox, await WikiBuilder.GetTableValuesAsync(form.SQL, _connectionString));
             }
         }
 
@@ -3778,38 +3817,29 @@ namespace SQL_Document_Builder
         #region Json document builder
 
         /// <summary>
-        /// Handles the click event of the Json table view values tool strip menu item.
+        /// Handles the click event of the Json clipboard to table tool strip menu item.
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
-        private async void JsonObjectListToolStripMenuItem_Click(object sender, EventArgs e)
+        private void JsonClipboardToTableToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Json) != DialogResult.Yes) return;
-
-            List<ObjectName>? selectedObjects = SelectObjects();
-
-            if (selectedObjects == null || selectedObjects.Count == 0)
+            if (Clipboard.ContainsText())
             {
-                return;
+                var metaData = Clipboard.GetText();
+
+                if (metaData.Length > 1)
+                {
+                    if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
+
+                    if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Json) != DialogResult.Yes) return;
+
+                    var builder = new JsonBuilder();
+
+                    AppendText(editBox, builder.TextToTable(metaData));
+
+                    EndBuild();
+                }
             }
-
-            StartBuild();
-
-            var progress = new Progress<int>(value =>
-            {
-                progressBar.Value = value;
-            });
-
-            string scripts = String.Empty;
-            var builder = new JsonBuilder();
-            await Task.Run(async () =>
-            {
-                scripts = await builder.BuildObjectList(selectedObjects, _connectionString, progress);
-            });
-
-            AppendText(CurrentEditBox, scripts);
-
-            EndBuild();
         }
 
         /// <summary>
@@ -3819,8 +3849,6 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void JsonObjectDefinitionToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Json) != DialogResult.Yes) return;
-
             if (objectsListBox.SelectedItem != null)
             {
                 var objectName = (ObjectName)objectsListBox.SelectedItem;
@@ -3838,9 +3866,69 @@ namespace SQL_Document_Builder
                     Common.MsgBox($"No definition found for {objectName.FullName}", MessageBoxIcon.Information);
                     return;
                 }
-                AppendText(CurrentEditBox, scripts);
+
+                if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
+
+                if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Json) != DialogResult.Yes) return;
+
+                AppendText(editBox, scripts);
 
                 EndBuild();
+            }
+        }
+
+        /// <summary>
+        /// Handles the click event of the Json table view values tool strip menu item.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private async void JsonObjectListToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            List<ObjectName>? selectedObjects = SelectObjects();
+
+            if (selectedObjects == null || selectedObjects.Count == 0)
+            {
+                return;
+            }
+
+            if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
+
+            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Json) != DialogResult.Yes) return;
+
+            StartBuild();
+
+            var progress = new Progress<int>(value =>
+            {
+                progressBar.Value = value;
+            });
+
+            string scripts = String.Empty;
+            var builder = new JsonBuilder();
+            await Task.Run(async () =>
+            {
+                scripts = await builder.BuildObjectList(selectedObjects, _connectionString, progress);
+            });
+
+            AppendText(editBox, scripts);
+
+            EndBuild();
+        }
+
+        /// <summary>
+        /// Handles the click event of the Json query data to table tool strip menu item.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private async void JsonQueryDataToTableToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using var form = new QueryDataToTableForm() { ConnectionString = _connectionString };
+            if (form.ShowDialog() == DialogResult.OK)
+            {
+                if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
+
+                if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Json) != DialogResult.Yes) return;
+
+                AppendText(editBox, await JsonBuilder.GetTableValuesAsync(form.SQL, _connectionString));
             }
         }
 
@@ -3851,8 +3939,6 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void JsonTableViewValuesToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Json) != DialogResult.Yes) return;
-
             if (objectsListBox.SelectedItem != null)
             {
                 var objectName = (ObjectName)objectsListBox.SelectedItem;
@@ -3866,49 +3952,13 @@ namespace SQL_Document_Builder
 
                 var scripts = await JsonBuilder.GetTableValuesAsync($"select * from {objectName.FullName}", _connectionString);
 
-                AppendText(CurrentEditBox, scripts);
+                if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
+
+                if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Json) != DialogResult.Yes) return;
+
+                AppendText(editBox, scripts);
 
                 EndBuild();
-            }
-        }
-
-        /// <summary>
-        /// Handles the click event of the Json clipboard to table tool strip menu item.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void JsonClipboardToTableToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Json) != DialogResult.Yes) return;
-
-            if (Clipboard.ContainsText())
-            {
-                var metaData = Clipboard.GetText();
-
-                if (metaData.Length > 1)
-                {
-                    var builder = new JsonBuilder();
-
-                    AppendText(CurrentEditBox, builder.TextToTable(metaData));
-
-                    EndBuild();
-                }
-            }
-        }
-
-        /// <summary>
-        /// Handles the click event of the Json query data to table tool strip menu item.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private async void JsonQueryDataToTableToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Json) != DialogResult.Yes) return;
-
-            using var form = new QueryDataToTableForm() { ConnectionString = _connectionString };
-            if (form.ShowDialog() == DialogResult.OK)
-            {
-                AppendText(CurrentEditBox, await JsonBuilder.GetTableValuesAsync(form.SQL, _connectionString));
             }
         }
 

@@ -92,7 +92,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Gets or sets the data source name.
         /// </summary>
-        public string DataSourceName { get; set; } = string.Empty;
+        public string? DataSourceName { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the default style font.

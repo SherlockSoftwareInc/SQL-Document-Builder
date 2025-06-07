@@ -102,6 +102,9 @@
             cutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             copyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             pasteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            toolStripSeparator27 = new System.Windows.Forms.ToolStripSeparator();
+            undoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            redoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             toolStripSeparator6 = new System.Windows.Forms.ToolStripSeparator();
             selectAllToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             toolStripSeparator8 = new System.Windows.Forms.ToolStripSeparator();
@@ -854,7 +857,7 @@
             // 
             // editToolStripMenuItem
             // 
-            editToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { cutToolStripMenuItem, copyToolStripMenuItem, pasteToolStripMenuItem, toolStripSeparator6, selectAllToolStripMenuItem, toolStripSeparator8, quickFindToolStripMenuItem, findToolStripMenuItem, findAndReplaceToolStripMenuItem, toolStripSeparator16, goToLineToolStripMenuItem, uppercaseToolStripMenuItem, lowercaseToolStripMenuItem });
+            editToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { cutToolStripMenuItem, copyToolStripMenuItem, pasteToolStripMenuItem, toolStripSeparator27, undoToolStripMenuItem, redoToolStripMenuItem, toolStripSeparator6, selectAllToolStripMenuItem, toolStripSeparator8, quickFindToolStripMenuItem, findToolStripMenuItem, findAndReplaceToolStripMenuItem, toolStripSeparator16, goToLineToolStripMenuItem, uppercaseToolStripMenuItem, lowercaseToolStripMenuItem });
             editToolStripMenuItem.Name = "editToolStripMenuItem";
             editToolStripMenuItem.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.F;
             editToolStripMenuItem.Size = new System.Drawing.Size(39, 20);
@@ -889,6 +892,27 @@
             pasteToolStripMenuItem.Size = new System.Drawing.Size(216, 22);
             pasteToolStripMenuItem.Text = "&Paste";
             pasteToolStripMenuItem.Click += PasteToolStripMenuItem_Click;
+            // 
+            // toolStripSeparator27
+            // 
+            toolStripSeparator27.Name = "toolStripSeparator27";
+            toolStripSeparator27.Size = new System.Drawing.Size(213, 6);
+            // 
+            // undoToolStripMenuItem
+            // 
+            undoToolStripMenuItem.Name = "undoToolStripMenuItem";
+            undoToolStripMenuItem.ShortcutKeyDisplayString = "Ctrl+Z";
+            undoToolStripMenuItem.Size = new System.Drawing.Size(216, 22);
+            undoToolStripMenuItem.Text = "Undo";
+            undoToolStripMenuItem.Click += UndoToolStripMenuItem_Click;
+            // 
+            // redoToolStripMenuItem
+            // 
+            redoToolStripMenuItem.Name = "redoToolStripMenuItem";
+            redoToolStripMenuItem.ShortcutKeyDisplayString = "Ctrl+Y";
+            redoToolStripMenuItem.Size = new System.Drawing.Size(216, 22);
+            redoToolStripMenuItem.Text = "Redo";
+            redoToolStripMenuItem.Click += RedoToolStripMenuItem_Click;
             // 
             // toolStripSeparator6
             // 
@@ -1924,5 +1948,8 @@
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator26;
         private System.Windows.Forms.ToolStripMenuItem jsonClipboardToTableToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem jsonQueryDataToTableToolStripMenuItem;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator27;
+        private System.Windows.Forms.ToolStripMenuItem undoToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem redoToolStripMenuItem;
     }
 }
