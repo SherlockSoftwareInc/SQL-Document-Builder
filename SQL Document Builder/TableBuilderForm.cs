@@ -1859,18 +1859,34 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void OnExecuteToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            string message = "Execute SQL statements in the current query editor.\n\n" +
+                             "If no text is selected, the whole text will be executed.\n\n" +
+                             "If the script contains a DROP statement, you will be asked for confirmation before executing it.";
+            string dataSourceText = $"{serverToolStripStatusLabel.Text}::{databaseToolStripStatusLabel.Text}";
+
             // get the selected text from the sqlTextBox
             string? script = CurrentEditBox?.SelectedText;
             if (script?.Length == 0)
             {
                 // if no text is selected, get the whole text from the sqlTextBox
                 script = CurrentEditBox?.Text;
+                message = $"SQL statement(s) will be executed on {dataSourceText}. Continue?";
+            }
+            else
+            {
+                message = $"The selected SQL statement(s) will be executed on {dataSourceText}. Continue?";
             }
 
             // if the script is empty, show a message box and return
             if (string.IsNullOrEmpty(script))
             {
                 Common.MsgBox("No SQL statements to execute", MessageBoxIcon.Information);
+                return;
+            }
+
+            // confirm if the user wants to execute the script
+            if (Common.MsgBox(message, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
+            {
                 return;
             }
 
