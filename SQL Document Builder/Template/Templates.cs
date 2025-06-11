@@ -272,6 +272,13 @@ namespace SQL_Document_Builder.Template
             string filePath = FilePath();
             if (File.Exists(filePath))
             {
+                // check if the file is start with "<root>", if so, clear the file
+                string firstLine = File.ReadLines(filePath).FirstOrDefault() ?? string.Empty;
+                if (firstLine.StartsWith("<root>", StringComparison.OrdinalIgnoreCase))
+                {
+                    File.WriteAllText(filePath, string.Empty); // Clear the file
+                }
+
                 // Load the templates from the file
                 string[] lines = File.ReadAllLines(filePath);
                 foreach (var line in lines)
