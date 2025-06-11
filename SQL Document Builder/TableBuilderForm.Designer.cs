@@ -193,6 +193,8 @@
             closeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             saveToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             toolTip1 = new System.Windows.Forms.ToolTip(components);
+            toolStripSeparator9 = new System.Windows.Forms.ToolStripSeparator();
+            sherlockSoftwareToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             toolStrip1.SuspendLayout();
             objectsTabControl.SuspendLayout();
             tabPage1.SuspendLayout();
@@ -966,8 +968,8 @@
             // 
             builderToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { mdObjectListToolStripMenuItem, toolStripSeparator7, mdDefinitionToolStripMenuItem, mdValuesToolStripMenuItem, toolStripSeparator17, mdClipboardToTableToolStripMenuItem, mdQueryDataToTableToolStripMenuItem });
             builderToolStripMenuItem.Name = "builderToolStripMenuItem";
-            builderToolStripMenuItem.Size = new System.Drawing.Size(115, 20);
-            builderToolStripMenuItem.Text = "Document Builder";
+            builderToolStripMenuItem.Size = new System.Drawing.Size(105, 20);
+            builderToolStripMenuItem.Text = "Document Build";
             // 
             // mdObjectListToolStripMenuItem
             // 
@@ -1076,25 +1078,27 @@
             // customizeToolStripMenuItem
             // 
             customizeToolStripMenuItem.Name = "customizeToolStripMenuItem";
-            customizeToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
+            customizeToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             customizeToolStripMenuItem.Text = "&Customize";
             customizeToolStripMenuItem.Visible = false;
             // 
             // optionsToolStripMenuItem
             // 
             optionsToolStripMenuItem.Name = "optionsToolStripMenuItem";
-            optionsToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
+            optionsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             optionsToolStripMenuItem.Text = "&Options";
+            optionsToolStripMenuItem.Visible = false;
             // 
             // toolStripSeparator1
             // 
             toolStripSeparator1.Name = "toolStripSeparator1";
-            toolStripSeparator1.Size = new System.Drawing.Size(175, 6);
+            toolStripSeparator1.Size = new System.Drawing.Size(177, 6);
+            toolStripSeparator1.Visible = false;
             // 
             // batchColumnDescToolStripMenuItem
             // 
             batchColumnDescToolStripMenuItem.Name = "batchColumnDescToolStripMenuItem";
-            batchColumnDescToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
+            batchColumnDescToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             batchColumnDescToolStripMenuItem.Text = "Batch Column Desc";
             batchColumnDescToolStripMenuItem.Click += BatchToolStripButton_Click;
             // 
@@ -1123,7 +1127,7 @@
             // 
             tableDescriptionToolStripMenuItem.Name = "tableDescriptionToolStripMenuItem";
             tableDescriptionToolStripMenuItem.Size = new System.Drawing.Size(248, 22);
-            tableDescriptionToolStripMenuItem.Text = "Object Description";
+            tableDescriptionToolStripMenuItem.Text = "Object Descriptions";
             tableDescriptionToolStripMenuItem.Click += TableDescriptionToolStripMenuItem_Click;
             // 
             // toolStripSeparator13
@@ -1166,14 +1170,14 @@
             // 
             queryInsertToolStripMenuItem.Name = "queryInsertToolStripMenuItem";
             queryInsertToolStripMenuItem.Size = new System.Drawing.Size(248, 22);
-            queryInsertToolStripMenuItem.Text = "Query to INSERT";
+            queryInsertToolStripMenuItem.Text = "Query to INSERT statements";
             queryInsertToolStripMenuItem.Click += QueryInsertToolStripMenuItem_Click;
             // 
             // excelToINSERTToolStripMenuItem
             // 
             excelToINSERTToolStripMenuItem.Name = "excelToINSERTToolStripMenuItem";
             excelToINSERTToolStripMenuItem.Size = new System.Drawing.Size(248, 22);
-            excelToINSERTToolStripMenuItem.Text = "Excel to INSERT";
+            excelToINSERTToolStripMenuItem.Text = "Excel to INSERT statements";
             excelToINSERTToolStripMenuItem.Click += ExcelToINSERTToolStripMenuItem_Click;
             // 
             // toolStripSeparator15
@@ -1295,7 +1299,7 @@
             // 
             // helpToolStripMenuItem
             // 
-            helpToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { aboutToolStripMenuItem });
+            helpToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { aboutToolStripMenuItem, toolStripSeparator9, sherlockSoftwareToolStripMenuItem });
             helpToolStripMenuItem.Name = "helpToolStripMenuItem";
             helpToolStripMenuItem.Size = new System.Drawing.Size(44, 20);
             helpToolStripMenuItem.Text = "&Help";
@@ -1303,7 +1307,7 @@
             // aboutToolStripMenuItem
             // 
             aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
-            aboutToolStripMenuItem.Size = new System.Drawing.Size(116, 22);
+            aboutToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             aboutToolStripMenuItem.Text = "&About...";
             aboutToolStripMenuItem.Click += AboutToolStripMenuItem_Click;
             // 
@@ -1590,6 +1594,18 @@
             saveToolStripMenuItem1.Text = "Save";
             saveToolStripMenuItem1.Click += SaveToolStripMenuItem1_Click;
             // 
+            // toolStripSeparator9
+            // 
+            toolStripSeparator9.Name = "toolStripSeparator9";
+            toolStripSeparator9.Size = new System.Drawing.Size(177, 6);
+            // 
+            // sherlockSoftwareToolStripMenuItem
+            // 
+            sherlockSoftwareToolStripMenuItem.Name = "sherlockSoftwareToolStripMenuItem";
+            sherlockSoftwareToolStripMenuItem.Size = new System.Drawing.Size(232, 22);
+            sherlockSoftwareToolStripMenuItem.Text = "Sherlock Software on the Web";
+            sherlockSoftwareToolStripMenuItem.Click += SherlockSoftwareToolStripMenuItem_Click;
+            // 
             // TableBuilderForm
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -1803,5 +1819,7 @@
         private System.Windows.Forms.ToolStripMenuItem redoToolStripMenuItem;
         private System.Windows.Forms.ToolStripLabel toolStripLabel2;
         private System.Windows.Forms.ToolStripComboBox docTypeToolStripComboBox;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator9;
+        private System.Windows.Forms.ToolStripMenuItem sherlockSoftwareToolStripMenuItem;
     }
 }

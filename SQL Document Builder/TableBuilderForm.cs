@@ -2596,6 +2596,21 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Handles the click event of the Sherlock Software tool strip menu item.
+        /// Navigates to the Sherlock Software website.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void SherlockSoftwareToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo()
+            {
+                FileName = "https://www.sherlocksoftwareinc.com/",
+                UseShellExecute = true
+            });
+        }
+
+        /// <summary>
         /// Start build.
         /// </summary>
         private void StartBuild(SqlEditBox editBox)
