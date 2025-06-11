@@ -47,12 +47,15 @@ namespace SQL_Document_Builder
             splitContainer1 = new System.Windows.Forms.SplitContainer();
             tabControl1 = new System.Windows.Forms.TabControl();
             tabPage1 = new System.Windows.Forms.TabPage();
+            triggerGridView = new System.Windows.Forms.DataGridView();
             parameterGridView = new System.Windows.Forms.DataGridView();
             tabPage2 = new System.Windows.Forms.TabPage();
             definitionTextBox = new SqlEditBox();
             panel1 = new System.Windows.Forms.Panel();
             saveTableDescButton = new System.Windows.Forms.Button();
             descriptionLabel = new System.Windows.Forms.Label();
+            tabPage3 = new System.Windows.Forms.TabPage();
+            objectPropertyGrid = new System.Windows.Forms.PropertyGrid();
             namePanel.SuspendLayout();
             openTableContextMenuStrip.SuspendLayout();
             tableContextMenuStrip.SuspendLayout();
@@ -64,9 +67,11 @@ namespace SQL_Document_Builder
             splitContainer1.SuspendLayout();
             tabControl1.SuspendLayout();
             tabPage1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)triggerGridView).BeginInit();
             ((System.ComponentModel.ISupportInitialize)parameterGridView).BeginInit();
             tabPage2.SuspendLayout();
             panel1.SuspendLayout();
+            tabPage3.SuspendLayout();
             SuspendLayout();
             // 
             // namePanel
@@ -206,6 +211,7 @@ namespace SQL_Document_Builder
             tabControl1.Alignment = System.Windows.Forms.TabAlignment.Bottom;
             tabControl1.Controls.Add(tabPage1);
             tabControl1.Controls.Add(tabPage2);
+            tabControl1.Controls.Add(tabPage3);
             tabControl1.Dock = System.Windows.Forms.DockStyle.Fill;
             tabControl1.Location = new System.Drawing.Point(0, 0);
             tabControl1.Name = "tabControl1";
@@ -215,6 +221,7 @@ namespace SQL_Document_Builder
             // 
             // tabPage1
             // 
+            tabPage1.Controls.Add(triggerGridView);
             tabPage1.Controls.Add(parameterGridView);
             tabPage1.Controls.Add(columnDefDataGridView);
             tabPage1.Location = new System.Drawing.Point(4, 4);
@@ -224,6 +231,22 @@ namespace SQL_Document_Builder
             tabPage1.TabIndex = 0;
             tabPage1.Text = "Columns";
             tabPage1.UseVisualStyleBackColor = true;
+            // 
+            // triggerGridView
+            // 
+            triggerGridView.AllowUserToAddRows = false;
+            triggerGridView.AllowUserToDeleteRows = false;
+            triggerGridView.AutoSizeRowsMode = System.Windows.Forms.DataGridViewAutoSizeRowsMode.AllCells;
+            triggerGridView.ClipboardCopyMode = System.Windows.Forms.DataGridViewClipboardCopyMode.EnableWithoutHeaderText;
+            triggerGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            triggerGridView.ContextMenuStrip = columnContextMenuStrip;
+            triggerGridView.Dock = System.Windows.Forms.DockStyle.Fill;
+            triggerGridView.Location = new System.Drawing.Point(3, 3);
+            triggerGridView.Name = "triggerGridView";
+            triggerGridView.RowTemplate.Resizable = System.Windows.Forms.DataGridViewTriState.True;
+            triggerGridView.Size = new System.Drawing.Size(345, 431);
+            triggerGridView.TabIndex = 2;
+            triggerGridView.Visible = false;
             // 
             // parameterGridView
             // 
@@ -305,6 +328,25 @@ namespace SQL_Document_Builder
             descriptionLabel.TabIndex = 0;
             descriptionLabel.Text = "Object description:";
             // 
+            // tabPage3
+            // 
+            tabPage3.Controls.Add(objectPropertyGrid);
+            tabPage3.Location = new System.Drawing.Point(4, 4);
+            tabPage3.Name = "tabPage3";
+            tabPage3.Padding = new System.Windows.Forms.Padding(3);
+            tabPage3.Size = new System.Drawing.Size(351, 437);
+            tabPage3.TabIndex = 2;
+            tabPage3.Text = "Properties";
+            tabPage3.UseVisualStyleBackColor = true;
+            // 
+            // objectPropertyGrid
+            // 
+            objectPropertyGrid.Dock = System.Windows.Forms.DockStyle.Fill;
+            objectPropertyGrid.Location = new System.Drawing.Point(3, 3);
+            objectPropertyGrid.Name = "objectPropertyGrid";
+            objectPropertyGrid.Size = new System.Drawing.Size(345, 431);
+            objectPropertyGrid.TabIndex = 4;
+            // 
             // ColumnDefView
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -325,10 +367,12 @@ namespace SQL_Document_Builder
             splitContainer1.ResumeLayout(false);
             tabControl1.ResumeLayout(false);
             tabPage1.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)triggerGridView).EndInit();
             ((System.ComponentModel.ISupportInitialize)parameterGridView).EndInit();
             tabPage2.ResumeLayout(false);
             panel1.ResumeLayout(false);
             panel1.PerformLayout();
+            tabPage3.ResumeLayout(false);
             ResumeLayout(false);
         }
 
@@ -356,5 +400,8 @@ namespace SQL_Document_Builder
         private System.Windows.Forms.TabPage tabPage2;
         private SqlEditBox definitionTextBox;
         private System.Windows.Forms.DataGridView parameterGridView;
+        private System.Windows.Forms.DataGridView triggerGridView;
+        private System.Windows.Forms.TabPage tabPage3;
+        private System.Windows.Forms.PropertyGrid objectPropertyGrid;
     }
 }

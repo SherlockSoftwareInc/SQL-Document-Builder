@@ -1784,6 +1784,11 @@ namespace SQL_Document_Builder
                         EnableTableValue(false);
                         break;
 
+                    case 4:
+                        _tables = await DatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.Trigger, _connectionString);
+                        EnableTableValue(false);
+                        break;
+
                     default:
                         break;
                 }

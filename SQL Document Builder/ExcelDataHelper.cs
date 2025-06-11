@@ -64,7 +64,7 @@ namespace SQL_Document_Builder
 
             if (Properties.Settings.Default.AddDropStatement)
             {
-                sb.AppendLine($"IF OBJECT_ID('{objectName.FullName}', 'U') IS NOT NULL");
+                sb.AppendLine($"IF OBJECT_ID(N'{objectName.FullName}', 'U') IS NOT NULL");
                 sb.AppendLine($"\tDROP TABLE {objectName.FullName};");
                 sb.AppendLine("GO");
             }

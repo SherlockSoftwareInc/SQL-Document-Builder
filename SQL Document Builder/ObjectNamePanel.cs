@@ -46,6 +46,10 @@ namespace SQL_Document_Builder
             }
 
             int wh = this.Height - 9;
+            if (wh < 8)
+            {
+                wh = 8; // Ensure minimum size for image
+            }
 
             // draw the object image
             Bitmap? image = GetImage();
@@ -102,6 +106,7 @@ namespace SQL_Document_Builder
                 ObjectName.ObjectTypeEnums.View => Properties.Resources.view_16,
                 ObjectName.ObjectTypeEnums.StoredProcedure => Properties.Resources.sp_16,
                 ObjectName.ObjectTypeEnums.Function => Properties.Resources.function_16,
+                ObjectName.ObjectTypeEnums.Trigger => Properties.Resources.dbtrigger24,
                 _ => null
             };
         }

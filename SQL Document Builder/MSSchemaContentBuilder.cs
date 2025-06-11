@@ -222,7 +222,7 @@ namespace SQL_Document_Builder
             try
             {
                 using SqlCommand cmd = new() { Connection = conn };
-                cmd.CommandText = $"SELECT ep.value AS ColumnDescription FROM sys.columns AS c LEFT JOIN sys.extended_properties AS ep ON ep.major_id = c.object_id AND ep.minor_id = c.column_id AND ep.class = 1 AND ep.name = 'MS_Description' WHERE SCHEMA_NAME(OBJECTPROPERTY(c.object_id, 'SchemaId')) = '{schemaName}' AND OBJECT_NAME(c.object_id) = '{tableName}' AND c.name = '{columnName}'";
+                cmd.CommandText = $"SELECT ep.value AS ColumnDescription FROM sys.columns AS c LEFT JOIN sys.extended_properties AS ep ON ep.major_id = c.object_id AND ep.minor_id = c.column_id AND ep.class = 1 AND ep.name = 'MS_Description' WHERE SCHEMA_NAME(OBJECTPROPERTY(c.object_id, 'SchemaId')) = '{schemaName}' AND OBJECT_NAME(c.object_id) = '{tableName}' AND c.name = N'{columnName}'";
                 // open the connection
                 conn.Open();
                 var dr = cmd.ExecuteReader();
@@ -264,7 +264,7 @@ namespace SQL_Document_Builder
             try
             {
                 using SqlCommand cmd = new() { Connection = conn };
-                cmd.CommandText = $"SELECT ep.value AS TableDescription FROM sys.tables AS t LEFT JOIN sys.extended_properties AS ep ON ep.major_id = t.object_id AND ep.minor_id = 0 AND ep.class = 1 AND ep.name = 'MS_Description' WHERE SCHEMA_NAME(t.schema_id) = '{schemaName}' AND t.name = '{tableName}'";
+                cmd.CommandText = $"SELECT ep.value AS TableDescription FROM sys.tables AS t LEFT JOIN sys.extended_properties AS ep ON ep.major_id = t.object_id AND ep.minor_id = 0 AND ep.class = 1 AND ep.name = 'MS_Description' WHERE SCHEMA_NAME(t.schema_id) = N'{schemaName}' AND t.name = N'{tableName}'";
                 // open the connection
                 conn.Open();
                 var dr = cmd.ExecuteReader();

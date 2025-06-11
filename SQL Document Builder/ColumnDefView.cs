@@ -189,7 +189,7 @@ namespace SQL_Document_Builder
                 sql = $@"IF NOT EXISTS (
     SELECT * FROM sys.indexes
     WHERE name = '{indexName}'
-    AND object_id = OBJECT_ID('[{Schema}].[{TableName}]')
+    AND object_id = OBJECT_ID(N'[{Schema}].[{TableName}]')
 )
 BEGIN
     CREATE INDEX {indexName}
@@ -287,8 +287,13 @@ GO
 
                 // change the tab page text to "Columns"
                 tabControl1.TabPages[0].Text = "Columns";
+
+                if (_dbObject.ObjectType == ObjectName.ObjectTypeEnums.Table)
+                    objectPropertyGrid.SelectedObject = _dbObject.TableInformation;
+                else
+                    objectPropertyGrid.SelectedObject = _dbObject.ViewInformation;
             }
-            else
+            else if (_dbObject.ObjectType == ObjectName.ObjectTypeEnums.StoredProcedure || _dbObject.ObjectType == ObjectName.ObjectTypeEnums.Function)
             {
                 parameterGridView.DataSource = _dbObject.Parameters;
                 parameterGridView.Visible = true;
@@ -301,9 +306,16 @@ GO
                 // change the tab page text to "parameters"
                 tabControl1.TabPages[0].Text = "Parameters";
 
-                //openButton.Visible = false;
-                //openButton.Visible = false;
-                //return;
+                if (_dbObject.ObjectType == ObjectName.ObjectTypeEnums.StoredProcedure)
+                    objectPropertyGrid.SelectedObject = _dbObject.ProcedureInformation;
+                else
+                    objectPropertyGrid.SelectedObject = _dbObject.FunctionInformation;
+            }
+            else if (_dbObject.ObjectType == ObjectName.ObjectTypeEnums.Trigger)
+            {
+                objectPropertyGrid.SelectedObject = _dbObject.TriggerInfomation;
+                // change the tab page text to "Trigger"
+                tabControl1.TabPages[0].Text = "Trigger";
             }
 
             //tableDescTextBox.Visible = true;

@@ -92,7 +92,8 @@ namespace SQL_Document_Builder
             View,
             StoredProcedure,
             Function,
-            Trigger
+            Trigger,
+            Synonym,
         }
 
         /// <summary>
@@ -164,6 +165,29 @@ namespace SQL_Document_Builder
                 else if (!string.IsNullOrEmpty(Name))
                 {
                     return Name;
+                }
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Gets the quoted full name.
+        /// </summary>
+        public string QuotedFullName
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(Catelog))
+                {
+                    return $"{Catelog.QuotedName()}.{Schema.QuotedName()}.{Name.QuotedName()}";
+                }
+                else if (!string.IsNullOrEmpty(Schema.QuotedName()))
+                {
+                    return $"{Schema.QuotedName()}.{Name.QuotedName()}";
+                }
+                else if (!string.IsNullOrEmpty(Name.QuotedName()))
+                {
+                    return Name.QuotedName();
                 }
                 return string.Empty;
             }

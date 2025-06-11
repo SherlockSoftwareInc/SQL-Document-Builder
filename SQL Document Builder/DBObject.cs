@@ -68,6 +68,11 @@ namespace SQL_Document_Builder
         public List<DBParameter> Parameters { get; set; } = [];
 
         /// <summary>
+        /// Gets or sets the trigger infomation.
+        /// </summary>
+        public TriggerInfo? TriggerInfomation { get; set; }
+
+        /// <summary>
         /// Gets or sets the primary key columns.
         /// </summary>
         public string PrimaryKeyColumns { get; set; } = string.Empty;
@@ -119,9 +124,9 @@ namespace SQL_Document_Builder
             {
                 query = $@"EXEC sys.sp_dropextendedproperty
 @name = N'MS_Description',
-@level0type = N'SCHEMA', @level0name = '{ObjectName.Schema}',
-@level1type = N'{level1type}', @level1name = '{ObjectName.Name}',
-@level2type = N'{level2Type}', @level2name = '{columnOrParameter}'";
+@level0type = N'SCHEMA', @level0name = N'{ObjectName.Schema}',
+@level1type = N'{level1type}', @level1name = N'{ObjectName.Name}',
+@level2type = N'{level2Type}', @level2name = N'{columnOrParameter}'";
             }
             else
             {
@@ -141,18 +146,18 @@ BEGIN
     EXEC sys.sp_updateextendedproperty
         @name = N'MS_Description',
         @value = N'{newDesc}',
-        @level0type = N'SCHEMA', @level0name = '{ObjectName.Schema}',
-        @level1type = N'{level1type}', @level1name = '{ObjectName.Name}',
-        @level2type = N'{level2Type}', @level2name = '{columnOrParameter}';
+        @level0type = N'SCHEMA', @level0name = N'{ObjectName.Schema}',
+        @level1type = N'{level1type}', @level1name = N'{ObjectName.Name}',
+        @level2type = N'{level2Type}', @level2name = N'{columnOrParameter}';
 END
 ELSE
 BEGIN
     EXEC sys.sp_addextendedproperty
         @name = N'MS_Description',
         @value = N'{newDesc}',
-        @level0type = N'SCHEMA', @level0name = '{ObjectName.Schema}',
-        @level1type = N'{level1type}', @level1name = '{ObjectName.Name}',
-        @level2type = N'{level2Type}', @level2name = '{columnOrParameter}';
+        @level0type = N'SCHEMA', @level0name = N'{ObjectName.Schema}',
+        @level1type = N'{level1type}', @level1name = N'{ObjectName.Name}',
+        @level2type = N'{level2Type}', @level2name = N'{columnOrParameter}';
 END;";
             }
 
@@ -206,8 +211,8 @@ END;";
                 {
                     query = $@"EXEC sys.sp_dropextendedproperty
 @name = N'MS_Description',
-@level0type = N'SCHEMA', @level0name = '{ObjectName.Schema}',
-@level1type = N'{level1type}', @level1name = '{ObjectName.Name}'";
+@level0type = N'SCHEMA', @level0name = N'{ObjectName.Schema}',
+@level1type = N'{level1type}', @level1name = N'{ObjectName.Name}'";
                 }
                 else
                 {
@@ -265,8 +270,8 @@ FROM
     INNER JOIN sys.objects o ON d.referenced_id = o.object_id
     INNER JOIN sys.schemas s ON v.schema_id = s.schema_id
 WHERE
-    o.name = '{objectName.Name}' AND
-    s.name = '{objectName.Schema}'";
+    o.name = N'{objectName.Name}' AND
+    s.name = N'{objectName.Schema}'";
 
             var dt = await DatabaseHelper.GetDataTableAsync(query, connectionString);
             if (dt == null || dt.Rows.Count == 0)
@@ -300,7 +305,7 @@ WHERE
 FROM sys.check_constraints cc
 INNER JOIN sys.tables t ON cc.parent_object_id = t.object_id
 INNER JOIN sys.schemas s ON t.schema_id = s.schema_id
-WHERE s.name = '{ObjectName.Schema}' AND t.name = '{ObjectName.Name}'
+WHERE s.name = N'{ObjectName.Schema}' AND t.name = N'{ObjectName.Name}'
 ORDER BY cc.name;";
 
             var dt = await DatabaseHelper.GetDataTableAsync(sql, ConnectionString);
@@ -342,7 +347,7 @@ FROM sys.default_constraints dc
 INNER JOIN sys.columns c ON dc.parent_object_id = c.object_id AND dc.parent_column_id = c.column_id
 INNER JOIN sys.tables t ON dc.parent_object_id = t.object_id
 INNER JOIN sys.schemas s ON t.schema_id = s.schema_id
-WHERE s.name = '{ObjectName.Schema}' AND t.name = '{ObjectName.Name}'
+WHERE s.name = N'{ObjectName.Schema}' AND t.name = N'{ObjectName.Name}'
 ORDER BY dc.name;";
 
             var dt = await DatabaseHelper.GetDataTableAsync(sql, ConnectionString);
@@ -394,7 +399,7 @@ INNER JOIN sys.columns cp ON fkc.parent_column_id = cp.column_id AND cp.object_i
 INNER JOIN sys.tables tr ON fk.referenced_object_id = tr.object_id
 INNER JOIN sys.schemas rs ON tr.schema_id = rs.schema_id
 INNER JOIN sys.columns cr ON fkc.referenced_column_id = cr.column_id AND cr.object_id = tr.object_id
-WHERE s.name = '{ObjectName.Schema}' AND tp.name = '{ObjectName.Name}'
+WHERE s.name = N'{ObjectName.Schema}' AND tp.name = N'{ObjectName.Name}'
 ORDER BY fk.name, fkc.constraint_column_id;";
 
             // Use DatabaseHelper to get the data as a DataTable
@@ -457,8 +462,8 @@ SELECT
 FROM sys.tables AS t
 INNER JOIN sys.schemas AS s ON t.schema_id = s.schema_id
 INNER JOIN sys.identity_columns AS ic ON t.object_id = ic.object_id
-WHERE t.name = '{ObjectName.Name}'
-AND s.name = '{ObjectName.Schema}';";
+WHERE t.name = N'{ObjectName.Name}'
+AND s.name = N'{ObjectName.Schema}';";
 
             var dt = await DatabaseHelper.GetDataTableAsync(identityQuery, connectionString);
             if (dt == null || dt.Rows.Count == 0)
@@ -493,9 +498,9 @@ AND s.name = '{ObjectName.Schema}';";
                 // determine the object type using DatabaseHelper
                 string sql = $@"
 SELECT TABLE_TYPE
-FROM INFORMATION_SCHEMA.TABLES
-WHERE TABLE_SCHEMA = '{objectName.Schema}'
-  AND TABLE_NAME = '{objectName.Name}'";
+FROM Information_SCHEMA.TABLES
+WHERE TABLE_SCHEMA = N'{objectName.Schema}'
+  AND TABLE_NAME = N'{objectName.Name}'";
 
                 var dt = await DatabaseHelper.GetDataTableAsync(sql, connectionString);
                 if (dt != null && dt.Rows.Count > 0)
@@ -510,12 +515,71 @@ WHERE TABLE_SCHEMA = '{objectName.Schema}'
                 }
             }
 
+            // Get the object properties
+            await OpenObjectInfo();
+
             return objectType switch
             {
                 ObjectTypeEnums.Table or ObjectTypeEnums.View => await OpenTableAsync(),
                 ObjectTypeEnums.StoredProcedure or ObjectTypeEnums.Function => await OpenFunctionAsync(),
+                ObjectTypeEnums.Trigger => await OpenTriggerAsync(),
                 _ => false,
             };
+        }
+
+        /// <summary>
+        /// Gets or sets the table Information.
+        /// </summary>
+        internal TableInfo? TableInformation { get; set; }
+
+        /// <summary>
+        /// Gets or sets the view Information.
+        /// </summary>
+        internal ViewInfo? ViewInformation { get; set; }
+
+        /// <summary>
+        /// Gets or sets the stored procedure Information.
+        /// </summary>
+        internal ProcedureInfo? ProcedureInformation { get; set; }
+
+        /// <summary>
+        /// Gets or sets the function information.
+        /// </summary>
+        internal FunctionInfo? FunctionInformation { get; set; }
+
+        /// <summary>
+        /// Opens the object info.
+        /// </summary>
+        /// <returns>A Task.</returns>
+        private async Task OpenObjectInfo()
+        {
+            switch (ObjectName.ObjectType)
+            {
+                case ObjectTypeEnums.Table:
+                    TableInformation = new TableInfo();
+                    await TableInformation.OpenAsync(ObjectName, ConnectionString);
+                    break;
+
+                case ObjectTypeEnums.View:
+                    ViewInformation = new ViewInfo();
+                    await ViewInformation.OpenAsync(ObjectName, ConnectionString);
+                    break;
+
+                case ObjectTypeEnums.StoredProcedure:
+                    ProcedureInformation = new ProcedureInfo();
+                    await ProcedureInformation.OpenAsync(ObjectName, ConnectionString);
+                    break;
+
+                case ObjectTypeEnums.Function:
+                    FunctionInformation = new FunctionInfo();
+                    await FunctionInformation.OpenAsync(ObjectName, ConnectionString);
+                    break;
+
+                case ObjectTypeEnums.Trigger:
+                    TriggerInfomation = new TriggerInfo();
+                    await TriggerInfomation.OpenAsync(ObjectName, ConnectionString);
+                    break;
+            }
         }
 
         /// <summary>
@@ -533,7 +597,7 @@ SELECT
     p.DATA_TYPE,
     p.CHARACTER_MAXIMUM_LENGTH,
     p.PARAMETER_MODE
-FROM INFORMATION_SCHEMA.PARAMETERS p
+FROM Information_SCHEMA.PARAMETERS p
 WHERE p.SPECIFIC_SCHEMA = N'{objectName.Schema}'
   AND p.SPECIFIC_NAME = N'{objectName.Name}'
   AND p.ORDINAL_POSITION > 0
@@ -554,8 +618,8 @@ INNER JOIN sys.{(ObjectName?.ObjectType == ObjectTypeEnums.Table ? "tables" : "v
 INNER JOIN sys.columns C ON T.object_id = C.object_id
 INNER JOIN sys.extended_properties E ON T.object_id = E.major_id AND C.column_id = E.minor_id
 WHERE E.name = N'MS_Description'
-  AND S.name = '{ObjectName?.Schema}'
-  AND T.name = '{ObjectName?.Name}'";
+  AND S.name = N'{ObjectName?.Schema}'
+  AND T.name = N'{ObjectName?.Name}'";
 
             var dt = await DatabaseHelper.GetDataTableAsync(sql, ConnectionString);
             if (dt == null || dt.Rows.Count == 0)
@@ -590,8 +654,8 @@ WHERE E.name = N'MS_Description'
             {
                 string sql = $@"
 SELECT ORDINAL_POSITION, COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, NUMERIC_PRECISION, IS_NULLABLE, COLUMN_DEFAULT
-FROM information_schema.columns
-WHERE TABLE_SCHEMA = '{ObjectName.Schema}' AND TABLE_NAME = '{ObjectName.Name}'
+FROM Information_schema.columns
+WHERE TABLE_SCHEMA = N'{ObjectName.Schema}' AND TABLE_NAME = N'{ObjectName.Name}'
 ORDER BY ORDINAL_POSITION";
 
                 var dt = await DatabaseHelper.GetDataTableAsync(sql, ConnectionString);
@@ -632,8 +696,8 @@ INNER JOIN sys.tables t ON kc.parent_object_id = t.object_id
 INNER JOIN sys.schemas s ON t.schema_id = s.schema_id
 LEFT JOIN sys.index_columns ic ON ic.object_id = kc.parent_object_id AND ic.index_id = kc.unique_index_id
 LEFT JOIN sys.columns c ON c.object_id = t.object_id AND c.column_id = ic.column_id
-WHERE s.name = '{schemaName}'
-  AND t.name = '{tableName}'
+WHERE s.name = N'{schemaName}'
+  AND t.name = N'{tableName}'
 UNION
 SELECT
     fk.name AS ConstraintName,
@@ -644,8 +708,8 @@ INNER JOIN sys.foreign_key_columns fkc ON fk.object_id = fkc.constraint_object_i
 INNER JOIN sys.tables t ON fk.parent_object_id = t.object_id
 INNER JOIN sys.schemas s ON t.schema_id = s.schema_id
 INNER JOIN sys.columns c ON fkc.parent_object_id = c.object_id AND fkc.parent_column_id = c.column_id
-WHERE s.name = '{schemaName}'
-  AND t.name = '{tableName}'
+WHERE s.name = N'{schemaName}'
+  AND t.name = N'{tableName}'
 UNION
 SELECT
     cc.name AS ConstraintName,
@@ -655,8 +719,8 @@ FROM sys.check_constraints cc
 INNER JOIN sys.tables t ON cc.parent_object_id = t.object_id
 INNER JOIN sys.schemas s ON t.schema_id = s.schema_id
 LEFT JOIN sys.columns c ON cc.parent_object_id = c.object_id AND cc.parent_column_id = c.column_id
-WHERE s.name = '{schemaName}'
-  AND t.name = '{tableName}'
+WHERE s.name = N'{schemaName}'
+  AND t.name = N'{tableName}'
 UNION
 SELECT
     dc.name AS ConstraintName,
@@ -666,8 +730,8 @@ FROM sys.default_constraints dc
 INNER JOIN sys.tables t ON dc.parent_object_id = t.object_id
 INNER JOIN sys.schemas s ON t.schema_id = s.schema_id
 INNER JOIN sys.columns c ON dc.parent_object_id = c.object_id AND dc.parent_column_id = c.column_id
-WHERE s.name = '{schemaName}'
-  AND t.name = '{tableName}'";
+WHERE s.name = N'{schemaName}'
+  AND t.name = N'{tableName}'";
 
             var dt = await DatabaseHelper.GetDataTableAsync(sql, ConnectionString);
             if (dt == null || dt.Rows.Count == 0)
@@ -702,8 +766,8 @@ INNER JOIN sys.index_columns ic ON ind.object_id = ic.object_id AND ind.index_id
 INNER JOIN sys.columns col ON ic.object_id = col.object_id AND ic.column_id = col.column_id
 INNER JOIN sys.tables t ON ind.object_id = t.object_id
 INNER JOIN sys.schemas s ON t.schema_id = s.schema_id
-WHERE s.name = '{objectName.Schema}'
-  AND t.name = '{objectName.Name}'
+WHERE s.name = N'{objectName.Schema}'
+  AND t.name = N'{objectName.Name}'
   AND ind.is_primary_key = 0 -- Exclude PK, unless you want to include it
 ORDER BY ind.name, ic.key_ordinal";
 
@@ -757,8 +821,8 @@ INNER JOIN sys.index_columns ic ON ind.object_id = ic.object_id AND ind.index_id
 INNER JOIN sys.columns col ON ic.object_id = col.object_id AND ic.column_id = col.column_id
 INNER JOIN sys.tables t ON ind.object_id = t.object_id
 INNER JOIN sys.schemas s ON t.schema_id = s.schema_id
-WHERE s.name = '{objectName.Schema}'
-AND t.name = '{objectName.Name}'";
+WHERE s.name = N'{objectName.Schema}'
+AND t.name = N'{objectName.Name}'";
 
             var dt = await DatabaseHelper.GetDataTableAsync(sql, ConnectionString);
             if (dt == null || dt.Rows.Count == 0)
@@ -802,7 +866,7 @@ AND t.name = '{objectName.Name}'";
 
                     if (string.IsNullOrEmpty(objectType)) return string.Empty;
 
-                    string sql = $"SELECT value FROM fn_listextendedproperty (NULL, 'schema', '{ObjectName.Schema}', '{objectType}', '{ObjectName.Name}', default, default) WHERE name = N'MS_Description'";
+                    string sql = $"SELECT value FROM fn_listextendedproperty (NULL, 'schema', '{ObjectName.Schema}', N'{objectType}', N'{ObjectName.Name}', default, default) WHERE name = N'MS_Description'";
 
                     var returnValue = await DatabaseHelper.ExecuteScalarAsync(sql, ConnectionString);
 
@@ -842,8 +906,8 @@ LEFT JOIN sys.parameters AS p
 WHERE ep.name = 'MS_Description'
   AND p.name IS NOT NULL
   AND o.type IN ('FN', 'TF', 'IF', 'P', 'PC')
-  AND o.name = '{ObjectName.Name}'
-  AND s.name = '{ObjectName.Schema}'";
+  AND o.name = N'{ObjectName.Name}'
+  AND s.name = N'{ObjectName.Schema}'";
 
             var dt = await DatabaseHelper.GetDataTableAsync(sql, ConnectionString);
             if (dt == null || dt.Rows.Count == 0)
@@ -874,10 +938,10 @@ WHERE ep.name = 'MS_Description'
 
             var sql = $@"
 SELECT COLUMN_NAME
-FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+FROM Information_SCHEMA.KEY_COLUMN_USAGE
 WHERE OBJECTPROPERTY(OBJECT_ID(CONSTRAINT_SCHEMA + '.' + CONSTRAINT_NAME), 'IsPrimaryKey') = 1
-  AND TABLE_NAME = '{objectName.Name}'
-  AND TABLE_SCHEMA = '{objectName.Schema}'";
+  AND TABLE_NAME = N'{objectName.Name}'
+  AND TABLE_SCHEMA = N'{objectName.Schema}'";
 
             var dt = await DatabaseHelper.GetDataTableAsync(sql, ConnectionString);
             if (dt == null || dt.Rows.Count == 0)
@@ -930,6 +994,36 @@ WHERE OBJECTPROPERTY(OBJECT_ID(CONSTRAINT_SCHEMA + '.' + CONSTRAINT_NAME), 'IsPr
             {
                 await GetParameterDescAsync();
             }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Opens the trigger async.
+        /// </summary>
+        /// <returns>A Task.</returns>
+        private async Task<bool> OpenTriggerAsync()
+        {
+            //get the object description and definition
+            //Description = await GetObjectDescriptionAsync();
+            Definition = await DatabaseHelper.GetObjectDefinitionAsync(ObjectName, ConnectionString);
+
+            // Get the function parameters
+            Parameters.Clear();
+            //var dtParameters = await GetParametersAsync(ObjectName, ConnectionString);
+            //if (dtParameters != null && dtParameters.Rows.Count > 0)
+            //{
+            //    foreach (DataRow row in dtParameters.Rows)
+            //    {
+            //        var parameter = new DBParameter(row);
+            //        Parameters.Add(parameter);
+            //    }
+            //}
+
+            //if (Parameters.Count > 0)
+            //{
+            //    await GetParameterDescAsync();
+            //}
 
             return true;
         }

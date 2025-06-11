@@ -39,6 +39,7 @@ namespace SQL_Document_Builder
                 ObjectName.ObjectTypeEnums.View => await GetCreateViewScriptAsync(dbObject, connectionString),
                 ObjectName.ObjectTypeEnums.StoredProcedure => await GetCreateStoredProcedureScriptAsync(dbObject, connectionString),
                 ObjectName.ObjectTypeEnums.Function => await GetCreateFunctionScriptAsync(dbObject, connectionString),
+                ObjectName.ObjectTypeEnums.Trigger => await DatabaseHelper.GetObjectDefinitionAsync(dbObject, connectionString),
                 _ => throw new NotSupportedException($"The object type '{dbObject.ObjectType}' is not supported.")
             };
         }
@@ -244,8 +245,8 @@ namespace SQL_Document_Builder
             //INNER JOIN sys.objects o ON i.object_id = o.object_id
             //INNER JOIN sys.schemas s ON o.schema_id = s.schema_id
             //LEFT JOIN sys.xml_indexes xi ON i.object_id = xi.object_id AND i.index_id = xi.index_id
-            //WHERE s.name = '{objectName.Schema}'
-            //  AND o.name = '{objectName.Name}'
+            //WHERE s.name = N'{objectName.Schema}'
+            //  AND o.name = N'{objectName.Name}'
             //  AND o.type IN ('U', 'V') -- U: Table, V: View
             //  AND i.is_primary_key = 0
             //  AND i.is_unique_constraint = 0
@@ -276,8 +277,8 @@ FROM sys.indexes i
 INNER JOIN sys.objects o ON i.object_id = o.object_id
 INNER JOIN sys.schemas s ON o.schema_id = s.schema_id
 LEFT JOIN sys.xml_indexes xi ON i.object_id = xi.object_id AND i.index_id = xi.index_id
-WHERE s.name = '{objectName.Schema}'
-  AND o.name = '{objectName.Name}'
+WHERE s.name = N'{objectName.Schema}'
+  AND o.name = N'{objectName.Name}'
   AND o.type IN ('U', 'V') -- U: Table, V: View
   AND i.is_primary_key = 0
   AND i.is_unique_constraint = 0
@@ -433,7 +434,7 @@ GO";
 
             // Use IF EXISTS with sys.objects and type IN ('FN','IF','TF')
             createScript.AppendLine(
-                $"IF EXISTS (SELECT 1 FROM sys.objects WHERE object_id = OBJECT_ID('{objectName.FullName}') AND type IN ('FN','IF','TF'))");
+                $"IF EXISTS (SELECT 1 FROM sys.objects WHERE object_id = OBJECT_ID(N'{objectName.FullName}') AND type IN ('FN','IF','TF'))");
             createScript.AppendLine($"\tDROP FUNCTION {objectName.FullName};");
             createScript.AppendLine($"GO");
 
@@ -462,7 +463,7 @@ GO";
             if (Properties.Settings.Default.AddDropStatement)
             {
                 // Add drop table statement
-                createScript.AppendLine($"IF OBJECT_ID('{objectName.FullName}', 'P') IS NOT NULL");
+                createScript.AppendLine($"IF OBJECT_ID(N'{objectName.FullName}', 'P') IS NOT NULL");
                 createScript.AppendLine($"\tDROP PROCEDURE {objectName.FullName};");
                 createScript.AppendLine($"GO");
             }
@@ -501,7 +502,7 @@ GO";
             // Add drop table statement
             if (Properties.Settings.Default.AddDropStatement)
             {
-                createScript.AppendLine($"IF OBJECT_ID('{objectName.FullName}', 'U') IS NOT NULL");
+                createScript.AppendLine($"IF OBJECT_ID(N'{objectName.FullName}', 'U') IS NOT NULL");
                 createScript.AppendLine($"\tDROP TABLE {objectName.FullName};");
                 createScript.AppendLine($"GO");
             }
@@ -643,9 +644,9 @@ FROM sys.triggers tr
 INNER JOIN sys.objects o ON tr.parent_id = o.object_id
 INNER JOIN sys.schemas s ON o.schema_id = s.schema_id
 INNER JOIN sys.sql_modules sm ON tr.object_id = sm.object_id
-WHERE s.name = '{objectName.Schema}'
-  AND o.name = '{objectName.Name}'
-ORDER BY tr.name;";
+WHERE s.name = N'{objectName.Schema}'
+  AND o.name = N'{objectName.Name}'
+ORDER BY tr.name";
 
             var dt = await DatabaseHelper.GetDataTableAsync(sql, connectionString);
             if (dt == null || dt.Rows.Count == 0)
@@ -665,7 +666,7 @@ ORDER BY tr.name;";
                 // Add drop statement if configured
                 if (Properties.Settings.Default.AddDropStatement)
                 {
-                    sb.AppendLine($"IF OBJECT_ID('{schema}.{triggerName}', 'TR') IS NOT NULL");
+                    sb.AppendLine($"IF OBJECT_ID(N'{schema}.{triggerName}', 'TR') IS NOT NULL");
                     sb.AppendLine($"\tDROP TRIGGER [{schema}].[{triggerName}];");
                     sb.AppendLine("GO");
                 }
@@ -700,7 +701,7 @@ ORDER BY tr.name;";
             // Add drop table statement
             if (Properties.Settings.Default.AddDropStatement)
             {
-                createScript.AppendLine($"IF OBJECT_ID('{objectName.FullName}', 'V') IS NOT NULL");
+                createScript.AppendLine($"IF OBJECT_ID(N'{objectName.FullName}', 'V') IS NOT NULL");
                 createScript.AppendLine($"\tDROP VIEW {objectName.FullName};");
                 createScript.AppendLine($"GO");
             }

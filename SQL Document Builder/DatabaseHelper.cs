@@ -128,11 +128,11 @@ namespace SQL_Document_Builder
             string sql;
             if (objectName.ObjectType == ObjectName.ObjectTypeEnums.View)
             {
-                sql = $"SELECT E.value Description FROM sys.schemas S INNER JOIN sys.views T ON S.schema_id = T.schema_id INNER JOIN sys.columns C ON T.object_id = C.object_id INNER JOIN sys.extended_properties E ON T.object_id = E.major_id AND C.column_id = E.minor_id AND E.name = 'MS_Description' AND S.name = '{objectName.Schema}' AND T.name = '{objectName.Name}' AND C.name = '{column}'";
+                sql = $"SELECT E.value Description FROM sys.schemas S INNER JOIN sys.views T ON S.schema_id = T.schema_id INNER JOIN sys.columns C ON T.object_id = C.object_id INNER JOIN sys.extended_properties E ON T.object_id = E.major_id AND C.column_id = E.minor_id AND E.name = 'MS_Description' AND S.name = N'{objectName.Schema}' AND T.name = N'{objectName.Name}' AND C.name = N'{column}'";
             }
             else
             {
-                sql = $"SELECT E.value Description FROM sys.schemas S INNER JOIN sys.tables T ON S.schema_id = T.schema_id INNER JOIN sys.columns C ON T.object_id = C.object_id INNER JOIN sys.extended_properties E ON T.object_id = E.major_id AND C.column_id = E.minor_id AND E.name = 'MS_Description' AND S.name = '{objectName.Schema}' AND T.name = '{objectName.Name}' AND C.name = '{column}'";
+                sql = $"SELECT E.value Description FROM sys.schemas S INNER JOIN sys.tables T ON S.schema_id = T.schema_id INNER JOIN sys.columns C ON T.object_id = C.object_id INNER JOIN sys.extended_properties E ON T.object_id = E.major_id AND C.column_id = E.minor_id AND E.name = 'MS_Description' AND S.name = N'{objectName.Schema}' AND T.name = N'{objectName.Name}' AND C.name = N'{column}'";
             }
             var conn = new SqlConnection(connectionString);
             try
@@ -178,6 +178,7 @@ namespace SQL_Document_Builder
                     ObjectTypeEnums.View => await GetViewsAsync(connectionString),
                     ObjectTypeEnums.StoredProcedure => await GetStoredProceduresAsync(connectionString),
                     ObjectTypeEnums.Function => await GetFunctionsAsync(connectionString),
+                    ObjectTypeEnums.Trigger => await GetTriggersAsync(connectionString),
                     _ => throw new NotSupportedException($"Unsupported object type: {tableType}.")
                 };
             }
@@ -187,6 +188,37 @@ namespace SQL_Document_Builder
                 MessageBox.Show($"Error retrieving database objects: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return []; // Return an empty list in case of an error
             }
+        }
+
+        /// <summary>
+        /// Gets the triggers.
+        /// </summary>
+        /// <param name="connectionString">The connection string.</param>
+        /// <returns>A Task.</returns>
+        private static async Task<List<ObjectName>> GetTriggersAsync(string connectionString)
+        {
+            var objects = new List<ObjectName>();
+
+            var query = @"SELECT s.name AS SchemaName, tr.name AS TriggerName
+FROM sys.triggers tr
+JOIN sys.objects o ON tr.parent_id = o.object_id
+JOIN sys.schemas s ON o.schema_id = s.schema_id";
+
+            using var connection = new SqlConnection(connectionString);
+            using var command = new SqlCommand(query, connection)
+            {
+                CommandType = CommandType.Text,
+                CommandTimeout = 50000
+            };
+            await connection.OpenAsync();
+
+            using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                objects.Add(new ObjectName(ObjectTypeEnums.Trigger, reader["SchemaName"].ToString(), reader["TriggerName"].ToString()));
+            }
+
+            return objects;
         }
 
         /// <summary>
@@ -711,7 +743,7 @@ END";
         /// <returns>A Task.</returns>
         internal static async Task<string> GetObjectDefinitionAsync(ObjectName objectName, string connectionString)
         {
-            string query = $@"SELECT sm.definition FROM sys.sql_modules sm WHERE sm.object_id = OBJECT_ID('{objectName.FullName}')";
+            string query = $@"SELECT sm.definition FROM sys.sql_modules sm WHERE sm.object_id = OBJECT_ID(N'{objectName.QuotedFullName}')";
             var result = await ExecuteScalarAsync(query, connectionString);
             return result != null && result != DBNull.Value ? result.ToString() ?? string.Empty : string.Empty;
         }
