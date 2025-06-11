@@ -39,19 +39,13 @@ namespace SQL_Document_Builder
                 ObjectName.ObjectTypeEnums.View => await GetCreateViewScriptAsync(dbObject, connectionString),
                 ObjectName.ObjectTypeEnums.StoredProcedure => await GetCreateStoredProcedureScriptAsync(dbObject, connectionString),
                 ObjectName.ObjectTypeEnums.Function => await GetCreateFunctionScriptAsync(dbObject, connectionString),
-                ObjectName.ObjectTypeEnums.Trigger => await DatabaseHelper.GetObjectDefinitionAsync(dbObject, connectionString),
+                ObjectName.ObjectTypeEnums.Trigger => await GetCreateTriggerScriptAsync(dbObject, connectionString),
                 _ => throw new NotSupportedException($"The object type '{dbObject.ObjectType}' is not supported.")
             };
         }
 
         /// <summary>
-        /// Queries the data and generates the insert statements.
-        /// </summary>
-        /// <param name="sql">The SQL query to fetch data.</param>
-        /// <param name="tableName">The table name for the insert statements.</param>
-        /// <returns>A string containing the generated insert statements or a warning if rows exceed 500.</returns>
-        /// <summary>
-        /// Queries the data and generates the insert statements asynchronously.
+        /// Convert the Query data to the insert statements.
         /// </summary>
         /// <param name="sql">The SQL query to fetch data.</param>
         /// <param name="tableName">The table name for the insert statements.</param>
@@ -204,7 +198,7 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Queries the data to insert statement async.
+        /// Pull data from a table or view and convert the data to insert statements.
         /// </summary>
         /// <param name="tableName">The table name.</param>
         /// <returns>A Task.</returns>
@@ -227,33 +221,6 @@ namespace SQL_Document_Builder
                 return string.Empty;
 
             StringBuilder sb = new();
-
-            //            string sql = $@"
-            //SELECT
-            //    i.name AS IndexName,
-            //    i.type_desc AS IndexType,
-            //    i.is_unique AS IsUnique,
-            //    s.name AS SchemaName,
-            //    o.name AS ObjectName,
-            //    STRING_AGG(COL_NAME(ic.object_id, ic.column_id), ',') AS IndexColumns,
-            //    i.filter_definition AS FilterDefinition,
-            //    i.is_disabled AS IsDisabled,
-            //    xi.using_xml_index_id,
-            //    xi.secondary_type
-            //FROM sys.indexes i
-            //INNER JOIN sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id
-            //INNER JOIN sys.objects o ON i.object_id = o.object_id
-            //INNER JOIN sys.schemas s ON o.schema_id = s.schema_id
-            //LEFT JOIN sys.xml_indexes xi ON i.object_id = xi.object_id AND i.index_id = xi.index_id
-            //WHERE s.name = N'{objectName.Schema}'
-            //  AND o.name = N'{objectName.Name}'
-            //  AND o.type IN ('U', 'V') -- U: Table, V: View
-            //  AND i.is_primary_key = 0
-            //  AND i.is_unique_constraint = 0
-            //  AND i.type_desc <> 'HEAP'
-            //  AND i.name IS NOT NULL
-            //GROUP BY i.name, i.type_desc, i.is_unique, s.name, o.name, i.filter_definition, i.is_disabled, xi.using_xml_index_id, xi.secondary_type
-            //ORDER BY i.name";
 
             var sql = $@"SELECT
     i.name AS IndexName,
@@ -614,6 +581,39 @@ GO";
                 createScript.AppendLine($"GO");
             }
 
+            return createScript.ToString();
+        }
+
+        /// <summary>
+        /// Gets the create trigger script async.
+        /// </summary>
+        /// <param name="objectName">The object name.</param>
+        /// <param name="connectionString">The connection string.</param>
+        /// <returns>A Task.</returns>
+        private static async Task<string?> GetCreateTriggerScriptAsync(ObjectName objectName, string connectionString)
+        {
+            StringBuilder createScript = new();
+
+            // Add the header
+            createScript.AppendLine($"/****** Object:  Trigger {objectName.Name} ******/");
+
+            if (Properties.Settings.Default.AddDropStatement)
+            {
+                // Add drop table statement
+                createScript.AppendLine($"IF OBJECT_ID(N'{objectName.FullName}', 'TR') IS NOT NULL");
+                createScript.AppendLine($"\tDROP TRIGGER {objectName.FullName};");
+                createScript.AppendLine($"GO");
+            }
+
+            var script = await DatabaseHelper.GetObjectDefinitionAsync(objectName, connectionString);
+
+            if (string.IsNullOrEmpty(script))
+            {
+                return string.Empty;
+            }
+
+            createScript.Append(script);
+            createScript.AppendLine($"GO");
             return createScript.ToString();
         }
 
