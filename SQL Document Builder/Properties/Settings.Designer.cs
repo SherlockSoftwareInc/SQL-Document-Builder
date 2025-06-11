@@ -238,5 +238,17 @@ namespace SQL_Document_Builder.Properties {
                 this["RightSplitterDistance"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Markdown")]
+        public string DocumentType {
+            get {
+                return ((string)(this["DocumentType"]));
+            }
+            set {
+                this["DocumentType"] = value;
+            }
+        }
     }
 }

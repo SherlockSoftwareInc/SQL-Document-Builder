@@ -19,9 +19,14 @@ namespace SQL_Document_Builder
         /// <param name="objectName">The object name.</param>
         /// <param name="connectionString">The connection string.</param>
         /// <returns>A Task.</returns>
-        internal static async Task<string> GetFunctionProcedureDef(ObjectName objectName, string connectionString, string templateBody)
+        internal static async Task<string> GetFunctionProcedureDef(ObjectName objectName, string connectionString, Template.Template template)
         {
-            string doc = templateBody;
+            string doc = objectName.ObjectType switch
+            {
+                ObjectName.ObjectTypeEnums.Table => template.GetTemplateItem(Template.TemplateItem.ObjectTypeEnums.Table).Body,
+                ObjectName.ObjectTypeEnums.View => template.GetTemplateItem(Template.TemplateItem.ObjectTypeEnums.View).Body,
+                _ => throw new ArgumentException("Unsupported object type for table/view documentation.", nameof(objectName.ObjectType)),
+            };
 
             // open the database oobjects
             var func = new DBObject();
@@ -71,9 +76,14 @@ namespace SQL_Document_Builder
         /// <param name="connectionString">The connection string.</param>
         /// <param name="templateBody">The template body.</param>
         /// <returns>A Task.</returns>
-        internal static async Task<string> GetTableViewDef(ObjectName objectName, string connectionString, string templateBody)
+        internal static async Task<string> GetTableViewDef(ObjectName objectName, string connectionString, Template.Template template)
         {
-            string doc = templateBody;
+            string doc = objectName.ObjectType switch
+            {
+                ObjectName.ObjectTypeEnums.Table => template.GetTemplateItem(Template.TemplateItem.ObjectTypeEnums.Table).Body,
+                ObjectName.ObjectTypeEnums.View => template.GetTemplateItem(Template.TemplateItem.ObjectTypeEnums.View).Body,
+                _ => throw new ArgumentException("Unsupported object type for table/view documentation.", nameof(objectName.ObjectType)),
+            };
 
             // open the database oobjects
             var tableView = new DBObject();
@@ -258,7 +268,7 @@ namespace SQL_Document_Builder
                 headers.Append($" {col.ColumnName} |");
                 separators.Append("------------|");
             }
-            sb. AppendLine(headers.ToString());
+            sb.AppendLine(headers.ToString());
             sb.AppendLine(separators.ToString());
 
             // Rows
@@ -269,7 +279,7 @@ namespace SQL_Document_Builder
                 {
                     row.Append($" {dr[col]?.ToString() ?? ""} |");
                 }
-                sb. AppendLine(row.ToString());
+                sb.AppendLine(row.ToString());
             }
             return sb.ToString();
         }

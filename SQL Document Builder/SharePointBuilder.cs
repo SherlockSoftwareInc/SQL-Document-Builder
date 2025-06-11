@@ -176,9 +176,13 @@ namespace SQL_Document_Builder
         /// <param name="connectionString">The connection string.</param>
         /// <param name="templateBody">The template body.</param>
         /// <returns>HTML documentation for the table/view.</returns>
-        public async Task<string> GetTableViewDef(ObjectName objectName, string connectionString, string templateBody)
+        public async Task<string> GetTableViewDef(ObjectName objectName, string connectionString, Template.Template template)
         {
-            string doc = templateBody;
+            string doc = objectName.ObjectType switch { 
+                ObjectName.ObjectTypeEnums.Table => template.GetTemplateItem(Template.TemplateItem.ObjectTypeEnums.Table).Body,
+                ObjectName.ObjectTypeEnums.View => template.GetTemplateItem(Template.TemplateItem.ObjectTypeEnums.View).Body,
+                _ => throw new ArgumentException("Unsupported object type for table/view documentation.", nameof(objectName.ObjectType)),
+            } ;
 
             // Open the database object
             var tableView = new DBObject();

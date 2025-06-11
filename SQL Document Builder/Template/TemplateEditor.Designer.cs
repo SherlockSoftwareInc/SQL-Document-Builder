@@ -31,6 +31,8 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(TemplateEditor));
             menuStrip1 = new System.Windows.Forms.MenuStrip();
             fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            resetToDefaultToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             editToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             undoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -41,35 +43,28 @@
             pasteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             toolStripSeparator4 = new System.Windows.Forms.ToolStripSeparator();
             selectAllToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            insertToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             toolStrip1 = new System.Windows.Forms.ToolStrip();
             docTypeToolStripLabel = new System.Windows.Forms.ToolStripLabel();
             docTypeToolStripComboBox = new System.Windows.Forms.ToolStripComboBox();
-            objTypeToolStripLabel = new System.Windows.Forms.ToolStripLabel();
-            objTypeToolStripComboBox = new System.Windows.Forms.ToolStripComboBox();
             toolStripSeparator6 = new System.Windows.Forms.ToolStripSeparator();
-            toolStripDropDownButton1 = new System.Windows.Forms.ToolStripDropDownButton();
-            objectNameToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            objectSchemaToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            objectFullNameToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            objectDescriptionToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            objectDefinitionToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            columnsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            parametersToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            indexesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            constraintsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            relationshipsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            toolStripSeparator7 = new System.Windows.Forms.ToolStripSeparator();
             exitToolStripButton = new System.Windows.Forms.ToolStripButton();
             templateTextBox = new SqlEditBox();
-            resetToDefaultToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+            splitContainer1 = new System.Windows.Forms.SplitContainer();
+            templateTreeView = new TemplateTree();
+            addDocumentTypeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             menuStrip1.SuspendLayout();
             toolStrip1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
+            splitContainer1.Panel1.SuspendLayout();
+            splitContainer1.Panel2.SuspendLayout();
+            splitContainer1.SuspendLayout();
             SuspendLayout();
             // 
             // menuStrip1
             // 
-            menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { fileToolStripMenuItem, editToolStripMenuItem });
+            menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { fileToolStripMenuItem, editToolStripMenuItem, insertToolStripMenuItem });
             menuStrip1.Location = new System.Drawing.Point(0, 0);
             menuStrip1.Name = "menuStrip1";
             menuStrip1.Size = new System.Drawing.Size(923, 24);
@@ -78,15 +73,27 @@
             // 
             // fileToolStripMenuItem
             // 
-            fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { resetToDefaultToolStripMenuItem, toolStripSeparator1, exitToolStripMenuItem });
+            fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { addDocumentTypeToolStripMenuItem, toolStripSeparator2, resetToDefaultToolStripMenuItem, toolStripSeparator1, exitToolStripMenuItem });
             fileToolStripMenuItem.Name = "fileToolStripMenuItem";
             fileToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
             fileToolStripMenuItem.Text = "&File";
             // 
+            // resetToDefaultToolStripMenuItem
+            // 
+            resetToDefaultToolStripMenuItem.Name = "resetToDefaultToolStripMenuItem";
+            resetToDefaultToolStripMenuItem.Size = new System.Drawing.Size(183, 22);
+            resetToDefaultToolStripMenuItem.Text = "Reset to Default";
+            resetToDefaultToolStripMenuItem.Click += ResetToDefaultToolStripMenuItem_Click;
+            // 
+            // toolStripSeparator1
+            // 
+            toolStripSeparator1.Name = "toolStripSeparator1";
+            toolStripSeparator1.Size = new System.Drawing.Size(180, 6);
+            // 
             // exitToolStripMenuItem
             // 
             exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            exitToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            exitToolStripMenuItem.Size = new System.Drawing.Size(183, 22);
             exitToolStripMenuItem.Text = "E&xit";
             exitToolStripMenuItem.Click += ExitToolStripButton_Click;
             // 
@@ -161,9 +168,15 @@
             selectAllToolStripMenuItem.Text = "Select &All";
             selectAllToolStripMenuItem.Click += SelectAllToolStripMenuItem_Click;
             // 
+            // insertToolStripMenuItem
+            // 
+            insertToolStripMenuItem.Name = "insertToolStripMenuItem";
+            insertToolStripMenuItem.Size = new System.Drawing.Size(48, 20);
+            insertToolStripMenuItem.Text = "Insert";
+            // 
             // toolStrip1
             // 
-            toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { docTypeToolStripLabel, docTypeToolStripComboBox, objTypeToolStripLabel, objTypeToolStripComboBox, toolStripSeparator6, toolStripDropDownButton1, toolStripSeparator7, exitToolStripButton });
+            toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { docTypeToolStripLabel, docTypeToolStripComboBox, toolStripSeparator6, exitToolStripButton });
             toolStrip1.Location = new System.Drawing.Point(0, 24);
             toolStrip1.Name = "toolStrip1";
             toolStrip1.Size = new System.Drawing.Size(923, 25);
@@ -184,109 +197,10 @@
             docTypeToolStripComboBox.Size = new System.Drawing.Size(121, 25);
             docTypeToolStripComboBox.SelectedIndexChanged += DocTypeToolStripComboBox_SelectedIndexChanged;
             // 
-            // objTypeToolStripLabel
-            // 
-            objTypeToolStripLabel.Name = "objTypeToolStripLabel";
-            objTypeToolStripLabel.Size = new System.Drawing.Size(71, 22);
-            objTypeToolStripLabel.Text = "Object type:";
-            // 
-            // objTypeToolStripComboBox
-            // 
-            objTypeToolStripComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            objTypeToolStripComboBox.Items.AddRange(new object[] { "Table", "View", "Stored Procedure", "Function", "Trigger" });
-            objTypeToolStripComboBox.Name = "objTypeToolStripComboBox";
-            objTypeToolStripComboBox.Size = new System.Drawing.Size(121, 25);
-            objTypeToolStripComboBox.SelectedIndexChanged += ObjTypeToolStripComboBox_SelectedIndexChanged;
-            // 
             // toolStripSeparator6
             // 
             toolStripSeparator6.Name = "toolStripSeparator6";
             toolStripSeparator6.Size = new System.Drawing.Size(6, 25);
-            // 
-            // toolStripDropDownButton1
-            // 
-            toolStripDropDownButton1.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
-            toolStripDropDownButton1.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { objectNameToolStripMenuItem, objectSchemaToolStripMenuItem, objectFullNameToolStripMenuItem, objectDescriptionToolStripMenuItem, objectDefinitionToolStripMenuItem, columnsToolStripMenuItem, parametersToolStripMenuItem, indexesToolStripMenuItem, constraintsToolStripMenuItem, relationshipsToolStripMenuItem });
-            toolStripDropDownButton1.Image = (System.Drawing.Image)resources.GetObject("toolStripDropDownButton1.Image");
-            toolStripDropDownButton1.ImageTransparentColor = System.Drawing.Color.Magenta;
-            toolStripDropDownButton1.Name = "toolStripDropDownButton1";
-            toolStripDropDownButton1.Size = new System.Drawing.Size(95, 22);
-            toolStripDropDownButton1.Text = "Insert element";
-            // 
-            // objectNameToolStripMenuItem
-            // 
-            objectNameToolStripMenuItem.Name = "objectNameToolStripMenuItem";
-            objectNameToolStripMenuItem.Size = new System.Drawing.Size(171, 22);
-            objectNameToolStripMenuItem.Text = "Object name";
-            objectNameToolStripMenuItem.Click += ObjectNameToolStripMenuItem_Click;
-            // 
-            // objectSchemaToolStripMenuItem
-            // 
-            objectSchemaToolStripMenuItem.Name = "objectSchemaToolStripMenuItem";
-            objectSchemaToolStripMenuItem.Size = new System.Drawing.Size(171, 22);
-            objectSchemaToolStripMenuItem.Text = "Object schema";
-            objectSchemaToolStripMenuItem.Click += ObjectSchemaToolStripMenuItem_Click;
-            // 
-            // objectFullNameToolStripMenuItem
-            // 
-            objectFullNameToolStripMenuItem.Name = "objectFullNameToolStripMenuItem";
-            objectFullNameToolStripMenuItem.Size = new System.Drawing.Size(171, 22);
-            objectFullNameToolStripMenuItem.Text = "Object full name";
-            objectFullNameToolStripMenuItem.Click += ObjectFullNameToolStripMenuItem_Click;
-            // 
-            // objectDescriptionToolStripMenuItem
-            // 
-            objectDescriptionToolStripMenuItem.Name = "objectDescriptionToolStripMenuItem";
-            objectDescriptionToolStripMenuItem.Size = new System.Drawing.Size(171, 22);
-            objectDescriptionToolStripMenuItem.Text = "Object description";
-            objectDescriptionToolStripMenuItem.Click += ObjectDescriptionToolStripMenuItem_Click;
-            // 
-            // objectDefinitionToolStripMenuItem
-            // 
-            objectDefinitionToolStripMenuItem.Name = "objectDefinitionToolStripMenuItem";
-            objectDefinitionToolStripMenuItem.Size = new System.Drawing.Size(171, 22);
-            objectDefinitionToolStripMenuItem.Text = "Object definition";
-            objectDefinitionToolStripMenuItem.Click += ObjectDefinitionToolStripMenuItem_Click;
-            // 
-            // columnsToolStripMenuItem
-            // 
-            columnsToolStripMenuItem.Name = "columnsToolStripMenuItem";
-            columnsToolStripMenuItem.Size = new System.Drawing.Size(171, 22);
-            columnsToolStripMenuItem.Text = "Columns";
-            columnsToolStripMenuItem.Click += ColumnsToolStripMenuItem_Click;
-            // 
-            // parametersToolStripMenuItem
-            // 
-            parametersToolStripMenuItem.Name = "parametersToolStripMenuItem";
-            parametersToolStripMenuItem.Size = new System.Drawing.Size(171, 22);
-            parametersToolStripMenuItem.Text = "Parameters";
-            parametersToolStripMenuItem.Click += ParametersToolStripMenuItem_Click;
-            // 
-            // indexesToolStripMenuItem
-            // 
-            indexesToolStripMenuItem.Name = "indexesToolStripMenuItem";
-            indexesToolStripMenuItem.Size = new System.Drawing.Size(171, 22);
-            indexesToolStripMenuItem.Text = "Indexes";
-            indexesToolStripMenuItem.Click += IndexesToolStripMenuItem_Click;
-            // 
-            // constraintsToolStripMenuItem
-            // 
-            constraintsToolStripMenuItem.Name = "constraintsToolStripMenuItem";
-            constraintsToolStripMenuItem.Size = new System.Drawing.Size(171, 22);
-            constraintsToolStripMenuItem.Text = "Constraints";
-            constraintsToolStripMenuItem.Click += ConstraintsToolStripMenuItem_Click;
-            // 
-            // relationshipsToolStripMenuItem
-            // 
-            relationshipsToolStripMenuItem.Name = "relationshipsToolStripMenuItem";
-            relationshipsToolStripMenuItem.Size = new System.Drawing.Size(171, 22);
-            relationshipsToolStripMenuItem.Text = "Relationships";
-            relationshipsToolStripMenuItem.Click += RelationshipsToolStripMenuItem_Click;
-            // 
-            // toolStripSeparator7
-            // 
-            toolStripSeparator7.Name = "toolStripSeparator7";
-            toolStripSeparator7.Size = new System.Drawing.Size(6, 25);
             // 
             // exitToolStripButton
             // 
@@ -312,30 +226,57 @@
             templateTextBox.Font = new System.Drawing.Font("Cascadia Mono", 10F);
             templateTextBox.IndentationGuides = ScintillaNET.IndentView.LookBoth;
             templateTextBox.LexerName = "sql";
-            templateTextBox.Location = new System.Drawing.Point(0, 49);
+            templateTextBox.Location = new System.Drawing.Point(0, 0);
             templateTextBox.Name = "templateTextBox";
             templateTextBox.SelectionBackColor = System.Drawing.Color.FromArgb(17, 77, 156);
-            templateTextBox.Size = new System.Drawing.Size(923, 530);
+            templateTextBox.Size = new System.Drawing.Size(719, 530);
             templateTextBox.TabIndex = 2;
             // 
-            // resetToDefaultToolStripMenuItem
+            // splitContainer1
             // 
-            resetToDefaultToolStripMenuItem.Name = "resetToDefaultToolStripMenuItem";
-            resetToDefaultToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            resetToDefaultToolStripMenuItem.Text = "Reset to Default";
-            resetToDefaultToolStripMenuItem.Click += ResetToDefaultToolStripMenuItem_Click;
+            splitContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
+            splitContainer1.Location = new System.Drawing.Point(0, 49);
+            splitContainer1.Name = "splitContainer1";
             // 
-            // toolStripSeparator1
+            // splitContainer1.Panel1
             // 
-            toolStripSeparator1.Name = "toolStripSeparator1";
-            toolStripSeparator1.Size = new System.Drawing.Size(177, 6);
+            splitContainer1.Panel1.Controls.Add(templateTreeView);
+            // 
+            // splitContainer1.Panel2
+            // 
+            splitContainer1.Panel2.Controls.Add(templateTextBox);
+            splitContainer1.Size = new System.Drawing.Size(923, 530);
+            splitContainer1.SplitterDistance = 200;
+            splitContainer1.TabIndex = 3;
+            // 
+            // templateTreeView
+            // 
+            templateTreeView.Dock = System.Windows.Forms.DockStyle.Fill;
+            templateTreeView.Location = new System.Drawing.Point(0, 0);
+            templateTreeView.Name = "templateTreeView";
+            templateTreeView.Size = new System.Drawing.Size(200, 530);
+            templateTreeView.TabIndex = 0;
+            templateTreeView.BeforeSelect += TemplateTreeView_BeforeSelect;
+            templateTreeView.AfterSelect += TemplateTreeView_AfterSelect;
+            // 
+            // addDocumentTypeToolStripMenuItem
+            // 
+            addDocumentTypeToolStripMenuItem.Name = "addDocumentTypeToolStripMenuItem";
+            addDocumentTypeToolStripMenuItem.Size = new System.Drawing.Size(183, 22);
+            addDocumentTypeToolStripMenuItem.Text = "Add Document Type";
+            addDocumentTypeToolStripMenuItem.Click += AddDocumentTypeToolStripMenuItem_Click;
+            // 
+            // toolStripSeparator2
+            // 
+            toolStripSeparator2.Name = "toolStripSeparator2";
+            toolStripSeparator2.Size = new System.Drawing.Size(180, 6);
             // 
             // TemplateEditor
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             ClientSize = new System.Drawing.Size(923, 579);
-            Controls.Add(templateTextBox);
+            Controls.Add(splitContainer1);
             Controls.Add(toolStrip1);
             Controls.Add(menuStrip1);
             MainMenuStrip = menuStrip1;
@@ -347,6 +288,10 @@
             menuStrip1.PerformLayout();
             toolStrip1.ResumeLayout(false);
             toolStrip1.PerformLayout();
+            splitContainer1.Panel1.ResumeLayout(false);
+            splitContainer1.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)splitContainer1).EndInit();
+            splitContainer1.ResumeLayout(false);
             ResumeLayout(false);
             PerformLayout();
         }
@@ -368,24 +313,15 @@
         private System.Windows.Forms.ToolStrip toolStrip1;
         private System.Windows.Forms.ToolStripLabel docTypeToolStripLabel;
         private System.Windows.Forms.ToolStripComboBox docTypeToolStripComboBox;
-        private System.Windows.Forms.ToolStripLabel objTypeToolStripLabel;
-        private System.Windows.Forms.ToolStripComboBox objTypeToolStripComboBox;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator6;
         private System.Windows.Forms.ToolStripButton exitToolStripButton;
         private SqlEditBox templateTextBox;
-        private System.Windows.Forms.ToolStripDropDownButton toolStripDropDownButton1;
-        private System.Windows.Forms.ToolStripMenuItem objectNameToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem objectSchemaToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem objectFullNameToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem objectDescriptionToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem objectDefinitionToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem columnsToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem parametersToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem indexesToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem constraintsToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem relationshipsToolStripMenuItem;
-        private System.Windows.Forms.ToolStripSeparator toolStripSeparator7;
         private System.Windows.Forms.ToolStripMenuItem resetToDefaultToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
+        private System.Windows.Forms.SplitContainer splitContainer1;
+        private TemplateTree templateTreeView;
+        private System.Windows.Forms.ToolStripMenuItem insertToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem addDocumentTypeToolStripMenuItem;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
     }
 }

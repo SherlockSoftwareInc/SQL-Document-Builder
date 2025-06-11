@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Xml;
 
 namespace SQL_Document_Builder.Template
 {
@@ -12,13 +10,12 @@ namespace SQL_Document_Builder.Template
     /// </summary>
     internal class Templates
     {
-        private readonly List<TemplateItem> _templates = [];
-        private string _tmpFile = "";   // a temporary file to save the changes during the editing
+        private readonly List<Template> _templates = [];
 
         /// <summary>
         /// Returns Template items
         /// </summary>
-        public List<TemplateItem> TemplateLists
+        public List<Template> TemplateLists
         {
             get
             {
@@ -27,30 +24,26 @@ namespace SQL_Document_Builder.Template
         }
 
         /// <summary>
-        /// Add a new Template item
+        /// Gets the template.
         /// </summary>
-        /// <param name="docType">The doc type.</param>
-        /// <param name="objectType">The object type.</param>
-        /// <param name="body">The body.</param>
-        /// <returns>A TemplateItem? .</returns>
-        internal TemplateItem Add(TemplateItem.DocumentTypeEnums docType, TemplateItem.ObjectTypeEnums objectType, string body)
+        /// <param name="documentType">The document type.</param>
+        /// <returns>A Template.</returns>
+        public Template? GetTemplate(string documentType)
         {
-            // Assuming _templates is a list of TemplateItem that contains templates
-            var templateItem = TemplateLists.FirstOrDefault(t => t.DocumentType == docType && t.ObjectType == objectType);
-            if (templateItem != null)
+            if (string.IsNullOrWhiteSpace(documentType))
             {
-                // If the template already exists, return it
-                return templateItem;
+                return null; // Return null if documentType is null or empty
             }
 
-            templateItem = new TemplateItem()
+            // Find the template based on documentType
+            var template = _templates.FirstOrDefault(t => t.DocumentType.Equals(documentType, StringComparison.OrdinalIgnoreCase));
+            if (template == null)
             {
-                DocumentType = docType,
-                ObjectType = objectType,
-                Body = body
-            };
-            _templates.Add(templateItem);
-            return templateItem;
+                // If not found, create a new one
+                template = new Template(documentType);
+                _templates.Add(template);
+            }
+            return template;
         }
 
         /// <summary>
@@ -58,82 +51,46 @@ namespace SQL_Document_Builder.Template
         /// </summary>
         public void Load()
         {
-            string fileName = FilePath();
+            var templatelist = new List<string> { "SharePoint", "Markdown", "WIKI" };
 
-            // if the file does not exist, use the default templates
-            if (!File.Exists(fileName))
+            // open the Templates.dat file
+            string filePath = FilePath();
+            if (File.Exists(filePath))
             {
-                ParseXML(default_templates);
-                Save();
-            }
-            else
-            {
-                using var fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
-                using var streamReader = new StreamReader(fileStream);
-                if (streamReader != null)
+                // Load the templates from the file
+                string[] lines = File.ReadAllLines(filePath);
+                foreach (var line in lines)
                 {
-                    string? strFirstLine = streamReader.ReadLine();
-                    string? strXML = streamReader.ReadToEnd();
-                    ParseXML(strFirstLine + "\r\n" + strXML);
+                    if (!string.IsNullOrWhiteSpace(line) && !templatelist.Contains(line, StringComparer.OrdinalIgnoreCase))
+                    {
+                        templatelist.Add(line);
+                    }
                 }
             }
-            _tmpFile = Path.GetTempFileName();
-        }
 
-        /// <summary>
-        /// Remove a Template item at specified location
-        /// </summary>
-        /// <param name="index">index in the Template list to remove</param>
-        public void RemoveAt(int index)
-        {
-            if (index >= 0 && index < _templates.Count)
-                _templates.RemoveAt(index);
-        }
-
-        /// <summary>
-        /// Save Template settings to file
-        /// </summary>
-        public void Save()
-        {
-            Save(FilePath());
-        }
-
-        /// <summary>
-        /// Save to a temp file for editing
-        /// </summary>
-        public void SaveTemp()
-        {
-            Save(_tmpFile);
-        }
-
-        /// <summary>
-        /// Moves the down.
-        /// </summary>
-        /// <param name="item">The item.</param>
-        internal void MoveDown(TemplateItem item)
-        {
-            // move selected item down
-            int index = _templates.IndexOf(item);
-            if (index >= 0 && index < _templates.Count - 1)
+            // Initialize the templates list with default templates if needed
+            if (_templates.Count == 0)
             {
-                _templates.RemoveAt(index);
-                _templates.Insert(index + 1, item);
+                foreach (var templateName in templatelist)
+                {
+                    var template = new Template(templateName);
+                    if (template.Load())
+                        _templates.Add(template);
+                }
             }
-        }
 
-        /// <summary>
-        /// Moves the up.
-        /// </summary>
-        /// <param name="item">The item.</param>
-        internal void MoveUp(TemplateItem item)
-        {
-            // move selected item up
-            int index = _templates.IndexOf(item);
-            if (index > 0)
-            {
-                _templates.RemoveAt(index);
-                _templates.Insert(index - 1, item);
-            }
+            // if the json file does not exists, save the templates to json
+            //if (!File.Exists(JsonFilePath))
+            //{
+            //    // Existing logic for handling file absence
+            //}
+            //else
+            //{
+            //    foreach (var template in _templates)
+            //    {
+            //        template.Load(); // Load each template from its file
+            //    }
+            //}
         }
 
         /// <summary>
@@ -153,367 +110,51 @@ namespace SQL_Document_Builder.Template
         }
 
         /// <summary>
-        /// Parse Templates from a xml string
+        /// Gets the json file path.
         /// </summary>
-        /// <param name="values">xml document body</param>
-        private void ParseXML(string values)
+        private static string JsonFilePath
         {
-            try
+            get
             {
-                _templates.Clear();
-
-                var oDoc = new XmlDocument();
-                if (oDoc != null)
+                string dataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Sherlock Software Inc");
+                dataPath = Path.Combine(dataPath, "SQLDocBuilder");
+                if (!Directory.Exists(dataPath))
                 {
-                    oDoc.LoadXml(values);
-                    if (oDoc.DocumentElement.HasChildNodes)
-                    {
-                        foreach (XmlNode node in oDoc.DocumentElement.ChildNodes)
-                        {
-                            if (node is XmlElement)
-                            {
-                                string sNodeName = node.Name;
-                                if (string.Compare(sNodeName, "TemplateItem", true) == 0)
-                                {
-                                    var item = new TemplateItem(node);
-                                    _templates.Add(item);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            catch (Exception)
-            {
-                throw;
-            }
-        }
-
-        /// <summary>
-        /// Save the settings to the application data file
-        /// </summary>
-        /// <param name="fileName"></param>
-        private void Save(string fileName)
-        {
-            var sb = new StringBuilder();
-            var settings = new XmlWriterSettings() { OmitXmlDeclaration = true, Indent = true, NewLineOnAttributes = false };
-            using (var writer = XmlWriter.Create(sb, settings))
-            {
-                writer.WriteStartDocument();
-                writer.WriteStartElement("root");
-
-                foreach (var item in _templates)
-                {
-                    item.Write(writer);
+                    Directory.CreateDirectory(dataPath);
                 }
 
-                writer.WriteEndElement();    //end sf:root
-                writer.WriteEndDocument();
-
-                writer.Flush();
-                writer.Close();
-            }
-
-            using var fileWriter = new StreamWriter(fileName);
-            fileWriter.Write(sb.ToString());
-            fileWriter.Flush();
-            fileWriter.Close();
-        }
-
-        /// <summary>
-        /// Gets the template.
-        /// </summary>
-        /// <param name="documentType">The document type.</param>
-        /// <param name="objectType">The object type.</param>
-        /// <returns>A string.</returns>
-        internal TemplateItem GetTemplate(TemplateItem.DocumentTypeEnums documentType, TemplateItem.ObjectTypeEnums objectType)
-        {
-            // Assuming _templates is a list of TemplateItem that contains templates
-            var templateItem = TemplateLists.FirstOrDefault(t => t.DocumentType == documentType && t.ObjectType == objectType);
-            if (templateItem != null)
-            {
-                // If the template already exists, return it
-                return templateItem;
-            }
-
-            templateItem = new TemplateItem()
-            {
-                DocumentType = documentType,
-                ObjectType = objectType,
-                Body = string.Empty
-            };
-            _templates.Add(templateItem);
-            return templateItem;
-        }
-
-        /// <summary>
-        /// Updates the template.
-        /// </summary>
-        /// <param name="documentType">The document type.</param>
-        /// <param name="objectType">The object type.</param>
-        /// <param name="text">The text.</param>
-        internal void UpdateTemplate(TemplateItem.DocumentTypeEnums documentType, TemplateItem.ObjectTypeEnums objectType, string text)
-        {
-            // Find the template based on documentType and objectType
-            var template = GetTemplate(documentType, objectType);
-            if (template != null)
-            {
-                // Update the template text
-                template.Body = text;
-                Save(); // Save the changes to the file
+                return Path.Combine(dataPath, "Templates1.json");
             }
         }
 
         /// <summary>
-        /// Resets to the default templates.
+        /// Saves the.
         /// </summary>
-        internal void Reset()
+        internal void Save()
         {
-            // Clear the templates list to reset the state
-            _templates.Clear();
-
-            ParseXML(default_templates);
-            Save();
+            // save for each template in the list
+            foreach (var template in _templates)
+            {
+                template.Save();
+            }
         }
 
-        private const string default_templates = @"<root>
-  <TemplateItem>
-    <DocumentType>Markdown</DocumentType>
-    <ObjectType>Table</ObjectType>
-    <Body># Table: `~ObjectFullName~`
+        /// <summary>
+        /// Adds the document type.
+        /// </summary>
+        /// <param name="newDocumentType">The new document type.</param>
+        internal void AddDocumentType(string newDocumentType)
+        {
+            // Create a new Template object with the provided document type
+            var template = new Template(newDocumentType);
+            template.Initialize();
+            template.Save(); // Save the new template
+            _templates.Add(template);
 
-&gt; ~Description~
-
-**Columns:**
-~Columns~
-
-**Indexes:**
-~Indexes~
-
-**Constraints:**
-~Constraints~
----
-</Body>
-  </TemplateItem>
-  <TemplateItem>
-    <DocumentType>Markdown</DocumentType>
-    <ObjectType>View</ObjectType>
-    <Body># View: `~ObjectFullName~`
-
-&gt; ~Description~
-
-**Columns:**
-~Columns~
-
-**Indexes:**
-~Indexes~
-
-**SQL Definition:**
-```sql
-~Definition~
-```</Body>
-  </TemplateItem>
-  <TemplateItem>
-    <DocumentType>Markdown</DocumentType>
-    <ObjectType>StoredProcedure</ObjectType>
-    <Body># Stored Procedure: `~ObjectFullName~`
-
-&gt; ~Description~
-
-## Parameters
-~Parameters~
-
-## SQL Code
-```sql
-~Definition~
-```
-</Body>
-  </TemplateItem>
-  <TemplateItem>
-    <DocumentType>Markdown</DocumentType>
-    <ObjectType>Function</ObjectType>
-    <Body># Function: `~ObjectFullName~`
-
-&gt; ~Description~
-
-## Parameters
-~Parameters~
-
-## SQL Code
-```sql
-~Definition~
-```
-</Body>
-  </TemplateItem>
-  <TemplateItem>
-    <DocumentType>SharePoint</DocumentType>
-    <ObjectType>Table</ObjectType>
-    <Body>&lt;h1&gt;TABLE NAME: ~ObjectFullName~&lt;/h1&gt;
-&lt;p&gt;~Description~&lt;/p&gt;
-&lt;div&gt;
-~Columns~
-&lt;/div&gt;
-&lt;div&gt;
-&lt;h2&gt;Indexes:&lt;/h2&gt;
-~Indexes~
-&lt;/div&gt;
-&lt;div&gt;
-&lt;h2&gt;Constraints:&lt;/h2&gt;
-~Constraints~
-&lt;/div&gt;
-&lt;hr/&gt;
-&lt;div&gt;Back to [[Home]]&lt;/div&gt; 
-</Body>
-  </TemplateItem>
-  <TemplateItem>
-    <DocumentType>Markdown</DocumentType>
-    <ObjectType>Trigger</ObjectType>
-    <Body># Trigger: `~ObjectFullName~`
-
-&gt; ~Description~
-
-## Parameters
-~Parameters~
-
-## Trigger SQL Code
-```sql
-~Definition~
-```
-</Body>
-  </TemplateItem>
-  <TemplateItem>
-    <DocumentType>SharePoint</DocumentType>
-    <ObjectType>View</ObjectType>
-    <Body>&lt;h1&gt;VIEW NAME: ~ObjectFullName~&lt;/h1&gt;
-&lt;p&gt;~Description~&lt;/p&gt;
-&lt;div&gt;
-~Columns~
-&lt;/div&gt;
-&lt;div&gt;
-&lt;h2&gt;Indexes:&lt;/h2&gt;
-~Indexes~
-&lt;/div&gt;
-&lt;div&gt;
-&lt;h2&gt;Code to build the view&lt;/h2&gt;
-~Definition~
-&lt;/div&gt;
-&lt;hr/&gt;
-&lt;div&gt;Back to [[Home]]&lt;/div&gt; 
-</Body>
-  </TemplateItem>
-  <TemplateItem>
-    <DocumentType>SharePoint</DocumentType>
-    <ObjectType>Function</ObjectType>
-    <Body>&lt;h1&gt;FUNCTION NAME: ~ObjectFullName~&lt;/h1&gt;
-&lt;p&gt;~Description~&lt;/p&gt;
-&lt;div&gt;
-&lt;h2&gt;Parameters:&lt;/h2&gt;
-~Parameters~
-&lt;/div&gt;
-&lt;div&gt;
-&lt;h2&gt;Source code&lt;/h2&gt;
-~Definition~
-&lt;/div&gt;
-&lt;hr/&gt;
-&lt;div&gt;Back to [[Home]]&lt;/div&gt; 
-</Body>
-  </TemplateItem>
-  <TemplateItem>
-    <DocumentType>SharePoint</DocumentType>
-    <ObjectType>StoredProcedure</ObjectType>
-    <Body>&lt;h1&gt;PROCEDURE NAME: ~ObjectFullName~&lt;/h1&gt;
-&lt;p&gt;~Description~&lt;/p&gt;
-&lt;div&gt;
-&lt;h2&gt;Parameters:&lt;/h2&gt;
-~Parameters~
-&lt;/div&gt;
-&lt;div&gt;
-&lt;h2&gt;Source code&lt;/h2&gt;
-~Definition~
-&lt;/div&gt;
-&lt;hr/&gt;
-&lt;div&gt;Back to [[Home]]&lt;/div&gt; 
-</Body>
-  </TemplateItem>
-  <TemplateItem>
-    <DocumentType>Wiki</DocumentType>
-    <ObjectType>Table</ObjectType>
-    <Body>= Table: '''~ObjectFullName~''' =
-
-&lt;blockquote&gt;
-~Description~
-&lt;/blockquote&gt;
-
-== Columns ==
-~Columns~
-
-== Indexes ==
-~Indexes~
-
-== Constraints ==
-~Constraints~
-
-----
-</Body>
-  </TemplateItem>
-  <TemplateItem>
-    <DocumentType>Wiki</DocumentType>
-    <ObjectType>View</ObjectType>
-    <Body>= View: '''~ObjectFullName~''' =
-
-&lt;blockquote&gt;
-~Description~
-&lt;/blockquote&gt;
-
-== Columns ==
-~Columns~
-
-== Indexes ==
-~Indexes~
-
-== SQL Definition ==
-&lt;syntaxhighlight lang=""sql""&gt;
-~Definition~
-&lt;/syntaxhighlight&gt;
-</Body>
-  </TemplateItem>
-  <TemplateItem>
-    <DocumentType>Wiki</DocumentType>
-    <ObjectType>Function</ObjectType>
-    <Body>= Function: '''~ObjectFullName~''' =
-
-&lt;blockquote&gt;
-~Description~
-&lt;/blockquote&gt;
-
-== Parameters ==
-~Parameters~
-
-== SQL Code ==
-&lt;syntaxhighlight lang=""sql""&gt;
-~Definition~
-&lt;/syntaxhighlight&gt;
-</Body>
-  </TemplateItem>
-  <TemplateItem>
-    <DocumentType>Wiki</DocumentType>
-    <ObjectType>StoredProcedure</ObjectType>
-    <Body>= Stored Procedure: '''~ObjectFullName~''' =
-
-&lt;blockquote&gt;
-~Description~
-&lt;/blockquote&gt;
-
-== Parameters ==
-~Parameters~
-
-== SQL Code ==
-&lt;syntaxhighlight lang=""sql""&gt;
-~Definition~
-&lt;/syntaxhighlight&gt;
-</Body>
-  </TemplateItem>
-</root>";
-
+            // add the new document type to the file with FilePath() 
+            string filePath = FilePath();
+            using StreamWriter sw = new(filePath, true);
+            sw.WriteLine(newDocumentType); // Append the new document type to the file
+        }
     }
 }

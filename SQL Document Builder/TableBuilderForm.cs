@@ -5,6 +5,7 @@ using SQL_Document_Builder.Template;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -176,59 +177,6 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Gets the template text.
-        /// </summary>
-        /// <param name="docType">The doc type.</param>
-        /// <param name="objType">The obj type.</param>
-        /// <returns>A string.</returns>
-        private static string GetTemplateText(TemplateItem.DocumentTypeEnums docType, ObjectTypeEnums objType)
-        {
-            string templateText = string.Empty;
-
-            // get the template body
-            TemplateItem.ObjectTypeEnums objectType = objType switch
-            {
-                ObjectTypeEnums.Table => TemplateItem.ObjectTypeEnums.Table,
-                ObjectTypeEnums.View => TemplateItem.ObjectTypeEnums.View,
-                ObjectTypeEnums.StoredProcedure => TemplateItem.ObjectTypeEnums.StoredProcedure,
-                ObjectTypeEnums.Function => TemplateItem.ObjectTypeEnums.Function,
-                _ => TemplateItem.ObjectTypeEnums.Table
-            };
-
-            // get the template text from the templates
-            Templates templates = new();
-            templates.Load();
-
-            var templateItem = templates.GetTemplate(docType, objectType);
-            if (templateItem != null)
-            {
-                templateText = templateItem.Body;
-            }
-
-            // if the template text is empty, show a message box and open the template editor
-            if (string.IsNullOrEmpty(templateText))
-            {
-                Common.MsgBox($"Template for {docType} and {objType} is not defined.", MessageBoxIcon.Information);
-                using var templateForm = new TemplateEditor()
-                {
-                    DocumentType = docType,
-                    ObjectType = objectType
-                };
-                templateForm.ShowDialog();
-
-                // get the template text again after editing
-                templates.Load();
-                templateItem = templates.GetTemplate(docType, objectType);
-                if (templateItem != null)
-                {
-                    templateText = templateItem.Body;
-                }
-            }
-
-            return templateText;
-        }
-
-        /// <summary>
         /// Checks if the usp_addupdateextendedproperty stored procedure exists in the database.
         /// </summary>
         /// <returns>A Task.</returns>
@@ -244,6 +192,8 @@ namespace SQL_Document_Builder
             return true;
         }
 
+        //    return templateText;
+        //}
         /// <summary>
         /// Perform the syntax check for the given script.
         /// </summary>
@@ -269,6 +219,14 @@ namespace SQL_Document_Builder
             return string.Empty;
         }
 
+        //    //    // get the template text again after editing
+        //    //    templates.Load();
+        //    //    templateItem = templates.GetTemplate(docType, objectType);
+        //    //    if (templateItem != null)
+        //    //    {
+        //    //        templateText = templateItem.Body;
+        //    //    }
+        //    //}
         /// <summary>
         /// Handles the "About" tool strip menu item click event:
         /// </summary>
@@ -281,6 +239,16 @@ namespace SQL_Document_Builder
             dlg.ShowDialog();
         }
 
+        //    //// if the template text is empty, show a message box and open the template editor
+        //    //if (string.IsNullOrEmpty(templateText))
+        //    //{
+        //    //    Common.MsgBox($"Template for {docType} and {objType} is not defined.", MessageBoxIcon.Information);
+        //    //    using var templateForm = new TemplateEditor()
+        //    //    {
+        //    //        DocumentType = docType,
+        //    //        ObjectType = objectType
+        //    //    };
+        //    //    templateForm.ShowDialog();
         /// <summary>
         /// Add connection.
         /// </summary>
@@ -325,6 +293,11 @@ namespace SQL_Document_Builder
             return false;
         }
 
+        //    //var templateItem = templates.GetTemplate(docType, objectType);
+        //    //if (templateItem != null)
+        //    //{
+        //    //    templateText = templateItem.Body;
+        //    //}
         /// <summary>
         /// Adds the data source tag to the document.
         /// </summary>
@@ -347,6 +320,9 @@ namespace SQL_Document_Builder
             }
         }
 
+        //    // get the template text from the templates
+        //    Templates templates = new();
+        //    templates.Load();
         /// <summary>
         /// Add list item.
         /// </summary>
@@ -358,6 +334,15 @@ namespace SQL_Document_Builder
             objectsListBox.Items.Add(new ObjectName(tableType, schema, tableName));
         }
 
+        //    // get the template body
+        //    TemplateItem.ObjectTypeEnums objectType = objType switch
+        //    {
+        //        ObjectTypeEnums.Table => TemplateItem.ObjectTypeEnums.Table,
+        //        ObjectTypeEnums.View => TemplateItem.ObjectTypeEnums.View,
+        //        ObjectTypeEnums.StoredProcedure => TemplateItem.ObjectTypeEnums.StoredProcedure,
+        //        ObjectTypeEnums.Function => TemplateItem.ObjectTypeEnums.Function,
+        //        _ => TemplateItem.ObjectTypeEnums.Table
+        //    };
         /// <summary>
         /// Add a new tab with query edit box
         /// </summary>
@@ -386,6 +371,15 @@ namespace SQL_Document_Builder
             return queryTextBox;
         }
 
+        ///// <summary>
+        ///// Gets the template text.
+        ///// </summary>
+        ///// <param name="docType">The doc type.</param>
+        ///// <param name="objType">The obj type.</param>
+        ///// <returns>A string.</returns>
+        //private static string GetTemplateText(TemplateItem.DocumentTypeEnums docType, ObjectTypeEnums objType)
+        //{
+        //    string templateText = string.Empty;
         /// <summary>
         /// Add a menu item under the windows dropdown to link the tab
         /// </summary>
@@ -543,6 +537,22 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Checks the current document type.
         /// </summary>
+        /// <returns>A DialogResult.</returns>
+        private DialogResult CheckCurrentDocumentType()
+        {
+            SqlEditBox.DocumentTypeEnums docType = docTypeToolStripComboBox.Text.ToUpper() switch
+            {
+                "SHAREPOINT" => SqlEditBox.DocumentTypeEnums.Html,
+                "MARKDOWN" => SqlEditBox.DocumentTypeEnums.Markdown,
+                "WIKI" => SqlEditBox.DocumentTypeEnums.Wiki,
+                _ => SqlEditBox.DocumentTypeEnums.Text,
+            };
+            return CheckCurrentDocumentType(docType);
+        }
+
+        /// <summary>
+        /// Checks the current document type.
+        /// </summary>
         /// <param name="targetType">The target type.</param>
         /// <returns>A DialogResult.</returns>
         private DialogResult CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums targetType)
@@ -591,34 +601,6 @@ namespace SQL_Document_Builder
         {
             searchTextBox.Text = string.Empty;
             searchTextBox.Focus();
-        }
-
-        /// <summary>
-        /// Clipboard the to table tool strip menu item click.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The E.</param>
-        private void ClipboardToTableToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (Clipboard.ContainsText())
-            {
-                if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
-
-                if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Html) != DialogResult.Yes) return;
-
-                var metaData = Clipboard.GetText();
-
-                if (metaData.Length > 1)
-                {
-                    var scripts = SharePointBuilder.TextToTable(metaData);
-
-                    AppendText(editBox, scripts);
-
-                    EndBuild(editBox);
-                }
-            }
-
-            statusToolStripStatusLabe.Text = "Complete!";
         }
 
         /// <summary>
@@ -889,7 +871,6 @@ namespace SQL_Document_Builder
                         AppendText(editBox, insertScript + "GO" + Environment.NewLine);
                     }
                 }
-
             }
 
             EndBuild(editBox);
@@ -1059,6 +1040,21 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Docs the type tool strip combo box_ selected index changed.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void DocTypeToolStripComboBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            // if selected item is not null, save the settings
+            if (docTypeToolStripComboBox.SelectedItem != null)
+            {
+                Properties.Settings.Default.DocumentType = docTypeToolStripComboBox.SelectedItem.ToString();
+                Properties.Settings.Default.Save();
+            }
+        }
+
+        /// <summary>
         /// Edits the box_ file name changed.
         /// </summary>
         /// <param name="sender">The sender.</param>
@@ -1112,9 +1108,7 @@ namespace SQL_Document_Builder
         private void EnableTableValue(bool enabled)
         {
             mdValuesToolStripButton.Enabled = enabled;
-            htmlValuesToolStripButton.Enabled = enabled;
             mdValuesToolStripMenuItem.Enabled = enabled;
-            spValuesToolStripMenuItem.Enabled = enabled;
             insertToolStripButton.Enabled = enabled;
             insertToolStripMenuItem.Enabled = enabled;
             jsonTableViewValuesToolStripMenuItem.Enabled = enabled;
@@ -1276,6 +1270,15 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Gets the document type.
+        /// </summary>
+        /// <returns>A string.</returns>
+        private string GetDocumentType()
+        {
+            return docTypeToolStripComboBox.Text;
+        }
+
+        /// <summary>
         /// Get next available empty new query edit box, add one if there is no empty
         /// </summary>
         /// <returns></returns>
@@ -1386,6 +1389,29 @@ namespace SQL_Document_Builder
                 }
             }
             return dtSchemas;
+        }
+
+        /// <summary>
+        /// Gets the template with selected document type.
+        /// </summary>
+        /// <returns>A Template.Template? .</returns>
+        private Template.Template? GetTemplate()
+        {
+            var docType = GetDocumentType();
+            if (string.IsNullOrEmpty(docType))
+            {
+                Common.MsgBox("Please select a document type first.", MessageBoxIcon.Information);
+                return null;
+            }
+
+            // load the templates
+            var templates = new Templates();
+            templates.Load();
+
+            // find the template for the document type
+            var template = templates.GetTemplate(docType);
+
+            return template;
         }
 
         /// <summary>
@@ -1630,6 +1656,7 @@ namespace SQL_Document_Builder
         {
             using var templateEditor = new TemplateEditor();
             templateEditor.ShowDialog(this);
+            PopulateDocumentType();
         }
 
         /// <summary>
@@ -1859,10 +1886,8 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void OnExecuteToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            string message = "Execute SQL statements in the current query editor.\n\n" +
-                             "If no text is selected, the whole text will be executed.\n\n" +
-                             "If the script contains a DROP statement, you will be asked for confirmation before executing it.";
             string dataSourceText = $"{serverToolStripStatusLabel.Text}::{databaseToolStripStatusLabel.Text}";
+            string message;
 
             // get the selected text from the sqlTextBox
             string? script = CurrentEditBox?.SelectedText;
@@ -2229,6 +2254,57 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Using the template settings and populates the document type
+        /// </summary>
+        private void PopulateDocumentType()
+        {
+            // Clear existing items in the document type combobox
+            docTypeToolStripComboBox.Items.Clear();
+
+            var templates = new Templates();
+            templates.Load();
+
+            // open template editor if no templates found
+            if (templates.TemplateLists.Count == 0)
+            {
+                var templateEditor = new TemplateEditor();
+                templateEditor.ShowDialog();
+                templates.Load(); // Reload templates after editing
+            }
+
+            // close the app if no templates found
+            if (templates.TemplateLists.Count == 0)
+            {
+                Common.MsgBox("No templates found. Please create a template first.", MessageBoxIcon.Error);
+                Close();
+                return;
+            }
+
+            foreach (var type in templates.TemplateLists)
+            {
+                // add the document type to the combobox
+                docTypeToolStripComboBox.Items.Add(type.DocumentType);
+            }
+
+            var lastDocType = Properties.Settings.Default.DocumentType;
+            if (string.IsNullOrEmpty(lastDocType))
+            {
+                lastDocType = templates.TemplateLists[0].DocumentType;
+            }
+
+            // check the menu item that matches the last document type
+            foreach (var item in docTypeToolStripComboBox.Items)
+            {
+                if (item.ToString().Equals(lastDocType, StringComparison.OrdinalIgnoreCase))
+                {
+                    // select the item in the combobox
+                    docTypeToolStripComboBox.SelectedItem = item;
+                    break;
+                }
+            }
+        }
+
+        /// <summary>
         /// Populates the schema.
         /// </summary>
         private void PopulateSchema()
@@ -2241,24 +2317,6 @@ namespace SQL_Document_Builder
             foreach (var item in schemas)
             {
                 schemaComboBox.Items.Add(item);
-            }
-        }
-
-        /// <summary>
-        /// Handles the "Query data to table" tool strip menu item click:
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The E.</param>
-        private async void QueryDataToTableToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            using var form = new QueryDataToTableForm() { ConnectionString = _connectionString };
-            if (form.ShowDialog() == DialogResult.OK)
-            {
-                if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
-
-                if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Html) != DialogResult.Yes) return;
-
-                AppendText(editBox, await SharePointBuilder.GetTableValuesAsync(form.SQL, _connectionString));
             }
         }
 
@@ -2698,6 +2756,12 @@ namespace SQL_Document_Builder
         {
             WindowState = FormWindowState.Maximized;
 
+            // initial the templates
+            //var templates = new Templates();
+            //templates.InitializeTemplates();
+            //templates.Load();
+            //templates.Save();
+
             // INIT HOTKEYS
             InitHotkeys();
 
@@ -2726,50 +2790,10 @@ namespace SQL_Document_Builder
             // populate most recent used files
             PopulateMRUFiles();
 
+            // populate the objects list box with tables
+            PopulateDocumentType();
+
             AddTab("");
-        }
-
-        /// <summary>
-        /// Handles the "Table definition" tool strip menu item click:
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The E.</param>
-        private async void TableDefinitionToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (objectsListBox.SelectedItem != null)
-            {
-                var objectName = (ObjectName)objectsListBox.SelectedItem;
-
-                var template = GetTemplateText(TemplateItem.DocumentTypeEnums.SharePoint, objectName.ObjectType);
-
-                if (string.IsNullOrWhiteSpace(template))
-                {
-                    Common.MsgBox($"No template found for {objectName.ObjectType} in SharePoint format.", MessageBoxIcon.Warning);
-                    return;
-                }
-
-                var builder = new SharePointBuilder();
-                var scripts = objectName.ObjectType switch
-                {
-                    ObjectTypeEnums.Table or ObjectTypeEnums.View => await builder.GetTableViewDef(objectName, _connectionString, template),
-                    ObjectTypeEnums.StoredProcedure or ObjectTypeEnums.Function => await builder.GetFunctionProcedureDef(objectName, _connectionString, template),
-                    _ => string.Empty
-                };
-
-                if (scripts.Length == 0)
-                {
-                    Common.MsgBox($"No definition found for {objectName.FullName}", MessageBoxIcon.Information);
-                    return;
-                }
-
-                if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
-
-                if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Html) != DialogResult.Yes) return;
-
-                AppendText(editBox, scripts);
-
-                EndBuild(editBox);
-            }
         }
 
         /// <summary>
@@ -2812,43 +2836,6 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Handles the "Table list" tool strip menu item click:
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The E.</param>
-        private async void TableListToolStripMenuItem1_Click(object sender, EventArgs e)
-        {
-            List<ObjectName>? selectedObjects = SelectObjects();
-
-            if (selectedObjects == null || selectedObjects.Count == 0)
-            {
-                return;
-            }
-
-            if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
-
-            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Html) != DialogResult.Yes) return;
-
-            StartBuild(editBox);
-
-            var progress = new Progress<int>(value =>
-            {
-                progressBar.Value = value;
-            });
-
-            string scripts = String.Empty;
-            var builder = new SharePointBuilder();
-            await Task.Run(async () =>
-            {
-                scripts = await builder.BuildTableListAsync(selectedObjects, _connectionString, progress);
-            });
-
-            AppendText(editBox, scripts);
-
-            EndBuild(editBox);
-        }
-
-        /// <summary>
         /// Handles timer tick.
         /// </summary>
         /// <param name="sender">The sender.</param>
@@ -2874,36 +2861,6 @@ namespace SQL_Document_Builder
             if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Sql) == DialogResult.Yes)
             {
                 AppendText(editBox, DatabaseDocBuilder.UspAddObjectDescription());
-            }
-        }
-
-        /// <summary>
-        /// Handles the "Value list" tool strip menu item click:
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The E.</param>
-        private async void ValueListToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (objectsListBox.SelectedItem != null)
-            {
-                var objectName = (ObjectName)objectsListBox.SelectedItem;
-
-                // check if the object is a table or view
-                if (objectName.ObjectType != ObjectTypeEnums.Table && objectName.ObjectType != ObjectTypeEnums.View)
-                {
-                    Common.MsgBox($"The feature is for Table or View only.", MessageBoxIcon.Warning);
-                    return;
-                }
-
-                var scripts = await SharePointBuilder.GetTableValuesAsync($"select * from {objectName.FullName}", _connectionString);
-
-                if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
-
-                if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Html) != DialogResult.Yes) return;
-
-                AppendText(editBox, scripts);
-
-                EndBuild(editBox);
             }
         }
 
@@ -3472,17 +3429,28 @@ namespace SQL_Document_Builder
         {
             if (Clipboard.ContainsText())
             {
-                if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
-
-                if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Markdown) != DialogResult.Yes) return;
-
                 var metaData = Clipboard.GetText();
 
                 if (metaData.Length > 1)
                 {
-                    var builder = new MarkdownBuilder();
+                    if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
 
-                    AppendText(editBox, builder.TextToTable(metaData));
+                    if (CheckCurrentDocumentType() != DialogResult.Yes) return;
+
+                    var docType = GetDocumentType();
+
+                    // get the template for the object list
+                    var template = GetTemplate();
+                    if (template == null)
+                    {
+                        Common.MsgBox($"No template found for {docType} format.", MessageBoxIcon.Warning);
+                        return;
+                    }
+
+                    // find the objec list template item in the template
+                    var datatableTemplate = template.TemplateLists.FirstOrDefault(t => t.ObjectType == TemplateItem.ObjectTypeEnums.DataTable);
+
+                    AppendText(editBox, DocumentBuilder.TextToTable(metaData, datatableTemplate));
 
                     EndBuild(editBox);
                 }
@@ -3503,9 +3471,29 @@ namespace SQL_Document_Builder
             {
                 if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
 
-                if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Markdown) != DialogResult.Yes) return;
+                if (CheckCurrentDocumentType() != DialogResult.Yes) return;
 
-                AppendText(editBox, await MarkdownBuilder.GetTableValuesAsync(form.SQL, _connectionString));
+                var docType = GetDocumentType();
+
+                // get the template for the object list
+                var template = GetTemplate();
+                if (template == null)
+                {
+                    Common.MsgBox($"No template found for {docType} format.", MessageBoxIcon.Warning);
+                    return;
+                }
+
+                // find the objec list template item in the template
+                var datatableTemplate = template.TemplateLists.FirstOrDefault(t => t.ObjectType == TemplateItem.ObjectTypeEnums.DataTable);
+                if (datatableTemplate != null)
+                {
+                    AppendText(editBox, await DocumentBuilder.GetTableValuesAsync(form.SQL, _connectionString, datatableTemplate));
+                }
+                else
+                {
+                    Common.MsgBox($"No object list template found for {docType} format.", MessageBoxIcon.Warning);
+                    return;
+                }
             }
         }
 
@@ -3520,22 +3508,33 @@ namespace SQL_Document_Builder
             {
                 var objectName = (ObjectName)objectsListBox.SelectedItem;
 
-                var template = GetTemplateText(TemplateItem.DocumentTypeEnums.Markdown, objectName.ObjectType);
-
-                if (string.IsNullOrWhiteSpace(template))
+                var docType = GetDocumentType();
+                // get the template for the object list
+                var template = GetTemplate();
+                if (template == null)
                 {
-                    Common.MsgBox($"No template found for {objectName.ObjectType} in Markdown format.", MessageBoxIcon.Warning);
+                    Common.MsgBox($"No template found for {objectName.ObjectType} in {docType} format.", MessageBoxIcon.Warning);
                     return;
                 }
 
-                var builder = new MarkdownBuilder();
-                var scripts = objectName.ObjectType switch
+                // find the objec list template item in the template
+                var objectTemplate = objectName.ObjectType switch
                 {
-                    ObjectTypeEnums.Table or ObjectTypeEnums.View => await MarkdownBuilder.GetTableViewDef(objectName, _connectionString, template),
-                    ObjectTypeEnums.StoredProcedure or ObjectTypeEnums.Function => await MarkdownBuilder.GetFunctionProcedureDef(objectName, _connectionString, template),
-                    _ => string.Empty
+                    ObjectTypeEnums.Table => template.TemplateLists.FirstOrDefault(t => t.ObjectType == TemplateItem.ObjectTypeEnums.Table),
+                    ObjectTypeEnums.View => template.TemplateLists.FirstOrDefault(t => t.ObjectType == TemplateItem.ObjectTypeEnums.View),
+                    ObjectTypeEnums.StoredProcedure => template.TemplateLists.FirstOrDefault(t => t.ObjectType == TemplateItem.ObjectTypeEnums.StoredProcedure),
+                    ObjectTypeEnums.Function => template.TemplateLists.FirstOrDefault(t => t.ObjectType == TemplateItem.ObjectTypeEnums.Function),
+                    ObjectTypeEnums.Trigger => template.TemplateLists.FirstOrDefault(t => t.ObjectType == TemplateItem.ObjectTypeEnums.Trigger),
+                    _ => null
                 };
 
+                if (objectTemplate == null)
+                {
+                    Common.MsgBox($"No template found for {objectName.ObjectType} in {docType} format.", MessageBoxIcon.Warning);
+                    return;
+                }
+
+                var scripts = await DocumentBuilder.GetObjectDef(objectName, _connectionString, objectTemplate);
                 if (scripts.Length == 0)
                 {
                     Common.MsgBox($"No definition found for {objectName.FullName}", MessageBoxIcon.Information);
@@ -3544,7 +3543,7 @@ namespace SQL_Document_Builder
 
                 if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
 
-                if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Markdown) != DialogResult.Yes) return;
+                if (CheckCurrentDocumentType() != DialogResult.Yes) return;
 
                 AppendText(editBox, scripts);
 
@@ -3568,7 +3567,25 @@ namespace SQL_Document_Builder
 
             if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
 
-            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Markdown) != DialogResult.Yes) return;
+            if (CheckCurrentDocumentType() != DialogResult.Yes) return;
+
+            var docType = GetDocumentType();
+            // get the template for the object list
+            var template = GetTemplate();
+            if (template == null)
+            {
+                Common.MsgBox($"No template found for {docType} format.", MessageBoxIcon.Warning);
+                return;
+            }
+
+            // find the objec list template item in the template
+            var objectListTemplate = template.TemplateLists.FirstOrDefault(t => t.ObjectType == TemplateItem.ObjectTypeEnums.ObjectList);
+
+            if (objectListTemplate == null)
+            {
+                Common.MsgBox($"No object list template found for {docType} format.", MessageBoxIcon.Warning);
+                return;
+            }
 
             StartBuild(editBox);
 
@@ -3578,10 +3595,9 @@ namespace SQL_Document_Builder
             });
 
             string scripts = String.Empty;
-            var builder = new MarkdownBuilder();
             await Task.Run(async () =>
             {
-                scripts = await builder.BuildObjectList(selectedObjects, _connectionString, progress);
+                scripts = await DocumentBuilder.BuildObjectList(selectedObjects, _connectionString, objectListTemplate, progress);
             });
 
             AppendText(editBox, scripts);
@@ -3609,9 +3625,28 @@ namespace SQL_Document_Builder
 
                 if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
 
-                if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Markdown) != DialogResult.Yes) return;
+                if (CheckCurrentDocumentType() != DialogResult.Yes) return;
 
-                AppendText(editBox, await MarkdownBuilder.GetTableValuesAsync($"select * from {objectName.FullName}", _connectionString));
+                var docType = GetDocumentType();
+
+                // get the template for the object list
+                var template = GetTemplate();
+                if (template == null)
+                {
+                    Common.MsgBox($"No template found for {docType} format.", MessageBoxIcon.Warning);
+                    return;
+                }
+
+                // find the objec list template item in the template
+                var datatableTemplate = template.TemplateLists.FirstOrDefault(t => t.ObjectType == TemplateItem.ObjectTypeEnums.DataTable);
+
+                if (datatableTemplate == null)
+                {
+                    Common.MsgBox($"No object list template found for {docType} format.", MessageBoxIcon.Warning);
+                    return;
+                }
+
+                AppendText(editBox, await DocumentBuilder.GetTableValuesAsync($"select * from {objectName.FullName}", _connectionString, datatableTemplate));
 
                 EndBuild(editBox);
             }
@@ -3672,165 +3707,6 @@ namespace SQL_Document_Builder
         }
 
         #endregion "MRU files"
-
-        #region Wiki Document Builder
-
-        /// <summary>
-        /// Handles the click event of the "WkClipboardToTable" tool strip menu item:
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void WkClipboardToTableToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (Clipboard.ContainsText())
-            {
-                var metaData = Clipboard.GetText();
-
-                if (metaData.Length > 1)
-                {
-                    var builder = new WikiBuilder();
-
-                    if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
-
-                    if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Wiki) != DialogResult.Yes) return;
-
-                    AppendText(editBox, builder.TextToTable(metaData));
-
-                    EndBuild(editBox);
-                }
-            }
-
-            statusToolStripStatusLabe.Text = "Complete!";
-        }
-
-        /// <summary>
-        /// Handles the click event of the "WkObjectDefinition" tool strip menu item:
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private async void WkObjectDefinitionToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (objectsListBox.SelectedItem != null)
-            {
-                var objectName = (ObjectName)objectsListBox.SelectedItem;
-
-                var template = GetTemplateText(TemplateItem.DocumentTypeEnums.Wiki, objectName.ObjectType);
-
-                if (string.IsNullOrWhiteSpace(template))
-                {
-                    Common.MsgBox($"No template found for {objectName.ObjectType} in Markdown format.", MessageBoxIcon.Warning);
-                    return;
-                }
-
-                var builder = new WikiBuilder();
-                var scripts = objectName.ObjectType switch
-                {
-                    ObjectTypeEnums.Table or ObjectTypeEnums.View => await MarkdownBuilder.GetTableViewDef(objectName, _connectionString, template),
-                    ObjectTypeEnums.StoredProcedure or ObjectTypeEnums.Function => await MarkdownBuilder.GetFunctionProcedureDef(objectName, _connectionString, template),
-                    _ => string.Empty
-                };
-
-                if (scripts.Length == 0)
-                {
-                    Common.MsgBox($"No definition found for {objectName.FullName}", MessageBoxIcon.Information);
-                    return;
-                }
-
-                if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
-
-                if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Wiki) != DialogResult.Yes) return;
-
-                AppendText(editBox, scripts);
-
-                EndBuild(editBox);
-            }
-        }
-
-        /// <summary>
-        /// Handles the click event of the "WkObjectList" tool strip menu item:
-        /// Generates a wiki object list for the selected objects.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private async void WkObjectListToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            List<ObjectName>? selectedObjects = SelectObjects();
-
-            if (selectedObjects == null || selectedObjects.Count == 0)
-            {
-                return;
-            }
-
-            if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
-
-            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Wiki) != DialogResult.Yes) return;
-
-            StartBuild(editBox);
-
-            var progress = new Progress<int>(value =>
-            {
-                progressBar.Value = value;
-            });
-
-            string scripts = String.Empty;
-            var builder = new WikiBuilder();
-            await Task.Run(async () =>
-            {
-                scripts = await builder.BuildObjectList(selectedObjects, _connectionString, progress);
-            });
-
-            AppendText(editBox, scripts);
-
-            EndBuild(editBox);
-        }
-
-        /// <summary>
-        /// Handles the click event of the "WkClipboardToTable" tool strip menu item:
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private async void WkQueryDataToTableToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            using var form = new QueryDataToTableForm() { ConnectionString = _connectionString };
-            if (form.ShowDialog() == DialogResult.OK)
-            {
-                if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
-
-                if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Wiki) != DialogResult.Yes) return;
-
-                AppendText(editBox, await WikiBuilder.GetTableValuesAsync(form.SQL, _connectionString));
-            }
-        }
-
-        /// <summary>
-        /// Handles the click event of the "WkTableViewValues" tool strip menu item:
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private async void WkTableViewValuesToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (objectsListBox.SelectedItem != null)
-            {
-                var objectName = (ObjectName)objectsListBox.SelectedItem;
-
-                // check if the object is a table or view
-                if (objectName.ObjectType != ObjectTypeEnums.Table && objectName.ObjectType != ObjectTypeEnums.View)
-                {
-                    Common.MsgBox($"The feature is for Table or View only.", MessageBoxIcon.Warning);
-                    return;
-                }
-
-                if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
-
-                if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Wiki) != DialogResult.Yes) return;
-
-                AppendText(editBox, await WikiBuilder.GetTableValuesAsync($"select * from {objectName.FullName}", _connectionString));
-
-                EndBuild(editBox);
-            }
-        }
-
-        #endregion Wiki Document Builder
 
         #region Json document builder
 

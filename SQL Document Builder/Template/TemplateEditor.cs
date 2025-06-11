@@ -1,5 +1,6 @@
 ﻿using DarkModeForms;
 using System;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace SQL_Document_Builder.Template
@@ -10,9 +11,11 @@ namespace SQL_Document_Builder.Template
     public partial class TemplateEditor : Form
     {
         private readonly Templates _templates = new();
-        private TemplateItem.DocumentTypeEnums _documentType = TemplateItem.DocumentTypeEnums.Markdown;
+        private Template? _activeTemplate;
+        private string _documentType = string.Empty;
         private bool _init = false;
         private TemplateItem.ObjectTypeEnums _objectType = TemplateItem.ObjectTypeEnums.Table;
+        private TreeNode? _selectedNode;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="TemplateEditor"/> class.
@@ -24,10 +27,10 @@ namespace SQL_Document_Builder.Template
             _templates.Load();
         }
 
-        /// <summary>
-        /// Gets or sets the document type.
-        /// </summary>
-        internal TemplateItem.DocumentTypeEnums DocumentType { private get; set; } = TemplateItem.DocumentTypeEnums.Markdown;
+        ///// <summary>
+        ///// Gets or sets the document type.
+        ///// </summary>
+        //internal TemplateItem.DocumentTypeEnums DocumentType { private get; set; } = TemplateItem.DocumentTypeEnums.Markdown;
 
         /// <summary>
         /// Gets or sets the object type.
@@ -39,6 +42,11 @@ namespace SQL_Document_Builder.Template
         /// </summary>
         private void ChangeTemplate()
         {
+            if (string.IsNullOrWhiteSpace(docTypeToolStripComboBox.Text))
+            {
+                return; // Prevents changing template if no document type or object type is selected
+            }
+
             // save the current template
             if (templateTextBox.Modified && templateTextBox.Text.Length > 1)
             {
@@ -46,34 +54,24 @@ namespace SQL_Document_Builder.Template
             }
 
             // get the selected document type and object type using Enum.TryParse
-            if (Enum.TryParse(docTypeToolStripComboBox.Text, out TemplateItem.DocumentTypeEnums docType))
-                _documentType = docType;
-            if (Enum.TryParse(objTypeToolStripComboBox.Text, out TemplateItem.ObjectTypeEnums objType))
-                _objectType = objType;
+            _documentType = docTypeToolStripComboBox.Text;
+            _activeTemplate = _templates.GetTemplate(_documentType);
 
-            templateTextBox.Text = _templates?.GetTemplate(_documentType, _objectType)?.Body;
-            templateTextBox.SetSavePoint();
-            templateTextBox.EmptyUndoBuffer();
-        }
+            if (_activeTemplate != null)
+            {
+                templateTreeView.Open(_activeTemplate, _documentType);
+            }
+            else
+            {
+                // clear the template tree view if no template is found
+                templateTreeView.Nodes.Clear();
+                templateTextBox.Text = string.Empty;
+                templateTextBox.Visible = false;
+            }
 
-        /// <summary>
-        /// Handles the Click event of the ColumnsToolStripMenuItem control.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void ColumnsToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            InsertText("~Columns~");
-        }
-
-        /// <summary>
-        /// Handles the Click event of the ForeignKeysToolStripMenuItem control.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void ConstraintsToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            InsertText("~Constraints~");
+            // select the root node in the template tree view
+            templateTreeView.SelectedNode = templateTreeView.Nodes[0];
+            templateTreeView.Focus();
         }
 
         /// <summary>
@@ -105,11 +103,11 @@ namespace SQL_Document_Builder.Template
         private void DocTypeToolStripComboBox_SelectedIndexChanged(object sender, EventArgs e)
         {
             // change the sqltext document type based on the selected item
-            templateTextBox.DocumentType = docTypeToolStripComboBox.SelectedItem switch
+            templateTextBox.DocumentType = docTypeToolStripComboBox.Text.ToLower() switch
             {
-                TemplateItem.DocumentTypeEnums.Markdown => SqlEditBox.DocumentTypeEnums.Markdown,
-                TemplateItem.DocumentTypeEnums.SharePoint => SqlEditBox.DocumentTypeEnums.Html,
-                TemplateItem.DocumentTypeEnums.Wiki => SqlEditBox.DocumentTypeEnums.Wiki,
+                "markdown" => SqlEditBox.DocumentTypeEnums.Markdown,
+                "sharepoint" => SqlEditBox.DocumentTypeEnums.Html,
+                "wiki" => SqlEditBox.DocumentTypeEnums.Wiki,
                 _ => SqlEditBox.DocumentTypeEnums.empty,
             };
             ChangeTemplate();
@@ -123,18 +121,22 @@ namespace SQL_Document_Builder.Template
         private void ExitToolStripButton_Click(object sender, EventArgs e)
         {
             // Save the template before closing
+            if (templateTextBox.Modified && _selectedNode != null)
+            {
+                if (_selectedNode is TemplateNode templateNode)
+                {
+                    // Set the template text box with the selected template body
+                    templateNode.TemplateBody = templateTextBox.Text;
+                }
+                else if (_selectedNode is TemplateElementNode templateElementNode)
+                {
+                    // Set the template text box with the selected template element body
+                    templateElementNode.ElementBody = templateTextBox.Text;
+                }
+            }
+
             SaveTemplate();
             Close();
-        }
-
-        /// <summary>
-        /// Handles the Click event of the IndexesToolStripMenuItem control.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void IndexesToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            InsertText("~Indexes~");
         }
 
         /// <summary>
@@ -143,6 +145,9 @@ namespace SQL_Document_Builder.Template
         /// <param name="text">The text.</param>
         private void InsertText(string text)
         {
+            // retur if the templateTextBox is not visible
+            if (!templateTextBox.Visible) return;
+
             // Insert the object name at the current cursor position in the template text box
             if (templateTextBox.SelectionStart != templateTextBox.SelectionEnd)
             {
@@ -155,56 +160,6 @@ namespace SQL_Document_Builder.Template
         }
 
         /// <summary>
-        /// Handles the Click event of the ObjectDefinitionToolStripMenuItem control.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void ObjectDefinitionToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            InsertText("~Definition~");
-        }
-
-        /// <summary>
-        /// handles the Click event of the ObjectDescriptionToolStripMenuItem control.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void ObjectDescriptionToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            InsertText("~Description~");
-        }
-
-        /// <summary>
-        /// Handles the Click event of the ObjectFullNameToolStripMenuItem control.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void ObjectFullNameToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            InsertText("~ObjectFullName~");
-        }
-
-        /// <summary>
-        /// Handles the Click event of the ObjectNameToolStripMenuItem control.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void ObjectNameToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            InsertText("~ObjectName~");
-        }
-
-        /// <summary>
-        /// Handles the Click event of the ObjectSchemaToolStripMenuItem control.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void ObjectSchemaToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            InsertText("~ObjectSchema~");
-        }
-
-        /// <summary>
         /// Handles the SelectedIndexChanged event of the ObjTypeToolStripComboBox control.
         /// </summary>
         /// <param name="sender">The sender.</param>
@@ -212,73 +167,6 @@ namespace SQL_Document_Builder.Template
         private void ObjTypeToolStripComboBox_SelectedIndexChanged(object sender, EventArgs e)
         {
             ChangeTemplate();
-
-            // enable/disable the ObjectType ToolStripComboBox based on the selected DocumentType
-            if (_init) return; // Prevents re-entrancy during form load
-
-            PopulateTemplateTextBox();
-        }
-
-        /// <summary>
-        /// Populates the template text box.
-        /// </summary>
-        private void PopulateTemplateTextBox()
-        {
-            objectDefinitionToolStripMenuItem.Enabled = false;
-            columnsToolStripMenuItem.Enabled = false;
-            constraintsToolStripMenuItem.Enabled = false;
-            indexesToolStripMenuItem.Enabled = false;
-            relationshipsToolStripMenuItem.Enabled = false;
-            parametersToolStripMenuItem.Enabled = false;
-
-            if (objTypeToolStripComboBox.SelectedItem is TemplateItem.ObjectTypeEnums objType)
-            {
-                switch (objType)
-                {
-                    case TemplateItem.ObjectTypeEnums.Table:
-                        columnsToolStripMenuItem.Enabled = true;
-                        constraintsToolStripMenuItem.Enabled = true;
-                        indexesToolStripMenuItem.Enabled = true;
-                        relationshipsToolStripMenuItem.Enabled = true;
-                        break;
-
-                    case TemplateItem.ObjectTypeEnums.View:
-                        objectDefinitionToolStripMenuItem.Enabled = true;
-                        columnsToolStripMenuItem.Enabled = true;
-                        indexesToolStripMenuItem.Enabled = true;
-                        relationshipsToolStripMenuItem.Enabled = true;
-                        break;
-
-                    case TemplateItem.ObjectTypeEnums.Function:
-                    case TemplateItem.ObjectTypeEnums.StoredProcedure:
-                        objectDefinitionToolStripMenuItem.Enabled = true;
-                        parametersToolStripMenuItem.Enabled = true;
-                        break;
-
-                    case TemplateItem.ObjectTypeEnums.Trigger:
-                        objectDefinitionToolStripMenuItem.Enabled = true;
-                        break;
-
-                    default:
-                        objectDefinitionToolStripMenuItem.Enabled = true;
-                        columnsToolStripMenuItem.Enabled = true;
-                        constraintsToolStripMenuItem.Enabled = true;
-                        indexesToolStripMenuItem.Enabled = true;
-                        relationshipsToolStripMenuItem.Enabled = true;
-                        parametersToolStripMenuItem.Enabled = true;
-                        break;
-                }
-            }
-        }
-
-        /// <summary>
-        /// Handles the Click event of the ParametersToolStripMenuItem control.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void ParametersToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            InsertText("~Parameters~");
         }
 
         /// <summary>
@@ -293,6 +181,79 @@ namespace SQL_Document_Builder.Template
         }
 
         /// <summary>
+        /// Populates the keywords.
+        /// </summary>
+        /// <param name="keywords">The keywords.</param>
+        private void PopulateKeywords((string Keyword, string Description)[] keywords)
+        {
+            // Assume you have a ToolStripMenuItem named keywordsToolStripMenuItem for the Insert menu
+            insertToolStripMenuItem.DropDownItems.Clear();
+
+            foreach (var (keyword, description) in keywords)
+            {
+                var item = new ToolStripMenuItem($"{keyword}  —  {description}")
+                {
+                    Tag = keyword
+                };
+                item.Click += (s, e) => InsertText(keyword);
+                insertToolStripMenuItem.DropDownItems.Add(item);
+            }
+        }
+
+        /*
+        /// <summary>
+        /// Populates the keywords menu items.
+        /// </summary>
+        private void PopulateKeywordsMenuItems()
+        {
+            // Define the keywords and their descriptions
+            var keywords = new (string Keyword, string Description)[]
+            {
+                ("~Align~", "Alignment"),
+                ("~Cell~", "Table cell"),
+                ("~ColumnDataType~", "Column data type"),
+                ("~ColumnDescription~", "Column description"),
+                ("~ColumnItem~", "Column row"),
+                ("~ColumnName~", "Column name"),
+                ("~ColumnNullable~", "Column nullable"),
+                ("~ColumnOrd~", "Column ordinal position"),
+                ("~Columns~", "Column definition section"),
+                ("~ConstraintColumn~", "Constraint column"),
+                ("~ConstraintItem~", "Constraint item"),
+                ("~ConstraintName~", "Constraint name"),
+                ("~Constraints~", "Constraints section"),
+                ("~ConstraintType~", "Constraint type"),
+                ("~Definition~", "Object definition (source code)"),
+                ("~Description~", "Object description"),
+                ("~Header~", "Data table header section"),
+                ("~HeaderCell~", "Data table header cell"),
+                ("~IndexColumns~", "Index columns"),
+                ("~Indexes~", "Index section"),
+                ("~IndexItem~", "Index items"),
+                ("~IndexName~", "Index name"),
+                ("~IndexType~", "Index type"),
+                ("~ObjectFullName~", "Object full name"),
+                ("~ObjectItem~", "Object list item"),
+                ("~ObjectName~", "Object name"),
+                ("~ObjectSchema~", "Object schema"),
+                ("~ObjectType~", "Object type"),
+                ("~ParameterDataType~", "Parameter data type"),
+                ("~ParameterDescription~", "Parameter description"),
+                ("~ParameterDirection~", "Parameter direction"),
+                ("~ParameterItem~", "Parameter items"),
+                ("~ParameterName~", "Parameter name"),
+                ("~ParameterOrd~", "Parameter ordinal position"),
+                ("~Parameters~", "Parameter section"),
+                ("~Row~", "Data row"),
+                ("~Rows~", "Data rows sections"),
+                ("~UniqueIndex~", "Unique index indicator"),
+            };
+
+            PopulateKeywords(keywords);
+        }
+        */
+
+        /// <summary>
         /// Handles the Click event of the UndoToolStripMenuItem control:
         /// </summary>
         /// <param name="sender">The sender.</param>
@@ -303,13 +264,273 @@ namespace SQL_Document_Builder.Template
         }
 
         /// <summary>
-        /// Handles the Click event of the RelationshipsToolStripMenuItem control.
+        /// Handles the Click event of the ResetToDefaultToolStripMenuItem control:
+        /// Resets the template to the default settings.
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
-        private void RelationshipsToolStripMenuItem_Click(object sender, EventArgs e)
+        private void ResetToDefaultToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            InsertText("~Relationships~");
+            if (_activeTemplate == null || _templates == null)
+            {
+                return; // Prevents resetting if no active template or templates are loaded
+            }
+
+            _init = true;
+
+            const string markdownTemplate = @"[
+  {
+    ""ObjectType"": 0,
+    ""Body"": ""# Table: \u0060~ObjectFullName~\u0060\r\n\r\n\u003E ~Description~\r\n\r\n**Columns:**\r\n~Columns~\r\n\r\n**Indexes:**\r\n~Indexes~\r\n\r\n**Constraints:**\r\n~Constraints~\r\n---\r\n"",
+    ""Columns"": {
+      ""Body"": ""| Ord | Name | Data Type | Description |\r\n|--------|------|-----------|-------------|\r\n~ColumnItem~"",
+      ""ColumnRow"": ""| ~ColumnOrd~ | \u0060~ColumnName~\u0060 | ~ColumnDataType~ | ~ColumnDescription~ |""
+    },
+    ""Constraints"": {
+      ""Body"": ""| Constraint Name | Type | Column |\r\n|------------------|------|-------------|\r\n~ConstraintItem~"",
+      ""ConstraintRow"": ""| \u0060~ConstraintName~\u0060 | ~ConstraintType~ | ~ConstraintColumn~ |""
+    },
+    ""Indexes"": {
+      ""Body"": ""| Index Name | Type | Columns | Unique |\r\n|------------|------|---------|--------|\r\n~IndexItem~"",
+      ""IndexRow"": ""| \u0060~IndexName~\u0060 | ~IndexType~ | ~IndexColumns~ | ~UniqueIndex~ |""
+    }
+  },
+  {
+    ""ObjectType"": 1,
+    ""Body"": ""# View: \u0060~ObjectFullName~\u0060\r\n\r\n\u003E ~Description~\r\n\r\n**Columns:**\r\n~Columns~\r\n\r\n**Indexes:**\r\n~Indexes~\r\n\r\n**SQL Definition:**\r\n\u0060\u0060\u0060sql\r\n~Definition~\r\n\u0060\u0060\u0060"",
+    ""Columns"": {
+      ""Body"": ""| Ord | Name | Data Type | Description |\r\n|--------|------|-----------|-------------|\r\n~ColumnItem~"",
+      ""ColumnRow"": ""| ~ColumnOrd~ | \u0060~ColumnName~\u0060 | ~ColumnDataType~ | ~ColumnDescription~ |""
+    },
+    ""Indexes"": {
+      ""Body"": ""| Index Name | Type | Columns | Unique |\r\n|------------|------|---------|--------|\r\n~IndexItem~"",
+      ""IndexRow"": ""| \u0060~IndexName~\u0060 | ~IndexType~ | ~IndexColumns~ | ~UniqueIndex~ |""
+    }
+  },
+  {
+    ""ObjectType"": 2,
+    ""Body"": ""# Function: \u0060~ObjectFullName~\u0060\r\n\r\n\u003E ~Description~\r\n\r\n## Parameters\r\n~Parameters~\r\n\r\n## SQL Code\r\n\u0060\u0060\u0060sql\r\n~Definition~\r\n\u0060\u0060\u0060\r\n"",
+    ""Parameters"": {
+      ""Body"": ""| Ord | Name | Data Type | Direction | Description |\r\n|-----|------|-----------|-----------|-------------|\r\n~ParameterItem~"",
+      ""ParameterRow"": ""| ~ParameterOrd~ | \u0060~ParameterName~\u0060 | ~ParameterDataType~ | ~ParameterDirection~ | ~ParameterDescription~ |""
+    }
+  },
+  {
+    ""ObjectType"": 3,
+    ""Body"": ""# Stored Procedure: \u0060~ObjectFullName~\u0060\r\n\r\n\u003E ~Description~\r\n\r\n## Parameters\r\n~Parameters~\r\n\r\n## SQL Code\r\n\u0060\u0060\u0060sql\r\n~Definition~\r\n\u0060\u0060\u0060\r\n"",
+    ""Parameters"": {
+      ""Body"": ""| Ord | Name | Data Type | Direction | Description |\r\n|-----|------|-----------|-----------|-------------|\r\n~ParameterItem~"",
+      ""ParameterRow"": ""| ~ParameterOrd~ | \u0060~ParameterName~\u0060 | ~ParameterDataType~ | ~ParameterDirection~ | ~ParameterDescription~ |""
+    }
+  },
+  {
+    ""ObjectType"": 4,
+    ""Body"": ""# Trigger: \u0060~ObjectFullName~\u0060\r\n\r\n\u003E ~Description~\r\n\r\n## Parameters\r\n~Parameters~\r\n\r\n## Trigger SQL Code\r\n\u0060\u0060\u0060sql\r\n~Definition~\r\n\u0060\u0060\u0060\r\n"",
+    ""Parameters"": {
+      ""Body"": """",
+      ""ParameterRow"": """"
+    }
+  },
+  {
+    ""ObjectType"": 5,
+    ""Body"": ""| Schema | Name | Description |\r\n|--------|------|-------------|\r\n~ObjectItem~"",
+    ""ObjectLists"": {
+      ""Body"": """",
+      ""ObjectRow"": ""| ~ObjectSchema~ | \u0060~ObjectName~\u0060 | ~Description~ |""
+    }
+  },
+  {
+    ""ObjectType"": 6,
+    ""Body"": ""| ~Header~ |\r\n| ~Align~ |\r\n~Rows~"",
+    ""DataTable"": {
+      ""Body"": """",
+      ""DataRow"": ""| ~Row~ |"",
+      ""HeaderCell"": ""~HeaderCell~"",
+      ""Cell"": ""~Cell~""
+    }
+  }
+]";
+            const string sharePointTemplate = @"[
+  {
+    ""ObjectType"": 0,
+    ""Body"": ""\u003Ch1\u003ETABLE NAME: ~ObjectFullName~\u003C/h1\u003E\r\n\u003Cp\u003E~Description~\u003C/p\u003E\r\n\u003Cdiv\u003E\r\n~Columns~\r\n\u003C/div\u003E\r\n\u003Cdiv\u003E\r\n    \u003Ch2\u003EIndexes:\u003C/h2\u003E\r\n~Indexes~\r\n\u003C/div\u003E\r\n\u003Cdiv\u003E\r\n    \u003Ch2\u003EConstraints:\u003C/h2\u003E\r\n~Constraints~\r\n\u003C/div\u003E\r\n\u003Chr/\u003E\r\n\u003Cdiv\u003EBack to [[Home]]\u003C/div\u003E"",
+    ""Columns"": {
+      ""Body"": ""\u003Cdiv\u003E\r\n\u003Ctable class=\u0022wikitable\u0022 style=\u0022margin: 1em 0px; border: 1px solid #a2a9b1; color: #202122; font-family: sans-serif; font-size: 14px; background-color: #f8f9fa;\u0022\u003E\r\n\u003Ctbody\u003E\r\n    \u003Ctr\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EOrd\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EName\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EData Type\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003ENullable\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EDescription\u003C/th\u003E\r\n    \u003C/tr\u003E\r\n~ColumnItem~\r\n\u003C/tbody\u003E\r\n\u003C/table\u003E\r\n\u003C/div\u003E\r\n"",
+      ""ColumnRow"": ""    \u003Ctr\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~ColumnOrd~\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~ColumnName~\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~ColumnDataType~\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~ColumnNullable~\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~ColumnDescription~\u003C/td\u003E\r\n    \u003C/tr\u003E\r\n""
+    },
+    ""Constraints"": {
+      ""Body"": ""\u003Ctable class=\u0022wikitable\u0022 style=\u0022margin: 1em 0px; border: 1px solid #a2a9b1; color: #202122; font-family: sans-serif; font-size: 14px; background-color: #f8f9fa;\u0022\u003E\r\n\u003Ctbody\u003E\r\n    \u003Ctr\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EConstraint Name\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EType\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EColumn(s)\u003C/th\u003E\r\n    \u003C/tr\u003E\r\n~ConstraintItem~\r\n\u003C/tbody\u003E\r\n\u003C/table\u003E\r\n"",
+      ""ConstraintRow"": ""    \u003Ctr\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~ConstraintName~\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~ConstraintType~\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~ConstraintColumn~\u003C/td\u003E\r\n    \u003C/tr\u003E\r\n""
+    },
+    ""Indexes"": {
+      ""Body"": ""\u003Ctable class=\u0022wikitable\u0022 style=\u0022margin: 1em 0px; border: 1px solid #a2a9b1; color: #202122; font-family: sans-serif; font-size: 14px; background-color: #f8f9fa;\u0022\u003E\r\n\u003Ctbody\u003E\r\n    \u003Ctr\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EIndex Name\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EType\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EColumns\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EUnique\u003C/th\u003E\r\n    \u003C/tr\u003E\r\n~IndexItem~\r\n\u003C/tbody\u003E\r\n\u003C/table\u003E\r\n"",
+      ""IndexRow"": ""    \u003Ctr\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~IndexName~\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~IndexType~\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~IndexColumns~\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~UniqueIndex~\u003C/td\u003E\r\n    \u003C/tr\u003E\r\n""
+    }
+  },
+  {
+    ""ObjectType"": 1,
+    ""Body"": ""\u003Ch1\u003EVIEW NAME: ~ObjectFullName~\u003C/h1\u003E\r\n\u003Cp\u003E~Description~\u003C/p\u003E\r\n\u003Cdiv\u003E\r\n~Columns~\r\n\u003C/div\u003E\r\n\u003Cdiv\u003E\r\n    \u003Ch2\u003EIndexes:\u003C/h2\u003E\r\n~Indexes~\r\n\u003C/div\u003E\r\n\u003Cdiv\u003E\r\n    \u003Ch2\u003ECode to build the view\u003C/h2\u003E\r\n\u003Cpre style=\u0022white-space: pre-wrap;\u0022\u003E\r\n~Definition~\r\n\u003C/pre\u003E\r\n\u003C/div\u003E\r\n\u003Chr/\u003E\r\n\u003Cdiv\u003EBack to [[Home]]\u003C/div\u003E"",
+    ""Columns"": {
+      ""Body"": ""\u003Cdiv\u003E\r\n\u003Ctable class=\u0022wikitable\u0022 style=\u0022margin: 1em 0px; border: 1px solid #a2a9b1; color: #202122; font-family: sans-serif; font-size: 14px; background-color: #f8f9fa;\u0022\u003E\r\n\u003Ctbody\u003E\r\n    \u003Ctr\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EOrd\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EName\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EData Type\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003ENullable\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EDescription\u003C/th\u003E\r\n    \u003C/tr\u003E\r\n~ColumnItem~\r\n\u003C/tbody\u003E\r\n\u003C/table\u003E\r\n\u003C/div\u003E\r\n"",
+      ""ColumnRow"": ""    \u003Ctr\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~ColumnOrd~\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~ColumnName~\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~ColumnDataType~\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~ColumnNullable~\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~ColumnDescription~\u003C/td\u003E\r\n    \u003C/tr\u003E\r\n""
+    },
+    ""Indexes"": {
+      ""Body"": ""\u003Ctable class=\u0022wikitable\u0022 style=\u0022margin: 1em 0px; border: 1px solid #a2a9b1; color: #202122; font-family: sans-serif; font-size: 14px; background-color: #f8f9fa;\u0022\u003E\r\n\u003Ctbody\u003E\r\n    \u003Ctr\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EIndex Name\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EType\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EColumns\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EUnique\u003C/th\u003E\r\n    \u003C/tr\u003E\r\n~IndexItem~\r\n\u003C/tbody\u003E\r\n\u003C/table\u003E\r\n"",
+      ""IndexRow"": ""    \u003Ctr\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~IndexName~\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~IndexType~\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~IndexColumns~\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~UniqueIndex~\u003C/td\u003E\r\n    \u003C/tr\u003E\r\n""
+    }
+  },
+  {
+    ""ObjectType"": 2,
+    ""Body"": ""\u003Ch1\u003EFUNCTION NAME: ~ObjectFullName~\u003C/h1\u003E\r\n\u003Cp\u003E~Description~\u003C/p\u003E\r\n\u003Cdiv\u003E\r\n\u003Ch2\u003EParameters:\u003C/h2\u003E\r\n~Parameters~\r\n\u003C/div\u003E\r\n\u003Cdiv\u003E\r\n\u003Ch2\u003ESource code\u003C/h2\u003E\r\n\u003Cpre style=\u0022white-space: pre-wrap;\u0022\u003E~Definition~\r\n\u003C/pre\u003E\r\n\u003C/div\u003E\r\n\u003Chr/\u003E\r\n\u003Cdiv\u003EBack to [[Home]]\u003C/div\u003E \r\n"",
+    ""Parameters"": {
+      ""Body"": ""\u003Ctable class=\u0022wikitable\u0022 style=\u0022margin: 1em 0px; border: 1px solid #a2a9b1; color: #202122; font-family: sans-serif; font-size: 14px; background-color: #f8f9fa;\u0022\u003E\r\n\u003Ctbody\u003E\r\n    \u003Ctr\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EOrd\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EName\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EData Type\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EDirection\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EDescription\u003C/th\u003E\r\n    \u003C/tr\u003E\r\n~ParameterItem~\r\n\u003C/tbody\u003E\r\n\u003C/table\u003E\r\n"",
+      ""ParameterRow"": ""    \u003Ctr\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~ParameterOrd~\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~ParameterName~\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~ParameterDataType~\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~ParameterDirection~\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~ParameterDescription~\u003C/td\u003E\r\n    \u003C/tr\u003E\r\n""
+    }
+  },
+  {
+    ""ObjectType"": 3,
+    ""Body"": ""\u003Ch1\u003EPROCEDURE NAME: ~ObjectFullName~\u003C/h1\u003E\r\n\u003Cp\u003E~Description~\u003C/p\u003E\r\n\u003Cdiv\u003E\r\n\u003Ch2\u003EParameters:\u003C/h2\u003E\r\n~Parameters~\r\n\u003C/div\u003E\r\n\u003Cdiv\u003E\r\n\u003Ch2\u003ESource code\u003C/h2\u003E\r\n\u003Cpre style=\u0022white-space: pre-wrap;\u0022\u003E~Definition~\r\n\u003C/pre\u003E\r\n\u003C/div\u003E\r\n\u003Chr/\u003E\r\n\u003Cdiv\u003EBack to [[Home]]\u003C/div\u003E \r\n"",
+    ""Parameters"": {
+      ""Body"": ""\u003Ctable class=\u0022wikitable\u0022 style=\u0022margin: 1em 0px; border: 1px solid #a2a9b1; color: #202122; font-family: sans-serif; font-size: 14px; background-color: #f8f9fa;\u0022\u003E\r\n\u003Ctbody\u003E\r\n    \u003Ctr\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EOrd\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EName\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EData Type\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EDirection\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EDescription\u003C/th\u003E\r\n    \u003C/tr\u003E\r\n~ParameterItem~\r\n\u003C/tbody\u003E\r\n\u003C/table\u003E\r\n"",
+      ""ParameterRow"": ""    \u003Ctr\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~ParameterOrd~\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~ParameterName~\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~ParameterDataType~\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~ParameterDirection~\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~ParameterDescription~\u003C/td\u003E\r\n    \u003C/tr\u003E\r\n""
+    }
+  },
+  {
+    ""ObjectType"": 4,
+    ""Body"": ""\u003Cpre style=\u0022white-space: pre-wrap;\u0022\u003E~Definition~\r\n\u003C/pre\u003E""
+  },
+  {
+    ""ObjectType"": 5,
+    ""Body"": ""\u003Ctable class=\u0022wikitable\u0022 style=\u0022margin: 1em 0px; border: 1px solid #a2a9b1; color: #202122; font-family: sans-serif; font-size: 14px; background-color: #f8f9fa;\u0022\u003E\r\n\u003Ctbody\u003E\r\n    \u003Ctr\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003ESchema\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EName\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EDescription\u003C/th\u003E\r\n    \u003C/tr\u003E\r\n~ObjectItem~\r\n\u003C/tbody\u003E\r\n\u003C/table\u003E\r\n"",
+    ""ObjectLists"": {
+      ""Body"": """",
+      ""ObjectRow"": ""    \u003Ctr\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~ObjectSchema~\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E[[~ObjectFullName~|~ObjectName~]]\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~Description~\u003C/td\u003E\r\n    \u003C/tr\u003E\r\n""
+    }
+  },
+  {
+    ""ObjectType"": 6,
+    ""Body"": ""\u003Ctable class=\u0027wikitable\u0027 style=\u0027border: 1px solid #ccc; font-size: 14px;\u0027\u003E\r\n\u003Cthead\u003E\u003Ctr\u003E~Header~\u003C/tr\u003E\u003C/thead\u003E\r\n\u003Ctbody\u003E~Rows~\u003C/tbody\u003E\r\n\u003C/table\u003E"",
+    ""DataTable"": {
+      ""Body"": """",
+      ""DataRow"": ""\u003Ctr\u003E\r\n~Row~\r\n\u003C/tr\u003E"",
+      ""HeaderCell"": ""\u003Cth style=\u0027border: 1px solid #ccc; padding: 4px;\u0027\u003E~HeaderCell~\u003C/th\u003E"",
+      ""Cell"": ""\u003Ctd style=\u0027border: 1px solid #ccc; padding: 4px;\u0027\u003E~Cell~\u003C/td\u003E""
+    }
+  }
+]";
+
+            const string wikiTemplate = @"[
+  {
+    ""ObjectType"": 0,
+    ""Body"": ""= Table: ~ObjectFullName~ =\n\n'''Description:''' ~Description~\n\n'''Columns:'''\n~Columns~\n\n'''Indexes:'''\n~Indexes~\n\n'''Constraints:'''\n~Constraints~\n----"",
+    ""Columns"": {
+      ""Body"": ""{| class=\""wikitable\"" style=\""border: 1px solid #a2a9b1;\""\n! Ord\n! Name\n! Data Type\n! Description\n~ColumnItem~\n|}"",
+      ""ColumnRow"": ""|-\n| ~ColumnOrd~ || <code>~ColumnName~</code> || ~ColumnDataType~ || ~ColumnDescription~""
+    },
+    ""Constraints"": {
+      ""Body"": ""{| class=\""wikitable\"" style=\""border: 1px solid #a2a9b1;\""\n! Constraint Name\n! Type\n! Column\n~ConstraintItem~\n|}"",
+      ""ConstraintRow"": ""|-\n| <code>~ConstraintName~</code> || ~ConstraintType~ || ~ConstraintColumn~""
+    },
+    ""Indexes"": {
+      ""Body"": ""{| class=\""wikitable\"" style=\""border: 1px solid #a2a9b1;\""\n! Index Name\n! Type\n! Columns\n! Unique\n~IndexItem~\n|}"",
+      ""IndexRow"": ""|-\n| <code>~IndexName~</code> || ~IndexType~ || ~IndexColumns~ || ~UniqueIndex~""
+    }
+  },
+  {
+    ""ObjectType"": 1,
+    ""Body"": ""= View: ~ObjectFullName~ =\n\n'''Description:''' ~Description~\n\n'''Columns:'''\n~Columns~\n\n'''Indexes:'''\n~Indexes~\n\n'''Constraints:'''\n~Constraints~\n----"",
+    ""Columns"": {
+      ""Body"": ""{| class=\""wikitable\"" style=\""border: 1px solid #a2a9b1;\""\n! Ord\n! Name\n! Data Type\n! Description\n~ColumnItem~\n|}"",
+      ""ColumnRow"": ""|-\n| ~ColumnOrd~ || <code>~ColumnName~</code> || ~ColumnDataType~ || ~ColumnDescription~""
+    },
+    ""Constraints"": {
+      ""Body"": ""{| class=\""wikitable\"" style=\""border: 1px solid #a2a9b1;\""\n! Constraint Name\n! Type\n! Column\n~ConstraintItem~\n|}"",
+      ""ConstraintRow"": ""|-\n| <code>~ConstraintName~</code> || ~ConstraintType~ || ~ConstraintColumn~""
+    },
+    ""Indexes"": {
+      ""Body"": ""{| class=\""wikitable\"" style=\""border: 1px solid #a2a9b1;\""\n! Index Name\n! Type\n! Columns\n! Unique\n~IndexItem~\n|}"",
+      ""IndexRow"": ""|-\n| <code>~IndexName~</code> || ~IndexType~ || ~IndexColumns~ || ~UniqueIndex~""
+    }
+  },
+  {
+    ""ObjectType"": 2,
+    ""Body"": ""= Function: ~ObjectFullName~ =\n\n'''Description:''' ~Description~\n\n'''Parameters:'''\n~Parameters~\n\n'''SQL Code:'''\n<syntaxhighlight lang=\""sql\"">\n~Definition~\n</syntaxhighlight>\n"",
+    ""Parameters"": {
+      ""Body"": ""{| class=\""wikitable\""\n! Ord\n! Name\n! Data Type\n! Direction\n! Description\n~ParameterItem~\n|}"",
+      ""ParameterRow"": ""|-\n| ~ParameterOrd~ || <code>~ParameterName~</code> || ~ParameterDataType~ || ~ParameterDirection~ || ~ParameterDescription~""
+    }
+  },
+  {
+    ""ObjectType"": 3,
+    ""Body"": ""= Stored Procedure: ~ObjectFullName~ =\n\n'''Description:''' ~Description~\n\n'''Parameters:'''\n~Parameters~\n\n'''SQL Code:'''\n<syntaxhighlight lang=\""sql\"">\n~Definition~\n</syntaxhighlight>\n"",
+    ""Parameters"": {
+      ""Body"": ""{| class=\""wikitable\""\n! Ord\n! Name\n! Data Type\n! Direction\n! Description\n~ParameterItem~\n|}"",
+      ""ParameterRow"": ""|-\n| ~ParameterOrd~ || <code>~ParameterName~</code> || ~ParameterDataType~ || ~ParameterDirection~ || ~ParameterDescription~""
+    }
+  },
+  {
+    ""ObjectType"": 4,
+    ""Body"": ""= Trigger: ~ObjectFullName~ =\n\n'''Description:''' ~Description~\n\n'''Parameters:'''\n~Parameters~\n\n'''SQL Code:'''\n<syntaxhighlight lang=\""sql\"">\n~Definition~\n</syntaxhighlight>\n""
+  },
+  {
+    ""ObjectType"": 5,
+    ""Body"": ""{| class=\""wikitable\""\n! Schema\n! Name\n! Description\n~ObjectItem~\n|}"",
+    ""ObjectLists"": {
+      ""Body"": """",
+      ""ObjectRow"": ""|-\n| ~ObjectSchema~ || <code>~ObjectName~</code> || ~Description~""
+    }
+  },
+  {
+    ""ObjectType"": 6,
+    ""Body"": ""{| class=\""wikitable\""\n! ~Header~\n~Rows~\n|}"",
+    ""DataTable"": {
+      ""Body"": """",
+      ""DataRow"": ""|-\n~Row~"",
+      ""HeaderCell"": ""! ~HeaderCell~"",
+      ""Cell"": ""| ~Cell~""
+    }
+  }
+]";
+
+            bool resetReset = false;
+            if (docTypeToolStripComboBox.Text.Equals("Markdown", StringComparison.CurrentCultureIgnoreCase) &&
+                _activeTemplate?.DocumentType?.Equals("Markdown", StringComparison.CurrentCultureIgnoreCase) == true)
+            {
+                // Reset the active template to the default markdown template
+                resetReset = _activeTemplate.Reset(markdownTemplate);
+            }
+            else if (docTypeToolStripComboBox.Text.Equals("SharePoint", StringComparison.CurrentCultureIgnoreCase) &&
+                            _activeTemplate?.DocumentType?.Equals("SharePoint", StringComparison.CurrentCultureIgnoreCase) == true)
+            {
+                // Reset the active template to the default SharePoint template
+                resetReset = _activeTemplate.Reset(sharePointTemplate);
+            }
+            else if (docTypeToolStripComboBox.Text.Equals("Wiki", StringComparison.CurrentCultureIgnoreCase) &&
+                            _activeTemplate?.DocumentType?.Equals("wiki", StringComparison.CurrentCultureIgnoreCase) == true)
+            {
+                // Reset the active template to the default markdown template
+                resetReset = _activeTemplate.Reset(wikiTemplate);
+            }
+            else
+            {
+                // show a message that the document type is not supported for reset
+                MessageBox.Show("The selected document type is not supported for reset.", "Unsupported Document Type", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            if (resetReset)
+            {
+                MessageBox.Show("Template has been reset to the default.", "Reset Successful", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            else
+            {
+                // Show a message that the reset failed
+                MessageBox.Show("Failed to reset the template.", "Reset Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+
+            //templateTextBox.Text = _templates?.GetTemplate(_documentType, _objectType)?.Body;
+            //templateTextBox.SetSavePoint();
+            //templateTextBox.EmptyUndoBuffer();
         }
 
         /// <summary>
@@ -317,10 +538,7 @@ namespace SQL_Document_Builder.Template
         /// </summary>
         private void SaveTemplate()
         {
-            if (templateTextBox.Modified)
-            {
-                _templates?.UpdateTemplate(_documentType, _objectType, templateTextBox.Text);
-            }
+            _templates?.Save();
             templateTextBox.SetSavePoint();
             templateTextBox.EmptyUndoBuffer();
         }
@@ -348,35 +566,204 @@ namespace SQL_Document_Builder.Template
 
             // Populate DocumentType ToolStripComboBox
             docTypeToolStripComboBox.Items.Clear();
-            foreach (var value in Enum.GetValues(typeof(TemplateItem.DocumentTypeEnums)))
-            {
-                docTypeToolStripComboBox.Items.Add(value);
-            }
-            // Set selected item using DocumentType property
-            docTypeToolStripComboBox.SelectedItem = DocumentType;
-            _documentType = DocumentType;
 
-            // Populate ObjectType ToolStripComboBox
-            objTypeToolStripComboBox.Items.Clear();
-            foreach (var value in Enum.GetValues(typeof(TemplateItem.ObjectTypeEnums)))
+            // list document types in the templates
+            foreach (var template in _templates.TemplateLists)
             {
-                objTypeToolStripComboBox.Items.Add(value);
+                docTypeToolStripComboBox.Items.Add(template.DocumentType);
             }
 
             _init = false;
-            // Set selected item using ObjectType property
-            objTypeToolStripComboBox.SelectedItem = ObjectType;
-            _objectType = ObjectType;
+
+            if (docTypeToolStripComboBox.Items.Count > 0)
+            {
+                docTypeToolStripComboBox.SelectedIndex = 0; // Set default selection to the first item
+            }
         }
 
         /// <summary>
-        /// Handles the Click event of the TriggersToolStripMenuItem control.
+        /// Templates the tree view_ after select.
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
-        private void TriggersToolStripMenuItem_Click(object sender, EventArgs e)
+        private void TemplateTreeView_AfterSelect(object sender, TreeViewEventArgs e)
         {
-            InsertText("~Triggers~");
+            if (e.Node is TemplateNode templateNode)
+            {
+                // Set the template text box with the selected template body
+                templateTextBox.Text = templateNode.Template?.Body ?? string.Empty;
+                templateTextBox.SetSavePoint();
+                templateTextBox.EmptyUndoBuffer();
+                templateTextBox.Visible = true;
+            }
+            else if (e.Node is TemplateElementNode templateElementNode)
+            {
+                // Set the template text box with the selected template element body
+                templateTextBox.Text = templateElementNode.ElementBody;
+                templateTextBox.SetSavePoint();
+                templateTextBox.EmptyUndoBuffer();
+                templateTextBox.Visible = true;
+            }
+            else
+            {
+                // Clear the template text box if no valid node is selected
+                templateTextBox.Text = string.Empty;
+                templateTextBox.Visible = false;
+            }
+            _selectedNode = e.Node;
+
+            Clipboard.SetText(e.Node?.Text);
+
+            // populate the keywords menu items based on the selected template
+            var keywords = e.Node?.Text.ToUpper() switch
+            {
+                "TABLE" =>
+                [
+                    ("~Columns~", "Column definition section"),
+                    ("~Constraints~", "Constraints section"),
+                    ("~Description~", "Object description"),
+                    ("~Indexes~", "Index section"),
+                    ("~ObjectFullName~", "Object full name"),
+                    ("~ObjectName~", "Object name"),
+                    ("~ObjectSchema~", "Object schema"),
+                    ("~ObjectType~", "Object type"),
+                ],
+                "COLUMNS" =>
+                [
+                    ("~ColumnItem~", "Column row"),
+                ],
+                "Column Item" =>
+                [
+                    ("~ColumnDataType~", "Column data type"),
+                    ("~ColumnDescription~", "Column description"),
+                    ("~ColumnName~", "Column name"),
+                    ("~ColumnNullable~", "Column nullable"),
+                    ("~ColumnOrd~", "Column ordinal position"),
+                ],
+                "INDEXES" =>
+                [
+                    ("~IndexItem~", "Index items"),
+                ],
+                "INDEX ITEM" =>
+                [
+                    ("~IndexColumns~", "Index columns"),
+                    ("~IndexName~", "Index name"),
+                    ("~IndexType~", "Index type"),
+                    ("~UniqueIndex~", "Unique index indicator"),
+                ],
+                "CONSTRAINTS" =>
+                [
+                    ("~ConstraintItem~", "Constraint item"),
+                ],
+                "CONSTRAINT ITEM" =>
+                [
+                    ("~ConstraintColumn~", "Constraint column"),
+                    ("~ConstraintName~", "Constraint name"),
+                    ("~ConstraintType~", "Constraint type"),
+                ],
+                "VIEW" =>
+                [
+                    ("~Columns~", "Column definition section"),
+                    ("~Definition~", "Object definition (source code)"),
+                    ("~Description~", "Object description"),
+                    ("~Indexes~", "Index section"),
+                    ("~ObjectFullName~", "Object full name"),
+                    ("~ObjectName~", "Object name"),
+                    ("~ObjectSchema~", "Object schema"),
+                    ("~ObjectType~", "Object type"),
+                ],
+                "FUNCTION" or "STORED PROCEDURE" =>
+                [
+                    ("~Definition~", "Object definition (source code)"),
+                    ("~Description~", "Object description"),
+                    ("~ObjectFullName~", "Object full name"),
+                    ("~ObjectName~", "Object name"),
+                    ("~ObjectSchema~", "Object schema"),
+                    ("~ObjectType~", "Object type"),
+                    ("~Parameters~", "Parameter section"),
+                ],
+                "PARAMETERS" =>
+                [
+                    ("~ParameterItem~", "Parameter items"),
+                ],
+                "PARAMETER ITEM" =>
+                [
+                    ("~ParameterDataType~", "Parameter data type"),
+                    ("~ParameterDescription~", "Parameter description"),
+                    ("~ParameterDirection~", "Parameter direction"),
+                    ("~ParameterOrd~", "Parameter ordinal position"),
+                    ("~ParameterName~", "Parameter name"),
+                ],
+                "TRIGGER" =>
+                [
+                    ("~Definition~", "Object definition (source code)"),
+                    ("~Description~", "Object description"),
+                    ("~ObjectFullName~", "Object full name"),
+                    ("~ObjectName~", "Object name"),
+                    ("~ObjectSchema~", "Object schema"),
+                    ("~ObjectType~", "Object type"),
+                ],
+                "OBJECT LIST" =>
+                [
+                    ("~ObjectItem~", "Object list item"),
+                ],
+                "OBJECT ITEM" =>
+                [
+                    ("~Description~", "Object description"),
+                    ("~ObjectFullName~", "Object full name"),
+                    ("~ObjectName~", "Object name"),
+                    ("~ObjectSchema~", "Object schema"),
+                    ("~ObjectType~", "Object type"),
+                ],
+                "DATA TABLE" =>
+                [
+                    ("~Align~", "Alignment"),
+                    ("~Header~", "Data table header section"),
+                    ("~ObjectFullName~", "Object full name"),
+                    ("~ObjectName~", "Object name"),
+                    ("~ObjectSchema~", "Object schema"),
+                    ("~Rows~", "Data rows sections"),
+                ],
+                "DATA TABLE ROW" =>
+                [
+                    ("~Row~", "Data row"),
+                ],
+                "DATA TABLE HEADER CELL" =>
+                [
+                    ("~HeaderCell~", "Data table header cell"),
+                ],
+                "DATA TABLE CELL" =>
+                [
+                    ("~Cell~", "Table cell"),
+                ],
+                _ => Array.Empty<(string Keyword, string Description)>() // Default case if no specific keywords are defined
+            };
+            PopulateKeywords(keywords);
+        }
+
+        /// <summary>
+        /// Templates the tree view_ before select.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void TemplateTreeView_BeforeSelect(object sender, TreeViewCancelEventArgs e)
+        {
+            // save the current template before changing selection if it has been modified
+            if (templateTextBox.Modified && _selectedNode != null)
+            {
+                if (_selectedNode is TemplateNode templateNode)
+                {
+                    // Set the template text box with the selected template body
+                    templateNode.TemplateBody = templateTextBox.Text;
+                    //_templates.UpdateTemplate(templateNode.Template.DocumentType, templateNode.Template.ObjectType, templateTextBox.Text);
+                }
+                else if (_selectedNode is TemplateElementNode templateElementNode)
+                {
+                    // Set the template text box with the selected template element body
+                    templateElementNode.ElementBody = templateTextBox.Text;
+                    //_templates.UpdateTemplateElement(templateElementNode.Template, templateElementNode.ElementType, templateTextBox.Text);
+                }
+            }
         }
 
         /// <summary>
@@ -390,27 +777,37 @@ namespace SQL_Document_Builder.Template
         }
 
         /// <summary>
-        /// Handles the Click event of the ResetToDefaultToolStripMenuItem control:
-        /// Resets the template to the default settings.
+        /// Adds the document type tool strip menu item_ click.
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
-        private void ResetToDefaultToolStripMenuItem_Click(object sender, EventArgs e)
+        private void AddDocumentTypeToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            _init = true;
-            _templates.Reset();
+            // input the new document type name
+            string newDocumentType = Common.InputBox("Enter the new document type name:", "Add Document Type", string.Empty);
+            // Validate the new document type name
+            if (string.IsNullOrWhiteSpace(newDocumentType))
+            {
+                return;
+            }
+            // the length of new document type name should be between 3 and 25 characters
+            if (newDocumentType.Length < 3 || newDocumentType.Length > 25)
+            {
+                MessageBox.Show("The document type name must be between 3 and 25 characters long.", "Invalid Document Type Name", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            // Check if the document type already exists
+            if (_templates.TemplateLists.Any(t => t.DocumentType.Equals(newDocumentType, StringComparison.OrdinalIgnoreCase)))
+            {
+                MessageBox.Show("The document type already exists.", "Document Type Exists", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            // Add the new document type to the templates
+            _templates.AddDocumentType(newDocumentType);
 
-            // get the selected document type and object type using Enum.TryParse
-            if (Enum.TryParse(docTypeToolStripComboBox.Text, out TemplateItem.DocumentTypeEnums docType))
-                _documentType = docType;
-            if (Enum.TryParse(objTypeToolStripComboBox.Text, out TemplateItem.ObjectTypeEnums objType))
-                _objectType = objType;
-
-            templateTextBox.Text = _templates?.GetTemplate(_documentType, _objectType)?.Body;
-            templateTextBox.SetSavePoint();
-            templateTextBox.EmptyUndoBuffer();
-
-            //PopulateTemplateTextBox();
+            // add the new document type to the combo box
+            docTypeToolStripComboBox.Items.Add(newDocumentType);
+            docTypeToolStripComboBox.SelectedItem = newDocumentType; // Select the newly added document type
         }
     }
 }

@@ -123,7 +123,7 @@ namespace SQL_Document_Builder
                     string tableName = dr.Name;
                     string description = await DatabaseHelper.GetTableDescriptionAsync(dr, connectionString);
                     AppendLine("|-");
-                    AppendLine($"| {tableSchema} || <code>{tableName}</code> || {description}");
+                    AppendLine($"| {tableSchema} || [[{tableSchema}.{tableName}|{tableName}]] || {description}");
                 }
                 AppendLine("|}");
             }
