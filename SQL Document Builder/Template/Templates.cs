@@ -80,6 +80,10 @@ namespace SQL_Document_Builder.Template
       ""HeaderCell"": ""~HeaderCell~"",
       ""Cell"": ""~Cell~""
     }
+  },
+  {
+    ""ObjectType"": 7,
+    ""Body"": ""# Synonym: \u0060~ObjectFullName~\u0060\r\n\r\n\u003E ~Description~\r\n\r\n### Base Object Name: ~BaseObjectName~\r\n### Base Object Type: ~BaseObjectType~\r\n""
   }
 ]";
 
@@ -149,6 +153,10 @@ namespace SQL_Document_Builder.Template
       ""HeaderCell"": ""\u003Cth style=\u0027border: 1px solid #ccc; padding: 4px;\u0027\u003E~HeaderCell~\u003C/th\u003E"",
       ""Cell"": ""\u003Ctd style=\u0027border: 1px solid #ccc; padding: 4px;\u0027\u003E~Cell~\u003C/td\u003E""
     }
+  },
+  {
+    ""ObjectType"": 7,
+    ""Body"": ""\u003Ch1\u003ESynonym: \u003Ccode\u003E~ObjectFullName~\u003C/code\u003E\u003C/h1\u003E\r\n\r\n\u003Cblockquote\u003E~Description~\u003C/blockquote\u003E\r\n\r\n\u003Ch3\u003EBase Object Name: ~BaseObjectName~\u003C/h3\u003E\r\n\u003Ch3\u003EBase Object Type: ~BaseObjectType~\u003C/h3\u003E\r\n""
   }
 ]";
 
@@ -222,6 +230,10 @@ namespace SQL_Document_Builder.Template
       ""HeaderCell"": ""! ~HeaderCell~"",
       ""Cell"": ""| ~Cell~""
     }
+  },
+  {
+    ""ObjectType"": 7,
+    ""Body"": ""= Synonym: {{code|~ObjectFullName~}} =\r\n\r\n\u003E ~Description~\r\n\r\n=== Base Object Name: ~BaseObjectName~ ===\r\n=== Base Object Type: ~BaseObjectType~ ===\r\n""
   }
 ]";
 

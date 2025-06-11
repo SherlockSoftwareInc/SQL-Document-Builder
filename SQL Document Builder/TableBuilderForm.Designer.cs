@@ -468,7 +468,7 @@
             // 
             objectTypeComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             objectTypeComboBox.FormattingEnabled = true;
-            objectTypeComboBox.Items.AddRange(new object[] { "Table", "View", "Stored Procedure", "Function", "Trigger" });
+            objectTypeComboBox.Items.AddRange(new object[] { "Table", "View", "Stored Procedure", "Function", "Trigger", "Synonym" });
             objectTypeComboBox.Location = new System.Drawing.Point(3, 21);
             objectTypeComboBox.Name = "objectTypeComboBox";
             objectTypeComboBox.Size = new System.Drawing.Size(168, 23);

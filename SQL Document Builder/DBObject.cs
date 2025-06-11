@@ -109,6 +109,7 @@ namespace SQL_Document_Builder
                 ObjectTypeEnums.StoredProcedure => "PROCEDURE",
                 ObjectTypeEnums.Function => "FUNCTION",
                 ObjectTypeEnums.Trigger => "TRIGGER",
+                ObjectTypeEnums.Synonym => "Synonym",
                 _ => throw new InvalidOperationException("Unsupported object type for description update.")
             };
 
@@ -203,6 +204,7 @@ END;";
                     ObjectTypeEnums.StoredProcedure => "PROCEDURE",
                     ObjectTypeEnums.Function => "FUNCTION",
                     ObjectTypeEnums.Trigger => "TRIGGER",
+                    ObjectTypeEnums.Synonym => "Synonym",
                     _ => throw new InvalidOperationException("Unsupported object type for description update.")
                 };
 
@@ -523,8 +525,42 @@ WHERE TABLE_SCHEMA = N'{objectName.Schema}'
                 ObjectTypeEnums.Table or ObjectTypeEnums.View => await OpenTableAsync(),
                 ObjectTypeEnums.StoredProcedure or ObjectTypeEnums.Function => await OpenFunctionAsync(),
                 ObjectTypeEnums.Trigger => await OpenTriggerAsync(),
+                ObjectTypeEnums.Synonym => await OpenSynonymAsync(),
                 _ => false,
             };
+        }
+
+        /// <summary>
+        /// Opens the synonym async.
+        /// </summary>
+        /// <returns>A Task.</returns>
+        private async Task<bool> OpenSynonymAsync()
+        {
+            // Get the synonym's base object name and description
+            // 1. Get the synonym's base object (target object) using sys.synonyms
+            // 2. Optionally, get the description from extended properties
+
+            if (ObjectName == null || ObjectName.IsEmpty() || string.IsNullOrEmpty(ConnectionString))
+                return false;
+
+            // Query to get the base object name for the synonym
+            string sql = $@"
+SELECT s.base_object_name
+FROM sys.synonyms s
+INNER JOIN sys.schemas sch ON s.schema_id = sch.schema_id
+WHERE sch.name = N'{ObjectName.Schema}' AND s.name = N'{ObjectName.Name}'";
+
+            var dt = await DatabaseHelper.GetDataTableAsync(sql, ConnectionString);
+            if (dt == null || dt.Rows.Count == 0)
+                return false;
+
+            // Set the Definition property to the base object name
+            Definition = dt.Rows[0]["base_object_name"]?.ToString() ?? string.Empty;
+
+            // Get the description (if any) from extended properties
+            Description = await DatabaseHelper.GetTableDescriptionAsync(ObjectName, ConnectionString);
+
+            return true;
         }
 
         /// <summary>
@@ -546,6 +582,11 @@ WHERE TABLE_SCHEMA = N'{objectName.Schema}'
         /// Gets or sets the function information.
         /// </summary>
         internal FunctionInfo? FunctionInformation { get; set; }
+
+        /// <summary>
+        /// Gets or sets the synonym information.
+        /// </summary>
+        internal SynonymInfo? SynonymInformation { get; set; }
 
         /// <summary>
         /// Opens the object info.
@@ -578,6 +619,11 @@ WHERE TABLE_SCHEMA = N'{objectName.Schema}'
                 case ObjectTypeEnums.Trigger:
                     TriggerInfomation = new TriggerInfo();
                     await TriggerInfomation.OpenAsync(ObjectName, ConnectionString);
+                    break;
+
+                case ObjectTypeEnums.Synonym:
+                    SynonymInformation = new SynonymInfo();
+                    await SynonymInformation.OpenAsync(ObjectName, ConnectionString);
                     break;
             }
         }

@@ -53,9 +53,23 @@ namespace SQL_Document_Builder.Template
                     PopulateDataTableRowNodes(templateItem);
                     break;
 
+                case TemplateItem.ObjectTypeEnums.Synonym:
+                    Text = "Synonym";
+                    PopulateSynonymNodes(templateItem);
+                    break;
+
                 default:
                     throw new ArgumentOutOfRangeException(nameof(templateItem.ObjectType), "Unknown template object type.");
             }
+        }
+
+        /// <summary>
+        /// Populates the synonym nodes.
+        /// </summary>
+        /// <param name="templateItem">The template item.</param>
+        private void PopulateSynonymNodes(TemplateItem templateItem)
+        {
+            //throw new NotImplementedException();
         }
 
         /// <summary>
@@ -87,6 +101,7 @@ namespace SQL_Document_Builder.Template
                 TemplateItem.ObjectTypeEnums.Trigger => "Trigger",
                 TemplateItem.ObjectTypeEnums.ObjectList => "Object List",
                 TemplateItem.ObjectTypeEnums.DataTable => "Data Table",
+                TemplateItem.ObjectTypeEnums.Synonym => "Synonym",
                 _ => base.ToString(),
             };
         }
@@ -154,7 +169,7 @@ namespace SQL_Document_Builder.Template
         /// <param name="templateItem">The template item.</param>
         private void PopulateTriggerNodes(TemplateItem templateItem)
         {
-            this.Nodes.Add(new TemplateElementNode(templateItem, TemplateElementNode.TemplateElementType.Triggers));
+            //this.Nodes.Add(new TemplateElementNode(templateItem, TemplateElementNode.TemplateElementType.Triggers));
         }
 
         /// <summary>

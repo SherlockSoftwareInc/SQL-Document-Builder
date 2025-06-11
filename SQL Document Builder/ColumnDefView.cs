@@ -317,6 +317,12 @@ GO
                 // change the tab page text to "Trigger"
                 tabControl1.TabPages[0].Text = "Trigger";
             }
+            else if (_dbObject.ObjectType == ObjectName.ObjectTypeEnums.Synonym)
+            {
+                objectPropertyGrid.SelectedObject = _dbObject.SynonymInformation;
+                // change the tab page text to "Synonym"
+                tabControl1.TabPages[0].Text = "Synonym";
+            }
 
             //tableDescTextBox.Visible = true;
             tableDescTextBox.Modified = false;
@@ -328,6 +334,7 @@ GO
                 ObjectName.ObjectTypeEnums.StoredProcedure => "Description of the procedure:",
                 ObjectName.ObjectTypeEnums.Function => "Description of the function:",
                 ObjectName.ObjectTypeEnums.Trigger => "Description of the trigger:",
+                ObjectName.ObjectTypeEnums.Synonym => "Description of the synonym",
                 _ => "Description:"
             };
         }

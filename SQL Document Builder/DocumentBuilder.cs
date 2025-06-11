@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlTypes;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -41,10 +40,12 @@ namespace SQL_Document_Builder
                     string tableSchema = dr.Schema;
                     string tableName = dr.Name;
                     string description = await DatabaseHelper.GetTableDescriptionAsync(dr, connectionString);
+                    var objectName = new ObjectName(dr.ObjectType, dr.Schema, dr.Name);
 
                     string objItemDoc = objectItemTemplate
                         .Replace("~ObjectName~", tableName)
                         .Replace("~ObjectSchema~", tableSchema)
+                        .Replace("~ObjectFullName~", objectName.FullName)
                         .Replace("~ObjectType~", ObjectTypeToString(dr.ObjectType))
                         .Replace("~Description~", description);
 
@@ -233,6 +234,13 @@ namespace SQL_Document_Builder
                     parameterDoc = parameterDoc.Replace("~ParameterItem~", parametersBody);
                 }
                 doc = doc.Replace("~Parameters~", parameterDoc);
+            }
+
+            // synonyms
+            if (objectName.ObjectType == ObjectName.ObjectTypeEnums.Synonym)
+            {
+                doc = doc.Replace("~BaseObjectName~", tableView.SynonymInformation?.BaseObjectName);
+                doc = doc.Replace("~BaseObjectType~", tableView.SynonymInformation?.BaseObjectType);
             }
 
             //doc = doc.Replace("~Triggers~", objectName.Name);
@@ -451,6 +459,7 @@ namespace SQL_Document_Builder
                 ObjectName.ObjectTypeEnums.Function => "Function",
                 ObjectName.ObjectTypeEnums.StoredProcedure => "Stored Procedure",
                 ObjectName.ObjectTypeEnums.Trigger => "Trigger",
+                ObjectName.ObjectTypeEnums.Synonym => "Synonym",
                 _ => "Unknown"
             };
         }

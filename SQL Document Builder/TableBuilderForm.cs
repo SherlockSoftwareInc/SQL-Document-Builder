@@ -1789,6 +1789,11 @@ namespace SQL_Document_Builder
                         EnableTableValue(false);
                         break;
 
+                    case 5:
+                        _tables = await DatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.Synonym, _connectionString);
+                        EnableTableValue(false);
+                        break;
+
                     default:
                         break;
                 }
@@ -3539,6 +3544,7 @@ namespace SQL_Document_Builder
                     ObjectTypeEnums.StoredProcedure => template.TemplateLists.FirstOrDefault(t => t.ObjectType == TemplateItem.ObjectTypeEnums.StoredProcedure),
                     ObjectTypeEnums.Function => template.TemplateLists.FirstOrDefault(t => t.ObjectType == TemplateItem.ObjectTypeEnums.Function),
                     ObjectTypeEnums.Trigger => template.TemplateLists.FirstOrDefault(t => t.ObjectType == TemplateItem.ObjectTypeEnums.Trigger),
+                    ObjectTypeEnums.Synonym => template.TemplateLists.FirstOrDefault(t => t.ObjectType == TemplateItem.ObjectTypeEnums.Synonym),
                     _ => null
                 };
 

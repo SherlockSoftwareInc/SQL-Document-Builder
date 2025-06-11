@@ -79,7 +79,7 @@ namespace SQL_Document_Builder.Template
             }
 
             // initialize the templates if they are not loaded
-            if (_templates.Count != 7)
+            if (_templates.Count != 8)
             {
                 // if table template is not loaded, initialize it
                 if (_templates.All(template => template.ObjectType != TemplateItem.ObjectTypeEnums.Table))
@@ -121,6 +121,12 @@ namespace SQL_Document_Builder.Template
                 if (_templates.All(template => template.ObjectType != TemplateItem.ObjectTypeEnums.DataTable))
                 {
                     _templates.Add(new TemplateItem(TemplateItem.ObjectTypeEnums.DataTable));
+                }
+
+                // if synonym template is not loaded, initialize it
+                if (_templates.All(template => template.ObjectType != TemplateItem.ObjectTypeEnums.Synonym))
+                {
+                    _templates.Add(new TemplateItem(TemplateItem.ObjectTypeEnums.Synonym));
                 }
             }
             return true; // Successfully loaded templates
@@ -174,20 +180,21 @@ namespace SQL_Document_Builder.Template
                 _templates.Add(new TemplateItem(TemplateItem.ObjectTypeEnums.Trigger));
                 _templates.Add(new TemplateItem(TemplateItem.ObjectTypeEnums.ObjectList));
                 _templates.Add(new TemplateItem(TemplateItem.ObjectTypeEnums.DataTable));
+                _templates.Add(new TemplateItem(TemplateItem.ObjectTypeEnums.Synonym));
             }
         }
 
         /// <summary>
         /// Resets the.
         /// </summary>
-        /// <param name="markdownTemplate">The markdown template.</param>
-        internal bool Reset(string markdownTemplate)
+        /// <param name="templateJson">The json string of the template.</param>
+        internal bool Reset(string templateJson)
         {
             // Load the JSON file into TemplateLists
             TemplateLists.Clear();
             try
             {
-                var templatesFromJson = System.Text.Json.JsonSerializer.Deserialize<List<TemplateItem>>(markdownTemplate);
+                var templatesFromJson = System.Text.Json.JsonSerializer.Deserialize<List<TemplateItem>>(templateJson);
                 if (templatesFromJson != null)
                 {
                     _templates.AddRange(templatesFromJson);

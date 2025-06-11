@@ -518,6 +518,14 @@ namespace SQL_Document_Builder.Template
                 [
                     ("~Cell~", "Table cell"),
                 ],
+                "SYNONYM" =>
+                [
+                    ("~BaseObjectName~", "Base object name"),
+                    ("~BaseObjectType~", "Base object type"),
+                    ("~ObjectFullName~", "Object full name"),
+                    ("~ObjectName~", "Object name"),
+                    ("~ObjectSchema~", "Object schema"),
+                ],
                 _ => Array.Empty<(string Keyword, string Description)>() // Default case if no specific keywords are defined
             };
             PopulateKeywords(keywords);

@@ -20,7 +20,8 @@
             StoredProcedure,
             Trigger,
             ObjectList,
-            DataTable
+            DataTable,
+            Synonym
         }
 
         /// <summary>

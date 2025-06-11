@@ -55,7 +55,7 @@ namespace SQL_Document_Builder.Template
                         TemplateItem.ObjectTypeEnums.Trigger => "Trigger",
                         TemplateItem.ObjectTypeEnums.ObjectList => "Object List",
                         TemplateItem.ObjectTypeEnums.DataTable => "Data Table",
-
+                        TemplateItem.ObjectTypeEnums.Synonym => "Synonym",
                         _ => throw new ArgumentOutOfRangeException(nameof(templateItem.ObjectType), "Unknown template object type.")
                     },
                     ImageIndex = 0,

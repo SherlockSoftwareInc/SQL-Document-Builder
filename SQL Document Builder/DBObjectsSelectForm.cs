@@ -196,14 +196,14 @@ namespace SQL_Document_Builder
                     "View" => ObjectTypeEnums.View,
                     "Stored Procedure" => ObjectTypeEnums.StoredProcedure,
                     "Function" => ObjectTypeEnums.Function,
+                    "Trigger" => ObjectTypeEnums.Trigger,
+                    "Synonym" => ObjectTypeEnums.Synonym,
                     _ => ObjectTypeEnums.None
                 };
 
                 // If no valid object type is selected, clear the selectable objects and return
                 if (selectedObjectType == ObjectTypeEnums.None)
                 {
-                    //_selectableObjects = null;
-                    //PopulateSelectableObjects();
                     return;
                 }
 

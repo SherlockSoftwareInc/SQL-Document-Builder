@@ -40,8 +40,52 @@ namespace SQL_Document_Builder
                 ObjectName.ObjectTypeEnums.StoredProcedure => await GetCreateStoredProcedureScriptAsync(dbObject, connectionString),
                 ObjectName.ObjectTypeEnums.Function => await GetCreateFunctionScriptAsync(dbObject, connectionString),
                 ObjectName.ObjectTypeEnums.Trigger => await GetCreateTriggerScriptAsync(dbObject, connectionString),
+                ObjectName.ObjectTypeEnums.Synonym => await GetCreateSynonymScriptAsync(dbObject, connectionString),
                 _ => throw new NotSupportedException($"The object type '{dbObject.ObjectType}' is not supported.")
             };
+        }
+
+        /// <summary>
+        /// Gets the create synonym script async.
+        /// </summary>
+        /// <param name="dbObject">The db object.</param>
+        /// <param name="connectionString">The connection string.</param>
+        /// <returns>A Task.</returns>
+        private static async Task<string?> GetCreateSynonymScriptAsync(ObjectName dbObject, string connectionString)
+        {
+            StringBuilder createScript = new();
+
+            // Add the header
+            createScript.AppendLine($"/****** Object:  Synonym {dbObject.FullName} ******/");
+
+            if (Properties.Settings.Default.AddDropStatement)
+            {
+                // Add drop synonym statement
+                createScript.AppendLine($"IF OBJECT_ID(N'{dbObject.FullName}', 'SN') IS NOT NULL");
+                createScript.AppendLine($"\tDROP SYNONYM {dbObject.FullName};");
+                createScript.AppendLine("GO");
+            }
+
+            // Query to get the base object name for the synonym
+            string sql = $@"
+SELECT s.base_object_name
+FROM sys.synonyms s
+INNER JOIN sys.schemas sch ON s.schema_id = sch.schema_id
+WHERE sch.name = N'{dbObject.Schema}' AND s.name = N'{dbObject.Name}'";
+
+            var dt = await DatabaseHelper.GetDataTableAsync(sql, connectionString);
+            if (dt == null || dt.Rows.Count == 0)
+                return string.Empty;
+
+            string baseObjectName = dt.Rows[0]["base_object_name"]?.ToString() ?? string.Empty;
+            if (string.IsNullOrEmpty(baseObjectName))
+                return string.Empty;
+
+            // Add the CREATE SYNONYM statement
+            createScript.AppendLine($"CREATE SYNONYM {dbObject.FullName} FOR {baseObjectName};");
+            createScript.AppendLine("GO");
+
+            return createScript.ToString();
         }
 
         /// <summary>

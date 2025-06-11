@@ -179,6 +179,7 @@ namespace SQL_Document_Builder
                     ObjectTypeEnums.StoredProcedure => await GetStoredProceduresAsync(connectionString),
                     ObjectTypeEnums.Function => await GetFunctionsAsync(connectionString),
                     ObjectTypeEnums.Trigger => await GetTriggersAsync(connectionString),
+                    ObjectTypeEnums.Synonym => await GetSynonymsAsync(connectionString),
                     _ => throw new NotSupportedException($"Unsupported object type: {tableType}.")
                 };
             }
@@ -188,6 +189,40 @@ namespace SQL_Document_Builder
                 MessageBox.Show($"Error retrieving database objects: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return []; // Return an empty list in case of an error
             }
+        }
+
+        /// <summary>
+        /// Gets the synonyms async.
+        /// </summary>
+        /// <param name="connectionString">The connection string.</param>
+        /// <returns>A Task.</returns>
+        private static async Task<List<ObjectName>> GetSynonymsAsync(string connectionString)
+        {
+            var objects = new List<ObjectName>();
+
+            var query = @"
+SELECT 
+    sch.name AS SchemaName, 
+    syn.name AS SynonymName
+FROM sys.synonyms syn
+INNER JOIN sys.schemas sch ON syn.schema_id = sch.schema_id
+ORDER BY sch.name, syn.name;";
+
+            using var connection = new SqlConnection(connectionString);
+            using var command = new SqlCommand(query, connection)
+            {
+                CommandType = CommandType.Text,
+                CommandTimeout = 50000
+            };
+            await connection.OpenAsync();
+
+            using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                objects.Add(new ObjectName(ObjectTypeEnums.Synonym, reader["SchemaName"].ToString(), reader["SynonymName"].ToString()));
+            }
+
+            return objects;
         }
 
         /// <summary>
@@ -460,6 +495,7 @@ ORDER BY s.name, p.name;";
                 ObjectTypeEnums.StoredProcedure => "procedure",
                 ObjectTypeEnums.Function => "function",
                 ObjectTypeEnums.Trigger => "trigger",
+                ObjectTypeEnums.Synonym => "synonym",
                 _ => throw new NotSupportedException($"Unsupported object type: {objectName.ObjectType}.")
             };
 

@@ -32,6 +32,7 @@ namespace SQL_Document_Builder
                     ObjectTypeEnums.StoredProcedure => "PROCEDURE",
                     ObjectTypeEnums.Function => "FUNCTION",
                     ObjectTypeEnums.Trigger => "TRIGGER",
+                    ObjectTypeEnums.Synonym => "SYNONYM",
                     _ => throw new InvalidOperationException("Unsupported object type for description update.")
                 };
 
