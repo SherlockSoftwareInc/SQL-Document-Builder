@@ -2756,12 +2756,6 @@ namespace SQL_Document_Builder
         {
             WindowState = FormWindowState.Maximized;
 
-            // initial the templates
-            //var templates = new Templates();
-            //templates.InitializeTemplates();
-            //templates.Load();
-            //templates.Save();
-
             // INIT HOTKEYS
             InitHotkeys();
 

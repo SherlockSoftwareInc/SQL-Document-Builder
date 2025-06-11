@@ -10,6 +10,221 @@ namespace SQL_Document_Builder.Template
     /// </summary>
     internal class Templates
     {
+        private const string markdownTemplate = @"[
+  {
+    ""ObjectType"": 0,
+    ""Body"": ""# Table: \u0060~ObjectFullName~\u0060\r\n\r\n\u003E ~Description~\r\n\r\n**Columns:**\r\n~Columns~\r\n\r\n**Indexes:**\r\n~Indexes~\r\n\r\n**Constraints:**\r\n~Constraints~\r\n---\r\n"",
+    ""Columns"": {
+      ""Body"": ""| Ord | Name | Data Type | Description |\r\n|--------|------|-----------|-------------|\r\n~ColumnItem~"",
+      ""ColumnRow"": ""| ~ColumnOrd~ | \u0060~ColumnName~\u0060 | ~ColumnDataType~ | ~ColumnDescription~ |""
+    },
+    ""Constraints"": {
+      ""Body"": ""| Constraint Name | Type | Column |\r\n|------------------|------|-------------|\r\n~ConstraintItem~"",
+      ""ConstraintRow"": ""| \u0060~ConstraintName~\u0060 | ~ConstraintType~ | ~ConstraintColumn~ |""
+    },
+    ""Indexes"": {
+      ""Body"": ""| Index Name | Type | Columns | Unique |\r\n|------------|------|---------|--------|\r\n~IndexItem~"",
+      ""IndexRow"": ""| \u0060~IndexName~\u0060 | ~IndexType~ | ~IndexColumns~ | ~UniqueIndex~ |""
+    }
+  },
+  {
+    ""ObjectType"": 1,
+    ""Body"": ""# View: \u0060~ObjectFullName~\u0060\r\n\r\n\u003E ~Description~\r\n\r\n**Columns:**\r\n~Columns~\r\n\r\n**Indexes:**\r\n~Indexes~\r\n\r\n**SQL Definition:**\r\n\u0060\u0060\u0060sql\r\n~Definition~\r\n\u0060\u0060\u0060"",
+    ""Columns"": {
+      ""Body"": ""| Ord | Name | Data Type | Description |\r\n|--------|------|-----------|-------------|\r\n~ColumnItem~"",
+      ""ColumnRow"": ""| ~ColumnOrd~ | \u0060~ColumnName~\u0060 | ~ColumnDataType~ | ~ColumnDescription~ |""
+    },
+    ""Indexes"": {
+      ""Body"": ""| Index Name | Type | Columns | Unique |\r\n|------------|------|---------|--------|\r\n~IndexItem~"",
+      ""IndexRow"": ""| \u0060~IndexName~\u0060 | ~IndexType~ | ~IndexColumns~ | ~UniqueIndex~ |""
+    }
+  },
+  {
+    ""ObjectType"": 2,
+    ""Body"": ""# Function: \u0060~ObjectFullName~\u0060\r\n\r\n\u003E ~Description~\r\n\r\n## Parameters\r\n~Parameters~\r\n\r\n## SQL Code\r\n\u0060\u0060\u0060sql\r\n~Definition~\r\n\u0060\u0060\u0060\r\n"",
+    ""Parameters"": {
+      ""Body"": ""| Ord | Name | Data Type | Direction | Description |\r\n|-----|------|-----------|-----------|-------------|\r\n~ParameterItem~"",
+      ""ParameterRow"": ""| ~ParameterOrd~ | \u0060~ParameterName~\u0060 | ~ParameterDataType~ | ~ParameterDirection~ | ~ParameterDescription~ |""
+    }
+  },
+  {
+    ""ObjectType"": 3,
+    ""Body"": ""# Stored Procedure: \u0060~ObjectFullName~\u0060\r\n\r\n\u003E ~Description~\r\n\r\n## Parameters\r\n~Parameters~\r\n\r\n## SQL Code\r\n\u0060\u0060\u0060sql\r\n~Definition~\r\n\u0060\u0060\u0060\r\n"",
+    ""Parameters"": {
+      ""Body"": ""| Ord | Name | Data Type | Direction | Description |\r\n|-----|------|-----------|-----------|-------------|\r\n~ParameterItem~"",
+      ""ParameterRow"": ""| ~ParameterOrd~ | \u0060~ParameterName~\u0060 | ~ParameterDataType~ | ~ParameterDirection~ | ~ParameterDescription~ |""
+    }
+  },
+  {
+    ""ObjectType"": 4,
+    ""Body"": ""# Trigger: \u0060~ObjectFullName~\u0060\r\n\r\n\u003E ~Description~\r\n\r\n## Parameters\r\n~Parameters~\r\n\r\n## Trigger SQL Code\r\n\u0060\u0060\u0060sql\r\n~Definition~\r\n\u0060\u0060\u0060\r\n"",
+    ""Parameters"": {
+      ""Body"": """",
+      ""ParameterRow"": """"
+    }
+  },
+  {
+    ""ObjectType"": 5,
+    ""Body"": ""| Schema | Name | Description |\r\n|--------|------|-------------|\r\n~ObjectItem~"",
+    ""ObjectLists"": {
+      ""Body"": """",
+      ""ObjectRow"": ""| ~ObjectSchema~ | \u0060~ObjectName~\u0060 | ~Description~ |""
+    }
+  },
+  {
+    ""ObjectType"": 6,
+    ""Body"": ""| ~Header~ |\r\n| ~Align~ |\r\n~Rows~"",
+    ""DataTable"": {
+      ""Body"": """",
+      ""DataRow"": ""| ~Row~ |"",
+      ""HeaderCell"": ""~HeaderCell~"",
+      ""Cell"": ""~Cell~""
+    }
+  }
+]";
+
+        private const string sharePointTemplate = @"[
+  {
+    ""ObjectType"": 0,
+    ""Body"": ""\u003Ch1\u003ETABLE NAME: ~ObjectFullName~\u003C/h1\u003E\r\n\u003Cp\u003E~Description~\u003C/p\u003E\r\n\u003Cdiv\u003E\r\n~Columns~\r\n\u003C/div\u003E\r\n\u003Cdiv\u003E\r\n    \u003Ch2\u003EIndexes:\u003C/h2\u003E\r\n~Indexes~\r\n\u003C/div\u003E\r\n\u003Cdiv\u003E\r\n    \u003Ch2\u003EConstraints:\u003C/h2\u003E\r\n~Constraints~\r\n\u003C/div\u003E\r\n\u003Chr/\u003E\r\n\u003Cdiv\u003EBack to [[Home]]\u003C/div\u003E"",
+    ""Columns"": {
+      ""Body"": ""\u003Cdiv\u003E\r\n\u003Ctable class=\u0022wikitable\u0022 style=\u0022margin: 1em 0px; border: 1px solid #a2a9b1; color: #202122; font-family: sans-serif; font-size: 14px; background-color: #f8f9fa;\u0022\u003E\r\n\u003Ctbody\u003E\r\n    \u003Ctr\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EOrd\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EName\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EData Type\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003ENullable\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EDescription\u003C/th\u003E\r\n    \u003C/tr\u003E\r\n~ColumnItem~\r\n\u003C/tbody\u003E\r\n\u003C/table\u003E\r\n\u003C/div\u003E\r\n"",
+      ""ColumnRow"": ""    \u003Ctr\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~ColumnOrd~\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~ColumnName~\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~ColumnDataType~\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~ColumnNullable~\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~ColumnDescription~\u003C/td\u003E\r\n    \u003C/tr\u003E\r\n""
+    },
+    ""Constraints"": {
+      ""Body"": ""\u003Ctable class=\u0022wikitable\u0022 style=\u0022margin: 1em 0px; border: 1px solid #a2a9b1; color: #202122; font-family: sans-serif; font-size: 14px; background-color: #f8f9fa;\u0022\u003E\r\n\u003Ctbody\u003E\r\n    \u003Ctr\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EConstraint Name\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EType\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EColumn(s)\u003C/th\u003E\r\n    \u003C/tr\u003E\r\n~ConstraintItem~\r\n\u003C/tbody\u003E\r\n\u003C/table\u003E\r\n"",
+      ""ConstraintRow"": ""    \u003Ctr\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~ConstraintName~\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~ConstraintType~\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~ConstraintColumn~\u003C/td\u003E\r\n    \u003C/tr\u003E\r\n""
+    },
+    ""Indexes"": {
+      ""Body"": ""\u003Ctable class=\u0022wikitable\u0022 style=\u0022margin: 1em 0px; border: 1px solid #a2a9b1; color: #202122; font-family: sans-serif; font-size: 14px; background-color: #f8f9fa;\u0022\u003E\r\n\u003Ctbody\u003E\r\n    \u003Ctr\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EIndex Name\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EType\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EColumns\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EUnique\u003C/th\u003E\r\n    \u003C/tr\u003E\r\n~IndexItem~\r\n\u003C/tbody\u003E\r\n\u003C/table\u003E\r\n"",
+      ""IndexRow"": ""    \u003Ctr\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~IndexName~\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~IndexType~\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~IndexColumns~\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~UniqueIndex~\u003C/td\u003E\r\n    \u003C/tr\u003E\r\n""
+    }
+  },
+  {
+    ""ObjectType"": 1,
+    ""Body"": ""\u003Ch1\u003EVIEW NAME: ~ObjectFullName~\u003C/h1\u003E\r\n\u003Cp\u003E~Description~\u003C/p\u003E\r\n\u003Cdiv\u003E\r\n~Columns~\r\n\u003C/div\u003E\r\n\u003Cdiv\u003E\r\n    \u003Ch2\u003EIndexes:\u003C/h2\u003E\r\n~Indexes~\r\n\u003C/div\u003E\r\n\u003Cdiv\u003E\r\n    \u003Ch2\u003ECode to build the view\u003C/h2\u003E\r\n\u003Cpre style=\u0022white-space: pre-wrap;\u0022\u003E\r\n~Definition~\r\n\u003C/pre\u003E\r\n\u003C/div\u003E\r\n\u003Chr/\u003E\r\n\u003Cdiv\u003EBack to [[Home]]\u003C/div\u003E"",
+    ""Columns"": {
+      ""Body"": ""\u003Cdiv\u003E\r\n\u003Ctable class=\u0022wikitable\u0022 style=\u0022margin: 1em 0px; border: 1px solid #a2a9b1; color: #202122; font-family: sans-serif; font-size: 14px; background-color: #f8f9fa;\u0022\u003E\r\n\u003Ctbody\u003E\r\n    \u003Ctr\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EOrd\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EName\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EData Type\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003ENullable\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EDescription\u003C/th\u003E\r\n    \u003C/tr\u003E\r\n~ColumnItem~\r\n\u003C/tbody\u003E\r\n\u003C/table\u003E\r\n\u003C/div\u003E\r\n"",
+      ""ColumnRow"": ""    \u003Ctr\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~ColumnOrd~\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~ColumnName~\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~ColumnDataType~\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~ColumnNullable~\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~ColumnDescription~\u003C/td\u003E\r\n    \u003C/tr\u003E\r\n""
+    },
+    ""Indexes"": {
+      ""Body"": ""\u003Ctable class=\u0022wikitable\u0022 style=\u0022margin: 1em 0px; border: 1px solid #a2a9b1; color: #202122; font-family: sans-serif; font-size: 14px; background-color: #f8f9fa;\u0022\u003E\r\n\u003Ctbody\u003E\r\n    \u003Ctr\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EIndex Name\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EType\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EColumns\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EUnique\u003C/th\u003E\r\n    \u003C/tr\u003E\r\n~IndexItem~\r\n\u003C/tbody\u003E\r\n\u003C/table\u003E\r\n"",
+      ""IndexRow"": ""    \u003Ctr\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~IndexName~\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~IndexType~\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~IndexColumns~\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~UniqueIndex~\u003C/td\u003E\r\n    \u003C/tr\u003E\r\n""
+    }
+  },
+  {
+    ""ObjectType"": 2,
+    ""Body"": ""\u003Ch1\u003EFUNCTION NAME: ~ObjectFullName~\u003C/h1\u003E\r\n\u003Cp\u003E~Description~\u003C/p\u003E\r\n\u003Cdiv\u003E\r\n\u003Ch2\u003EParameters:\u003C/h2\u003E\r\n~Parameters~\r\n\u003C/div\u003E\r\n\u003Cdiv\u003E\r\n\u003Ch2\u003ESource code\u003C/h2\u003E\r\n\u003Cpre style=\u0022white-space: pre-wrap;\u0022\u003E~Definition~\r\n\u003C/pre\u003E\r\n\u003C/div\u003E\r\n\u003Chr/\u003E\r\n\u003Cdiv\u003EBack to [[Home]]\u003C/div\u003E \r\n"",
+    ""Parameters"": {
+      ""Body"": ""\u003Ctable class=\u0022wikitable\u0022 style=\u0022margin: 1em 0px; border: 1px solid #a2a9b1; color: #202122; font-family: sans-serif; font-size: 14px; background-color: #f8f9fa;\u0022\u003E\r\n\u003Ctbody\u003E\r\n    \u003Ctr\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EOrd\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EName\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EData Type\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EDirection\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EDescription\u003C/th\u003E\r\n    \u003C/tr\u003E\r\n~ParameterItem~\r\n\u003C/tbody\u003E\r\n\u003C/table\u003E\r\n"",
+      ""ParameterRow"": ""    \u003Ctr\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~ParameterOrd~\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~ParameterName~\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~ParameterDataType~\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~ParameterDirection~\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~ParameterDescription~\u003C/td\u003E\r\n    \u003C/tr\u003E\r\n""
+    }
+  },
+  {
+    ""ObjectType"": 3,
+    ""Body"": ""\u003Ch1\u003EPROCEDURE NAME: ~ObjectFullName~\u003C/h1\u003E\r\n\u003Cp\u003E~Description~\u003C/p\u003E\r\n\u003Cdiv\u003E\r\n\u003Ch2\u003EParameters:\u003C/h2\u003E\r\n~Parameters~\r\n\u003C/div\u003E\r\n\u003Cdiv\u003E\r\n\u003Ch2\u003ESource code\u003C/h2\u003E\r\n\u003Cpre style=\u0022white-space: pre-wrap;\u0022\u003E~Definition~\r\n\u003C/pre\u003E\r\n\u003C/div\u003E\r\n\u003Chr/\u003E\r\n\u003Cdiv\u003EBack to [[Home]]\u003C/div\u003E \r\n"",
+    ""Parameters"": {
+      ""Body"": ""\u003Ctable class=\u0022wikitable\u0022 style=\u0022margin: 1em 0px; border: 1px solid #a2a9b1; color: #202122; font-family: sans-serif; font-size: 14px; background-color: #f8f9fa;\u0022\u003E\r\n\u003Ctbody\u003E\r\n    \u003Ctr\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EOrd\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EName\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EData Type\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EDirection\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EDescription\u003C/th\u003E\r\n    \u003C/tr\u003E\r\n~ParameterItem~\r\n\u003C/tbody\u003E\r\n\u003C/table\u003E\r\n"",
+      ""ParameterRow"": ""    \u003Ctr\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~ParameterOrd~\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~ParameterName~\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~ParameterDataType~\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~ParameterDirection~\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~ParameterDescription~\u003C/td\u003E\r\n    \u003C/tr\u003E\r\n""
+    }
+  },
+  {
+    ""ObjectType"": 4,
+    ""Body"": ""\u003Cpre style=\u0022white-space: pre-wrap;\u0022\u003E~Definition~\r\n\u003C/pre\u003E""
+  },
+  {
+    ""ObjectType"": 5,
+    ""Body"": ""\u003Ctable class=\u0022wikitable\u0022 style=\u0022margin: 1em 0px; border: 1px solid #a2a9b1; color: #202122; font-family: sans-serif; font-size: 14px; background-color: #f8f9fa;\u0022\u003E\r\n\u003Ctbody\u003E\r\n    \u003Ctr\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003ESchema\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EName\u003C/th\u003E\r\n        \u003Cth style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1; text-align: center; background-color: #eaecf0;\u0022\u003EDescription\u003C/th\u003E\r\n    \u003C/tr\u003E\r\n~ObjectItem~\r\n\u003C/tbody\u003E\r\n\u003C/table\u003E\r\n"",
+    ""ObjectLists"": {
+      ""Body"": """",
+      ""ObjectRow"": ""    \u003Ctr\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~ObjectSchema~\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E[[~ObjectFullName~|~ObjectName~]]\u003C/td\u003E\r\n        \u003Ctd style=\u0022padding: 0.2em 0.4em; border: 1px solid #a2a9b1;\u0022\u003E~Description~\u003C/td\u003E\r\n    \u003C/tr\u003E\r\n""
+    }
+  },
+  {
+    ""ObjectType"": 6,
+    ""Body"": ""\u003Ctable class=\u0027wikitable\u0027 style=\u0027border: 1px solid #ccc; font-size: 14px;\u0027\u003E\r\n\u003Cthead\u003E\u003Ctr\u003E~Header~\u003C/tr\u003E\u003C/thead\u003E\r\n\u003Ctbody\u003E~Rows~\u003C/tbody\u003E\r\n\u003C/table\u003E"",
+    ""DataTable"": {
+      ""Body"": """",
+      ""DataRow"": ""\u003Ctr\u003E\r\n~Row~\r\n\u003C/tr\u003E"",
+      ""HeaderCell"": ""\u003Cth style=\u0027border: 1px solid #ccc; padding: 4px;\u0027\u003E~HeaderCell~\u003C/th\u003E"",
+      ""Cell"": ""\u003Ctd style=\u0027border: 1px solid #ccc; padding: 4px;\u0027\u003E~Cell~\u003C/td\u003E""
+    }
+  }
+]";
+
+        private const string wikiTemplate = @"[
+  {
+    ""ObjectType"": 0,
+    ""Body"": ""= Table: ~ObjectFullName~ =\n\n'''Description:''' ~Description~\n\n'''Columns:'''\n~Columns~\n\n'''Indexes:'''\n~Indexes~\n\n'''Constraints:'''\n~Constraints~\n----"",
+    ""Columns"": {
+      ""Body"": ""{| class=\""wikitable\"" style=\""border: 1px solid #a2a9b1;\""\n! Ord\n! Name\n! Data Type\n! Description\n~ColumnItem~\n|}"",
+      ""ColumnRow"": ""|-\n| ~ColumnOrd~ || <code>~ColumnName~</code> || ~ColumnDataType~ || ~ColumnDescription~""
+    },
+    ""Constraints"": {
+      ""Body"": ""{| class=\""wikitable\"" style=\""border: 1px solid #a2a9b1;\""\n! Constraint Name\n! Type\n! Column\n~ConstraintItem~\n|}"",
+      ""ConstraintRow"": ""|-\n| <code>~ConstraintName~</code> || ~ConstraintType~ || ~ConstraintColumn~""
+    },
+    ""Indexes"": {
+      ""Body"": ""{| class=\""wikitable\"" style=\""border: 1px solid #a2a9b1;\""\n! Index Name\n! Type\n! Columns\n! Unique\n~IndexItem~\n|}"",
+      ""IndexRow"": ""|-\n| <code>~IndexName~</code> || ~IndexType~ || ~IndexColumns~ || ~UniqueIndex~""
+    }
+  },
+  {
+    ""ObjectType"": 1,
+    ""Body"": ""= View: ~ObjectFullName~ =\n\n'''Description:''' ~Description~\n\n'''Columns:'''\n~Columns~\n\n'''Indexes:'''\n~Indexes~\n\n'''Constraints:'''\n~Constraints~\n----"",
+    ""Columns"": {
+      ""Body"": ""{| class=\""wikitable\"" style=\""border: 1px solid #a2a9b1;\""\n! Ord\n! Name\n! Data Type\n! Description\n~ColumnItem~\n|}"",
+      ""ColumnRow"": ""|-\n| ~ColumnOrd~ || <code>~ColumnName~</code> || ~ColumnDataType~ || ~ColumnDescription~""
+    },
+    ""Constraints"": {
+      ""Body"": ""{| class=\""wikitable\"" style=\""border: 1px solid #a2a9b1;\""\n! Constraint Name\n! Type\n! Column\n~ConstraintItem~\n|}"",
+      ""ConstraintRow"": ""|-\n| <code>~ConstraintName~</code> || ~ConstraintType~ || ~ConstraintColumn~""
+    },
+    ""Indexes"": {
+      ""Body"": ""{| class=\""wikitable\"" style=\""border: 1px solid #a2a9b1;\""\n! Index Name\n! Type\n! Columns\n! Unique\n~IndexItem~\n|}"",
+      ""IndexRow"": ""|-\n| <code>~IndexName~</code> || ~IndexType~ || ~IndexColumns~ || ~UniqueIndex~""
+    }
+  },
+  {
+    ""ObjectType"": 2,
+    ""Body"": ""= Function: ~ObjectFullName~ =\n\n'''Description:''' ~Description~\n\n'''Parameters:'''\n~Parameters~\n\n'''SQL Code:'''\n<syntaxhighlight lang=\""sql\"">\n~Definition~\n</syntaxhighlight>\n"",
+    ""Parameters"": {
+      ""Body"": ""{| class=\""wikitable\""\n! Ord\n! Name\n! Data Type\n! Direction\n! Description\n~ParameterItem~\n|}"",
+      ""ParameterRow"": ""|-\n| ~ParameterOrd~ || <code>~ParameterName~</code> || ~ParameterDataType~ || ~ParameterDirection~ || ~ParameterDescription~""
+    }
+  },
+  {
+    ""ObjectType"": 3,
+    ""Body"": ""= Stored Procedure: ~ObjectFullName~ =\n\n'''Description:''' ~Description~\n\n'''Parameters:'''\n~Parameters~\n\n'''SQL Code:'''\n<syntaxhighlight lang=\""sql\"">\n~Definition~\n</syntaxhighlight>\n"",
+    ""Parameters"": {
+      ""Body"": ""{| class=\""wikitable\""\n! Ord\n! Name\n! Data Type\n! Direction\n! Description\n~ParameterItem~\n|}"",
+      ""ParameterRow"": ""|-\n| ~ParameterOrd~ || <code>~ParameterName~</code> || ~ParameterDataType~ || ~ParameterDirection~ || ~ParameterDescription~""
+    }
+  },
+  {
+    ""ObjectType"": 4,
+    ""Body"": ""= Trigger: ~ObjectFullName~ =\n\n'''Description:''' ~Description~\n\n'''Parameters:'''\n~Parameters~\n\n'''SQL Code:'''\n<syntaxhighlight lang=\""sql\"">\n~Definition~\n</syntaxhighlight>\n""
+  },
+  {
+    ""ObjectType"": 5,
+    ""Body"": ""{| class=\""wikitable\""\n! Schema\n! Name\n! Description\n~ObjectItem~\n|}"",
+    ""ObjectLists"": {
+      ""Body"": """",
+      ""ObjectRow"": ""|-\n| ~ObjectSchema~ || <code>~ObjectName~</code> || ~Description~""
+    }
+  },
+  {
+    ""ObjectType"": 6,
+    ""Body"": ""{| class=\""wikitable\""\n! ~Header~\n~Rows~\n|}"",
+    ""DataTable"": {
+      ""Body"": """",
+      ""DataRow"": ""|-\n~Row~"",
+      ""HeaderCell"": ""! ~HeaderCell~"",
+      ""Cell"": ""| ~Cell~""
+    }
+  }
+]";
+
         private readonly List<Template> _templates = [];
 
         /// <summary>
@@ -73,57 +288,100 @@ namespace SQL_Document_Builder.Template
             {
                 foreach (var templateName in templatelist)
                 {
-                    var template = new Template(templateName);
-                    if (template.Load())
-                        _templates.Add(template);
+                    AddDocumentType(templateName);
                 }
             }
-
-            // if the json file does not exists, save the templates to json
-            //if (!File.Exists(JsonFilePath))
-            //{
-            //    // Existing logic for handling file absence
-            //}
-            //else
-            //{
-            //    foreach (var template in _templates)
-            //    {
-            //        template.Load(); // Load each template from its file
-            //    }
-            //}
         }
 
         /// <summary>
-        /// Returns the local where to store the Templates data
+        /// Resets the template.
         /// </summary>
-        /// <returns></returns>
-        private static string FilePath()
+        /// <param name="documentType">The document type.</param>
+        /// <returns>A bool.</returns>
+        public bool ResetTemplate(string documentType)
         {
-            string dataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Sherlock Software Inc");
-            dataPath = Path.Combine(dataPath, "SQLDocBuilder");
-            if (!Directory.Exists(dataPath))
+            if (string.IsNullOrWhiteSpace(documentType))
             {
-                Directory.CreateDirectory(dataPath);
+                return false; // Return false if documentType is null or empty
             }
 
-            return Path.Combine(dataPath, "Templates.dat");
+            // Find the template based on documentType
+            var template = _templates.FirstOrDefault(t => t.DocumentType.Equals(documentType, StringComparison.OrdinalIgnoreCase));
+            if (template == null)
+            {
+                return false; // Template not found
+            }
+
+            // Reset the template
+            string templateJson = documentType.ToUpper() switch
+            {
+                "SHAREPOINT" => sharePointTemplate,
+                "MARKDOWN" => markdownTemplate,
+                "WIKI" => wikiTemplate,
+                _ => ""
+            };
+
+            if (!string.IsNullOrEmpty(templateJson))
+            {
+                template.Reset(templateJson);
+                template.Save();
+                return true; // Reset successful
+            }
+            
+            return false; // No valid template found to reset
         }
 
         /// <summary>
-        /// Gets the json file path.
+        /// Adds the document type.
         /// </summary>
-        private static string JsonFilePath
+        /// <param name="newDocumentType">The new document type.</param>
+        internal void AddDocumentType(string newDocumentType)
         {
-            get
+            // Check if the document type already exists
+            if (_templates.Any(t => t.DocumentType.Equals(newDocumentType, StringComparison.OrdinalIgnoreCase)))
             {
-                string dataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Sherlock Software Inc");
-                dataPath = Path.Combine(dataPath, "SQLDocBuilder");
-                if (!Directory.Exists(dataPath))
+                return; // Document type already exists, no need to add
+            }
+
+            // Create a new Template object with the provided document type
+            var template = new Template(newDocumentType);
+            if (!template.Load())
+            {
+                string templateJson = newDocumentType.ToUpper() switch
                 {
-                    Directory.CreateDirectory(dataPath);
-                }
+                    "SHAREPOINT" => sharePointTemplate,
+                    "MARKDOWN" => markdownTemplate,
+                    "WIKI" => wikiTemplate,
+                    _ => ""
+                };
 
-                return Path.Combine(dataPath, "Templates1.json");
+                if (!string.IsNullOrEmpty(templateJson))
+                {
+                    template.Reset(templateJson);
+                }
+                else
+                {
+                    template.Initialize();
+                }
+                template.Save();
+            }
+
+            _templates.Add(template);
+
+            // add the new document type to the file with FilePath()
+            string filePath = FilePath();
+            bool existsInFile = false;
+            if (File.Exists(filePath))
+            {
+                // Read all lines and check if the document type already exists (case-insensitive)
+                existsInFile = File.ReadLines(filePath)
+                    .Any(line => line.Equals(newDocumentType, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (!existsInFile)
+            {
+                using StreamWriter sw = new(filePath, true);
+                sw.WriteLine(newDocumentType); // Append the new document type to the file
             }
         }
 
@@ -140,21 +398,19 @@ namespace SQL_Document_Builder.Template
         }
 
         /// <summary>
-        /// Adds the document type.
+        /// Returns the local where to store the Templates data
         /// </summary>
-        /// <param name="newDocumentType">The new document type.</param>
-        internal void AddDocumentType(string newDocumentType)
+        /// <returns></returns>
+        private static string FilePath()
         {
-            // Create a new Template object with the provided document type
-            var template = new Template(newDocumentType);
-            template.Initialize();
-            template.Save(); // Save the new template
-            _templates.Add(template);
+            string dataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Sherlock Software Inc");
+            dataPath = Path.Combine(dataPath, "SQLDocBuilder");
+            if (!Directory.Exists(dataPath))
+            {
+                Directory.CreateDirectory(dataPath);
+            }
 
-            // add the new document type to the file with FilePath() 
-            string filePath = FilePath();
-            using StreamWriter sw = new(filePath, true);
-            sw.WriteLine(newDocumentType); // Append the new document type to the file
+            return Path.Combine(dataPath, "Templates.dat");
         }
     }
 }

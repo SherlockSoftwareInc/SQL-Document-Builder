@@ -31,6 +31,8 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(TemplateEditor));
             menuStrip1 = new System.Windows.Forms.MenuStrip();
             fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            addDocumentTypeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             resetToDefaultToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -52,8 +54,6 @@
             templateTextBox = new SqlEditBox();
             splitContainer1 = new System.Windows.Forms.SplitContainer();
             templateTreeView = new TemplateTree();
-            addDocumentTypeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             menuStrip1.SuspendLayout();
             toolStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
@@ -78,6 +78,18 @@
             fileToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
             fileToolStripMenuItem.Text = "&File";
             // 
+            // addDocumentTypeToolStripMenuItem
+            // 
+            addDocumentTypeToolStripMenuItem.Name = "addDocumentTypeToolStripMenuItem";
+            addDocumentTypeToolStripMenuItem.Size = new System.Drawing.Size(183, 22);
+            addDocumentTypeToolStripMenuItem.Text = "Add Document Type";
+            addDocumentTypeToolStripMenuItem.Click += AddDocumentTypeToolStripMenuItem_Click;
+            // 
+            // toolStripSeparator2
+            // 
+            toolStripSeparator2.Name = "toolStripSeparator2";
+            toolStripSeparator2.Size = new System.Drawing.Size(180, 6);
+            // 
             // resetToDefaultToolStripMenuItem
             // 
             resetToDefaultToolStripMenuItem.Name = "resetToDefaultToolStripMenuItem";
@@ -94,7 +106,7 @@
             // 
             exitToolStripMenuItem.Name = "exitToolStripMenuItem";
             exitToolStripMenuItem.Size = new System.Drawing.Size(183, 22);
-            exitToolStripMenuItem.Text = "E&xit";
+            exitToolStripMenuItem.Text = "Close";
             exitToolStripMenuItem.Click += ExitToolStripButton_Click;
             // 
             // editToolStripMenuItem
@@ -131,7 +143,7 @@
             cutToolStripMenuItem.ImageTransparentColor = System.Drawing.Color.Magenta;
             cutToolStripMenuItem.Name = "cutToolStripMenuItem";
             cutToolStripMenuItem.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.X;
-            cutToolStripMenuItem.Size = new System.Drawing.Size(164, 22);
+            cutToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             cutToolStripMenuItem.Text = "Cu&t";
             cutToolStripMenuItem.Click += CutToolStripMenuItem_Click;
             // 
@@ -194,7 +206,7 @@
             docTypeToolStripComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             docTypeToolStripComboBox.Items.AddRange(new object[] { "Markdown", "SharePoint" });
             docTypeToolStripComboBox.Name = "docTypeToolStripComboBox";
-            docTypeToolStripComboBox.Size = new System.Drawing.Size(121, 25);
+            docTypeToolStripComboBox.Size = new System.Drawing.Size(144, 25);
             docTypeToolStripComboBox.SelectedIndexChanged += DocTypeToolStripComboBox_SelectedIndexChanged;
             // 
             // toolStripSeparator6
@@ -258,18 +270,6 @@
             templateTreeView.TabIndex = 0;
             templateTreeView.BeforeSelect += TemplateTreeView_BeforeSelect;
             templateTreeView.AfterSelect += TemplateTreeView_AfterSelect;
-            // 
-            // addDocumentTypeToolStripMenuItem
-            // 
-            addDocumentTypeToolStripMenuItem.Name = "addDocumentTypeToolStripMenuItem";
-            addDocumentTypeToolStripMenuItem.Size = new System.Drawing.Size(183, 22);
-            addDocumentTypeToolStripMenuItem.Text = "Add Document Type";
-            addDocumentTypeToolStripMenuItem.Click += AddDocumentTypeToolStripMenuItem_Click;
-            // 
-            // toolStripSeparator2
-            // 
-            toolStripSeparator2.Name = "toolStripSeparator2";
-            toolStripSeparator2.Size = new System.Drawing.Size(180, 6);
             // 
             // TemplateEditor
             // 
