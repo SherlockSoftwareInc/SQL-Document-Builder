@@ -396,8 +396,6 @@ namespace SQL_Document_Builder.Template
             }
             _selectedNode = e.Node;
 
-            Clipboard.SetText(e.Node?.Text);
-
             // populate the keywords menu items based on the selected template
             var keywords = e.Node?.Text.ToUpper() switch
             {
