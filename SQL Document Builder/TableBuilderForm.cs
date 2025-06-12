@@ -4,6 +4,7 @@ using SQL_Document_Builder.ScintillaNetUtils;
 using SQL_Document_Builder.Template;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -3877,5 +3878,116 @@ namespace SQL_Document_Builder
         }
 
         #endregion Json document builder
+
+        /// <summary>
+        /// Handles the click event of the export descriptions tool strip menu item.
+        /// Export descriptions of the selected objects to an Excel file.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private async void ExportDescriptionsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // get the file name to save the Excel file
+            using SaveFileDialog saveFileDialog = new()
+            {
+                Filter = "Excel Files|*.xlsx",
+                Title = "Export Descriptions to Excel",
+                FileName = "Descriptions.xlsx"
+            };
+            if (saveFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                // get the selected objects
+                List<ObjectName>? selectedObjects = SelectObjects();
+                if (selectedObjects == null || selectedObjects.Count == 0)
+                {
+                    Common.MsgBox("No objects selected to export descriptions.", MessageBoxIcon.Warning);
+                    return;
+                }
+
+                Cursor = Cursors.WaitCursor;
+                statusToolStripStatusLabe.Text = "Exporting descriptions to Excel...";
+                // export the descriptions to Excel
+                try
+                {
+                    await ExcelDataHelper.ExportDescriptionsToExcel(selectedObjects, saveFileDialog.FileName, _connectionString);
+
+                    Common.MsgBox("Descriptions exported successfully.", MessageBoxIcon.Information);
+                }
+                catch (Exception ex)
+                {
+                    Common.MsgBox($"Error exporting descriptions: {ex.Message}", MessageBoxIcon.Error);
+                }
+                Cursor = Cursors.Default;
+            }
+        }
+
+        /// <summary>
+        /// Handles the click event of the import descriptions tool strip menu item.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void ImportDescriptionsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // get the Excel file name
+            var openFileDialog = new OpenFileDialog
+            {
+                Filter = "Excel files (*.xls;*.xlsx)|*.xls;*.xlsx|All files (*.*)|*.*",
+                Multiselect = false
+            };
+            if (openFileDialog.ShowDialog() != DialogResult.OK)
+            {
+                return;
+            }
+
+            var fileName = openFileDialog.FileName;
+
+            using var form = new ExcelSheetsForm()
+            {
+                FileName = fileName
+            };
+            form.ShowDialog();
+            if (form.ResultDataTable != null)
+            {
+                if (!IsValidDescriptionData(form.ResultDataTable))
+                {
+                    Common.MsgBox("The selected Excel sheet does not contain valid description data.", MessageBoxIcon.Warning);
+                    return;
+                }
+
+                // Add a new edit box if it's not empty
+                if (CurrentEditBox == null || CurrentEditBox.Text.Length > 0)
+                {
+                    AddTab("");
+                }
+
+                if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
+
+                editBox.DocumentType = SqlEditBox.DocumentTypeEnums.Sql; // Set the document type to SQL
+
+                AppendText(editBox, $"-- Data source: {fileName}" + Environment.NewLine);
+
+                var dataHelper = new ExcelDataHelper(form.ResultDataTable);
+                AppendText(editBox, dataHelper.GetDescriptionStatement());
+            }
+        }
+
+        /// <summary>
+        /// Are the valid description data.
+        /// </summary>
+        /// <param name="data">The data.</param>
+        /// <returns>A bool.</returns>
+        private bool IsValidDescriptionData(DataTable data)
+        {
+            // Check if the DataTable has the required columns
+            var requiredColumns = new[] { "Level0Type", "Level0Name", "Level1Type", "Level1Name", "Level2Type", "Level2Name", "Value" };
+            foreach (var column in requiredColumns)
+            {
+                if (!data.Columns.Contains(column))
+                {
+                    return false; // Missing required column
+                }
+            }
+            return true; // All required columns are present
+        }
     }
 }

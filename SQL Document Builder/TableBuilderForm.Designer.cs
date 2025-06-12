@@ -135,6 +135,9 @@
             optionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             batchColumnDescToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            toolStripSeparator10 = new System.Windows.Forms.ToolStripSeparator();
+            exportDescriptionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            importDescriptionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             databaseDDLToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             cREATEToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             insertToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -508,7 +511,7 @@
             tabPage2.Location = new System.Drawing.Point(4, 24);
             tabPage2.Name = "tabPage2";
             tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            tabPage2.Size = new System.Drawing.Size(205, 648);
+            tabPage2.Size = new System.Drawing.Size(205, 645);
             tabPage2.TabIndex = 1;
             tabPage2.Text = "Output options";
             tabPage2.UseVisualStyleBackColor = true;
@@ -1070,7 +1073,7 @@
             // 
             // toolsToolStripMenuItem
             // 
-            toolsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { customizeToolStripMenuItem, optionsToolStripMenuItem, toolStripSeparator1, batchColumnDescToolStripMenuItem });
+            toolsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { customizeToolStripMenuItem, optionsToolStripMenuItem, toolStripSeparator1, batchColumnDescToolStripMenuItem, toolStripSeparator10, exportDescriptionsToolStripMenuItem, importDescriptionsToolStripMenuItem });
             toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
             toolsToolStripMenuItem.Size = new System.Drawing.Size(47, 20);
             toolsToolStripMenuItem.Text = "&Tools";
@@ -1101,6 +1104,25 @@
             batchColumnDescToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
             batchColumnDescToolStripMenuItem.Text = "Batch Column Desc";
             batchColumnDescToolStripMenuItem.Click += BatchToolStripButton_Click;
+            // 
+            // toolStripSeparator10
+            // 
+            toolStripSeparator10.Name = "toolStripSeparator10";
+            toolStripSeparator10.Size = new System.Drawing.Size(175, 6);
+            // 
+            // exportDescriptionsToolStripMenuItem
+            // 
+            exportDescriptionsToolStripMenuItem.Name = "exportDescriptionsToolStripMenuItem";
+            exportDescriptionsToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
+            exportDescriptionsToolStripMenuItem.Text = "Export Descriptions";
+            exportDescriptionsToolStripMenuItem.Click += ExportDescriptionsToolStripMenuItem_Click;
+            // 
+            // importDescriptionsToolStripMenuItem
+            // 
+            importDescriptionsToolStripMenuItem.Name = "importDescriptionsToolStripMenuItem";
+            importDescriptionsToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
+            importDescriptionsToolStripMenuItem.Text = "Import Descriptions";
+            importDescriptionsToolStripMenuItem.Click += ImportDescriptionsToolStripMenuItem_Click;
             // 
             // databaseDDLToolStripMenuItem
             // 
@@ -1429,7 +1451,6 @@
             definitionPanel.Location = new System.Drawing.Point(907, 49);
             definitionPanel.Margin = new System.Windows.Forms.Padding(6);
             definitionPanel.Name = "definitionPanel";
-            definitionPanel.SelectedParameter = null;
             definitionPanel.Size = new System.Drawing.Size(360, 676);
             definitionPanel.TabIndex = 4;
             // 
@@ -1445,7 +1466,6 @@
             defiCollapsibleSplitter.Location = new System.Drawing.Point(899, 49);
             defiCollapsibleSplitter.Name = "defiCollapsibleSplitter";
             defiCollapsibleSplitter.Size = new System.Drawing.Size(8, 676);
-            defiCollapsibleSplitter.SplitterDistance = 360;
             defiCollapsibleSplitter.TabIndex = 3;
             defiCollapsibleSplitter.TabStop = false;
             defiCollapsibleSplitter.UseAnimations = true;
@@ -1821,5 +1841,8 @@
         private System.Windows.Forms.ToolStripComboBox docTypeToolStripComboBox;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator9;
         private System.Windows.Forms.ToolStripMenuItem sherlockSoftwareToolStripMenuItem;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator10;
+        private System.Windows.Forms.ToolStripMenuItem exportDescriptionsToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem importDescriptionsToolStripMenuItem;
     }
 }
