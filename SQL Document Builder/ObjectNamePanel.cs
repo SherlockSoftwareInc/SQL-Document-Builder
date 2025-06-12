@@ -107,7 +107,7 @@ namespace SQL_Document_Builder
                 ObjectName.ObjectTypeEnums.StoredProcedure => Properties.Resources.sp_16,
                 ObjectName.ObjectTypeEnums.Function => Properties.Resources.function_16,
                 ObjectName.ObjectTypeEnums.Trigger => Properties.Resources.dbtrigger24,
-                ObjectName.ObjectTypeEnums.Synonym => Properties.Resources.table_view,
+                ObjectName.ObjectTypeEnums.Synonym => Properties.Resources.synonym_24,
                 _ => null
             };
         }

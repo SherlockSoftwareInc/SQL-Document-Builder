@@ -568,6 +568,7 @@ GO";
                 createScript.AppendLine($"\tCONSTRAINT PK_{objectName.Schema}_{objectName.Name} PRIMARY KEY ({primaryKeyColumns})");
             }
             createScript.AppendLine(");");
+            createScript.AppendLine("GO");
 
             // add the foreign key constraints
             var foreignKeyConstraints = await table.GetForeignKeyConstraintsScript();
@@ -609,23 +610,38 @@ GO";
             if (!string.IsNullOrEmpty(triggerScript))
             {
                 // if the createScript does not ended with a line of "GO", add it
-                if (!createScript.ToString().EndsWith(Environment.NewLine + "GO" + Environment.NewLine, StringComparison.OrdinalIgnoreCase))
-                {
-                    createScript.AppendLine($"GO");
-                }
+                AddGOStatement(createScript);
+                //if (!createScript.ToString().EndsWith(Environment.NewLine + "GO" + Environment.NewLine, StringComparison.OrdinalIgnoreCase))
+                //{
+                //    createScript.AppendLine($"GO");
+                //}
 
                 // remove the new line at the end of the script
                 triggerScript = triggerScript.TrimEnd('\r', '\n');
                 createScript.AppendLine(triggerScript);
             }
 
-            // add GO statement
-            if (!createScript.ToString().EndsWith(Environment.NewLine + "GO" + Environment.NewLine, StringComparison.OrdinalIgnoreCase))
-            {
-                createScript.AppendLine($"GO");
-            }
+            // add GO statement 
+            AddGOStatement(createScript);
+            //if (!createScript.ToString().EndsWith(Environment.NewLine + "GO" + Environment.NewLine, StringComparison.OrdinalIgnoreCase))
+            //{
+            //    createScript.AppendLine($"GO");
+            //}
 
             return createScript.ToString();
+        }
+
+        /// <summary>
+        /// Adds GO statement to the script if the script does not already end with it.
+        /// </summary>
+        /// <param name="sb">The sb.</param>
+        private static void AddGOStatement(StringBuilder sb)
+        {
+            // Add a "GO" statement to separate batches in the script
+            if (!sb.ToString().EndsWith(Environment.NewLine + "GO" + Environment.NewLine, StringComparison.OrdinalIgnoreCase))
+            {
+                sb.AppendLine($"GO");
+            }
         }
 
         /// <summary>

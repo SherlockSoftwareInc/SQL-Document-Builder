@@ -83,6 +83,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Gets or sets the selected parameter.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string? SelectedParameter { get; set; }
 
         /// <summary>

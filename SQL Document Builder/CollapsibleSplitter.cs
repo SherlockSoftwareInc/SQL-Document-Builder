@@ -169,6 +169,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Gets or sets splitter distance (size of the control)
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int SplitterDistance
         {
             get
@@ -179,20 +180,13 @@ namespace SQL_Document_Builder
                 }
                 else
                 {
-                    //if (this.currentState == SplitterState.Collapsed)
-                    //{
-                    //    return 0;
-                    //}
-                    //else
+                    if (Dock == DockStyle.Left || Dock == DockStyle.Right)
                     {
-                        if (Dock == DockStyle.Left || Dock == DockStyle.Right)
-                        {
-                            return this.ControlToHide.Width;
-                        }
-                        else
-                        {
-                            return this.ControlToHide.Height;
-                        }
+                        return this.ControlToHide.Width;
+                    }
+                    else
+                    {
+                        return this.ControlToHide.Height;
                     }
                 }
             }

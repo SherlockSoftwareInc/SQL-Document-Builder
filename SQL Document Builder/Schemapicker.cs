@@ -22,6 +22,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Gets or sets the connection string.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string ConnectionString { get; set; } = string.Empty;
 
         /// <summary>

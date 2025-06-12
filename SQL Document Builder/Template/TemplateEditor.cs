@@ -1,5 +1,6 @@
 ﻿using DarkModeForms;
 using System;
+using System.ComponentModel;
 using System.Linq;
 using System.Windows.Forms;
 
@@ -35,6 +36,7 @@ namespace SQL_Document_Builder.Template
         /// <summary>
         /// Gets or sets the object type.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         internal TemplateItem.ObjectTypeEnums ObjectType { private get; set; } = TemplateItem.ObjectTypeEnums.Table;
 
         /// <summary>

@@ -313,6 +313,16 @@ namespace SQL_Document_Builder.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap synonym_24 {
+            get {
+                object obj = ResourceManager.GetObject("synonym_24", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap table_edit_16 {
             get {
                 object obj = ResourceManager.GetObject("table_edit_16", resourceCulture);

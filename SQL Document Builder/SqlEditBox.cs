@@ -3,6 +3,7 @@ using System;
 using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
+using System.ComponentModel;
 
 namespace SQL_Document_Builder
 {
@@ -87,16 +88,19 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Gets or sets the alias.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string Alias { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the data source name.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string? DataSourceName { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the default style font.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public System.Drawing.Font DefaultStyleFont
         {
             get => this.Font;
@@ -118,6 +122,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Gets or sets the document type.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public DocumentTypeEnums DocumentType
         {
             get => _documentType;
@@ -164,6 +169,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// File name of current query script
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string FileName { get; set; } = string.Empty;
 
         /// <summary>

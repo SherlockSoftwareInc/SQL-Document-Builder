@@ -1,6 +1,7 @@
 ﻿using DarkModeForms;
 using ExcelDataReader;
 using System;
+using System.ComponentModel;
 using System.Data;
 using System.IO;
 using System.Threading;
@@ -32,6 +33,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// The Excel file name to analyze.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string FileName { get; set; } = string.Empty;
 
         /// <summary>

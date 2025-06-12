@@ -46,6 +46,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Gets or sets the max length of the input text.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public int MaxLength { get => textBox1.MaxLength; set => textBox1.MaxLength = value < 32767 ? value : 32767; }
 
         /// <summary>
