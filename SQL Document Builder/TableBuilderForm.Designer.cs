@@ -1171,14 +1171,14 @@
             createPrimaryKeyToolStripMenuItem.Name = "createPrimaryKeyToolStripMenuItem";
             createPrimaryKeyToolStripMenuItem.Size = new System.Drawing.Size(248, 22);
             createPrimaryKeyToolStripMenuItem.Text = "Create Primary Key";
-            createPrimaryKeyToolStripMenuItem.Click += CreatePrimaryKeyToolStripMenuItem_Click;
+            createPrimaryKeyToolStripMenuItem.Click += OnCreatePrimaryKeyRequested;
             // 
             // createIndexToolStripMenuItem
             // 
             createIndexToolStripMenuItem.Name = "createIndexToolStripMenuItem";
             createIndexToolStripMenuItem.Size = new System.Drawing.Size(248, 22);
             createIndexToolStripMenuItem.Text = "Create Index";
-            createIndexToolStripMenuItem.Click += CreateIndexToolStripMenuItem_Click;
+            createIndexToolStripMenuItem.Click += OnCreateIndexRequested;
             // 
             // toolStripSeparator14
             // 
@@ -1374,7 +1374,7 @@
             // statusToolStripStatusLabe
             // 
             statusToolStripStatusLabe.Name = "statusToolStripStatusLabe";
-            statusToolStripStatusLabe.Size = new System.Drawing.Size(975, 20);
+            statusToolStripStatusLabe.Size = new System.Drawing.Size(1128, 17);
             statusToolStripStatusLabe.Spring = true;
             statusToolStripStatusLabe.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
@@ -1382,7 +1382,7 @@
             // 
             serverToolStripStatusLabel.Image = Properties.Resources.server;
             serverToolStripStatusLabel.Name = "serverToolStripStatusLabel";
-            serverToolStripStatusLabel.Size = new System.Drawing.Size(54, 20);
+            serverToolStripStatusLabel.Size = new System.Drawing.Size(54, 17);
             serverToolStripStatusLabel.Text = "server";
             serverToolStripStatusLabel.ToolTipText = "Server name";
             // 
@@ -1390,7 +1390,7 @@
             // 
             databaseToolStripStatusLabel.Image = Properties.Resources.database;
             databaseToolStripStatusLabel.Name = "databaseToolStripStatusLabel";
-            databaseToolStripStatusLabel.Size = new System.Drawing.Size(70, 20);
+            databaseToolStripStatusLabel.Size = new System.Drawing.Size(70, 17);
             databaseToolStripStatusLabel.Text = "database";
             databaseToolStripStatusLabel.ToolTipText = "Database name";
             // 
@@ -1466,6 +1466,8 @@
             definitionPanel.Size = new System.Drawing.Size(360, 676);
             definitionPanel.TabIndex = 4;
             toolTip1.SetToolTip(definitionPanel, "Object description edit box");
+            definitionPanel.AddIndexRequested += OnCreateIndexRequested;
+            definitionPanel.AddPrimaryKeyRequested += OnCreatePrimaryKeyRequested;
             // 
             // defiCollapsibleSplitter
             // 
