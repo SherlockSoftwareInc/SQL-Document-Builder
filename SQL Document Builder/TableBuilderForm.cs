@@ -193,8 +193,6 @@ namespace SQL_Document_Builder
             return true;
         }
 
-        //    return templateText;
-        //}
         /// <summary>
         /// Perform the syntax check for the given script.
         /// </summary>
@@ -220,14 +218,6 @@ namespace SQL_Document_Builder
             return string.Empty;
         }
 
-        //    //    // get the template text again after editing
-        //    //    templates.Load();
-        //    //    templateItem = templates.GetTemplate(docType, objectType);
-        //    //    if (templateItem != null)
-        //    //    {
-        //    //        templateText = templateItem.Body;
-        //    //    }
-        //    //}
         /// <summary>
         /// Handles the "About" tool strip menu item click event:
         /// </summary>
@@ -240,16 +230,6 @@ namespace SQL_Document_Builder
             dlg.ShowDialog();
         }
 
-        //    //// if the template text is empty, show a message box and open the template editor
-        //    //if (string.IsNullOrEmpty(templateText))
-        //    //{
-        //    //    Common.MsgBox($"Template for {docType} and {objType} is not defined.", MessageBoxIcon.Information);
-        //    //    using var templateForm = new TemplateEditor()
-        //    //    {
-        //    //        DocumentType = docType,
-        //    //        ObjectType = objectType
-        //    //    };
-        //    //    templateForm.ShowDialog();
         /// <summary>
         /// Add connection.
         /// </summary>
@@ -294,11 +274,6 @@ namespace SQL_Document_Builder
             return false;
         }
 
-        //    //var templateItem = templates.GetTemplate(docType, objectType);
-        //    //if (templateItem != null)
-        //    //{
-        //    //    templateText = templateItem.Body;
-        //    //}
         /// <summary>
         /// Adds the data source tag to the document.
         /// </summary>
@@ -321,9 +296,6 @@ namespace SQL_Document_Builder
             }
         }
 
-        //    // get the template text from the templates
-        //    Templates templates = new();
-        //    templates.Load();
         /// <summary>
         /// Add list item.
         /// </summary>
@@ -335,15 +307,6 @@ namespace SQL_Document_Builder
             objectsListBox.Items.Add(new ObjectName(tableType, schema, tableName));
         }
 
-        //    // get the template body
-        //    TemplateItem.ObjectTypeEnums objectType = objType switch
-        //    {
-        //        ObjectTypeEnums.Table => TemplateItem.ObjectTypeEnums.Table,
-        //        ObjectTypeEnums.View => TemplateItem.ObjectTypeEnums.View,
-        //        ObjectTypeEnums.StoredProcedure => TemplateItem.ObjectTypeEnums.StoredProcedure,
-        //        ObjectTypeEnums.Function => TemplateItem.ObjectTypeEnums.Function,
-        //        _ => TemplateItem.ObjectTypeEnums.Table
-        //    };
         /// <summary>
         /// Add a new tab with query edit box
         /// </summary>
@@ -372,15 +335,6 @@ namespace SQL_Document_Builder
             return queryTextBox;
         }
 
-        ///// <summary>
-        ///// Gets the template text.
-        ///// </summary>
-        ///// <param name="docType">The doc type.</param>
-        ///// <param name="objType">The obj type.</param>
-        ///// <returns>A string.</returns>
-        //private static string GetTemplateText(TemplateItem.DocumentTypeEnums docType, ObjectTypeEnums objType)
-        //{
-        //    string templateText = string.Empty;
         /// <summary>
         /// Add a menu item under the windows dropdown to link the tab
         /// </summary>
@@ -790,13 +744,47 @@ namespace SQL_Document_Builder
             {
                 dBObjectDefPanel.Copy();
             }
-            else if (focusedControl is Scintilla scintilla)
-            {
-                scintilla.Copy();
-            }
             else if (focusedControl is ColumnDefView columnDefView)
             {
                 columnDefView.Copy();
+            }
+            else if (focusedControl is SqlEditBox editBox)
+            {
+                editBox.Copy();
+            }
+            else if (focusedControl is ListBox listBox)
+            {
+                if (listBox.SelectedItem != null)
+                {
+                    Clipboard.SetText(listBox.SelectedItem.ToString() ?? string.Empty);
+                }
+            }
+            else if (focusedControl is DataGridView dataGridView)
+            {
+                // If the DataGridView is in edit mode, copy from the editing control (usually a TextBox)
+                if (dataGridView.CurrentCell != null && dataGridView.CurrentCell.IsInEditMode)
+                {
+                    if (dataGridView.EditingControl is TextBox editingTextBox)
+                    {
+                        editingTextBox.Copy();
+                        return;
+                    }
+                }
+                // Otherwise, copy the selected cells as a DataObject (tabular, for pasting into Excel, etc.)
+                var clipboardContent = dataGridView.GetClipboardContent();
+                if (clipboardContent != null)
+                {
+                    Clipboard.SetDataObject(clipboardContent);
+                }
+                // If nothing is selected, fallback to copying the current cell's value as text
+                else
+                {
+                    var value = dataGridView.CurrentCell?.Value?.ToString();
+                    if (!string.IsNullOrEmpty(value))
+                    {
+                        Clipboard.SetText(value);
+                    }
+                }
             }
             else
             {
@@ -984,13 +972,24 @@ namespace SQL_Document_Builder
             {
                 dBObjectDefPanel.Cut();
             }
-            else if (focusedControl is Scintilla scintilla)
+            else if (focusedControl is SqlEditBox editBox)
             {
-                scintilla.Cut();
+                editBox.Cut();
             }
             else if (focusedControl is ColumnDefView columnDefView)
             {
                 columnDefView.Cut();
+            }
+            else if (focusedControl is DataGridView dataGridView)
+            {
+                // If the DataGridView is active, cut the current cell's value
+                if (dataGridView.CurrentCell != null && dataGridView.CurrentCell.IsInEditMode)
+                {
+                    if (dataGridView.EditingControl is TextBox editingTextBox && editingTextBox.Enabled)
+                    {
+                        editingTextBox.Cut();
+                    }
+                }
             }
             else
             {
@@ -1184,51 +1183,6 @@ namespace SQL_Document_Builder
         private void FindNextButton_Click(object sender, EventArgs e)
         {
             ReplaceManager.Find(true, false);
-        }
-
-        /// <summary>
-        /// Footers the text.
-        /// </summary>
-        /// <returns>A string.</returns>
-        private string FooterText()
-        {
-            string footerText = string.Empty;
-
-            if (objectsListBox.SelectedItem != null)
-            {
-                var objectName = (ObjectName)objectsListBox.SelectedItem;
-                var objectType = objectName.ObjectType == ObjectName.ObjectTypeEnums.View ? "view" : "table";
-
-                footerText = objectName.Schema.ToLower() switch
-                {
-                    "dbo" => $@"<hr/>
-<div>Back to [[Data warehouse {objectType}s]]</div>
-<div>Back to [[Home]]</div>",
-                    "af" => $@"<hr/>
-<div>Back to [[AF Database {objectType}s]]</div>
-<div>Back to [[Home]]</div>",
-                    "bccr" => $@"<hr/>
-<div>Back to [[BCCR Database {objectType}s]]</div>
-<div>Back to [[Home]]</div>",
-                    "dih" => $@"<hr/>
-<div>Back to [[APPROACH (HeartIS) database {objectType}s]]</div>
-<div>Back to [[Home]]</div>",
-                    "joint" => $@"<hr/>
-<div>Back to [[JOINT database {objectType}s]]</div>
-<div>Back to [[Home]]</div>",
-                    "pcr" or "pcrl1" => $@"<hr/>
-<div>Back to [[PCR database {objectType}s (CVI.Source)]]</div>
-<div>Back to [[Home]]</div>",
-                    "wlv" => $@"<hr/>
-<div>Back to [[WLV database {objectType}s]]</div>
-<div>Back to [[Home]]</div>",
-                    _ => $@"<hr/>
-<div>Back to [[{objectName.Schema.ToUpper()} schema {objectType}s]]</div>
-<div>Back to [[Home]]</div>",
-                };
-            }
-
-            return footerText;
         }
 
         /// <summary>
@@ -1929,7 +1883,7 @@ namespace SQL_Document_Builder
             // checks if there is a DROP statement in the script, ask for confirmation
             if (script.Contains("DROP ", StringComparison.CurrentCultureIgnoreCase))
             {
-                if (Common.MsgBox("The script contains a DROP statement. Are you sure you want to continue?", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
+                if (Common.MsgBox("WARNING!\nThe scripts contains DROP statement(s). This may result in PERMANENT DATA LOSS. Are you sure you want to continue?", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, "WARNING") == DialogResult.No)
                 {
                     return;
                 }
@@ -2074,10 +2028,7 @@ namespace SQL_Document_Builder
         private void PasteToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Control? focusedControl = GetFocusedControl(this);
-            if (focusedControl == null)
-            {
-                return;
-            }
+            if (focusedControl == null) return;
 
             if (focusedControl is TextBox textBox)
             {
@@ -2087,13 +2038,24 @@ namespace SQL_Document_Builder
             {
                 dBObjectDefPanel.Paste();
             }
-            else if (focusedControl is Scintilla scintilla)
+            else if (focusedControl is SqlEditBox editBox)
             {
-                scintilla.Paste();
+                editBox.Paste();
             }
             else if (focusedControl is ColumnDefView columnDefView)
             {
                 columnDefView.Paste();
+            }
+            else if (focusedControl is DataGridView dataGridView)
+            {
+                // If the DataGridView is active, paste into the current cell
+                if (dataGridView.CurrentCell != null && dataGridView.CurrentCell.IsInEditMode)
+                {
+                    if (dataGridView.EditingControl is TextBox editingTextBox && editingTextBox.Enabled)
+                    {
+                        editingTextBox.Paste();
+                    }
+                }
             }
             else
             {
@@ -2551,13 +2513,18 @@ namespace SQL_Document_Builder
             {
                 dBObjectDefPanel.SelectAll();
             }
-            else if (focusedControl is Scintilla scintilla)
+            else if (focusedControl is SqlEditBox editBox)
             {
-                scintilla.SelectAll();
+                editBox.SelectAll();
             }
             else if (focusedControl is ColumnDefView columnDefView)
             {
                 columnDefView.SelectAll();
+            }
+            else if (focusedControl is DataGridView dataGridView)
+            {
+                // If the DataGridView is active, select all cells
+                dataGridView.SelectAll();
             }
             else
             {

@@ -13,13 +13,29 @@ namespace SQL_Document_Builder
         /// Gets or sets the create date.
         /// </summary>
         [ReadOnly(true)]
+        [Description("The date and time when the view was created.")]
         public DateTime? CreateDate { get; set; }
 
         /// <summary>
         /// Gets or sets the modify date.
         /// </summary>
         [ReadOnly(true)]
+        [Description("The date and time when the view was last modified.")]
         public DateTime? ModifyDate { get; set; }
+
+        /// <summary>
+        /// Gets or sets the schema name.
+        /// </summary>
+        [ReadOnly(true)]
+        [Description("The schema name of the view.")]
+        public string? SchemaName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the view name.
+        /// </summary>
+        [ReadOnly(true)]
+        [Description("The name of the view.")]
+        public string? ViewName { get; set; }
 
         /// <summary>
         /// Loads view info asynchronously for the given view.
@@ -28,6 +44,9 @@ namespace SQL_Document_Builder
         /// <param name="connectionString">The connection string.</param>
         internal async Task OpenAsync(ObjectName objectName, string connectionString)
         {
+            SchemaName = objectName.Schema;
+            ViewName = objectName.Name;
+
             string sql = $@"
 SELECT
     v.create_date AS CreateDate,

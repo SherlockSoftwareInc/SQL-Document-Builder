@@ -10,60 +10,67 @@ namespace SQL_Document_Builder
     internal class TriggerInfo
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="TriggerInfo"/> class.
-        /// </summary>
-        public TriggerInfo()
-        {
-            TriggerType = string.Empty;
-            IsDisabled = string.Empty;
-            ParentObjectSchema = string.Empty;
-            ParentObjectName = string.Empty;
-            ParentObjectType = string.Empty;
-            CreateDate = DateTime.MinValue;
-            ModifyDate = DateTime.MinValue;
-        }
-
-        /// <summary>
-        /// Gets or sets the type of the trigger (e.g., DML, DDL).
+        /// Gets or sets the date and time when the trigger was created.
         /// </summary>
         [ReadOnly(true)]
-        public string? TriggerType { get; set; }
+        [Description("The date and time when the trigger was created.")]
+        public DateTime? CreateDate { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether the trigger is disabled.
         /// </summary>
         [ReadOnly(true)]
+        [Description("Indicates whether the trigger is disabled.")]
         public string? IsDisabled { get; set; }
-
-        /// <summary>
-        /// Gets or sets the schema of the parent object to which the trigger belongs.
-        /// </summary>
-        [ReadOnly(true)]
-        public string? ParentObjectSchema { get; set; }
-
-        /// <summary>
-        /// Gets or sets the name of the parent object to which the trigger belongs.
-        /// </summary>
-        [ReadOnly(true)]
-        public string? ParentObjectName { get; set; }
-
-        /// <summary>
-        /// Gets or sets the type of the parent object (e.g., Table, View).
-        /// </summary>
-        [ReadOnly(true)]
-        public string? ParentObjectType { get; set; }
-
-        /// <summary>
-        /// Gets or sets the date and time when the trigger was created.
-        /// </summary>
-        [ReadOnly(true)]
-        public DateTime? CreateDate { get; set; }
 
         /// <summary>
         /// Gets or sets the date and time when the trigger was last modified.
         /// </summary>
         [ReadOnly(true)]
+        [Description("The date and time when the trigger was last modified.")]
         public DateTime? ModifyDate { get; set; }
+
+        /// <summary>
+        /// Gets or sets the name of the parent object to which the trigger belongs.
+        /// </summary>
+        [ReadOnly(true)]
+        [Description("The name of the parent object to which the trigger belongs.")]
+        public string? ParentObjectName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the schema of the parent object to which the trigger belongs.
+        /// </summary>
+        [ReadOnly(true)]
+        [Description("The schema of the parent object to which the trigger belongs.")]
+        public string? ParentObjectSchema { get; set; }
+
+        /// <summary>
+        /// Gets or sets the type of the parent object (e.g., Table, View).
+        /// </summary>
+        [ReadOnly(true)]
+        [Description("The type of the parent object (e.g., Table, View).")]
+        public string? ParentObjectType { get; set; }
+
+        /// <summary>
+        /// Gets or sets the schema name.
+        /// </summary>
+        [ReadOnly(true)]
+        [Description("The schema name of the trigger.")]
+        public string? SchemaName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the synonym name.
+        /// </summary>
+        [ReadOnly(true)]
+        [Description("The name of the trigger.")]
+        public string? TriggerName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the type of the trigger (e.g., DML, DDL).
+        /// </summary>
+        [ReadOnly(true)]
+        [Description("The type of the trigger.")]
+        public string? TriggerType { get; set; }
 
         /// <summary>
         /// Opens the async.
@@ -73,6 +80,9 @@ namespace SQL_Document_Builder
         /// <returns>A Task.</returns>
         internal async Task OpenAsync(ObjectName objectName, string connectionString)
         {
+            SchemaName = objectName.Schema;
+            TriggerName = objectName.Name;
+
             string sql = $@"SELECT
     CASE WHEN tr.is_instead_of_trigger = 1 THEN 'INSTEAD OF' ELSE 'AFTER' END AS TriggerType,
     CASE WHEN tr.is_disabled = 1 THEN 'Yes' ELSE 'No' END AS IsDisabled,

@@ -14,30 +14,43 @@ namespace SQL_Document_Builder
         /// Gets or sets the creation date of the function.
         /// </summary>
         [ReadOnly(true)]
+        [Description("The date and time when the function was created.")]
         public DateTime? CreateDate { get; set; }
 
         /// <summary>
-        /// Gets or sets the last modification date of the function.
+        /// Gets or sets the table name.
         /// </summary>
         [ReadOnly(true)]
-        public DateTime? ModifyDate { get; set; }
+        [Description("The name of the function.")]
+        public string? FunctionName { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether the function is a system object.
         /// </summary>
         [ReadOnly(true)]
+        [Description("Indicates whether the function is a system object.")]
         public bool? IsSystemObject { get; set; }
+
+        /// <summary>
+        /// Gets or sets the last modification date of the function.
+        /// </summary>
+        [ReadOnly(true)]
+        [Description("The date and time when the function was last modified.")]
+        public DateTime? ModifyDate { get; set; }
 
         /// <summary>
         /// Gets or sets the type description of the function (e.g., SQL_SCALAR_FUNCTION).
         /// </summary>
         [ReadOnly(true)]
+        [Description("The type description of the function.")]
         public string? ObjectType { get; set; }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="FunctionInfo"/> class.
+        /// Gets or sets the schema name.
         /// </summary>
-        public FunctionInfo() { }
+        [ReadOnly(true)]
+        [Description("The schema name of the function.")]
+        public string? SchemaName { get; set; }
 
         /// <summary>
         /// Loads function information from the database and assigns to this instance.
@@ -47,20 +60,23 @@ namespace SQL_Document_Builder
         /// <returns>A <see cref="Task{bool}"/> indicating if the function was found and loaded.</returns>
         public async Task<bool> OpenAsync(ObjectName objectName, string connectionString)
         {
+            SchemaName = objectName.Schema;
+            FunctionName = objectName.Name;
+
             if (objectName == null || string.IsNullOrEmpty(objectName.Name) || string.IsNullOrEmpty(objectName.Schema))
                 return false;
 
             string sql = $@"
-SELECT 
+SELECT
     o.create_date AS CreateDate,
     o.modify_date AS ModifyDate,
     o.is_ms_shipped AS IsSystemObject,
     o.type_desc AS ObjectType
-FROM 
+FROM
     sys.objects o
-JOIN 
+JOIN
     sys.schemas s ON o.schema_id = s.schema_id
-WHERE 
+WHERE
     o.object_id = OBJECT_ID(N'{objectName.Schema}.{objectName.Name}')
     AND o.type IN ('FN', 'IF', 'TF');";
 

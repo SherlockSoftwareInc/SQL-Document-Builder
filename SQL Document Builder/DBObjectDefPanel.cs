@@ -32,15 +32,17 @@ namespace SQL_Document_Builder
         /// </summary>
         public void Copy()
         {
-            var currentControl = this.ActiveControl;
-            if (currentControl?.GetType() == typeof(TextBox))
+            Control? focusedControl = GetFocusedControl(this);
+            if (focusedControl == null) return;
+
+            if (focusedControl?.GetType() == typeof(TextBox))
             {
-                TextBox textBox = (TextBox)currentControl;
+                TextBox textBox = (TextBox)focusedControl;
                 textBox.Copy();
             }
-            else if (currentControl?.GetType() == typeof(ColumnDefView))
+            else if (focusedControl?.GetType() == typeof(ColumnDefView))
             {
-                ColumnDefView defView = (ColumnDefView)currentControl;
+                ColumnDefView defView = (ColumnDefView)focusedControl;
                 defView.Copy();
             }
         }
@@ -50,16 +52,18 @@ namespace SQL_Document_Builder
         /// </summary>
         public void Cut()
         {
-            var currentControl = this.ActiveControl;
-            if (currentControl?.GetType() == typeof(TextBox))
+            Control? focusedControl = GetFocusedControl(this);
+            if (focusedControl == null) return;
+
+            if (focusedControl is ColumnDefView defView)
             {
-                TextBox textBox = (TextBox)currentControl;
-                textBox.Cut();
-            }
-            else if (currentControl?.GetType() == typeof(ColumnDefView))
-            {
-                ColumnDefView defView = (ColumnDefView)currentControl;
                 defView.Cut();
+                return;
+            }
+            else if (focusedControl is TextBox textBox)
+            {
+                textBox.Cut();
+                return;
             }
         }
 
@@ -80,16 +84,18 @@ namespace SQL_Document_Builder
         /// </summary>
         public void Paste()
         {
-            var currentControl = this.ActiveControl;
-            if (currentControl?.GetType() == typeof(TextBox))
+            Control? focusedControl = GetFocusedControl(this);
+            if (focusedControl == null) return;
+
+            if (focusedControl is ColumnDefView defView)
             {
-                TextBox textBox = (TextBox)currentControl;
-                textBox.Paste();
-            }
-            else if (currentControl?.GetType() == typeof(ColumnDefView))
-            {
-                ColumnDefView defView = (ColumnDefView)currentControl;
                 defView.Paste();
+                return;
+            }
+            else if (focusedControl is TextBox textBox)
+            {
+                textBox.Paste();
+                return;
             }
         }
 
@@ -98,17 +104,40 @@ namespace SQL_Document_Builder
         /// </summary>
         public void SelectAll()
         {
-            var currentControl = this.ActiveControl;
-            if (currentControl?.GetType() == typeof(TextBox))
+            Control? focusedControl = GetFocusedControl(this);
+            if (focusedControl == null) return;
+
+            if (focusedControl is TextBox textBox)
             {
-                TextBox textBox = (TextBox)currentControl;
                 textBox.SelectAll();
             }
-            else if (currentControl?.GetType() == typeof(ColumnDefView))
+            else if (focusedControl is ColumnDefView defView)
             {
-                ColumnDefView defView = (ColumnDefView)currentControl;
                 defView.SelectAll();
             }
+        }
+
+        /// <summary>
+        /// Recursively gets the currently focused control within a container.
+        /// </summary>
+        /// <param name="container">The container control.</param>
+        /// <returns>The focused control, or null if none is focused.</returns>
+        private static Control? GetFocusedControl(Control container)
+        {
+            if (container == null)
+                return null;
+
+            if (container.Focused)
+                return container;
+
+            foreach (Control child in container.Controls)
+            {
+                Control? focused = GetFocusedControl(child);
+                if (focused != null)
+                    return focused;
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -167,7 +196,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The E.</param>
         private async void DescEditForm_FormClosing(object sender, FormClosingEventArgs e)
         {
-           await SaveChangeAsync();
+            await SaveChangeAsync();
         }
 
         /// <summary>

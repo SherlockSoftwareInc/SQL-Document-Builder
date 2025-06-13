@@ -511,7 +511,7 @@
             tabPage2.Location = new System.Drawing.Point(4, 24);
             tabPage2.Name = "tabPage2";
             tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            tabPage2.Size = new System.Drawing.Size(205, 645);
+            tabPage2.Size = new System.Drawing.Size(205, 648);
             tabPage2.TabIndex = 1;
             tabPage2.Text = "Output options";
             tabPage2.UseVisualStyleBackColor = true;
@@ -898,7 +898,8 @@
             // selectAllToolStripMenuItem
             // 
             selectAllToolStripMenuItem.Name = "selectAllToolStripMenuItem";
-            selectAllToolStripMenuItem.ShortcutKeyDisplayString = "Ctrl+A";
+            selectAllToolStripMenuItem.ShortcutKeyDisplayString = "";
+            selectAllToolStripMenuItem.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.A;
             selectAllToolStripMenuItem.Size = new System.Drawing.Size(216, 22);
             selectAllToolStripMenuItem.Text = "Select &All";
             selectAllToolStripMenuItem.Click += SelectAllToolStripMenuItem_Click;

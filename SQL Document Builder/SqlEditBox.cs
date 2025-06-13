@@ -50,6 +50,12 @@ namespace SQL_Document_Builder
             this.ClearCmdKey(Keys.Control | Keys.H);
             this.ClearCmdKey(Keys.Control | Keys.L);
             this.ClearCmdKey(Keys.Control | Keys.U);
+
+            this.ClearCmdKey(Keys.Control | Keys.A);
+            this.ClearCmdKey(Keys.Control | Keys.C);
+            this.ClearCmdKey(Keys.Control | Keys.V);
+            this.ClearCmdKey(Keys.Control | Keys.X);
+
             //this.ClearCmdKey(Keys.Control | Keys.Shift | Keys.L);
             //this.ClearCmdKey(Keys.Control | Keys.Shift | Keys.U);
         }

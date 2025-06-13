@@ -1,6 +1,5 @@
 using System;
 using System.ComponentModel;
-using System.Data;
 using System.Threading.Tasks;
 
 namespace SQL_Document_Builder
@@ -14,25 +13,43 @@ namespace SQL_Document_Builder
         /// Gets or sets the table creation date.
         /// </summary>
         [ReadOnly(true)]
+        [Description("The date and time when the table was created.")]
         public DateTime? CreateDate { get; set; }
+
+        /// <summary>
+        /// Gets or sets the data size in megabytes.
+        /// </summary>
+        [ReadOnly(true)]
+        [Description("The size of the table's data in megabytes.")]
+        public double DataSizeMB { get; set; }
 
         /// <summary>
         /// Gets or sets the table last modification date.
         /// </summary>
         [ReadOnly(true)]
+        [Description("The date and time when the table was last modified.")]
         public DateTime? ModifyDate { get; set; }
 
         /// <summary>
         /// Gets or sets the row count.
         /// </summary>
         [ReadOnly(true)]
+        [Description("The number of rows in the table.")]
         public long RowCount { get; set; }
 
         /// <summary>
-        /// Gets or sets the data size in megabytes.
+        /// Gets or sets the schema name.
         /// </summary>
         [ReadOnly(true)]
-        public double DataSizeMB { get; set; }
+        [Description("The schema name of the table.")]
+        public string? SchemaName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the table name.
+        /// </summary>
+        [ReadOnly(true)]
+        [Description("The name of the table.")]
+        public string? TableName { get; set; }
 
         /// <summary>
         /// Loads table info asynchronously for the given table.
@@ -41,8 +58,11 @@ namespace SQL_Document_Builder
         /// <param name="connectionString">The connection string.</param>
         internal async Task OpenAsync(ObjectName objectName, string connectionString)
         {
+            TableName = objectName.Name;
+            SchemaName = objectName.Schema;
+
             string sql = $@"
-SELECT 
+SELECT
     t.create_date AS CreateDate,
     t.modify_date AS ModifyDate,
     p.rows AS [RowCount],

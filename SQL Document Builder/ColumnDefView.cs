@@ -17,6 +17,8 @@ namespace SQL_Document_Builder
         /// </summary>
         private DBObject _dbObject = new();
 
+        private bool _init = false;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="ColumnDefView"/> class.
         /// </summary>
@@ -57,11 +59,6 @@ namespace SQL_Document_Builder
         public event EventHandler? SelectedColumnChanged;
 
         public event EventHandler? TableDescSelected;
-
-        ///// <summary>
-        ///// Gets the database object.
-        ///// </summary>
-        //internal DBObject? DBObject => _dbObject;
 
         /// <summary>
         /// Gets or sets database connection
@@ -116,6 +113,7 @@ namespace SQL_Document_Builder
         /// </summary>
         public void Clear()
         {
+            _init = true;
             namePanel.Clear();
             SelectedColumn = "";
             if (columnDefDataGridView.DataSource != null)
@@ -130,6 +128,12 @@ namespace SQL_Document_Builder
                 parameterGridView.Columns.Clear();
                 parameterGridView.DataSource = null;
             }
+            definitionTextBox.Text = string.Empty;
+            if (objectPropertyGrid.SelectedObject != null)
+            {
+                objectPropertyGrid.SelectedObject = null;
+            }
+            _init = false;
         }
 
         /// <summary>
@@ -152,25 +156,62 @@ namespace SQL_Document_Builder
         /// </summary>
         public void Copy()
         {
-            var currentControl = this.ActiveControl;
-            if (currentControl?.GetType() == typeof(TextBox))
+            Control? focusedControl = GetFocusedControl(this);
+            if (focusedControl == null) return;
+
+            if (focusedControl is TextBox text)
             {
-                TextBox textBox = (TextBox)currentControl;
-                textBox.Copy();
+                if (text.Text.Length > 0)
+                {
+                    // If the TextBox has text, copy the selected text
+                    if (text.SelectionLength > 0)
+                    {
+                        text.Copy();
+                        return;
+                    }
+                }
+                else
+                {
+                    // If the TextBox is empty, copy the whole text
+                    Clipboard.SetText(text.Text);
+                }
+                return;
             }
-            else if (currentControl?.GetType() == typeof(Label))
+            else if (focusedControl is Label label)
             {
-                Label label = (Label)currentControl;
+                // Copy the label's text
                 Clipboard.SetText(label.Text);
             }
-            else if (currentControl?.GetType() == typeof(DataGridView))
+            else if (focusedControl is DataGridView dataGridView)
             {
-                DataGridView defView = (DataGridView)currentControl;
-                var value = defView.CurrentCell?.Value.ToString();
-                if (!string.IsNullOrEmpty(value))
+                // If the DataGridView is in edit mode, copy from the editing control (usually a TextBox)
+                if (dataGridView.CurrentCell != null && dataGridView.CurrentCell.IsInEditMode)
                 {
-                    Clipboard.SetText(value);
+                    if (dataGridView.EditingControl is TextBox editingTextBox)
+                    {
+                        editingTextBox.Copy();
+                        return;
+                    }
                 }
+                // Otherwise, copy the selected cells as a DataObject (tabular, for pasting into Excel, etc.)
+                var clipboardContent = dataGridView.GetClipboardContent();
+                if (clipboardContent != null)
+                {
+                    Clipboard.SetDataObject(clipboardContent);
+                }
+                // If nothing is selected, fallback to copying the current cell's value as text
+                else
+                {
+                    var value = dataGridView.CurrentCell?.Value?.ToString();
+                    if (!string.IsNullOrEmpty(value))
+                    {
+                        Clipboard.SetText(value);
+                    }
+                }
+            }
+            else if (focusedControl is ObjectNamePanel namePanel)
+            {
+                namePanel.Copy();
             }
         }
 
@@ -208,14 +249,23 @@ GO
         /// </summary>
         public void Cut()
         {
-            var currentControl = this.ActiveControl;
-            if (currentControl?.GetType() == typeof(TextBox))
+            Control? focusedControl = GetFocusedControl(this);
+            if (focusedControl == null) return;
+
+            if (focusedControl is DataGridView dataGridView)
             {
-                TextBox textBox = (TextBox)currentControl;
-                if (textBox.Enabled)
+                // If the DataGridView is active, cut the current cell's value
+                if (dataGridView.CurrentCell != null && dataGridView.CurrentCell.IsInEditMode)
                 {
-                    textBox.Cut();
+                    if (dataGridView.EditingControl is TextBox editingTextBox && editingTextBox.Enabled)
+                    {
+                        editingTextBox.Cut();
+                    }
                 }
+            }
+            else if (focusedControl is TextBox textBox)
+            {
+                textBox.Cut();
             }
         }
 
@@ -345,13 +395,23 @@ GO
         /// </summary>
         public void Paste()
         {
-            var currentControl = this.ActiveControl;
-            if (currentControl?.GetType() == typeof(TextBox))
+            Control? focusedControl = GetFocusedControl(this);
+            if (focusedControl == null) return;
+
+            if (focusedControl is TextBox textBox)
             {
-                TextBox textBox = (TextBox)currentControl;
-                if (textBox.Enabled)
+                textBox.Paste();
+                return;
+            }
+            else if (focusedControl is DataGridView dataGridView)
+            {
+                // If the DataGridView is active, paste into the current cell
+                if (dataGridView.CurrentCell != null && dataGridView.CurrentCell.IsInEditMode)
                 {
-                    textBox.Paste();
+                    if (dataGridView.EditingControl is TextBox editingTextBox && editingTextBox.Enabled)
+                    {
+                        editingTextBox.Paste();
+                    }
                 }
             }
         }
@@ -393,10 +453,17 @@ GO
         /// </summary>
         public void SelectAll()
         {
-            var currentControl = this.ActiveControl;
-            if (currentControl?.GetType() == typeof(TextBox))
+            Control? focusedControl = GetFocusedControl(this);
+            if (focusedControl == null) return;
+
+            if (focusedControl is DataGridView dataGridView)
             {
-                TextBox textBox = (TextBox)currentControl;
+                // If the DataGridView is active, select all cells
+                dataGridView.SelectAll();
+            }
+            else if (focusedControl is TextBox textBox)
+            {
+                // Select all text in the TextBox
                 textBox.SelectAll();
             }
         }
@@ -419,6 +486,29 @@ GO
         {
             await _dbObject.UpdateTableDescAsync(description);
             TableDescription = description;
+        }
+
+        /// <summary>
+        /// Recursively gets the currently focused control within a container.
+        /// </summary>
+        /// <param name="container">The container control.</param>
+        /// <returns>The focused control, or null if none is focused.</returns>
+        private static Control? GetFocusedControl(Control container)
+        {
+            if (container == null)
+                return null;
+
+            if (container.Focused)
+                return container;
+
+            foreach (Control child in container.Controls)
+            {
+                Control? focused = GetFocusedControl(child);
+                if (focused != null)
+                    return focused;
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -496,6 +586,8 @@ GO
         /// <param name="e">The E.</param>
         private async void ColumnDefDataGridView_CellValidated(object sender, DataGridViewCellEventArgs e)
         {
+            if (_init) return; // prevent recursive calls during initialization
+
             int rowIndex = e.RowIndex;
             if (rowIndex >= 0)
             {

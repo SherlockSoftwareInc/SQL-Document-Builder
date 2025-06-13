@@ -20,6 +20,19 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Copies the.
+        /// </summary>
+        public void Copy()
+        {
+            // Copy the object name to the clipboard
+            if (_objectName != null)
+            {
+                string objectNameText = _objectName.FullName ?? string.Empty;
+                Clipboard.SetText(objectNameText);
+            }
+        }
+
+        /// <summary>
         /// Opens the database object.
         /// </summary>
         /// <param name="objectName">The object name.</param>
@@ -85,6 +98,7 @@ namespace SQL_Document_Builder
                 e.Graphics.DrawString(objectNameText, this.Font, brush, imageWidth + 3, textY);
             }
         }
+
         /// <summary>
         /// Clears the.
         /// </summary>
