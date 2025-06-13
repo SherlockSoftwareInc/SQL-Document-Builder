@@ -234,6 +234,7 @@
             newToolStripButton1.Name = "newToolStripButton1";
             newToolStripButton1.Size = new System.Drawing.Size(23, 22);
             newToolStripButton1.Text = "&New";
+            newToolStripButton1.ToolTipText = "New document";
             newToolStripButton1.Click += NewToolStripMenuItem_Click;
             // 
             // openToolStripButton
@@ -307,6 +308,7 @@
             dataSourcesToolStripComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             dataSourcesToolStripComboBox.Name = "dataSourcesToolStripComboBox";
             dataSourcesToolStripComboBox.Size = new System.Drawing.Size(250, 25);
+            dataSourcesToolStripComboBox.ToolTipText = "Data source";
             dataSourcesToolStripComboBox.SelectedIndexChanged += DataSourcesToolStripComboBox_SelectedIndexChanged;
             // 
             // toolStripSeparator20
@@ -325,6 +327,7 @@
             docTypeToolStripComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             docTypeToolStripComboBox.Name = "docTypeToolStripComboBox";
             docTypeToolStripComboBox.Size = new System.Drawing.Size(121, 25);
+            docTypeToolStripComboBox.ToolTipText = "Target document type";
             docTypeToolStripComboBox.SelectedIndexChanged += DocTypeToolStripComboBox_SelectedIndexChanged;
             // 
             // objDefToolStripButton
@@ -334,7 +337,7 @@
             objDefToolStripButton.Name = "objDefToolStripButton";
             objDefToolStripButton.Size = new System.Drawing.Size(79, 22);
             objDefToolStripButton.Text = "Definition";
-            objDefToolStripButton.ToolTipText = "Table Definition (Markdown)";
+            objDefToolStripButton.ToolTipText = "Generate object definition document";
             objDefToolStripButton.Click += TableDefinitionToolStripMenuItem_Click_1;
             // 
             // mdValuesToolStripButton
@@ -344,7 +347,7 @@
             mdValuesToolStripButton.Name = "mdValuesToolStripButton";
             mdValuesToolStripButton.Size = new System.Drawing.Size(60, 22);
             mdValuesToolStripButton.Text = "Values";
-            mdValuesToolStripButton.ToolTipText = "Table values (Markdown)";
+            mdValuesToolStripButton.ToolTipText = "Generate document for object data";
             mdValuesToolStripButton.Click += TableValuesMDToolStripMenuItem_Click;
             // 
             // toolStripSeparator2
@@ -359,6 +362,7 @@
             createTableToolStripButton.Name = "createTableToolStripButton";
             createTableToolStripButton.Size = new System.Drawing.Size(68, 22);
             createTableToolStripButton.Text = "CREATE";
+            createTableToolStripButton.ToolTipText = "Generate CREATE statement for object";
             createTableToolStripButton.Click += CreateTableToolStripButton_Click;
             // 
             // insertToolStripButton
@@ -368,6 +372,7 @@
             insertToolStripButton.Name = "insertToolStripButton";
             insertToolStripButton.Size = new System.Drawing.Size(64, 22);
             insertToolStripButton.Text = "INSERT";
+            insertToolStripButton.ToolTipText = "Generate INSERT statement for object data";
             insertToolStripButton.Click += InsertToolStripButton_Click;
             // 
             // descToolStripButton
@@ -377,6 +382,7 @@
             descToolStripButton.Name = "descToolStripButton";
             descToolStripButton.Size = new System.Drawing.Size(87, 22);
             descToolStripButton.Text = "Description";
+            descToolStripButton.ToolTipText = "Generate object description statements";
             descToolStripButton.Click += TableDescriptionToolStripMenuItem_Click;
             // 
             // objectsTabControl
@@ -476,6 +482,7 @@
             objectTypeComboBox.Name = "objectTypeComboBox";
             objectTypeComboBox.Size = new System.Drawing.Size(168, 23);
             objectTypeComboBox.TabIndex = 1;
+            toolTip1.SetToolTip(objectTypeComboBox, "Object type");
             objectTypeComboBox.SelectedIndexChanged += ObjectTypeComboBox_SelectedIndexChanged;
             // 
             // schemaComboBox
@@ -487,6 +494,7 @@
             schemaComboBox.Name = "schemaComboBox";
             schemaComboBox.Size = new System.Drawing.Size(171, 23);
             schemaComboBox.TabIndex = 3;
+            toolTip1.SetToolTip(schemaComboBox, "Schema");
             schemaComboBox.SelectedIndexChanged += SchemaComboBox_SelectedIndexChanged;
             // 
             // label1
@@ -1360,12 +1368,13 @@
             progressBar.Name = "progressBar";
             progressBar.Size = new System.Drawing.Size(120, 19);
             progressBar.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
+            progressBar.ToolTipText = "Process progres";
             progressBar.Visible = false;
             // 
             // statusToolStripStatusLabe
             // 
             statusToolStripStatusLabe.Name = "statusToolStripStatusLabe";
-            statusToolStripStatusLabe.Size = new System.Drawing.Size(1128, 17);
+            statusToolStripStatusLabe.Size = new System.Drawing.Size(975, 20);
             statusToolStripStatusLabe.Spring = true;
             statusToolStripStatusLabe.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
@@ -1373,15 +1382,17 @@
             // 
             serverToolStripStatusLabel.Image = Properties.Resources.server;
             serverToolStripStatusLabel.Name = "serverToolStripStatusLabel";
-            serverToolStripStatusLabel.Size = new System.Drawing.Size(54, 17);
+            serverToolStripStatusLabel.Size = new System.Drawing.Size(54, 20);
             serverToolStripStatusLabel.Text = "server";
+            serverToolStripStatusLabel.ToolTipText = "Server name";
             // 
             // databaseToolStripStatusLabel
             // 
             databaseToolStripStatusLabel.Image = Properties.Resources.database;
             databaseToolStripStatusLabel.Name = "databaseToolStripStatusLabel";
-            databaseToolStripStatusLabel.Size = new System.Drawing.Size(70, 17);
+            databaseToolStripStatusLabel.Size = new System.Drawing.Size(70, 20);
             databaseToolStripStatusLabel.Text = "database";
+            databaseToolStripStatusLabel.ToolTipText = "Database name";
             // 
             // searchPanel
             // 
@@ -1454,6 +1465,7 @@
             definitionPanel.Name = "definitionPanel";
             definitionPanel.Size = new System.Drawing.Size(360, 676);
             definitionPanel.TabIndex = 4;
+            toolTip1.SetToolTip(definitionPanel, "Object description edit box");
             // 
             // defiCollapsibleSplitter
             // 
