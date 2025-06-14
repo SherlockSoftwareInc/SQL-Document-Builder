@@ -143,8 +143,8 @@
             insertToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             tableDescriptionToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             toolStripSeparator13 = new System.Windows.Forms.ToolStripSeparator();
-            createPrimaryKeyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             createIndexToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            createPrimaryKeyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             toolStripSeparator14 = new System.Windows.Forms.ToolStripSeparator();
             uspToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             toolStripSeparator12 = new System.Windows.Forms.ToolStripSeparator();
@@ -198,6 +198,7 @@
             closeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             saveToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             toolTip1 = new System.Windows.Forms.ToolTip(components);
+            startTimer = new System.Windows.Forms.Timer(components);
             toolStrip1.SuspendLayout();
             objectsTabControl.SuspendLayout();
             tabPage1.SuspendLayout();
@@ -1166,19 +1167,19 @@
             toolStripSeparator13.Name = "toolStripSeparator13";
             toolStripSeparator13.Size = new System.Drawing.Size(245, 6);
             // 
-            // createPrimaryKeyToolStripMenuItem
-            // 
-            createPrimaryKeyToolStripMenuItem.Name = "createPrimaryKeyToolStripMenuItem";
-            createPrimaryKeyToolStripMenuItem.Size = new System.Drawing.Size(248, 22);
-            createPrimaryKeyToolStripMenuItem.Text = "Create Primary Key";
-            createPrimaryKeyToolStripMenuItem.Click += CreatePrimaryKeyToolStripMenuItem_Click;
-            // 
             // createIndexToolStripMenuItem
             // 
             createIndexToolStripMenuItem.Name = "createIndexToolStripMenuItem";
             createIndexToolStripMenuItem.Size = new System.Drawing.Size(248, 22);
             createIndexToolStripMenuItem.Text = "Create Index";
             createIndexToolStripMenuItem.Click += CreateIndexToolStripMenuItem_Click;
+            // 
+            // createPrimaryKeyToolStripMenuItem
+            // 
+            createPrimaryKeyToolStripMenuItem.Name = "createPrimaryKeyToolStripMenuItem";
+            createPrimaryKeyToolStripMenuItem.Size = new System.Drawing.Size(248, 22);
+            createPrimaryKeyToolStripMenuItem.Text = "Create Primary Key";
+            createPrimaryKeyToolStripMenuItem.Click += CreatePrimaryKeyToolStripMenuItem_Click;
             // 
             // toolStripSeparator14
             // 
@@ -1641,6 +1642,10 @@
             saveToolStripMenuItem1.Text = "Save";
             saveToolStripMenuItem1.Click += SaveToolStripMenuItem1_Click;
             // 
+            // startTimer
+            // 
+            startTimer.Tick += StartTimer_Tick;
+            // 
             // TableBuilderForm
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -1859,5 +1864,6 @@
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator10;
         private System.Windows.Forms.ToolStripMenuItem exportDescriptionsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem importDescriptionsToolStripMenuItem;
+        private System.Windows.Forms.Timer startTimer;
     }
 }

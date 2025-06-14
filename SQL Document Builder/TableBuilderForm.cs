@@ -5,6 +5,7 @@ using SQL_Document_Builder.Template;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -2751,38 +2752,36 @@ namespace SQL_Document_Builder
         {
             WindowState = FormWindowState.Maximized;
 
-            // INIT HOTKEYS
-            InitHotkeys();
+            //// INIT HOTKEYS
+            //InitHotkeys();
 
-            _connections.Load();
-            await PopulateConnections();
+            //_connections.Load();
+            //await PopulateConnections();
 
-            RestoreLastConnection();
+            //RestoreLastConnection();
 
-            addDataSourceCheckBox.Checked = Properties.Settings.Default.AddDataSource;
-            scriptDropsCheckBox.Checked = Properties.Settings.Default.AddDropStatement;
-            if (Properties.Settings.Default.UseExtendedProperties)
-                useExtendedPropertyRadioButton.Checked = true;
-            else
-                useUspDescRadioButton.Checked = true;
+            //addDataSourceCheckBox.Checked = Properties.Settings.Default.AddDataSource;
+            //scriptDropsCheckBox.Checked = Properties.Settings.Default.AddDropStatement;
+            //if (Properties.Settings.Default.UseExtendedProperties)
+            //    useExtendedPropertyRadioButton.Checked = true;
+            //else
+            //    useUspDescRadioButton.Checked = true;
 
-            insertBatchTextBox.Text = Properties.Settings.Default.InsertBatchRows.ToString();
-            insertMaxTextBox.Text = Properties.Settings.Default.InertMaxRows.ToString();
+            //insertBatchTextBox.Text = Properties.Settings.Default.InsertBatchRows.ToString();
+            //insertMaxTextBox.Text = Properties.Settings.Default.InertMaxRows.ToString();
+
+            //defiCollapsibleSplitter.SplitterDistance = Properties.Settings.Default.RightSplitterDistance;
+            //splitContainer1.SplitterDistance = Properties.Settings.Default.LeftSplitterDistance;
 
             WindowState = FormWindowState.Maximized;
             //if (collapsibleSplitter1 != null)
             //    collapsibleSplitter1.SplitterDistance = (int)(this.Width * 0.4F);
 
-            defiCollapsibleSplitter.SplitterDistance = Properties.Settings.Default.RightSplitterDistance;
-            splitContainer1.SplitterDistance = Properties.Settings.Default.LeftSplitterDistance;
+            //defiCollapsibleSplitter.SplitterDistance = Properties.Settings.Default.RightSplitterDistance;
+            //splitContainer1.SplitterDistance = Properties.Settings.Default.LeftSplitterDistance;
 
-            // populate most recent used files
-            PopulateMRUFiles();
+            startTimer.Start();
 
-            // populate the objects list box with tables
-            PopulateDocumentType();
-
-            AddTab("");
         }
 
         /// <summary>
@@ -3957,6 +3956,44 @@ namespace SQL_Document_Builder
                 }
             }
             return true; // All required columns are present
+        }
+
+        /// <summary>
+        /// Starts the timer_ tick.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private async void StartTimer_Tick(object sender, EventArgs e)
+        {
+            startTimer.Stop(); // Stop the timer to prevent multiple invocations
+
+            // INIT HOTKEYS
+            InitHotkeys();
+
+            _connections.Load();
+            await PopulateConnections();
+
+            RestoreLastConnection();
+
+            addDataSourceCheckBox.Checked = Properties.Settings.Default.AddDataSource;
+            scriptDropsCheckBox.Checked = Properties.Settings.Default.AddDropStatement;
+            if (Properties.Settings.Default.UseExtendedProperties)
+                useExtendedPropertyRadioButton.Checked = true;
+            else
+                useUspDescRadioButton.Checked = true;
+
+            insertBatchTextBox.Text = Properties.Settings.Default.InsertBatchRows.ToString();
+            insertMaxTextBox.Text = Properties.Settings.Default.InertMaxRows.ToString();
+
+            defiCollapsibleSplitter.SplitterDistance = Properties.Settings.Default.RightSplitterDistance;
+            splitContainer1.SplitterDistance = Properties.Settings.Default.LeftSplitterDistance;
+
+            PopulateDocumentType();
+
+            // populate most recent used files
+            PopulateMRUFiles();
+
+            AddTab("");
         }
     }
 }
