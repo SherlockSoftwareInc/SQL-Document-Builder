@@ -474,7 +474,7 @@ namespace SQL_Document_Builder
                         {
                             submenuitem.Checked = true;
 
-                            Properties.Settings.Default.LastAccessConnection = submenuitem.Connection.GUID.ToString();
+                            Properties.Settings.Default.LastAccessConnection = submenuitem.Connection.ConnectionID.ToString();
                             Properties.Settings.Default.Save();
                         }
                         else
@@ -1019,7 +1019,7 @@ namespace SQL_Document_Builder
                     {
                         if (item is ConnectionMenuItem connectionMenuItem)
                         {
-                            if (connectionMenuItem.Connection.GUID == selectedItem.GUID)
+                            if (connectionMenuItem.Connection.ConnectionID == selectedItem.ConnectionID)
                             {
                                 connectionMenuItem.Checked = true;
                                 // perform menu item click event to update the connection
@@ -2386,7 +2386,7 @@ namespace SQL_Document_Builder
                 // find the connection that matches the last access connection GUID
                 for (int i = 0; i < connectToToolStripMenuItem.DropDown.Items.Count; i++)
                 {
-                    if (connectToToolStripMenuItem.DropDown.Items[i] is ConnectionMenuItem menuItem && menuItem.Connection.GUID.Equals(lastConnectionGuid))
+                    if (connectToToolStripMenuItem.DropDown.Items[i] is ConnectionMenuItem menuItem && menuItem.Connection.ConnectionID.Equals(lastConnectionGuid))
                     {
                         matchedItems = menuItem;
                         break;
@@ -2565,7 +2565,7 @@ namespace SQL_Document_Builder
             {
                 if (dataSourcesToolStripComboBox.Items[i] is DatabaseConnectionItem comboItem)
                 {
-                    if (comboItem.GUID == connectionItem.GUID)
+                    if (comboItem.ConnectionID == connectionItem.ConnectionID)
                     {
                         dataSourcesToolStripComboBox.SelectedIndex = i;
                         break;

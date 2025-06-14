@@ -44,13 +44,13 @@ namespace SQL_Document_Builder
             AuthenticationType = AuthenticationMethod.ActiveDirectoryIntegrated;
             ConnectionString = "";
             ConnectionType = "SQL Server";
-            GUID = Guid.NewGuid();
+            ConnectionID = Guid.NewGuid();
         }
 
         /// <summary>
         /// Gets the guid for a connection item.
         /// </summary>
-        public Guid GUID { get; set; }
+        public Guid ConnectionID { get; set; }
 
         /// <summary>
         /// DBMS type for future use.
@@ -191,7 +191,7 @@ namespace SQL_Document_Builder
         {
             if (obj is not DatabaseConnectionItem p)
                 return false;
-            return GUID != null && GUID.Equals(p.GUID);
+            return ConnectionID != null && ConnectionID.Equals(p.ConnectionID);
         }
 
         /// <summary>
@@ -200,7 +200,7 @@ namespace SQL_Document_Builder
         /// <returns>An int.</returns>
         public override int GetHashCode()
         {
-            return GUID.ToString().GetHashCode();
+            return ConnectionID.ToString().GetHashCode();
         }
 
         /// <summary>
