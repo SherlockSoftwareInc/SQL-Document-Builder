@@ -44,6 +44,8 @@ namespace SQL_Document_Builder
             columnDefDataGridView = new System.Windows.Forms.DataGridView();
             columnContextMenuStrip = new System.Windows.Forms.ContextMenuStrip(components);
             columnValueFrequencyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
+            addIndexToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             splitContainer1 = new System.Windows.Forms.SplitContainer();
             tabControl1 = new System.Windows.Forms.TabControl();
             tabPage1 = new System.Windows.Forms.TabPage();
@@ -51,11 +53,12 @@ namespace SQL_Document_Builder
             parameterGridView = new System.Windows.Forms.DataGridView();
             tabPage2 = new System.Windows.Forms.TabPage();
             definitionTextBox = new SqlEditBox();
+            tabPage3 = new System.Windows.Forms.TabPage();
+            objectPropertyGrid = new System.Windows.Forms.PropertyGrid();
             panel1 = new System.Windows.Forms.Panel();
             saveTableDescButton = new System.Windows.Forms.Button();
             descriptionLabel = new System.Windows.Forms.Label();
-            tabPage3 = new System.Windows.Forms.TabPage();
-            objectPropertyGrid = new System.Windows.Forms.PropertyGrid();
+            addPrimaryKeyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             namePanel.SuspendLayout();
             openTableContextMenuStrip.SuspendLayout();
             tableContextMenuStrip.SuspendLayout();
@@ -70,8 +73,8 @@ namespace SQL_Document_Builder
             ((System.ComponentModel.ISupportInitialize)triggerGridView).BeginInit();
             ((System.ComponentModel.ISupportInitialize)parameterGridView).BeginInit();
             tabPage2.SuspendLayout();
-            panel1.SuspendLayout();
             tabPage3.SuspendLayout();
+            panel1.SuspendLayout();
             SuspendLayout();
             // 
             // namePanel
@@ -176,9 +179,9 @@ namespace SQL_Document_Builder
             // 
             // columnContextMenuStrip
             // 
-            columnContextMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { columnValueFrequencyToolStripMenuItem });
+            columnContextMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { columnValueFrequencyToolStripMenuItem, toolStripSeparator2, addIndexToolStripMenuItem, addPrimaryKeyToolStripMenuItem });
             columnContextMenuStrip.Name = "columnContextMenuStrip";
-            columnContextMenuStrip.Size = new System.Drawing.Size(207, 26);
+            columnContextMenuStrip.Size = new System.Drawing.Size(207, 98);
             // 
             // columnValueFrequencyToolStripMenuItem
             // 
@@ -186,6 +189,18 @@ namespace SQL_Document_Builder
             columnValueFrequencyToolStripMenuItem.Size = new System.Drawing.Size(206, 22);
             columnValueFrequencyToolStripMenuItem.Text = "Column Value Frequency";
             columnValueFrequencyToolStripMenuItem.Click += ColumnValueFrequencyToolStripMenuItem_Click;
+            // 
+            // toolStripSeparator2
+            // 
+            toolStripSeparator2.Name = "toolStripSeparator2";
+            toolStripSeparator2.Size = new System.Drawing.Size(203, 6);
+            // 
+            // addIndexToolStripMenuItem
+            // 
+            addIndexToolStripMenuItem.Name = "addIndexToolStripMenuItem";
+            addIndexToolStripMenuItem.Size = new System.Drawing.Size(206, 22);
+            addIndexToolStripMenuItem.Text = "Create Index";
+            addIndexToolStripMenuItem.Click += AddIndexToolStripMenuItem_Click;
             // 
             // splitContainer1
             // 
@@ -279,16 +294,11 @@ namespace SQL_Document_Builder
             // 
             // definitionTextBox
             // 
-            definitionTextBox.Alias = "";
             definitionTextBox.AllowDrop = true;
             definitionTextBox.AutocompleteListSelectedBackColor = System.Drawing.Color.FromArgb(0, 120, 215);
             definitionTextBox.AutomaticFold = ScintillaNET.AutomaticFold.Show | ScintillaNET.AutomaticFold.Click | ScintillaNET.AutomaticFold.Change;
             definitionTextBox.CaretForeColor = System.Drawing.Color.White;
-            definitionTextBox.DataSourceName = "";
-            definitionTextBox.DefaultStyleFont = new System.Drawing.Font("Cascadia Mono", 10F);
             definitionTextBox.Dock = System.Windows.Forms.DockStyle.Fill;
-            definitionTextBox.DocumentType = SqlEditBox.DocumentTypeEnums.empty;
-            definitionTextBox.FileName = "";
             definitionTextBox.Font = new System.Drawing.Font("Cascadia Mono", 10F);
             definitionTextBox.IndentationGuides = ScintillaNET.IndentView.LookBoth;
             definitionTextBox.LexerName = "sql";
@@ -297,6 +307,25 @@ namespace SQL_Document_Builder
             definitionTextBox.SelectionBackColor = System.Drawing.Color.FromArgb(17, 77, 156);
             definitionTextBox.Size = new System.Drawing.Size(345, 431);
             definitionTextBox.TabIndex = 0;
+            // 
+            // tabPage3
+            // 
+            tabPage3.Controls.Add(objectPropertyGrid);
+            tabPage3.Location = new System.Drawing.Point(4, 4);
+            tabPage3.Name = "tabPage3";
+            tabPage3.Padding = new System.Windows.Forms.Padding(3);
+            tabPage3.Size = new System.Drawing.Size(351, 437);
+            tabPage3.TabIndex = 2;
+            tabPage3.Text = "Properties";
+            tabPage3.UseVisualStyleBackColor = true;
+            // 
+            // objectPropertyGrid
+            // 
+            objectPropertyGrid.Dock = System.Windows.Forms.DockStyle.Fill;
+            objectPropertyGrid.Location = new System.Drawing.Point(3, 3);
+            objectPropertyGrid.Name = "objectPropertyGrid";
+            objectPropertyGrid.Size = new System.Drawing.Size(345, 431);
+            objectPropertyGrid.TabIndex = 4;
             // 
             // panel1
             // 
@@ -328,24 +357,12 @@ namespace SQL_Document_Builder
             descriptionLabel.TabIndex = 0;
             descriptionLabel.Text = "Object description:";
             // 
-            // tabPage3
+            // addPrimaryKeyToolStripMenuItem
             // 
-            tabPage3.Controls.Add(objectPropertyGrid);
-            tabPage3.Location = new System.Drawing.Point(4, 4);
-            tabPage3.Name = "tabPage3";
-            tabPage3.Padding = new System.Windows.Forms.Padding(3);
-            tabPage3.Size = new System.Drawing.Size(351, 437);
-            tabPage3.TabIndex = 2;
-            tabPage3.Text = "Properties";
-            tabPage3.UseVisualStyleBackColor = true;
-            // 
-            // objectPropertyGrid
-            // 
-            objectPropertyGrid.Dock = System.Windows.Forms.DockStyle.Fill;
-            objectPropertyGrid.Location = new System.Drawing.Point(3, 3);
-            objectPropertyGrid.Name = "objectPropertyGrid";
-            objectPropertyGrid.Size = new System.Drawing.Size(345, 431);
-            objectPropertyGrid.TabIndex = 4;
+            addPrimaryKeyToolStripMenuItem.Name = "addPrimaryKeyToolStripMenuItem";
+            addPrimaryKeyToolStripMenuItem.Size = new System.Drawing.Size(206, 22);
+            addPrimaryKeyToolStripMenuItem.Text = "Create Primary Key";
+            addPrimaryKeyToolStripMenuItem.Click += AddPrimaryKeyToolStripMenuItem_Click;
             // 
             // ColumnDefView
             // 
@@ -370,9 +387,9 @@ namespace SQL_Document_Builder
             ((System.ComponentModel.ISupportInitialize)triggerGridView).EndInit();
             ((System.ComponentModel.ISupportInitialize)parameterGridView).EndInit();
             tabPage2.ResumeLayout(false);
+            tabPage3.ResumeLayout(false);
             panel1.ResumeLayout(false);
             panel1.PerformLayout();
-            tabPage3.ResumeLayout(false);
             ResumeLayout(false);
         }
 
@@ -403,5 +420,8 @@ namespace SQL_Document_Builder
         private System.Windows.Forms.DataGridView triggerGridView;
         private System.Windows.Forms.TabPage tabPage3;
         private System.Windows.Forms.PropertyGrid objectPropertyGrid;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
+        private System.Windows.Forms.ToolStripMenuItem addIndexToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem addPrimaryKeyToolStripMenuItem;
     }
 }

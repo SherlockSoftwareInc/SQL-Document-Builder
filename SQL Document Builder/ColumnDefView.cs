@@ -56,6 +56,10 @@ namespace SQL_Document_Builder
             definitionTextBox.DocumentType = SqlEditBox.DocumentTypeEnums.Sql;
         }
 
+        public event EventHandler? AddIndexRequested;
+
+        public event EventHandler? AddPrimaryKeyRequested;
+
         public event EventHandler? SelectedColumnChanged;
 
         public event EventHandler? TableDescSelected;
@@ -388,6 +392,14 @@ GO
                 ObjectName.ObjectTypeEnums.Synonym => "Description of the synonym",
                 _ => "Description:"
             };
+
+            // enable/disable the add index and primary key menu items based on the object type
+            addIndexToolStripMenuItem.Enabled = _dbObject.ObjectType == ObjectName.ObjectTypeEnums.Table || _dbObject.ObjectType == ObjectName.ObjectTypeEnums.View;
+            addPrimaryKeyToolStripMenuItem.Enabled = _dbObject.ObjectType == ObjectName.ObjectTypeEnums.Table;
+
+            // enable/disable the column value frequency menu item based on the object type
+            columnValueFrequencyToolStripMenuItem.Enabled = _dbObject.ObjectType == ObjectName.ObjectTypeEnums.Table || _dbObject.ObjectType == ObjectName.ObjectTypeEnums.View;
+
         }
 
         /// <summary>
@@ -533,6 +545,26 @@ GO
 
             tableDescTextBox.Text = description;
             await _dbObject.UpdateTableDescAsync(description);
+        }
+
+        /// <summary>
+        /// Handles the add index tool strip menu item click event.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void AddIndexToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            AddIndexRequested?.Invoke(this, EventArgs.Empty);
+        }
+
+        /// <summary>
+        /// Handles the add primary key tool strip menu item click event.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void AddPrimaryKeyToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            AddPrimaryKeyRequested?.Invoke(this, EventArgs.Empty);
         }
 
         /// <summary>
