@@ -1135,7 +1135,7 @@
             // 
             // databaseDDLToolStripMenuItem
             // 
-            databaseDDLToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { cREATEToolStripMenuItem1, insertToolStripMenuItem, tableDescriptionToolStripMenuItem, toolStripSeparator13, createPrimaryKeyToolStripMenuItem, createIndexToolStripMenuItem, toolStripSeparator14, uspToolStripMenuItem, toolStripSeparator12, queryInsertToolStripMenuItem, excelToINSERTToolStripMenuItem, toolStripSeparator15, batchToolStripMenuItem });
+            databaseDDLToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { cREATEToolStripMenuItem1, insertToolStripMenuItem, tableDescriptionToolStripMenuItem, toolStripSeparator13, createIndexToolStripMenuItem, createPrimaryKeyToolStripMenuItem, toolStripSeparator14, uspToolStripMenuItem, toolStripSeparator12, queryInsertToolStripMenuItem, excelToINSERTToolStripMenuItem, toolStripSeparator15, batchToolStripMenuItem });
             databaseDDLToolStripMenuItem.Name = "databaseDDLToolStripMenuItem";
             databaseDDLToolStripMenuItem.Size = new System.Drawing.Size(92, 20);
             databaseDDLToolStripMenuItem.Text = "Database DDL";

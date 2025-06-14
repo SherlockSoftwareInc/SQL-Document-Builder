@@ -7,13 +7,13 @@
   IgnorableNamespaces="uap rescap">
 
   <Identity
-    Name="34d89e86-713b-4231-976d-47c8b685a18b"
+    Name="3977SherlockSoftwareInc.21579484A1346"
     Publisher="CN=691AAF11-7ECE-4865-B3C9-00A04CA42AF5"
-    Version="3.3.4.0" />
+    Version="3.4.6.0" />
 
   <Properties>
     <DisplayName>SQL Server Script and Document Builder</DisplayName>
-    <PublisherDisplayName>sherl</PublisherDisplayName>
+    <PublisherDisplayName>Sherlock Software Inc.</PublisherDisplayName>
     <Logo>Images\StoreLogo.png</Logo>
   </Properties>
 
@@ -42,22 +42,6 @@
           <uap:Rotation Preference="landscape"/>
           <uap:Rotation Preference="portrait"/></uap:InitialRotationPreference>
       </uap:VisualElements>
-      <Extensions>
-        <uap:Extension Category="windows.fileOpenPicker">
-          <uap:FileOpenPicker>
-            <uap:SupportedFileTypes>
-              <uap:SupportsAnyFileType/>
-            </uap:SupportedFileTypes>
-          </uap:FileOpenPicker>
-        </uap:Extension>
-        <uap:Extension Category="windows.fileSavePicker">
-          <uap:FileSavePicker>
-            <uap:SupportedFileTypes>
-              <uap:SupportsAnyFileType/>
-            </uap:SupportedFileTypes>
-          </uap:FileSavePicker>
-        </uap:Extension>
-      </Extensions>
     </Application>
   </Applications>
 
