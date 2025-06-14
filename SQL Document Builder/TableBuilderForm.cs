@@ -22,7 +22,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// The database connections.
         /// </summary>
-        private readonly SQLServerConnections _connections = new();
+        private readonly DatabaseConnections _connections = new();
 
         /// <summary>
         /// The count of database connections.
@@ -72,7 +72,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Executes the scripts.
         /// </summary>
-        private static async Task<string> ExecuteScriptsAsync(SQLDatabaseConnectionItem connection, string script)
+        private static async Task<string> ExecuteScriptsAsync(DatabaseConnectionItem connection, string script)
         {
             var sqlStatements = Regex.Split(script, @"\bGO\b", RegexOptions.IgnoreCase | RegexOptions.Multiline);
 
@@ -239,7 +239,7 @@ namespace SQL_Document_Builder
             using var dlg = new NewSQLServerConnectionDialog();
             if (dlg.ShowDialog() == DialogResult.OK)
             {
-                var connection = new SQLDatabaseConnectionItem()
+                var connection = new DatabaseConnectionItem()
                 {
                     Name = dlg.ConnectionName,
                     ServerName = dlg.ServerName,
@@ -442,7 +442,7 @@ namespace SQL_Document_Builder
         /// Change DB connection.
         /// </summary>
         /// <param name="connection">The connection.</param>
-        private async Task ChangeDBConnectionAsync(SQLDatabaseConnectionItem connection)
+        private async Task ChangeDBConnectionAsync(DatabaseConnectionItem connection)
         {
             if (connection != null)
             {
@@ -473,7 +473,7 @@ namespace SQL_Document_Builder
                         {
                             submenuitem.Checked = true;
 
-                            Properties.Settings.Default.LastAccessConnection = submenuitem.Connection.GUID;
+                            Properties.Settings.Default.LastAccessConnection = submenuitem.Connection.GUID.ToString();
                             Properties.Settings.Default.Save();
                         }
                         else
@@ -1009,7 +1009,7 @@ namespace SQL_Document_Builder
                 Cursor = Cursors.WaitCursor;
                 Application.DoEvents();
 
-                if (dataSourcesToolStripComboBox.SelectedItem is SQLDatabaseConnectionItem selectedItem)
+                if (dataSourcesToolStripComboBox.SelectedItem is DatabaseConnectionItem selectedItem)
                 {
                     //await ChangeDBConnectionAsync(selectedItem);
 
@@ -1898,7 +1898,7 @@ namespace SQL_Document_Builder
             }
 
             // convert the selected item to SQLDatabaseConnectionItem
-            if (dataSourcesToolStripComboBox.SelectedItem is SQLDatabaseConnectionItem connection)
+            if (dataSourcesToolStripComboBox.SelectedItem is DatabaseConnectionItem connection)
             {
                 if (connection.ConnectionString == null || connection.ConnectionString.Length == 0)
                 {
@@ -2380,10 +2380,12 @@ namespace SQL_Document_Builder
             var lastConnection = Properties.Settings.Default.LastAccessConnection;
             if (!string.IsNullOrEmpty(lastConnection))
             {
+                var lastConnectionGuid = new Guid(lastConnection);
+
                 // find the connection that matches the last access connection GUID
                 for (int i = 0; i < connectToToolStripMenuItem.DropDown.Items.Count; i++)
                 {
-                    if (connectToToolStripMenuItem.DropDown.Items[i] is ConnectionMenuItem menuItem && menuItem.Connection.GUID == lastConnection)
+                    if (connectToToolStripMenuItem.DropDown.Items[i] is ConnectionMenuItem menuItem && menuItem.Connection.GUID.Equals(lastConnectionGuid))
                     {
                         matchedItems = menuItem;
                         break;
@@ -2553,16 +2555,16 @@ namespace SQL_Document_Builder
         /// Sets the connection combo box.
         /// </summary>
         /// <param name="connectionItem">The connection item.</param>
-        private void SetConnectionComboBox(SQLDatabaseConnectionItem connectionItem)
+        private void SetConnectionComboBox(DatabaseConnectionItem connectionItem)
         {
             _ignoreConnectionComboBoxIndexChange = true;
 
             // go through the dataSourcesToolStripComboBox and find the matched item
             for (int i = 0; i < dataSourcesToolStripComboBox.Items.Count; i++)
             {
-                if (dataSourcesToolStripComboBox.Items[i] is SQLDatabaseConnectionItem comboItem)
+                if (dataSourcesToolStripComboBox.Items[i] is DatabaseConnectionItem comboItem)
                 {
-                    if (string.Equals(comboItem.GUID, connectionItem.GUID, StringComparison.OrdinalIgnoreCase))
+                    if (comboItem.GUID == connectionItem.GUID)
                     {
                         dataSourcesToolStripComboBox.SelectedIndex = i;
                         break;

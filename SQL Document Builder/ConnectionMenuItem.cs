@@ -10,14 +10,14 @@ namespace SQL_Document_Builder
     /// Initializes a new instance of the <see cref="ConnectionMenuItem"/> class.
     /// </remarks>
     /// <param name="connectionItem">The connection item.</param>
-    internal class ConnectionMenuItem(SQLDatabaseConnectionItem connectionItem) : ToolStripMenuItem(connectionItem.Name)
+    internal class ConnectionMenuItem(DatabaseConnectionItem connectionItem) : ToolStripMenuItem(connectionItem.Name)
     {
 
         /// <summary>
         /// Gets or sets the connection.
         /// </summary>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public SQLDatabaseConnectionItem Connection { get; set; } = connectionItem;
+        public DatabaseConnectionItem Connection { get; set; } = connectionItem;
 
         /// <summary>
         /// Gets the connection name.

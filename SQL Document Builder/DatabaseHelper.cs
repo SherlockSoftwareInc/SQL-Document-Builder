@@ -267,7 +267,7 @@ JOIN sys.schemas s ON o.schema_id = s.schema_id";
 
             try
             {
-                SqlConnectionStringBuilder connection = new()
+                Microsoft.Data.SqlClient.SqlConnectionStringBuilder connection = new()
                 {
                     DataSource = serverName,
                     IntegratedSecurity = true,

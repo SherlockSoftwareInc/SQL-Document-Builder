@@ -1,5 +1,4 @@
 ﻿using DarkModeForms;
-using Microsoft.Data.SqlClient;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -25,7 +24,7 @@ namespace SQL_Document_Builder
         /// Gets or sets the authentication.
         /// </summary>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public SqlAuthenticationMethod Authentication { get; set; }
+        public AuthenticationMethod Authentication { get; set; }
 
         /// <summary>
         /// Gets or sets the connection string.
@@ -90,13 +89,8 @@ namespace SQL_Document_Builder
             string dbName = databaseComboBox.Text;
             if (serverName.Length > 0 && dbName.Length > 0)
             {
-                SqlConnectionStringBuilder builder = new()
+                Microsoft.Data.SqlClient.SqlConnectionStringBuilder builder = new()
                 {
-                    //builder.Add("Server", "phsa-csbc-pcr-prod-sql-server.database.windows.net");
-                    //builder.Add("Database", "pcr_analytic");
-                    //builder.Add("Authentication", "ActiveDirectoryInteractive");
-                    //builder.Add("UID", userNameTextBox.Text);
-                    //builder.Add("PWD", passwordTextBox.Text);
                     { "Server", serverName },
                     { "Database", dbName }
                 };
@@ -165,7 +159,7 @@ namespace SQL_Document_Builder
             userNameTextBox.Text = UserName;
             authenticationComboBox.SelectedValue = Authentication;
             EnableOKButton();
-            if (Authentication == SqlAuthenticationMethod.SqlPassword)
+            if (Authentication == AuthenticationMethod.SqlPassword)
                 passwordTextBox.Focus();
         }
 
@@ -199,8 +193,8 @@ namespace SQL_Document_Builder
                 DatabaseName = databaseComboBox.Text;
                 UserName = userNameTextBox.Text;
                 Password = passwordTextBox.Text;
-                var selectedItem = authenticationComboBox.SelectedItem as KeyValuePair<string, SqlAuthenticationMethod>?;
-                Authentication = selectedItem?.Value ?? SqlAuthenticationMethod.NotSpecified;
+                var selectedItem = authenticationComboBox.SelectedItem as KeyValuePair<string, AuthenticationMethod>?;
+                Authentication = selectedItem?.Value ?? AuthenticationMethod.NotSpecified;
                 DialogResult = DialogResult.OK;
                 Close();
             }

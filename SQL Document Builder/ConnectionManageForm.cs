@@ -1,5 +1,4 @@
 ﻿using DarkModeForms;
-using Microsoft.Data.SqlClient;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -16,8 +15,8 @@ namespace SQL_Document_Builder
     {
         internal CancellationTokenSource? _cancellation = null;
         private bool _changed = false;
-        private SQLServerConnections _connections = new();
-        private SQLDatabaseConnectionItem? _currentConnectionItem;
+        private DatabaseConnections _connections = new();
+        private DatabaseConnectionItem? _currentConnectionItem;
         private bool _populating = false;
         private int _selectedIndex = -1;    // index of current connect in the connection list
 
@@ -34,7 +33,7 @@ namespace SQL_Document_Builder
         /// Gets or sets data connections object
         /// </summary>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public SQLServerConnections DataConnections
+        public DatabaseConnections DataConnections
         {
             get { return _connections; }
             set
@@ -135,22 +134,22 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void ConnectionManageForm_Load(object sender, EventArgs e)
         {
-            // Creating a dictionary mapping authentication method names to SqlAuthenticationMethod values
-            Dictionary<string, SqlAuthenticationMethod> authMethods = new()
+            // Creating a dictionary mapping authentication method names to AuthenticationMethod values
+            Dictionary<string, AuthenticationMethod> authMethods = new()
             {
-                //{ "Windows Authentication", SqlAuthenticationMethod.ActiveDirectoryDefault },
-                { "SQL Server Authentication", SqlAuthenticationMethod.SqlPassword },
-                { "Microsoft Entra Integrated", SqlAuthenticationMethod.ActiveDirectoryIntegrated },
-                { "Microsoft Entra Interactive", SqlAuthenticationMethod.ActiveDirectoryInteractive },
-                { "Microsoft Entra Password", Microsoft.Data.SqlClient.SqlAuthenticationMethod.ActiveDirectoryPassword },
-                { "Microsoft Entra Managed Identity", SqlAuthenticationMethod.ActiveDirectoryManagedIdentity },
-                { "Microsoft Entra Service Principal", SqlAuthenticationMethod.ActiveDirectoryServicePrincipal }
+                //{ "Windows Authentication", AuthenticationMethod.ActiveDirectoryDefault },
+                { "SQL Server Authentication", AuthenticationMethod.SqlPassword },
+                { "Microsoft Entra Integrated", AuthenticationMethod.ActiveDirectoryIntegrated },
+                { "Microsoft Entra Interactive", AuthenticationMethod.ActiveDirectoryInteractive },
+                { "Microsoft Entra Password", AuthenticationMethod.ActiveDirectoryPassword },
+                { "Microsoft Entra Managed Identity", AuthenticationMethod.ActiveDirectoryManagedIdentity },
+                { "Microsoft Entra Service Principal", AuthenticationMethod.ActiveDirectoryServicePrincipal }
             };
 
             // Adding authentication methods to the combo box using data binding
             authenticationComboBox.DataSource = new BindingSource(authMethods, null);
             authenticationComboBox.DisplayMember = "Key"; // Display the name of the authentication method
-            authenticationComboBox.ValueMember = "Value"; // Use the SqlAuthenticationMethod as the value
+            authenticationComboBox.ValueMember = "Value"; // Use the AuthenticationMethod as the value
 
             PopulateConnections();
 
@@ -198,7 +197,7 @@ namespace SQL_Document_Builder
         {
             if (connectionsListBox.SelectedItem != null && _selectedIndex >= 0)
             {
-                var item = connectionsListBox.SelectedItem as SQLDatabaseConnectionItem;
+                var item = connectionsListBox.SelectedItem as DatabaseConnectionItem;
 
                 if (item == null) return;
 
@@ -228,7 +227,7 @@ namespace SQL_Document_Builder
             // get selected item from list box and move it down
             if (connectionsListBox.SelectedItem != null && _selectedIndex >= 0 && _selectedIndex < connectionsListBox.Items.Count - 1)
             {
-                var item = (SQLDatabaseConnectionItem)(connectionsListBox.SelectedItem);
+                var item = (DatabaseConnectionItem)(connectionsListBox.SelectedItem);
                 _connections.MoveDown(item);
                 PopulateConnections();
                 connectionsListBox.SelectedItem = item;
@@ -246,7 +245,7 @@ namespace SQL_Document_Builder
             // get selected item from list box and move it up
             if (connectionsListBox.SelectedItem != null && _selectedIndex > 0)
             {
-                var item = (SQLDatabaseConnectionItem)(connectionsListBox.SelectedItem);
+                var item = (DatabaseConnectionItem)(connectionsListBox.SelectedItem);
                 _connections.MoveUp(item);
                 PopulateConnections();
                 connectionsListBox.SelectedItem = item;
@@ -279,7 +278,7 @@ namespace SQL_Document_Builder
         {
             SetEditEnableState(false);
 
-            var item = connectionsListBox.SelectedItem as SQLDatabaseConnectionItem;
+            var item = connectionsListBox.SelectedItem as DatabaseConnectionItem;
             _currentConnectionItem = item;
             _selectedIndex = connectionsListBox.SelectedIndex;
             if (item != null)
@@ -338,14 +337,14 @@ namespace SQL_Document_Builder
         /// <param name="e"></param>
         private void SaveButton_Click(object sender, EventArgs e)
         {
-            var selectedAuthentication = authenticationComboBox.SelectedItem as KeyValuePair<string, SqlAuthenticationMethod>?;
+            var selectedAuthentication = authenticationComboBox.SelectedItem as KeyValuePair<string, AuthenticationMethod>?;
 
-            var connection = new SQLDatabaseConnectionItem()
+            var connection = new DatabaseConnectionItem()
             {
                 Name = connectionNameTextBox.Text,
                 ServerName = serverNameTextBox.Text,
                 Database = databaseComboBox.Text,
-                AuthenticationType = selectedAuthentication?.Value ?? SqlAuthenticationMethod.ActiveDirectoryIntegrated,
+                AuthenticationType = selectedAuthentication?.Value ?? AuthenticationMethod.ActiveDirectoryIntegrated,
                 UserName = userNameTextBox.Text,
                 Password = passwordTextBox.Text,
                 RememberPassword = rememberPasswordCheckBox.Checked,
@@ -405,7 +404,7 @@ namespace SQL_Document_Builder
             try
             {
                 bool result = false;
-                var item = new SQLDatabaseConnectionItem()
+                var item = new DatabaseConnectionItem()
                 {
                     ConnectionType = "SQL Server",
                 };
@@ -447,11 +446,11 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Gets the authentication.
         /// </summary>
-        /// <returns>A SqlAuthenticationMethod.</returns>
-        private SqlAuthenticationMethod GetAuthentication()
+        /// <returns>A AuthenticationMethod.</returns>
+        private AuthenticationMethod GetAuthentication()
         {
-            var selectedItem = authenticationComboBox.SelectedItem as KeyValuePair<string, SqlAuthenticationMethod>?;
-            return selectedItem?.Value ?? SqlAuthenticationMethod.ActiveDirectoryIntegrated;
+            var selectedItem = authenticationComboBox.SelectedItem as KeyValuePair<string, AuthenticationMethod>?;
+            return selectedItem?.Value ?? AuthenticationMethod.ActiveDirectoryIntegrated;
         }
 
         /// <summary>
@@ -459,7 +458,7 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="connection">The connection.</param>
         /// <returns>A Task.</returns>
-        private static async Task<bool> TestConnection(SQLDatabaseConnectionItem connection)
+        private static async Task<bool> TestConnection(DatabaseConnectionItem connection)
         {
             bool result = false;
 
@@ -481,7 +480,7 @@ namespace SQL_Document_Builder
                 databaseComboBox.Text.Trim().Length > 1);
             if (enabled)
             {
-                if (GetAuthentication() == SqlAuthenticationMethod.SqlPassword)
+                if (GetAuthentication() == AuthenticationMethod.SqlPassword)
                 {
                     enabled = (userNameTextBox.Text.Trim().Length > 1 && passwordTextBox.Text.Trim().Length > 1);
                 }
@@ -496,28 +495,28 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void AuthenticationComboBox_SelectedIndexChanged(object sender, EventArgs e)
         {
-            var selectedItem = authenticationComboBox.SelectedItem as KeyValuePair<string, SqlAuthenticationMethod>?;
+            var selectedItem = authenticationComboBox.SelectedItem as KeyValuePair<string, AuthenticationMethod>?;
 
             if (selectedItem.HasValue) // Fix for CS8629: Ensure the nullable value type is not null
             {
-                var authenticationMethod = selectedItem.Value.Value; // Fix for CS0029: Access the 'Value' property of the KeyValuePair to get the SqlAuthenticationMethod
+                var authenticationMethod = selectedItem.Value.Value; // Fix for CS0029: Access the 'Value' property of the KeyValuePair to get the AuthenticationMethod
 
                 switch (authenticationMethod) // Fix for CS0077: Directly use the value without 'as' since it's a non-nullable value type
                 {
-                    case SqlAuthenticationMethod.NotSpecified:
+                    case AuthenticationMethod.NotSpecified:
                         break;
 
-                    case SqlAuthenticationMethod.SqlPassword:
-                    case SqlAuthenticationMethod.ActiveDirectoryPassword:
-                    case SqlAuthenticationMethod.ActiveDirectoryServicePrincipal:
-                    case SqlAuthenticationMethod.ActiveDirectoryManagedIdentity:
+                    case AuthenticationMethod.SqlPassword:
+                    case AuthenticationMethod.ActiveDirectoryPassword:
+                    case AuthenticationMethod.ActiveDirectoryServicePrincipal:
+                    case AuthenticationMethod.ActiveDirectoryManagedIdentity:
                         userNameTextBox.Enabled = true;
                         passwordTextBox.Enabled = true;
                         rememberPasswordCheckBox.Enabled = true;
                         break;
 
-                    case SqlAuthenticationMethod.ActiveDirectoryIntegrated:
-                    case SqlAuthenticationMethod.ActiveDirectoryInteractive:
+                    case AuthenticationMethod.ActiveDirectoryIntegrated:
+                    case AuthenticationMethod.ActiveDirectoryInteractive:
                         userNameTextBox.Enabled = true;
                         passwordTextBox.Text = String.Empty;
                         passwordTextBox.Enabled = false;
