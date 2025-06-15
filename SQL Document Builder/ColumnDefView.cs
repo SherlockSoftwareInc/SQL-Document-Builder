@@ -68,7 +68,7 @@ namespace SQL_Document_Builder
         /// Gets or sets database connection
         /// </summary>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-        public string ConnectionString { get; set; } = "";
+        public DatabaseConnectionItem? Connection { get; set; }
 
         /// <summary>
         /// Gets object schema
@@ -277,8 +277,15 @@ GO
         /// Open the database object schema
         /// </summary>
         /// <param name="objectName">The object name.</param>
-        public async Task OpenAsync(ObjectName? objectName, string connectionString)
+        public async Task OpenAsync(ObjectName? objectName, DatabaseConnectionItem? connection)
         {
+            if (objectName == null || connection == null || string.IsNullOrEmpty(connection.ConnectionString))
+            {
+                Clear();
+                namePanel.Open(null);
+                return;
+            }
+
             // save the description of the current object if modified
             if (tableDescTextBox.Modified || _dbObject.ObjectType != ObjectName.ObjectTypeEnums.None)
             {
@@ -288,7 +295,7 @@ GO
             Clear();
             namePanel.Open(objectName);
 
-            ConnectionString = connectionString;
+            Connection = connection;
             SelectedColumnChanged?.Invoke(this, EventArgs.Empty);
 
             // clear the column data grid view
@@ -314,7 +321,7 @@ GO
             else
             {
                 _dbObject = new DBObject();
-                if (!await _dbObject.OpenAsync(objectName, connectionString))
+                if (!await _dbObject.OpenAsync(objectName, connection))
                 {
                     return;
                 }
@@ -636,6 +643,11 @@ GO
         /// <param name="e">The e.</param>
         private void ColumnValueFrequencyToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if(Connection == null)
+            {
+                return;
+            }
+
             // get the selected column name from the data grid view
             if (columnDefDataGridView.SelectedCells.Count > 0)
             {
@@ -658,7 +670,7 @@ GO
                     TableName = $"[{Schema}].[{TableName}]",
                     EnableValueFrequency = true,
                     DatabaseIndex = 0,
-                    ConnectionString = ConnectionString
+                    ConnectionString = Connection.ConnectionString
                 };
                 dlg.ShowDialog();
             }
@@ -680,7 +692,7 @@ GO
         /// <returns>A string.</returns>
         private async Task<string> GetTableDependencyScriptAsync()
         {
-            var viewList = await DBObject.GetViewsUsingTableAsync(_dbObject.ObjectName, ConnectionString);
+            var viewList = await DBObject.GetViewsUsingTableAsync(_dbObject.ObjectName, Connection);
 
             if (viewList != null && viewList.Count > 0)
             {
@@ -700,6 +712,11 @@ GO
         /// <param name="e">The e.</param>
         private void OpenToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (Connection == null || string.IsNullOrEmpty(Connection.ConnectionString) || string.IsNullOrEmpty(Schema) || string.IsNullOrEmpty(TableName))
+            {
+                return;
+            }
+
             var sql = $@"SELECT * FROM [{Schema}].[{TableName}]";
             using var dlg = new DataViewForm()
             {
@@ -709,7 +726,7 @@ GO
                 TableName = $"[{Schema}].[{TableName}]",
                 EnableValueFrequency = true,
                 DatabaseIndex = 0,
-                ConnectionString = ConnectionString
+                ConnectionString = Connection.ConnectionString
             };
             dlg.ShowDialog();
         }

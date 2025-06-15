@@ -19,8 +19,13 @@ namespace SQL_Document_Builder
         /// <param name="schemaName">The schema name.</param>
         /// <param name="progress">The progress.</param>
         /// <returns>A Task.</returns>
-        internal static async Task<string> BuildObjectList(List<ObjectName> objectList, string connectionString, TemplateItem template, IProgress<int> progress)
+        internal static async Task<string> BuildObjectList(List<ObjectName> objectList, DatabaseConnectionItem? connection, TemplateItem template, IProgress<int> progress)
         {
+            if (objectList == null || objectList.Count == 0 || connection == null || template == null)
+            {
+                return string.Empty;
+            }
+
             string doc = template.Body;
             string objectItemTemplate = template.ObjectLists.ObjectRow;
 
@@ -39,7 +44,7 @@ namespace SQL_Document_Builder
                     ObjectName dr = objectList[i];
                     string tableSchema = dr.Schema;
                     string tableName = dr.Name;
-                    string description = await SQLDatabaseHelper.GetTableDescriptionAsync(dr, connectionString);
+                    string description = await SQLDatabaseHelper.GetTableDescriptionAsync(dr, connection.ConnectionString);
                     var objectName = new ObjectName(dr.ObjectType, dr.Schema, dr.Name);
 
                     string objItemDoc = objectItemTemplate
@@ -167,13 +172,18 @@ namespace SQL_Document_Builder
         /// <param name="connectionString">The connection string.</param>
         /// <param name="templateBody">The template body.</param>
         /// <returns>A Task.</returns>
-        internal static async Task<string> GetObjectDef(ObjectName objectName, string connectionString, Template.TemplateItem template)
+        internal static async Task<string> GetObjectDef(ObjectName objectName, DatabaseConnectionItem? connection, Template.TemplateItem template)
         {
+            if (objectName == null || connection == null || template == null)
+            {
+                return string.Empty;
+            }
+
             string doc = template.Body;
 
             // open the database oobjects
             var tableView = new DBObject();
-            await tableView.OpenAsync(objectName, connectionString);
+            await tableView.OpenAsync(objectName, connection);
 
             // Replace placeholders with actual values
             doc = doc.Replace("~ObjectName~", objectName.Name);
@@ -254,9 +264,14 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="sql">The full name.</param>
         /// <returns>A Task.</returns>
-        internal static async Task<string> GetTableValuesAsync(string sql, string connectionString, TemplateItem template)
+        internal static async Task<string> GetTableValuesAsync(string sql, DatabaseConnectionItem? connection, TemplateItem template)
         {
-            DataTable? dt = await SQLDatabaseHelper.GetDataTableAsync(sql, connectionString);
+            if (string.IsNullOrWhiteSpace(sql) || connection == null)
+            {
+                return string.Empty;
+            }
+
+            DataTable? dt = await SQLDatabaseHelper.GetDataTableAsync(sql, connection?.ConnectionString);
             if (dt == null || dt.Rows.Count == 0)
             {
                 return "''No data found.''";

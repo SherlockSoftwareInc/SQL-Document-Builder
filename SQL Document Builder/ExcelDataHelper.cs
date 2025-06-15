@@ -37,8 +37,13 @@ namespace SQL_Document_Builder
         /// <param name="selectedObjects">The selected objects.</param>
         /// <param name="fileName">The file name.</param>
         /// <param name="connectionString">The connection string.</param>
-        internal static async Task ExportDescriptionsToExcel(List<ObjectName> selectedObjects, string fileName, string connectionString)
+        internal static async Task ExportDescriptionsToExcel(List<ObjectName> selectedObjects, string fileName, DatabaseConnectionItem? connection)
         {
+            if (connection == null || selectedObjects?.Count == 0)
+            {
+                return;
+            }
+
             // Create a new Excel package
             // Create a new XLSX workbook
             XSSFWorkbook workbook = new();
@@ -59,7 +64,7 @@ namespace SQL_Document_Builder
             for (int i = 0; i < selectedObjects.Count; i++)
             {
                 // Output the object descriptions
-                rowIndex = await OutputObjectDescription(selectedObjects[i], sheet, rowIndex, connectionString);
+                rowIndex = await OutputObjectDescription(selectedObjects[i], sheet, rowIndex, connection);
             }
 
             // Save the workbook to the selected file
@@ -75,11 +80,11 @@ namespace SQL_Document_Builder
         /// <param name="v">The v.</param>
         /// <param name="connectionString">The connection string.</param>
         /// <returns>An int.</returns>
-        private static async Task<int> OutputObjectDescription(ObjectName objectName, ISheet sheet, int v, string connectionString)
+        private static async Task<int> OutputObjectDescription(ObjectName objectName, ISheet sheet, int v, DatabaseConnectionItem connection)
         {
             // open the object
             var table = new DBObject();
-            if (!await table.OpenAsync(objectName, connectionString))
+            if (!await table.OpenAsync(objectName, connection))
             {
                 return v; // If the object cannot be opened, skip it
             }

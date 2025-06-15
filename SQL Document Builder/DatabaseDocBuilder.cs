@@ -19,7 +19,7 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="dbObject">The database object for which the creation script is to be generated.</param>
         /// <returns>A Task<string?> containing the creation script, or null if the object type is unsupported.</returns>
-        public static async Task<string?> GetCreateObjectScriptAsync(ObjectName dbObject, string connectionString)
+        public static async Task<string?> GetCreateObjectScriptAsync(ObjectName dbObject, DatabaseConnectionItem connection)
         {
             if (dbObject == null)
             {
@@ -34,12 +34,12 @@ namespace SQL_Document_Builder
             // Determine the object type and retrieve the corresponding creation script
             return dbObject.ObjectType switch
             {
-                ObjectName.ObjectTypeEnums.Table => await GetCreateTableScriptAsync(dbObject, connectionString),
-                ObjectName.ObjectTypeEnums.View => await GetCreateViewScriptAsync(dbObject, connectionString),
-                ObjectName.ObjectTypeEnums.StoredProcedure => await GetCreateStoredProcedureScriptAsync(dbObject, connectionString),
-                ObjectName.ObjectTypeEnums.Function => await GetCreateFunctionScriptAsync(dbObject, connectionString),
-                ObjectName.ObjectTypeEnums.Trigger => await GetCreateTriggerScriptAsync(dbObject, connectionString),
-                ObjectName.ObjectTypeEnums.Synonym => await GetCreateSynonymScriptAsync(dbObject, connectionString),
+                ObjectName.ObjectTypeEnums.Table => await GetCreateTableScriptAsync(dbObject, connection),
+                ObjectName.ObjectTypeEnums.View => await GetCreateViewScriptAsync(dbObject, connection),
+                ObjectName.ObjectTypeEnums.StoredProcedure => await GetCreateStoredProcedureScriptAsync(dbObject, connection),
+                ObjectName.ObjectTypeEnums.Function => await GetCreateFunctionScriptAsync(dbObject, connection),
+                ObjectName.ObjectTypeEnums.Trigger => await GetCreateTriggerScriptAsync(dbObject, connection),
+                ObjectName.ObjectTypeEnums.Synonym => await GetCreateSynonymScriptAsync(dbObject, connection),
                 _ => throw new NotSupportedException($"The object type '{dbObject.ObjectType}' is not supported.")
             };
         }
@@ -50,7 +50,7 @@ namespace SQL_Document_Builder
         /// <param name="dbObject">The db object.</param>
         /// <param name="connectionString">The connection string.</param>
         /// <returns>A Task.</returns>
-        private static async Task<string?> GetCreateSynonymScriptAsync(ObjectName dbObject, string connectionString)
+        private static async Task<string?> GetCreateSynonymScriptAsync(ObjectName dbObject, DatabaseConnectionItem connection)
         {
             StringBuilder createScript = new();
 
@@ -72,7 +72,7 @@ FROM sys.synonyms s
 INNER JOIN sys.schemas sch ON s.schema_id = sch.schema_id
 WHERE sch.name = N'{dbObject.Schema}' AND s.name = N'{dbObject.Name}'";
 
-            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, connectionString);
+            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, connection.ConnectionString);
             if (dt == null || dt.Rows.Count == 0)
                 return string.Empty;
 
@@ -93,14 +93,14 @@ WHERE sch.name = N'{dbObject.Schema}' AND s.name = N'{dbObject.Name}'";
         /// <param name="sql">The SQL query to fetch data.</param>
         /// <param name="tableName">The table name for the insert statements.</param>
         /// <returns>A Task<string> containing the generated insert statements or a warning if rows exceed 500.</returns>
-        public static async Task<string> QueryDataToInsertStatementAsync(string sql, string connectionString, string tableName = "YourTableName", bool hasIdentity = false)
+        public static async Task<string> QueryDataToInsertStatementAsync(string sql, DatabaseConnectionItem connection, string tableName = "YourTableName", bool hasIdentity = false)
         {
             var sb = new StringBuilder();
 
             try
             {
                 // Use SQLDatabaseHelper to get the data as a DataTable
-                var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, connectionString);
+                var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, connection.ConnectionString);
 
                 if (dt != null && dt.Rows.Count > 0)
                 {
@@ -200,16 +200,22 @@ WHERE sch.name = N'{dbObject.Schema}' AND s.name = N'{dbObject.Name}'";
 
             return sb.ToString();
         }
+
         /// <summary>
         /// Pull data from a table or view and convert the data to insert statements.
         /// </summary>
         /// <param name="tableName">The table name.</param>
         /// <returns>A Task.</returns>
-        public static async Task<string> TableToInsertStatementAsync(ObjectName tableName, string connectionString)
+        public static async Task<string> TableToInsertStatementAsync(ObjectName tableName, DatabaseConnectionItem? connection)
         {
+            if (tableName.IsEmpty() || connection == null || string.IsNullOrWhiteSpace(connection?.ConnectionString))
+            {
+                throw new ArgumentException("Invalid table name or connection.");
+            }
+
             var sql = $"select * from {tableName.FullName}";
-            var hasIdentity = await SQLDatabaseHelper.HasIdentityColumnAsync(tableName, connectionString);
-            return await QueryDataToInsertStatementAsync(sql, connectionString, tableName.FullName, hasIdentity);
+            var hasIdentity = await SQLDatabaseHelper.HasIdentityColumnAsync(tableName, connection.ConnectionString);
+            return await QueryDataToInsertStatementAsync(sql, connection, tableName.FullName, hasIdentity);
         }
 
         /// <summary>
@@ -217,7 +223,7 @@ WHERE sch.name = N'{dbObject.Schema}' AND s.name = N'{dbObject.Name}'";
         /// Handles XML indexes with the correct syntax.
         /// </summary>
         /// <returns>A string containing the SQL script to recreate the indexes.</returns>
-        internal static async Task<string?> GetCreateIndexesScript(ObjectName objectName, string connectionString)
+        internal static async Task<string?> GetCreateIndexesScript(ObjectName objectName, DatabaseConnectionItem connection)
         {
             if (objectName.IsEmpty() ||
                 (objectName.ObjectType != ObjectTypeEnums.Table && objectName.ObjectType != ObjectTypeEnums.View))
@@ -256,7 +262,7 @@ WHERE s.name = N'{objectName.Schema}'
   AND i.name IS NOT NULL
 ORDER BY i.name";
 
-            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, connectionString);
+            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, connection.ConnectionString);
             if (dt == null || dt.Rows.Count == 0)
                 return string.Empty;
 
@@ -395,7 +401,7 @@ GO";
         /// </summary>
         /// <param name="objectName">The object name.</param>
         /// <returns>A Task.</returns>
-        private static async Task<string?> GetCreateFunctionScriptAsync(ObjectName objectName, string connectionString)
+        private static async Task<string?> GetCreateFunctionScriptAsync(ObjectName objectName, DatabaseConnectionItem connection)
         {
             StringBuilder createScript = new();
 
@@ -408,7 +414,7 @@ GO";
             createScript.AppendLine($"\tDROP FUNCTION {objectName.FullName};");
             createScript.AppendLine($"GO");
 
-            var script = await GetDefinitionAsync(objectName, connectionString);
+            var script = await GetDefinitionAsync(objectName, connection);
             if (string.IsNullOrEmpty(script))
             {
                 return string.Empty;
@@ -423,7 +429,7 @@ GO";
         /// </summary>
         /// <param name="objectName">The object name.</param>
         /// <returns>A Task.</returns>
-        private static async Task<string?> GetCreateStoredProcedureScriptAsync(ObjectName objectName, string connectionString)
+        private static async Task<string?> GetCreateStoredProcedureScriptAsync(ObjectName objectName, DatabaseConnectionItem connection)
         {
             StringBuilder createScript = new();
 
@@ -438,7 +444,7 @@ GO";
                 createScript.AppendLine($"GO");
             }
 
-            var script = await GetDefinitionAsync(objectName, connectionString);
+            var script = await GetDefinitionAsync(objectName, connection);
 
             if (string.IsNullOrEmpty(script))
             {
@@ -455,7 +461,7 @@ GO";
         /// </summary>
         /// <param name="dbObject">The db object.</param>
         /// <returns>A Task.</returns>
-        private static async Task<string?> GetCreateTableScriptAsync(ObjectName objectName, string connectionString)
+        private static async Task<string?> GetCreateTableScriptAsync(ObjectName objectName, DatabaseConnectionItem connection)
         {
             StringBuilder createScript = new();
 
@@ -464,7 +470,7 @@ GO";
 
             // open the table object
             var table = new DBObject();
-            if (!await table.OpenAsync(objectName, connectionString))
+            if (!await table.OpenAsync(objectName, connection))
             {
                 return string.Empty;
             }
@@ -481,7 +487,7 @@ GO";
             string primaryKeyColumns = table.PrimaryKeyColumns;
 
             // Retrieve identity column details
-            var identityColumns = await table.GetIdentityColumns(connectionString);
+            var identityColumns = await table.GetIdentityColumns(connection);
 
             // Add the CREATE TABLE statement
             createScript.AppendLine($"CREATE TABLE {objectName.FullName} (");
@@ -556,7 +562,7 @@ GO";
                 createScript.AppendLine(defaultConstraints);
             }
 
-            var indexScript = await GetCreateIndexesScript(objectName, connectionString);
+            var indexScript = await GetCreateIndexesScript(objectName, connection);
             if (!string.IsNullOrEmpty(indexScript))
             {
                 // remove the new line at the end of the script
@@ -565,7 +571,7 @@ GO";
                 createScript.AppendLine(indexScript);
             }
 
-            var triggerScript = await GetCreateTriggersScriptAsync(objectName, connectionString);
+            var triggerScript = await GetCreateTriggersScriptAsync(objectName, connection);
             if (!string.IsNullOrEmpty(triggerScript))
             {
                 // if the createScript does not ended with a line of "GO", add it
@@ -580,7 +586,7 @@ GO";
                 createScript.AppendLine(triggerScript);
             }
 
-            // add GO statement 
+            // add GO statement
             AddGOStatement(createScript);
             //if (!createScript.ToString().EndsWith(Environment.NewLine + "GO" + Environment.NewLine, StringComparison.OrdinalIgnoreCase))
             //{
@@ -609,7 +615,7 @@ GO";
         /// <param name="objectName">The object name.</param>
         /// <param name="connectionString">The connection string.</param>
         /// <returns>A Task.</returns>
-        private static async Task<string?> GetCreateTriggerScriptAsync(ObjectName objectName, string connectionString)
+        private static async Task<string?> GetCreateTriggerScriptAsync(ObjectName objectName, DatabaseConnectionItem connection)
         {
             StringBuilder createScript = new();
 
@@ -624,7 +630,7 @@ GO";
                 createScript.AppendLine($"GO");
             }
 
-            var script = await SQLDatabaseHelper.GetObjectDefinitionAsync(objectName, connectionString);
+            var script = await SQLDatabaseHelper.GetObjectDefinitionAsync(objectName, connection.ConnectionString);
 
             if (string.IsNullOrEmpty(script))
             {
@@ -641,7 +647,7 @@ GO";
         /// </summary>
         /// <param name="objectName">The object name.</param>
         /// <returns>A Task.</returns>
-        private static async Task<string?> GetCreateTriggersScriptAsync(ObjectName objectName, string connectionString)
+        private static async Task<string?> GetCreateTriggersScriptAsync(ObjectName objectName, DatabaseConnectionItem connection)
         {
             // Only tables and views can have DML triggers
             if (objectName.IsEmpty() ||
@@ -667,7 +673,7 @@ WHERE s.name = N'{objectName.Schema}'
   AND o.name = N'{objectName.Name}'
 ORDER BY tr.name";
 
-            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, connectionString);
+            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, connection.ConnectionString);
             if (dt == null || dt.Rows.Count == 0)
                 return string.Empty;
 
@@ -710,7 +716,7 @@ ORDER BY tr.name";
         /// </summary>
         /// <param name="objectName">The object name.</param>
         /// <returns>A Task.</returns>
-        private static async Task<string?> GetCreateViewScriptAsync(ObjectName objectName, string connectionString)
+        private static async Task<string?> GetCreateViewScriptAsync(ObjectName objectName, DatabaseConnectionItem connection)
         {
             StringBuilder createScript = new();
 
@@ -725,14 +731,14 @@ ORDER BY tr.name";
                 createScript.AppendLine($"GO");
             }
 
-            var script = await GetDefinitionAsync(objectName, connectionString);
+            var script = await GetDefinitionAsync(objectName, connection);
             if (string.IsNullOrEmpty(script))
             {
                 return string.Empty;
             }
             createScript.Append(script);
 
-            var indexScript = await DatabaseDocBuilder.GetCreateIndexesScript(objectName, connectionString);
+            var indexScript = await DatabaseDocBuilder.GetCreateIndexesScript(objectName, connection);
             if (!string.IsNullOrEmpty(indexScript))
             {
                 // remove the new line at the end of the script
@@ -750,12 +756,12 @@ ORDER BY tr.name";
         /// </summary>
         /// <param name="objectName">The object name.</param>
         /// <returns>A Task.</returns>
-        private static async Task<string?> GetDefinitionAsync(ObjectName objectName, string connectionString)
+        private static async Task<string?> GetDefinitionAsync(ObjectName objectName, DatabaseConnectionItem connection)
         {
             // Validate the single full name parameter
             if (!string.IsNullOrWhiteSpace(objectName.FullName))
             {
-                string? definition = await SQLDatabaseHelper.GetObjectDefinitionAsync(objectName, connectionString);
+                string? definition = await SQLDatabaseHelper.GetObjectDefinitionAsync(objectName, connection?.ConnectionString);
 
                 if (string.IsNullOrEmpty(definition))
                 {

@@ -71,12 +71,12 @@ namespace SQL_Document_Builder
         /// Open a database object
         /// </summary>
         /// <param name="tableName">The table name.</param>
-        public async Task OpenAsync(ObjectName? tableName, string connectionString)
+        public async Task OpenAsync(ObjectName? tableName, DatabaseConnectionItem connection)
         {
             await SaveChangeAsync();
             TableName = tableName;
-            columnView.ConnectionString = connectionString;
-            await columnView.OpenAsync(TableName, connectionString);
+            columnView.Connection = connection;
+            await columnView.OpenAsync(TableName, connection);
         }
 
         /// <summary>

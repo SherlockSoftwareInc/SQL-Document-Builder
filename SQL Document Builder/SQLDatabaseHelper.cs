@@ -316,8 +316,13 @@ JOIN sys.schemas s ON o.schema_id = s.schema_id";
         /// </summary>
         /// <param name="sql">The sql.</param>
         /// <returns>A DataTable? .</returns>
-        internal static async Task<DataTable?> GetDataTableAsync(string sql, string connectionString)
+        internal static async Task<DataTable?> GetDataTableAsync(string sql, string? connectionString)
         {
+            if(string.IsNullOrEmpty(connectionString) || string.IsNullOrEmpty(sql))
+            {
+                return null;
+            }
+
             var tables = new DataTable();
             using var connection = new SqlConnection(connectionString);
             try
@@ -350,8 +355,13 @@ JOIN sys.schemas s ON o.schema_id = s.schema_id";
         /// Gets the functions async.
         /// </summary>
         /// <returns>A Task.</returns>
-        internal static async Task<List<ObjectName>> GetFunctionsAsync(string connectionString)
+        internal static async Task<List<ObjectName>> GetFunctionsAsync(string? connectionString)
         {
+            if(string.IsNullOrEmpty(connectionString))
+            {
+                return [];
+            }
+
             var objects = new List<ObjectName>();
 
             var query = @"SELECT
@@ -385,8 +395,13 @@ ORDER BY s.name, o.name;";
         /// </summary>
         /// <param name="fullName">The full name of the object.</param>
         /// <returns>A Task<int> representing the row count.</returns>
-        internal static async Task<int> GetRowCountAsync(string fullName, string connectionString)
+        internal static async Task<int> GetRowCountAsync(string fullName, string? connectionString)
         {
+            if(string.IsNullOrEmpty(connectionString) || string.IsNullOrEmpty(fullName))
+            {
+                return 0;
+            }
+
             var sql = $"SELECT COUNT(*) FROM {fullName}";
             try
             {
@@ -413,8 +428,13 @@ ORDER BY s.name, o.name;";
         /// Gets the schemas async.
         /// </summary>
         /// <returns>A Task.</returns>
-        internal static async Task<List<string>> GetSchemasAsync(string connectionString)
+        internal static async Task<List<string>> GetSchemasAsync(string? connectionString)
         {
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                return [];
+            }
+
             var schemas = new List<string>();
             var query = "SELECT name FROM sys.schemas ORDER BY name";
             using var connection = new SqlConnection(connectionString);
@@ -451,8 +471,13 @@ ORDER BY s.name, o.name;";
         /// Gets the stored procedures async.
         /// </summary>
         /// <returns>A Task.</returns>
-        internal static async Task<List<ObjectName>> GetStoredProceduresAsync(string connectionString)
+        internal static async Task<List<ObjectName>> GetStoredProceduresAsync(string? connectionString)
         {
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                return [];
+            }
+
             var objects = new List<ObjectName>();
 
             var query = @"SELECT
@@ -480,15 +505,15 @@ ORDER BY s.name, p.name;";
         /// </summary>
         /// <param name="objectName">The object name.</param>
         /// <returns>A Task<string> containing the description.</returns>
-        internal static async Task<string> GetTableDescriptionAsync(ObjectName objectName, string connectionString)
+        internal static async Task<string> GetTableDescriptionAsync(ObjectName? objectName, string? connectionString)
         {
-            if (objectName == null || objectName.ObjectType == ObjectTypeEnums.None)
+            if (objectName == null || objectName?.ObjectType == ObjectTypeEnums.None || string.IsNullOrEmpty(connectionString))
                 return string.Empty;
 
             string result = string.Empty;
 
             // Map object type to the correct level1type for fn_listextendedproperty
-            string level1Type = objectName.ObjectType switch
+            string level1Type = objectName?.ObjectType switch
             {
                 ObjectTypeEnums.Table => "table",
                 ObjectTypeEnums.View => "view",
@@ -496,7 +521,7 @@ ORDER BY s.name, p.name;";
                 ObjectTypeEnums.Function => "function",
                 ObjectTypeEnums.Trigger => "trigger",
                 ObjectTypeEnums.Synonym => "synonym",
-                _ => throw new NotSupportedException($"Unsupported object type: {objectName.ObjectType}.")
+                _ => throw new NotSupportedException($"Unsupported object type: {objectName?.ObjectType}.")
             };
 
             // Build the SQL for all supported object types
@@ -540,8 +565,13 @@ WHERE name = N'MS_Description'";
         /// Gets the tables async.
         /// </summary>
         /// <returns>A Task.</returns>
-        internal static async Task<List<ObjectName>> GetTablesAsync(string connectionString)
+        internal static async Task<List<ObjectName>> GetTablesAsync(string? connectionString)
         {
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                return [];
+            }
+
             var objects = new List<ObjectName>();
 
             var query = @"
@@ -570,8 +600,11 @@ WHERE name = N'MS_Description'";
         /// </summary>
         /// <param name="objectName">The object name.</param>
         /// <returns>The identity column name, or null.</returns>
-        internal static async Task<bool> HasIdentityColumnAsync(ObjectName objectName, string connectionString)
+        internal static async Task<bool> HasIdentityColumnAsync(ObjectName? objectName, string? connectionString)
         {
+            if (objectName == null || objectName?.ObjectType == ObjectTypeEnums.None || string.IsNullOrEmpty(connectionString))
+                return false;
+
             bool result = false;
             string sql = @"
 SELECT
@@ -591,8 +624,8 @@ AND s.name = @SchemaName;";
                     CommandType = CommandType.Text,
                     CommandTimeout = 50000
                 };
-                cmd.Parameters.AddWithValue("@TableName", objectName.Name);
-                cmd.Parameters.AddWithValue("@SchemaName", objectName.Schema);
+                cmd.Parameters.AddWithValue("@TableName", objectName?.Name);
+                cmd.Parameters.AddWithValue("@SchemaName", objectName?.Schema);
 
                 await using var reader = await cmd.ExecuteReaderAsync();
                 if (await reader.ReadAsync())
@@ -615,8 +648,13 @@ AND s.name = @SchemaName;";
         /// <summary>
         /// Save the description of the selected column
         /// </summary>
-        internal static async Task SaveColumnDescAsync(string? objectName, string columnName, string desc, string connectionString)
+        internal static async Task SaveColumnDescAsync(string? objectName, string columnName, string desc, string? connectionString)
         {
+            if(string.IsNullOrEmpty(connectionString) || string.IsNullOrEmpty(objectName) || string.IsNullOrEmpty(columnName) || string.IsNullOrEmpty(desc))
+            {
+                return;
+            }
+
             const string sql = @"
 IF EXISTS (SELECT name
            FROM sys.columns
@@ -671,7 +709,7 @@ END";
         /// </summary>
         /// <param name="userQuery">The user query.</param>
         /// <returns>A Task.</returns>
-        internal static async Task<string> SyntaxCheckAsync(string userQuery, string connectionString)
+        internal static async Task<string> SyntaxCheckAsync(string userQuery, string? connectionString)
         {
             if (string.IsNullOrWhiteSpace(connectionString))
                 return "No database connection specified.";
@@ -723,8 +761,13 @@ END";
         /// </summary>
         /// <param name="connectionString">The connection string.</param>
         /// <returns><![CDATA[Task<bool>]]></returns>
-        internal static async Task<bool> TestConnectionAsync(string connectionString)
+        internal static async Task<bool> TestConnectionAsync(string? connectionString)
         {
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                return false; // Return false if the connection string is null or empty
+            }
+
             using SqlConnection connection = new(connectionString);
             try
             {
@@ -742,8 +785,13 @@ END";
         /// Gets the views async.
         /// </summary>
         /// <returns>A Task.</returns>
-        private static async Task<List<ObjectName>> GetViewsAsync(string connectionString)
+        private static async Task<List<ObjectName>> GetViewsAsync(string? connectionString)
         {
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                return [];
+            }
+
             var objects = new List<ObjectName>();
 
             var query = @"
@@ -777,8 +825,13 @@ END";
         /// <param name="objectName">The object name.</param>
         /// <param name="connectionString">The connection string.</param>
         /// <returns>A Task.</returns>
-        internal static async Task<string> GetObjectDefinitionAsync(ObjectName objectName, string connectionString)
+        internal static async Task<string> GetObjectDefinitionAsync(ObjectName objectName, string? connectionString)
         {
+            if (objectName == null || objectName.ObjectType == ObjectTypeEnums.None || string.IsNullOrEmpty(connectionString))
+            {
+                return string.Empty;
+            }
+
             string query = $@"SELECT sm.definition FROM sys.sql_modules sm WHERE sm.object_id = OBJECT_ID(N'{objectName.QuotedFullName}')";
             var result = await ExecuteScalarAsync(query, connectionString);
             return result != null && result != DBNull.Value ? result.ToString() ?? string.Empty : string.Empty;
@@ -789,8 +842,13 @@ END";
         /// </summary>
         /// <param name="connectionString">The connection string.</param>
         /// <returns>A DataTable containing all foreign key relationships.</returns>
-        internal static DataTable GetAllForeignKeys(string connectionString)
+        internal static DataTable? GetAllForeignKeys(string? connectionString)
         {
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                return null; // Return null if the connection string is null or empty
+            }
+
             var dtForeignKeys = new DataTable();
             using SqlConnection conn = new(connectionString);
             try

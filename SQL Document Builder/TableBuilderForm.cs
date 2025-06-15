@@ -24,12 +24,7 @@ namespace SQL_Document_Builder
         /// </summary>
         private readonly DatabaseConnections _connections = new();
 
-        /// <summary>
-        /// The count of database connections.
-        /// </summary>
-        private int _connectionCount = 0;
-
-        private string _connectionString = string.Empty;
+        private DatabaseConnectionItem? _currentConnection;
 
         private ObjectName? _selectedObject;
 
@@ -139,12 +134,17 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="objectName">The object name.</param>
         /// <returns>A Task.</returns>
-        private static async Task<string> GetObjectCreateScriptAsync(ObjectName objectName, string connectionString)
+        private async Task<string> GetObjectCreateScriptAsync(ObjectName objectName, DatabaseConnectionItem? connection)
         {
+            if (connection == null || string.IsNullOrEmpty(objectName.FullName))
+            {
+                return string.Empty; // If connection is null or object name is empty, return an empty string
+            }
+
             string? createScript = string.Empty;
             if (objectName != null)
             {
-                createScript = await DatabaseDocBuilder.GetCreateObjectScriptAsync(objectName, connectionString);
+                createScript = await DatabaseDocBuilder.GetCreateObjectScriptAsync(objectName, connection);
             }
 
             if (string.IsNullOrEmpty(createScript))
@@ -166,7 +166,7 @@ namespace SQL_Document_Builder
             }
 
             // get the object description for table and view
-            var description = await ObjectDescription.BuildObjectDescription(objectName, connectionString, Properties.Settings.Default.UseExtendedProperties);
+            var description = await ObjectDescription.BuildObjectDescription(objectName, _currentConnection, Properties.Settings.Default.UseExtendedProperties);
             if (description.Length > 0)
             {
                 // append the description to the script
@@ -261,7 +261,7 @@ namespace SQL_Document_Builder
 
                 var submenuitem = new ConnectionMenuItem(connection)
                 {
-                    Name = string.Format("ConnectionMenuItem{0}", _connectionCount++),
+                    Name = ConnectionMenuItemName(),
                     Size = new Size(300, 26),
                 };
                 submenuitem.Click += new System.EventHandler(this.OnConnectionToolStripMenuItem_Click);
@@ -272,6 +272,28 @@ namespace SQL_Document_Builder
                 return true;
             }
             return false;
+        }
+
+        /// <summary>
+        /// builds a unique name for the connection menu item.
+        /// </summary>
+        /// <returns>A string.</returns>
+        private string ConnectionMenuItemName()
+        {
+            int connectionCount = _connections.Connections.Count;
+            string name = $"ConnectionMenuItem{connectionCount}";
+
+            while (true)
+            {
+                if (connectToToolStripMenuItem.DropDown.Items.Cast<ToolStripMenuItem>().All(item => item.Name != name))
+                {
+                    break; // Found a unique name
+                }
+                connectionCount++;
+                name = $"ConnectionMenuItem{connectionCount}";
+            }
+
+            return name;
         }
 
         /// <summary>
@@ -381,9 +403,11 @@ namespace SQL_Document_Builder
         /// <param name="e">The E.</param>
         private void BatchToolStripButton_Click(object sender, EventArgs e)
         {
+            if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
+
             using var frm = new BatchColumnDesc()
             {
-                ConnectionString = _connectionString
+                ConnectionString = connectionString
             };
             frm.ShowDialog();
         }
@@ -426,7 +450,7 @@ namespace SQL_Document_Builder
                         serverToolStripStatusLabel.Text = connection?.ServerName;
                         databaseToolStripStatusLabel.Text = connection?.Database;
                         Properties.Settings.Default.dbConnectionString = connectionString;
-                        _connectionString = connectionString;
+                        _currentConnection = connection;
                     }
 
                     for (int i = 0; i < connectToToolStripMenuItem.DropDown.Items.Count; i++)
@@ -448,7 +472,7 @@ namespace SQL_Document_Builder
             }
             else
             {
-                _connectionString = string.Empty;
+                _currentConnection = null;
             }
         }
 
@@ -762,6 +786,8 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void CreateIndexToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
+
             if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
 
             if (BeginAddDDLScript())
@@ -778,6 +804,8 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void CreateInsertToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
+
             List<ObjectName>? selectedObjects = SelectObjects();
 
             if (selectedObjects == null || selectedObjects.Count == 0) { return; }
@@ -801,14 +829,14 @@ namespace SQL_Document_Builder
                     var obj = selectedObjects[i];
 
                     // get the object create script
-                    var script = await GetObjectCreateScriptAsync(obj, _connectionString);
+                    var script = await GetObjectCreateScriptAsync(obj, _currentConnection);
                     if (editBox == null) return;
 
                     AppendText(editBox, script);
 
                     // get the insert statement for the object
                     // get the number of rows in the table
-                    var rowCount = await SQLDatabaseHelper.GetRowCountAsync(obj.FullName, _connectionString);
+                    var rowCount = await SQLDatabaseHelper.GetRowCountAsync(obj.FullName, connectionString);
 
                     // confirm if the user wants to continue when the number of rows is too much
                     if (rowCount > Properties.Settings.Default.InertMaxRows)
@@ -817,7 +845,7 @@ namespace SQL_Document_Builder
                     }
                     else
                     {
-                        var insertScript = await DatabaseDocBuilder.TableToInsertStatementAsync(obj, _connectionString);
+                        var insertScript = await DatabaseDocBuilder.TableToInsertStatementAsync(obj, _currentConnection);
                         if (editBox == null) return;
 
                         AppendText(editBox, insertScript + "GO" + Environment.NewLine);
@@ -829,12 +857,43 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Gets the connection string from the current connection.
+        /// Returns true if a valid connection string is obtained, otherwise false.
+        /// </summary>
+        /// <param name="connectionString">The output connection string.</param>
+        /// <returns>True if successful, false otherwise.</returns>
+        private bool GetConnectionString(out string connectionString)
+        {
+            connectionString = string.Empty;
+
+            // Check if there is a current connection
+            if (_currentConnection == null)
+            {
+                Common.MsgBox("Please connect to a database first.", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return false;
+            }
+
+            // Build the connection string if it is missing or empty
+            if (string.IsNullOrWhiteSpace(_currentConnection.ConnectionString))
+            {
+                _currentConnection.BuildConnectionString();
+            }
+
+            connectionString = _currentConnection.ConnectionString ?? string.Empty;
+
+            // Return true if the connection string is not null or empty
+            return !string.IsNullOrWhiteSpace(connectionString);
+        }
+
+        /// <summary>
         /// handles the "create primary key" tool strip menu item click:
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
         private void CreatePrimaryKeyToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
+
             if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
 
             if (BeginAddDDLScript())
@@ -851,10 +910,12 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void CreateTableToolStripButton_Click(object sender, EventArgs e)
         {
+            if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
+
             if (objectsListBox.SelectedItem is not ObjectName objectName) return;
 
             Cursor = Cursors.WaitCursor;
-            var script = await GetObjectCreateScriptAsync(objectName, _connectionString);
+            var script = await GetObjectCreateScriptAsync(objectName, _currentConnection);
 
             if (!string.IsNullOrEmpty(script))
             {
@@ -877,6 +938,8 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void CreateToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
+
             List<ObjectName>? selectedObjects = SelectObjects();
 
             if (selectedObjects == null || selectedObjects.Count == 0)
@@ -891,9 +954,6 @@ namespace SQL_Document_Builder
             {
                 StartBuild(editBox);
 
-                // get the current connection string
-                string connectionString = _connectionString;
-
                 for (int i = 0; i < selectedObjects.Count; i++)
                 {
                     int percentComplete = (i * 100) / selectedObjects.Count;
@@ -903,7 +963,7 @@ namespace SQL_Document_Builder
                     }
                     statusToolStripStatusLabe.Text = $"Processing {percentComplete}%...";
 
-                    var script = await GetObjectCreateScriptAsync(selectedObjects[i], connectionString);
+                    var script = await GetObjectCreateScriptAsync(selectedObjects[i], _currentConnection);
 
                     if (editBox == null) return;
 
@@ -1484,6 +1544,8 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void InsertToolStripButton_Click(object sender, EventArgs e)
         {
+            if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
+
             if (objectsListBox.SelectedItem is ObjectName objectName)
             {
                 // return if object type is not a table or view
@@ -1500,7 +1562,7 @@ namespace SQL_Document_Builder
                     }
 
                     // get the number of rows in the table
-                    var rowCount = await SQLDatabaseHelper.GetRowCountAsync(objectName.FullName, _connectionString);
+                    var rowCount = await SQLDatabaseHelper.GetRowCountAsync(objectName.FullName, connectionString);
 
                     // confirm if the user wants to continue when the number of rows is too much
                     if (rowCount > 1000)
@@ -1516,7 +1578,7 @@ namespace SQL_Document_Builder
                     // checks if the table has identify column
                     //var hasIdentityColumn = await DatabaseHelper.HasIdentityColumnAsync(objectName);
 
-                    var script = await DatabaseDocBuilder.TableToInsertStatementAsync(objectName, _connectionString);
+                    var script = await DatabaseDocBuilder.TableToInsertStatementAsync(objectName, _currentConnection);
 
                     if (script == "Too much rows")
                     {
@@ -1610,6 +1672,8 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void ObjectsDescriptionToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
+
             List<ObjectName>? selectedObjects = SelectObjects();
 
             if (selectedObjects == null || selectedObjects.Count == 0) return;
@@ -1631,7 +1695,7 @@ namespace SQL_Document_Builder
                     statusToolStripStatusLabe.Text = $"Processing {percentComplete}%...";
 
                     var obj = selectedObjects[i];
-                    var script = await ObjectDescription.BuildObjectDescription(obj, _connectionString, Properties.Settings.Default.UseExtendedProperties);
+                    var script = await ObjectDescription.BuildObjectDescription(obj, _currentConnection, Properties.Settings.Default.UseExtendedProperties);
 
                     // add "GO" and new line after each object description if it is not empty
                     if (!string.IsNullOrEmpty(script))
@@ -1659,11 +1723,11 @@ namespace SQL_Document_Builder
             if (objectsListBox.SelectedItem != null)
             {
                 _selectedObject = (ObjectName)objectsListBox.SelectedItem;
-                await definitionPanel.OpenAsync(_selectedObject, _connectionString);
+                await definitionPanel.OpenAsync(_selectedObject, _currentConnection);
             }
             else
             {
-                await definitionPanel.OpenAsync(null, _connectionString);
+                await definitionPanel.OpenAsync(null, _currentConnection);
             }
         }
 
@@ -1674,6 +1738,8 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void ObjectTypeComboBox_SelectedIndexChanged(object sender, EventArgs e)
         {
+            if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
+
             // keep the selected schema
             string schemaName = schemaComboBox.Text;
 
@@ -1683,32 +1749,32 @@ namespace SQL_Document_Builder
                 switch (objectTypeComboBox.SelectedIndex)
                 {
                     case 0:
-                        _tables = await SQLDatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.Table, _connectionString);
+                        _tables = await SQLDatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.Table, connectionString);
                         EnableTableValue(true);
                         break;
 
                     case 1:
-                        _tables = await SQLDatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.View, _connectionString);
+                        _tables = await SQLDatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.View, connectionString);
                         EnableTableValue(true);
                         break;
 
                     case 2:
-                        _tables = await SQLDatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.StoredProcedure, _connectionString);
+                        _tables = await SQLDatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.StoredProcedure, connectionString);
                         EnableTableValue(false);
                         break;
 
                     case 3:
-                        _tables = await SQLDatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.Function, _connectionString);
+                        _tables = await SQLDatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.Function, connectionString);
                         EnableTableValue(false);
                         break;
 
                     case 4:
-                        _tables = await SQLDatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.Trigger, _connectionString);
+                        _tables = await SQLDatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.Trigger, connectionString);
                         EnableTableValue(false);
                         break;
 
                     case 5:
-                        _tables = await SQLDatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.Synonym, _connectionString);
+                        _tables = await SQLDatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.Synonym, connectionString);
                         EnableTableValue(false);
                         break;
 
@@ -1814,6 +1880,8 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void OnExecuteToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
+
             string dataSourceText = $"{serverToolStripStatusLabel.Text}::{databaseToolStripStatusLabel.Text}";
             string message;
 
@@ -2031,7 +2099,7 @@ namespace SQL_Document_Builder
         /// </summary>
         private async Task PopulateAsync()
         {
-            await definitionPanel.OpenAsync(null, _connectionString);
+            await definitionPanel.OpenAsync(null, _currentConnection);
             string schemaName = string.Empty;
             if (schemaComboBox.SelectedIndex > 0)
                 schemaName = schemaComboBox.Text;
@@ -2263,9 +2331,11 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void QueryInsertToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
+
             using var form = new QueryDataToTableForm()
             {
-                ConnectionString = _connectionString,
+                ConnectionString = connectionString,
                 InsertStatement = true
             };
             if (form.ShowDialog() == DialogResult.OK)
@@ -2274,7 +2344,7 @@ namespace SQL_Document_Builder
 
                 if (BeginAddDDLScript())
                 {
-                    var insertStatements = await DatabaseDocBuilder.QueryDataToInsertStatementAsync(form.SQL, _connectionString);
+                    var insertStatements = await DatabaseDocBuilder.QueryDataToInsertStatementAsync(form.SQL, _currentConnection);
 
                     AppendText(editBox, insertStatements);
                 }
@@ -2503,9 +2573,16 @@ namespace SQL_Document_Builder
         /// <returns>A List&lt;ObjectName&gt;? .</returns>
         private List<ObjectName>? SelectObjects()
         {
+            if (!GetConnectionString(out string connectionString)) return []; // If we don't have a connection string, exit early
+
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                return null;
+            }
+
             var form = new DBObjectsSelectForm()
             {
-                ConnectionString = _connectionString,
+                ConnectionString = connectionString,
             };
             if (form.ShowDialog() == DialogResult.OK)
             {
@@ -2753,10 +2830,12 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void TableDescriptionToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
+
             var objectName = objectsListBox.SelectedItem as ObjectName;
             if (!string.IsNullOrEmpty(objectName?.Name))
             {
-                var description = await ObjectDescription.BuildObjectDescription(objectName, _connectionString, Properties.Settings.Default.UseExtendedProperties);
+                var description = await ObjectDescription.BuildObjectDescription(objectName, _currentConnection, Properties.Settings.Default.UseExtendedProperties);
                 if (!string.IsNullOrEmpty(description))
                 {
                     if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
@@ -3415,7 +3494,9 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void QueryDataToTableToolStripMenuItem1_Click(object sender, EventArgs e)
         {
-            using var form = new QueryDataToTableForm() { ConnectionString = _connectionString };
+            if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
+
+            using var form = new QueryDataToTableForm() { ConnectionString = connectionString };
             if (form.ShowDialog() == DialogResult.OK)
             {
                 if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
@@ -3436,7 +3517,7 @@ namespace SQL_Document_Builder
                 var datatableTemplate = template.TemplateLists.FirstOrDefault(t => t.ObjectType == TemplateItem.ObjectTypeEnums.DataTable);
                 if (datatableTemplate != null)
                 {
-                    AppendText(editBox, await DocumentBuilder.GetTableValuesAsync(form.SQL, _connectionString, datatableTemplate));
+                    AppendText(editBox, await DocumentBuilder.GetTableValuesAsync(form.SQL, _currentConnection, datatableTemplate));
                 }
                 else
                 {
@@ -3453,6 +3534,8 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void TableDefinitionToolStripMenuItem_Click_1(object sender, EventArgs e)
         {
+            if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
+
             if (objectsListBox.SelectedItem != null)
             {
                 var objectName = (ObjectName)objectsListBox.SelectedItem;
@@ -3484,7 +3567,7 @@ namespace SQL_Document_Builder
                     return;
                 }
 
-                var scripts = await DocumentBuilder.GetObjectDef(objectName, _connectionString, objectTemplate);
+                var scripts = await DocumentBuilder.GetObjectDef(objectName, _currentConnection, objectTemplate);
                 if (scripts.Length == 0)
                 {
                     Common.MsgBox($"No definition found for {objectName.FullName}", MessageBoxIcon.Information);
@@ -3508,6 +3591,8 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void TableListToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
+
             List<ObjectName>? selectedObjects = SelectObjects();
 
             if (selectedObjects == null || selectedObjects.Count == 0)
@@ -3547,7 +3632,7 @@ namespace SQL_Document_Builder
             string scripts = String.Empty;
             await Task.Run(async () =>
             {
-                scripts = await DocumentBuilder.BuildObjectList(selectedObjects, _connectionString, objectListTemplate, progress);
+                scripts = await DocumentBuilder.BuildObjectList(selectedObjects, _currentConnection, objectListTemplate, progress);
             });
 
             AppendText(editBox, scripts);
@@ -3562,6 +3647,8 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void TableValuesMDToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
+
             if (objectsListBox.SelectedItem != null)
             {
                 var objectName = (ObjectName)objectsListBox.SelectedItem;
@@ -3596,7 +3683,7 @@ namespace SQL_Document_Builder
                     return;
                 }
 
-                AppendText(editBox, await DocumentBuilder.GetTableValuesAsync($"select * from {objectName.FullName}", _connectionString, datatableTemplate));
+                AppendText(editBox, await DocumentBuilder.GetTableValuesAsync($"select * from {objectName.FullName}", _currentConnection, datatableTemplate));
 
                 EndBuild(editBox);
             }
@@ -3693,15 +3780,17 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void JsonObjectDefinitionToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
+
             if (objectsListBox.SelectedItem != null)
             {
                 var objectName = (ObjectName)objectsListBox.SelectedItem;
 
                 var scripts = objectName.ObjectType switch
                 {
-                    ObjectTypeEnums.Table => await JsonBuilder.GetTableDef(objectName, _connectionString),
-                    ObjectTypeEnums.View => await JsonBuilder.GetViewDef(objectName, _connectionString),
-                    ObjectTypeEnums.StoredProcedure or ObjectTypeEnums.Function => await JsonBuilder.GetFunctionProcedureDef(objectName, _connectionString),
+                    ObjectTypeEnums.Table => await JsonBuilder.GetTableDef(objectName, _currentConnection),
+                    ObjectTypeEnums.View => await JsonBuilder.GetViewDef(objectName, _currentConnection),
+                    ObjectTypeEnums.StoredProcedure or ObjectTypeEnums.Function => await JsonBuilder.GetFunctionProcedureDef(objectName, _currentConnection),
                     _ => string.Empty
                 };
 
@@ -3728,6 +3817,8 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void JsonObjectListToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
+
             List<ObjectName>? selectedObjects = SelectObjects();
 
             if (selectedObjects == null || selectedObjects.Count == 0)
@@ -3750,7 +3841,7 @@ namespace SQL_Document_Builder
             var builder = new JsonBuilder();
             await Task.Run(async () =>
             {
-                scripts = await builder.BuildObjectList(selectedObjects, _connectionString, progress);
+                scripts = await builder.BuildObjectList(selectedObjects, _currentConnection, progress);
             });
 
             AppendText(editBox, scripts);
@@ -3765,14 +3856,16 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void JsonQueryDataToTableToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            using var form = new QueryDataToTableForm() { ConnectionString = _connectionString };
+            if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
+
+            using var form = new QueryDataToTableForm() { ConnectionString = connectionString };
             if (form.ShowDialog() == DialogResult.OK)
             {
                 if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
 
                 if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Json) != DialogResult.Yes) return;
 
-                AppendText(editBox, await JsonBuilder.GetTableValuesAsync(form.SQL, _connectionString));
+                AppendText(editBox, await JsonBuilder.GetTableValuesAsync(form.SQL, _currentConnection));
             }
         }
 
@@ -3783,6 +3876,8 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void JsonTableViewValuesToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
+
             if (objectsListBox.SelectedItem != null)
             {
                 var objectName = (ObjectName)objectsListBox.SelectedItem;
@@ -3794,7 +3889,7 @@ namespace SQL_Document_Builder
                     return;
                 }
 
-                var scripts = await JsonBuilder.GetTableValuesAsync($"select * from {objectName.FullName}", _connectionString);
+                var scripts = await JsonBuilder.GetTableValuesAsync($"select * from {objectName.FullName}", _currentConnection);
 
                 if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
 
@@ -3816,6 +3911,8 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void ExportDescriptionsToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
+
             // get the file name to save the Excel file
             using SaveFileDialog saveFileDialog = new()
             {
@@ -3838,7 +3935,7 @@ namespace SQL_Document_Builder
                 // export the descriptions to Excel
                 try
                 {
-                    await ExcelDataHelper.ExportDescriptionsToExcel(selectedObjects, saveFileDialog.FileName, _connectionString);
+                    await ExcelDataHelper.ExportDescriptionsToExcel(selectedObjects, saveFileDialog.FileName, _currentConnection);
 
                     Common.MsgBox("Descriptions exported successfully.", MessageBoxIcon.Information);
                 }
@@ -3857,6 +3954,8 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void ImportDescriptionsToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
+
             // get the Excel file name
             var openFileDialog = new OpenFileDialog
             {

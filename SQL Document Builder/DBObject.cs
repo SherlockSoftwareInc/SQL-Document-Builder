@@ -14,6 +14,8 @@ namespace SQL_Document_Builder
     /// </summary>
     internal class DBObject
     {
+        private string? _connectionString = string.Empty;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="DBObject"/> class.
         /// </summary>
@@ -88,9 +90,9 @@ namespace SQL_Document_Builder
         internal ObjectName ObjectName { get; private set; }
 
         /// <summary>
-        /// Gets or sets database connection string
+        /// Gets or sets the connection.
         /// </summary>
-        private string ConnectionString { get; set; } = string.Empty;
+        private DatabaseConnectionItem? Connection { get; set; }
 
         /// <summary>
         /// Updates the column description.
@@ -99,7 +101,7 @@ namespace SQL_Document_Builder
         /// <param name="newDescription">The new description.</param>
         public async Task UpdateLevel1DescriptionAsync(string columnOrParameter, string newDescription, ObjectName.ObjectTypeEnums objectType)
         {
-            if (ConnectionString.Length == 0) return;
+            if (_connectionString?.Length == 0) return;
 
             string newDesc = newDescription.Replace("'", "''");
             string level1type = objectType switch
@@ -162,7 +164,7 @@ BEGIN
 END;";
             }
 
-            await SQLDatabaseHelper.ExecuteSQLAsync(query, ConnectionString);
+            await SQLDatabaseHelper.ExecuteSQLAsync(query, _connectionString);
 
             if (objectType == ObjectTypeEnums.Table || objectType == ObjectTypeEnums.View)
             {
@@ -192,7 +194,7 @@ END;";
         {
             Description = newDescription;
 
-            if (ConnectionString.Length == 0 || ObjectName.IsEmpty()) return;
+            if (_connectionString?.Length == 0 || ObjectName.IsEmpty()) return;
 
             if (!ObjectName.IsEmpty() && newDescription.Length > 0)
             {
@@ -237,7 +239,7 @@ END;";
             @level1type = N'{level1type}', @level1name = N'{ObjectName.Name}';";
                 }
 
-                var result = await SQLDatabaseHelper.ExecuteSQLAsync(query, ConnectionString);
+                var result = await SQLDatabaseHelper.ExecuteSQLAsync(query, _connectionString);
                 if (result != string.Empty)
                 {
                     Common.MsgBox("Failed to update object description." + Environment.NewLine + result, MessageBoxIcon.Error);
@@ -251,8 +253,13 @@ END;";
         /// <param name="objectName">The object name.</param>
         /// <param name="connectionString">The connection string.</param>
         /// <returns>A Task.</returns>
-        internal static async Task<List<(string ViewName, string SchemaName)>> GetViewsUsingTableAsync(ObjectName objectName, string connectionString)
+        internal static async Task<List<(string ViewName, string SchemaName)>> GetViewsUsingTableAsync(ObjectName objectName, DatabaseConnectionItem connection)
         {
+            if (connection == null || string.IsNullOrEmpty(connection.ConnectionString) || objectName.IsEmpty())
+            {
+                return [];
+            }
+
             var views = new List<(string ViewName, string SchemaName)>();
             if (string.IsNullOrEmpty(objectName.Name))
             {
@@ -275,7 +282,7 @@ WHERE
     o.name = N'{objectName.Name}' AND
     s.name = N'{objectName.Schema}'";
 
-            var dt = await SQLDatabaseHelper.GetDataTableAsync(query, connectionString);
+            var dt = await SQLDatabaseHelper.GetDataTableAsync(query, connection.ConnectionString);
             if (dt == null || dt.Rows.Count == 0)
                 return views;
 
@@ -310,7 +317,7 @@ INNER JOIN sys.schemas s ON t.schema_id = s.schema_id
 WHERE s.name = N'{ObjectName.Schema}' AND t.name = N'{ObjectName.Name}'
 ORDER BY cc.name;";
 
-            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, ConnectionString);
+            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, _connectionString);
             if (dt == null || dt.Rows.Count == 0)
                 return string.Empty;
 
@@ -352,7 +359,7 @@ INNER JOIN sys.schemas s ON t.schema_id = s.schema_id
 WHERE s.name = N'{ObjectName.Schema}' AND t.name = N'{ObjectName.Name}'
 ORDER BY dc.name;";
 
-            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, ConnectionString);
+            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, _connectionString);
             if (dt == null || dt.Rows.Count == 0)
                 return string.Empty;
 
@@ -405,7 +412,7 @@ WHERE s.name = N'{ObjectName.Schema}' AND tp.name = N'{ObjectName.Name}'
 ORDER BY fk.name, fkc.constraint_column_id;";
 
             // Use DatabaseHelper to get the data as a DataTable
-            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, ConnectionString);
+            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, _connectionString);
             if (dt == null || dt.Rows.Count == 0)
                 return string.Empty;
 
@@ -452,7 +459,7 @@ ORDER BY fk.name, fkc.constraint_column_id;";
         /// Retrieves identity column details for the current table.
         /// </summary>
         /// <returns>A dictionary where the key is the column name and the value is a tuple containing seed and increment values.</returns>
-        internal async Task<Dictionary<string, (int SeedValue, int IncrementValue)>> GetIdentityColumns(string connectionString)
+        internal async Task<Dictionary<string, (int SeedValue, int IncrementValue)>> GetIdentityColumns(DatabaseConnectionItem connection)
         {
             var identityColumns = new Dictionary<string, (int SeedValue, int IncrementValue)>();
 
@@ -467,7 +474,7 @@ INNER JOIN sys.identity_columns AS ic ON t.object_id = ic.object_id
 WHERE t.name = N'{ObjectName.Name}'
 AND s.name = N'{ObjectName.Schema}';";
 
-            var dt = await SQLDatabaseHelper.GetDataTableAsync(identityQuery, connectionString);
+            var dt = await SQLDatabaseHelper.GetDataTableAsync(identityQuery, connection.ConnectionString);
             if (dt == null || dt.Rows.Count == 0)
                 return identityColumns;
 
@@ -489,10 +496,11 @@ AND s.name = N'{ObjectName.Schema}';";
         /// <param name="objectName">The object name.</param>
         /// <param name="connectionString">The connection string.</param>
         /// <returns>A bool.</returns>
-        internal async Task<bool> OpenAsync(ObjectName objectName, string connectionString)
+        internal async Task<bool> OpenAsync(ObjectName objectName, DatabaseConnectionItem? connection)
         {
             this.ObjectName = objectName;
-            this.ConnectionString = connectionString;
+            this.Connection = connection;
+            _connectionString = connection?.ConnectionString;
 
             var objectType = objectName.ObjectType;
             if (objectType == ObjectTypeEnums.None)
@@ -504,7 +512,7 @@ FROM Information_SCHEMA.TABLES
 WHERE TABLE_SCHEMA = N'{objectName.Schema}'
   AND TABLE_NAME = N'{objectName.Name}'";
 
-                var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, connectionString);
+                var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, _connectionString);
                 if (dt != null && dt.Rows.Count > 0)
                 {
                     string? objType = dt.Rows[0]["TABLE_TYPE"]?.ToString();
@@ -540,7 +548,7 @@ WHERE TABLE_SCHEMA = N'{objectName.Schema}'
             // 1. Get the synonym's base object (target object) using sys.synonyms
             // 2. Optionally, get the description from extended properties
 
-            if (ObjectName == null || ObjectName.IsEmpty() || string.IsNullOrEmpty(ConnectionString))
+            if (ObjectName == null || ObjectName.IsEmpty() || string.IsNullOrEmpty(_connectionString))
                 return false;
 
             // Query to get the base object name for the synonym
@@ -550,7 +558,7 @@ FROM sys.synonyms s
 INNER JOIN sys.schemas sch ON s.schema_id = sch.schema_id
 WHERE sch.name = N'{ObjectName.Schema}' AND s.name = N'{ObjectName.Name}'";
 
-            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, ConnectionString);
+            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, _connectionString);
             if (dt == null || dt.Rows.Count == 0)
                 return false;
 
@@ -558,7 +566,7 @@ WHERE sch.name = N'{ObjectName.Schema}' AND s.name = N'{ObjectName.Name}'";
             Definition = dt.Rows[0]["base_object_name"]?.ToString() ?? string.Empty;
 
             // Get the description (if any) from extended properties
-            Description = await SQLDatabaseHelper.GetTableDescriptionAsync(ObjectName, ConnectionString);
+            Description = await SQLDatabaseHelper.GetTableDescriptionAsync(ObjectName, _connectionString);
 
             return true;
         }
@@ -594,36 +602,39 @@ WHERE sch.name = N'{ObjectName.Schema}' AND s.name = N'{ObjectName.Name}'";
         /// <returns>A Task.</returns>
         private async Task OpenObjectInfo()
         {
+            if (ObjectName == null || ObjectName.IsEmpty() || string.IsNullOrEmpty(_connectionString))
+                return;
+
             switch (ObjectName.ObjectType)
             {
                 case ObjectTypeEnums.Table:
                     TableInformation = new TableInfo();
-                    await TableInformation.OpenAsync(ObjectName, ConnectionString);
+                    await TableInformation.OpenAsync(ObjectName, _connectionString);
                     break;
 
                 case ObjectTypeEnums.View:
                     ViewInformation = new ViewInfo();
-                    await ViewInformation.OpenAsync(ObjectName, ConnectionString);
+                    await ViewInformation.OpenAsync(ObjectName, _connectionString);
                     break;
 
                 case ObjectTypeEnums.StoredProcedure:
                     ProcedureInformation = new ProcedureInfo();
-                    await ProcedureInformation.OpenAsync(ObjectName, ConnectionString);
+                    await ProcedureInformation.OpenAsync(ObjectName, _connectionString);
                     break;
 
                 case ObjectTypeEnums.Function:
                     FunctionInformation = new FunctionInfo();
-                    await FunctionInformation.OpenAsync(ObjectName, ConnectionString);
+                    await FunctionInformation.OpenAsync(ObjectName, _connectionString);
                     break;
 
                 case ObjectTypeEnums.Trigger:
                     TriggerInfomation = new TriggerInfo();
-                    await TriggerInfomation.OpenAsync(ObjectName, ConnectionString);
+                    await TriggerInfomation.OpenAsync(ObjectName, _connectionString);
                     break;
 
                 case ObjectTypeEnums.Synonym:
                     SynonymInformation = new SynonymInfo();
-                    await SynonymInformation.OpenAsync(ObjectName, ConnectionString);
+                    await SynonymInformation.OpenAsync(ObjectName, _connectionString);
                     break;
             }
         }
@@ -634,7 +645,7 @@ WHERE sch.name = N'{ObjectName.Schema}' AND s.name = N'{ObjectName.Name}'";
         /// <param name="objectName">The object name.</param>
         /// <param name="connectionString">The connection string.</param>
         /// <returns>A Task.</returns>
-        private static async Task<DataTable?> GetParametersAsync(ObjectName objectName, string connectionString)
+        private static async Task<DataTable?> GetParametersAsync(ObjectName objectName, DatabaseConnectionItem connection)
         {
             string paramSql = $@"
 SELECT
@@ -649,7 +660,7 @@ WHERE p.SPECIFIC_SCHEMA = N'{objectName.Schema}'
   AND p.ORDINAL_POSITION > 0
 ORDER BY p.ORDINAL_POSITION";
 
-            return await SQLDatabaseHelper.GetDataTableAsync(paramSql, connectionString);
+            return await SQLDatabaseHelper.GetDataTableAsync(paramSql, connection.ConnectionString);
         }
 
         /// <summary>
@@ -667,7 +678,7 @@ WHERE E.name = N'MS_Description'
   AND S.name = N'{ObjectName?.Schema}'
   AND T.name = N'{ObjectName?.Name}'";
 
-            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, ConnectionString);
+            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, _connectionString);
             if (dt == null || dt.Rows.Count == 0)
                 return;
 
@@ -696,7 +707,7 @@ WHERE E.name = N'MS_Description'
 
             Columns.Clear();
 
-            if (ConnectionString.Length > 0 && ObjectName.Name.Length > 0)
+            if (_connectionString?.Length > 0 && ObjectName.Name.Length > 0)
             {
                 string sql = $@"
 SELECT ORDINAL_POSITION, COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, NUMERIC_PRECISION, IS_NULLABLE, COLUMN_DEFAULT
@@ -704,7 +715,7 @@ FROM Information_schema.columns
 WHERE TABLE_SCHEMA = N'{ObjectName.Schema}' AND TABLE_NAME = N'{ObjectName.Name}'
 ORDER BY ORDINAL_POSITION";
 
-                var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, ConnectionString);
+                var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, _connectionString);
 
                 if (dt != null && dt.Rows.Count > 0)
                 {
@@ -726,7 +737,7 @@ ORDER BY ORDINAL_POSITION";
         {
             Constraints.Clear();
 
-            if (ObjectName == null || ObjectName.IsEmpty() || string.IsNullOrEmpty(ConnectionString))
+            if (ObjectName == null || ObjectName.IsEmpty() || string.IsNullOrEmpty(_connectionString))
                 return;
 
             string schemaName = ObjectName.Schema;
@@ -779,7 +790,7 @@ INNER JOIN sys.columns c ON dc.parent_object_id = c.object_id AND dc.parent_colu
 WHERE s.name = N'{schemaName}'
   AND t.name = N'{tableName}'";
 
-            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, ConnectionString);
+            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, _connectionString);
             if (dt == null || dt.Rows.Count == 0)
                 return;
 
@@ -817,7 +828,7 @@ WHERE s.name = N'{objectName.Schema}'
   AND ind.is_primary_key = 0 -- Exclude PK, unless you want to include it
 ORDER BY ind.name, ic.key_ordinal";
 
-            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, ConnectionString);
+            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, _connectionString);
             if (dt == null || dt.Rows.Count == 0)
                 return;
 
@@ -870,7 +881,7 @@ INNER JOIN sys.schemas s ON t.schema_id = s.schema_id
 WHERE s.name = N'{objectName.Schema}'
 AND t.name = N'{objectName.Name}'";
 
-            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, ConnectionString);
+            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, _connectionString);
             if (dt == null || dt.Rows.Count == 0)
                 return;
 
@@ -914,7 +925,7 @@ AND t.name = N'{objectName.Name}'";
 
                     string sql = $"SELECT value FROM fn_listextendedproperty (NULL, 'schema', '{ObjectName.Schema}', N'{objectType}', N'{ObjectName.Name}', default, default) WHERE name = N'MS_Description'";
 
-                    var returnValue = await SQLDatabaseHelper.ExecuteScalarAsync(sql, ConnectionString);
+                    var returnValue = await SQLDatabaseHelper.ExecuteScalarAsync(sql, _connectionString);
 
                     if (returnValue != null && returnValue != DBNull.Value)
                     {
@@ -955,7 +966,7 @@ WHERE ep.name = 'MS_Description'
   AND o.name = N'{ObjectName.Name}'
   AND s.name = N'{ObjectName.Schema}'";
 
-            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, ConnectionString);
+            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, _connectionString);
             if (dt == null || dt.Rows.Count == 0)
                 return;
 
@@ -989,7 +1000,7 @@ WHERE OBJECTPROPERTY(OBJECT_ID(CONSTRAINT_SCHEMA + '.' + CONSTRAINT_NAME), 'IsPr
   AND TABLE_NAME = N'{objectName.Name}'
   AND TABLE_SCHEMA = N'{objectName.Schema}'";
 
-            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, ConnectionString);
+            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, _connectionString);
             if (dt == null || dt.Rows.Count == 0)
                 return;
 
@@ -1022,11 +1033,11 @@ WHERE OBJECTPROPERTY(OBJECT_ID(CONSTRAINT_SCHEMA + '.' + CONSTRAINT_NAME), 'IsPr
         {
             //get the object description and definition
             Description = await GetObjectDescriptionAsync();
-            Definition = await SQLDatabaseHelper.GetObjectDefinitionAsync(ObjectName, ConnectionString);
+            Definition = await SQLDatabaseHelper.GetObjectDefinitionAsync(ObjectName, _connectionString);
 
             // Get the function parameters
             Parameters.Clear();
-            var dtParameters = await GetParametersAsync(ObjectName, ConnectionString);
+            var dtParameters = await GetParametersAsync(ObjectName, Connection);
             if (dtParameters != null && dtParameters.Rows.Count > 0)
             {
                 foreach (DataRow row in dtParameters.Rows)
@@ -1052,7 +1063,7 @@ WHERE OBJECTPROPERTY(OBJECT_ID(CONSTRAINT_SCHEMA + '.' + CONSTRAINT_NAME), 'IsPr
         {
             //get the object description and definition
             //Description = await GetObjectDescriptionAsync();
-            Definition = await SQLDatabaseHelper.GetObjectDefinitionAsync(ObjectName, ConnectionString);
+            Definition = await SQLDatabaseHelper.GetObjectDefinitionAsync(ObjectName, _connectionString);
 
             // Get the function parameters
             Parameters.Clear();
@@ -1082,7 +1093,7 @@ WHERE OBJECTPROPERTY(OBJECT_ID(CONSTRAINT_SCHEMA + '.' + CONSTRAINT_NAME), 'IsPr
         {
             bool result = true;
 
-            if (ConnectionString.Length > 0 && ObjectName.Name.Length > 0)
+            if (_connectionString?.Length > 0 && ObjectName.Name.Length > 0)
             {
                 result = await GetColumnsAsync();
 
@@ -1101,7 +1112,7 @@ WHERE OBJECTPROPERTY(OBJECT_ID(CONSTRAINT_SCHEMA + '.' + CONSTRAINT_NAME), 'IsPr
                 // get the definition if it is a view
                 if (ObjectName.ObjectType == ObjectTypeEnums.View)
                 {
-                    Definition = await SQLDatabaseHelper.GetObjectDefinitionAsync(ObjectName, ConnectionString);
+                    Definition = await SQLDatabaseHelper.GetObjectDefinitionAsync(ObjectName, _connectionString);
                 }
             }
 

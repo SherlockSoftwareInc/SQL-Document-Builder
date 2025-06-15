@@ -16,13 +16,13 @@ namespace SQL_Document_Builder
         /// <param name="schemaName">The schema name.</param>
         /// <param name="tableName">The table name.</param>
         /// <returns>A string.</returns>
-        public static async Task<string> BuildObjectDescription(ObjectName objectName, string connectionString, bool useExtendedProperties)
+        public static async Task<string> BuildObjectDescription(ObjectName objectName, DatabaseConnectionItem? connection, bool useExtendedProperties)
         {
             bool spaceAdded = false;
             var sb = new StringBuilder();
 
             var dbTable = new DBObject();
-            if (await dbTable.OpenAsync(objectName, connectionString))
+            if (await dbTable.OpenAsync(objectName, connection))
             {
                 var tableDesc = dbTable.Description;
                 string level1type = objectName.ObjectType switch

@@ -20,10 +20,10 @@ namespace SQL_Document_Builder
         /// <param name="objectName">The object name.</param>
         /// <param name="connectionString">The connection string.</param>
         /// <returns>A Task.</returns>
-        internal static async Task<string> GetFunctionProcedureDef(ObjectName objectName, string connectionString)
+        internal static async Task<string> GetFunctionProcedureDef(ObjectName objectName, DatabaseConnectionItem connection)
         {
             var func = new DBObject();
-            await func.OpenAsync(objectName, connectionString);
+            await func.OpenAsync(objectName, connection);
 
             var obj = new
             {
@@ -52,10 +52,15 @@ namespace SQL_Document_Builder
         /// <param name="connectionString">The connection string.</param>
         /// <param name="templateBody">The template body.</param>
         /// <returns>A Task.</returns>
-        internal static async Task<string> GetTableDef(ObjectName objectName, string connectionString)
+        internal static async Task<string> GetTableDef(ObjectName objectName, DatabaseConnectionItem? connection)
         {
+            if (connection == null)
+            {
+                throw new ArgumentNullException(nameof(connection), "Connection cannot be null.");
+            }
+
             var tableView = new DBObject();
-            await tableView.OpenAsync(objectName, connectionString);
+            await tableView.OpenAsync(objectName, connection);
 
             var obj = new
             {
@@ -94,10 +99,15 @@ namespace SQL_Document_Builder
         /// <param name="objectName">The object name.</param>
         /// <param name="connectionString">The connection string.</param>
         /// <returns>A Task.</returns>
-        internal static async Task<string> GetViewDef(ObjectName objectName, string connectionString)
+        internal static async Task<string> GetViewDef(ObjectName objectName, DatabaseConnectionItem? connection)
         {
+            if (connection == null)
+            {
+                throw new ArgumentNullException(nameof(connection), "Connection cannot be null.");
+            }
+
             var tableView = new DBObject();
-            await tableView.OpenAsync(objectName, connectionString);
+            await tableView.OpenAsync(objectName, connection);
 
             var obj = new
             {
@@ -132,8 +142,13 @@ namespace SQL_Document_Builder
         /// <param name="connectionString">The connection string.</param>
         /// <param name="progress">The progress.</param>
         /// <returns>A Task.</returns>
-        internal async Task<string> BuildObjectList(List<ObjectName> objectList, string connectionString, IProgress<int> progress)
+        internal async Task<string> BuildObjectList(List<ObjectName> objectList, DatabaseConnectionItem? connection, IProgress<int> progress)
         {
+            if (connection == null || objectList?.Count == 0)
+            {
+                return "[]";
+            }
+
             var list = new List<object>();
 
             for (int i = 0; i < objectList.Count; i++)
@@ -145,7 +160,7 @@ namespace SQL_Document_Builder
                 }
 
                 ObjectName dr = objectList[i];
-                string description = await SQLDatabaseHelper.GetTableDescriptionAsync(dr, connectionString);
+                string description = await SQLDatabaseHelper.GetTableDescriptionAsync(dr, connection.ConnectionString);
                 list.Add(new
                 {
                     Schema = dr.Schema,
@@ -163,12 +178,17 @@ namespace SQL_Document_Builder
         /// <param name="sql">The sql.</param>
         /// <param name="connectionString">The connection string.</param>
         /// <returns>A Task.</returns>
-        internal static async Task<string> GetTableValuesAsync(string sql, string connectionString)
+        internal static async Task<string> GetTableValuesAsync(string sql, DatabaseConnectionItem? connection)
         {
-            DataTable? dt = await SQLDatabaseHelper.GetDataTableAsync(sql, connectionString);
+            if (connection == null)
+            {
+                return "";
+            }
+
+            DataTable? dt = await SQLDatabaseHelper.GetDataTableAsync(sql, connection?.ConnectionString);
             if (dt == null || dt.Rows.Count == 0)
             {
-                return "[]";
+                return "";
             }
             return DataTableToJson(dt);
         }
