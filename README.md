@@ -76,3 +76,14 @@ Because it is a **template-based document builder**, it can easily support any o
 ## 🛠️ Extensibility
 
 SQL Server Script and Document Builder is designed for growth. Adding support for new output formats or programming languages is as simple as creating and loading a new template.
+
+## 📸 Screenshots
+
+### 🖥️ Main Interface with CREATE TABLE Scripts
+![Main Interface](SQL%20Document%20Builder/DDLGenerate.png)
+
+### 📂 Markdown Output
+![Markdown Document Output](SQL%20Document%20Builder/Markdown.png)
+
+### 📝 Template Editor
+![Template Editor](SQL%20Document%20Builder/TemplateEditor.png)
