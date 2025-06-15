@@ -26,39 +26,46 @@ namespace SQL_Document_Builder
                 return string.Empty;
             }
 
-            string doc = template.Body;
-            string objectItemTemplate = template.ObjectLists.ObjectRow;
-
-            var sb = new StringBuilder();
-
-            if (objectList.Count > 0)
+            if (connection.DBMSType == DBMSTypeEnums.SQLServer)
             {
-                for (int i = 0; i < objectList.Count; i++)
+                string doc = template.Body;
+                string objectItemTemplate = template.ObjectLists.ObjectRow;
+
+                var sb = new StringBuilder();
+
+                if (objectList.Count > 0)
                 {
-                    int percentComplete = (i * 100) / objectList.Count;
-                    if (percentComplete > 0 && percentComplete % 2 == 0)
+                    for (int i = 0; i < objectList.Count; i++)
                     {
-                        progress.Report(percentComplete + 1);
+                        int percentComplete = (i * 100) / objectList.Count;
+                        if (percentComplete > 0 && percentComplete % 2 == 0)
+                        {
+                            progress.Report(percentComplete + 1);
+                        }
+
+                        ObjectName dr = objectList[i];
+                        string tableSchema = dr.Schema;
+                        string tableName = dr.Name;
+                        string description = await SQLDatabaseHelper.GetTableDescriptionAsync(dr, connection.ConnectionString);
+                        var objectName = new ObjectName(dr.ObjectType, dr.Schema, dr.Name);
+
+                        string objItemDoc = objectItemTemplate
+                            .Replace("~ObjectName~", tableName)
+                            .Replace("~ObjectSchema~", tableSchema)
+                            .Replace("~ObjectFullName~", objectName.FullName)
+                            .Replace("~ObjectType~", ObjectTypeToString(dr.ObjectType))
+                            .Replace("~Description~", description);
+
+                        sb.AppendLine(objItemDoc);
                     }
-
-                    ObjectName dr = objectList[i];
-                    string tableSchema = dr.Schema;
-                    string tableName = dr.Name;
-                    string description = await SQLDatabaseHelper.GetTableDescriptionAsync(dr, connection.ConnectionString);
-                    var objectName = new ObjectName(dr.ObjectType, dr.Schema, dr.Name);
-
-                    string objItemDoc = objectItemTemplate
-                        .Replace("~ObjectName~", tableName)
-                        .Replace("~ObjectSchema~", tableSchema)
-                        .Replace("~ObjectFullName~", objectName.FullName)
-                        .Replace("~ObjectType~", ObjectTypeToString(dr.ObjectType))
-                        .Replace("~Description~", description);
-
-                    sb.AppendLine(objItemDoc);
                 }
+
+                return doc.Replace("~ObjectItem~", sb.ToString());
             }
 
-            return doc.Replace("~ObjectItem~", sb.ToString());
+            // reserved for future use
+            return string.Empty;
+
         }
 
         /// <summary>
@@ -179,84 +186,91 @@ namespace SQL_Document_Builder
                 return string.Empty;
             }
 
-            string doc = template.Body;
-
-            // open the database oobjects
-            var tableView = new DBObject();
-            await tableView.OpenAsync(objectName, connection);
-
-            // Replace placeholders with actual values
-            doc = doc.Replace("~ObjectName~", objectName.Name);
-            doc = doc.Replace("~ObjectSchema~", objectName.Schema);
-            doc = doc.Replace("~ObjectFullName~", objectName.FullName);
-            doc = doc.Replace("~ObjectType~", ObjectTypeToString(objectName.ObjectType));
-
-            doc = doc.Replace("~Description~", tableView.Description.Length == 0 ? " " : tableView.Description);
-            doc = doc.Replace("~Definition~", tableView.Definition);
-
-            // Build the columns table
-            if (doc.Contains("~Columns~"))
+            if (connection.DBMSType == DBMSTypeEnums.SQLServer)
             {
-                string columnsDoc = template.Columns.Body;
-                if (columnsDoc.Contains("~ColumnItem~", StringComparison.CurrentCultureIgnoreCase))
+                string doc = template.Body;
+
+                // open the database oobjects
+                var tableView = new DBObject();
+                await tableView.OpenAsync(objectName, connection);
+
+                // Replace placeholders with actual values
+                doc = doc.Replace("~ObjectName~", objectName.Name);
+                doc = doc.Replace("~ObjectSchema~", objectName.Schema);
+                doc = doc.Replace("~ObjectFullName~", objectName.FullName);
+                doc = doc.Replace("~ObjectType~", ObjectTypeToString(objectName.ObjectType));
+
+                doc = doc.Replace("~Description~", tableView.Description.Length == 0 ? " " : tableView.Description);
+                doc = doc.Replace("~Definition~", tableView.Definition);
+
+                // Build the columns table
+                if (doc.Contains("~Columns~"))
                 {
-                    string columnItemTemplate = template.Columns.ColumnRow;
-                    var columnsBody = GetColumnsBody(tableView.Columns, columnItemTemplate);
-                    columnsDoc = columnsDoc.Replace("~ColumnItem~", columnsBody);
+                    string columnsDoc = template.Columns.Body;
+                    if (columnsDoc.Contains("~ColumnItem~", StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        string columnItemTemplate = template.Columns.ColumnRow;
+                        var columnsBody = GetColumnsBody(tableView.Columns, columnItemTemplate);
+                        columnsDoc = columnsDoc.Replace("~ColumnItem~", columnsBody);
+                    }
+                    doc = doc.Replace("~Columns~", columnsDoc);
                 }
-                doc = doc.Replace("~Columns~", columnsDoc);
-            }
 
-            // Build the indexes table
-            if (doc.Contains("~Indexes~"))
-            {
-                string indexesDoc = template.Indexes.Body;
-                if (indexesDoc.Contains("~IndexItem~", StringComparison.CurrentCultureIgnoreCase))
+                // Build the indexes table
+                if (doc.Contains("~Indexes~"))
                 {
-                    string indexItemTemplate = template.Indexes.IndexRow;
-                    var indexesBody = GetIndexesBody(tableView.Indexes, indexItemTemplate);
-                    indexesDoc = indexesDoc.Replace("~IndexItem~", indexesBody);
+                    string indexesDoc = template.Indexes.Body;
+                    if (indexesDoc.Contains("~IndexItem~", StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        string indexItemTemplate = template.Indexes.IndexRow;
+                        var indexesBody = GetIndexesBody(tableView.Indexes, indexItemTemplate);
+                        indexesDoc = indexesDoc.Replace("~IndexItem~", indexesBody);
+                    }
+                    doc = doc.Replace("~Indexes~", indexesDoc);
                 }
-                doc = doc.Replace("~Indexes~", indexesDoc);
-            }
 
-            // Build the constraints table
-            if (doc.Contains("~Constraints~"))
-            {
-                string constraintDoc = template.Constraints.Body;
-                if (constraintDoc.Contains("~ConstraintItem~", StringComparison.CurrentCultureIgnoreCase))
+                // Build the constraints table
+                if (doc.Contains("~Constraints~"))
                 {
-                    string constraintItemTemplate = template.Constraints.ConstraintRow;
-                    var constraintsBody = GetConstraintsBody(tableView.Constraints, constraintItemTemplate);
-                    constraintDoc = constraintDoc.Replace("~ConstraintItem~", constraintsBody);
+                    string constraintDoc = template.Constraints.Body;
+                    if (constraintDoc.Contains("~ConstraintItem~", StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        string constraintItemTemplate = template.Constraints.ConstraintRow;
+                        var constraintsBody = GetConstraintsBody(tableView.Constraints, constraintItemTemplate);
+                        constraintDoc = constraintDoc.Replace("~ConstraintItem~", constraintsBody);
+                    }
+                    doc = doc.Replace("~Constraints~", constraintDoc);
                 }
-                doc = doc.Replace("~Constraints~", constraintDoc);
-            }
 
-            // Build the parameters table
-            if (doc.Contains("~Parameters~"))
-            {
-                string parameterDoc = template.Parameters.Body;
-                if (parameterDoc.Contains("~ParameterItem~", StringComparison.CurrentCultureIgnoreCase))
+                // Build the parameters table
+                if (doc.Contains("~Parameters~"))
                 {
-                    string parameterItemTemplate = template.Parameters.ParameterRow;
-                    var parametersBody = GetParametersBody(tableView.Parameters, parameterItemTemplate);
-                    parameterDoc = parameterDoc.Replace("~ParameterItem~", parametersBody);
+                    string parameterDoc = template.Parameters.Body;
+                    if (parameterDoc.Contains("~ParameterItem~", StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        string parameterItemTemplate = template.Parameters.ParameterRow;
+                        var parametersBody = GetParametersBody(tableView.Parameters, parameterItemTemplate);
+                        parameterDoc = parameterDoc.Replace("~ParameterItem~", parametersBody);
+                    }
+                    doc = doc.Replace("~Parameters~", parameterDoc);
                 }
-                doc = doc.Replace("~Parameters~", parameterDoc);
+
+                // synonyms
+                if (objectName.ObjectType == ObjectName.ObjectTypeEnums.Synonym)
+                {
+                    doc = doc.Replace("~BaseObjectName~", tableView.SynonymInformation?.BaseObjectName);
+                    doc = doc.Replace("~BaseObjectType~", tableView.SynonymInformation?.BaseObjectType);
+                }
+
+                //doc = doc.Replace("~Triggers~", objectName.Name);
+                //doc = doc.Replace("~Relationships~", objectName.Name);
+
+                return doc;
             }
 
-            // synonyms
-            if (objectName.ObjectType == ObjectName.ObjectTypeEnums.Synonym)
-            {
-                doc = doc.Replace("~BaseObjectName~", tableView.SynonymInformation?.BaseObjectName);
-                doc = doc.Replace("~BaseObjectType~", tableView.SynonymInformation?.BaseObjectType);
-            }
+            // reserved for future use
+            return string.Empty;
 
-            //doc = doc.Replace("~Triggers~", objectName.Name);
-            //doc = doc.Replace("~Relationships~", objectName.Name);
-
-            return doc;
         }
 
         /// <summary>
@@ -271,12 +285,18 @@ namespace SQL_Document_Builder
                 return string.Empty;
             }
 
-            DataTable? dt = await SQLDatabaseHelper.GetDataTableAsync(sql, connection?.ConnectionString);
-            if (dt == null || dt.Rows.Count == 0)
+            if (connection.DBMSType == DBMSTypeEnums.SQLServer)
             {
-                return "''No data found.''";
+                DataTable? dt = await SQLDatabaseHelper.GetDataTableAsync(sql, connection?.ConnectionString);
+                if (dt == null || dt.Rows.Count == 0)
+                {
+                    return "''No data found.''";
+                }
+                return DataTableToTemplateDoc(dt, template);
             }
-            return DataTableToTemplateDoc(dt, template);
+
+            // reserved for future use
+            return string.Empty;
         }
 
         /// <summary>

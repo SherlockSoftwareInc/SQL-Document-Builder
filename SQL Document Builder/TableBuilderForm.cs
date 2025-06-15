@@ -387,13 +387,19 @@ namespace SQL_Document_Builder
         /// <param name="text">The text.</param>
         private void AppendText(SqlEditBox? editBox, string text)
         {
-            if (editBox == null || string.IsNullOrEmpty(text)) return;
-            editBox.BeginUndoAction();
-            editBox.AppendText(text);
-            editBox.EndUndoAction();
+            try
+            {
+                if (editBox == null || string.IsNullOrEmpty(text)) return;
+                editBox.BeginUndoAction();
+                editBox.AppendText(text);
+                editBox.EndUndoAction();
 
-            // Move caret to end and scroll to it
-            ScrollToCaret();
+                // Move caret to end and scroll to it
+                ScrollToCaret();
+            }
+            catch (Exception)
+            {
+            }
         }
 
         /// <summary>
@@ -3595,10 +3601,7 @@ namespace SQL_Document_Builder
 
             List<ObjectName>? selectedObjects = SelectObjects();
 
-            if (selectedObjects == null || selectedObjects.Count == 0)
-            {
-                return;
-            }
+            if (selectedObjects == null || selectedObjects.Count == 0) return;  // If no objects are selected, exit early
 
             if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
 
@@ -3766,7 +3769,7 @@ namespace SQL_Document_Builder
 
                     var builder = new JsonBuilder();
 
-                    AppendText(editBox, builder.TextToTable(metaData));
+                    AppendText(editBox, JsonBuilder.TextToTable(metaData));
 
                     EndBuild(editBox);
                 }
@@ -3841,7 +3844,7 @@ namespace SQL_Document_Builder
             var builder = new JsonBuilder();
             await Task.Run(async () =>
             {
-                scripts = await builder.BuildObjectList(selectedObjects, _currentConnection, progress);
+                scripts = await JsonBuilder.BuildObjectList(selectedObjects, _currentConnection, progress);
             });
 
             AppendText(editBox, scripts);

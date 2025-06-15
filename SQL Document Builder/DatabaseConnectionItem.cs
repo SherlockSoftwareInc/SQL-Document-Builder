@@ -26,6 +26,23 @@ namespace SQL_Document_Builder
     }
 
     /// <summary>
+    /// The DBMS type enums.
+    /// </summary>
+    public enum DBMSTypeEnums
+    {
+        SQLServer = 0,
+        MySQL = 1,
+        PostgreSQL = 2,
+        Oracle = 3,
+        MongoDB = 4,
+        SQLite = 5,
+        Redis = 6,
+        Cassandra = 7,
+        MariaDB = 8,
+        Other = 9
+    }
+
+    /// <summary>
     /// The sql database connection item.
     /// </summary>
     public class DatabaseConnectionItem
@@ -35,7 +52,7 @@ namespace SQL_Document_Builder
         /// </summary>
         public DatabaseConnectionItem()
         {
-            DBMSType = 0;
+            DBMSType = DBMSTypeEnums.SQLServer;
             Name = "";
             ServerName = "";
             Database = "";
@@ -56,7 +73,7 @@ namespace SQL_Document_Builder
         /// DBMS type for future use.
         /// Currently 0 is used stand for MS SQL server
         /// </summary>
-        public int DBMSType { get; set; } = 0;
+        public DBMSTypeEnums DBMSType { get; set; } = 0;
 
         /// <summary>
         /// Gets or sets the connection type.

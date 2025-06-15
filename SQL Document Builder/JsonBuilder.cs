@@ -22,27 +22,33 @@ namespace SQL_Document_Builder
         /// <returns>A Task.</returns>
         internal static async Task<string> GetFunctionProcedureDef(ObjectName objectName, DatabaseConnectionItem connection)
         {
-            var func = new DBObject();
-            await func.OpenAsync(objectName, connection);
-
-            var obj = new
+            if (connection.DBMSType == DBMSTypeEnums.SQLServer)
             {
-                ObjectName = objectName.Name,
-                ObjectSchema = objectName.Schema,
-                ObjectType = ObjectTypeToString(objectName.ObjectType),
-                func.Description,
-                func.Definition,
-                Parameters = func.Parameters?.ConvertAll(dr => new
-                {
-                    dr.Ord,
-                    dr.Name,
-                    dr.DataType,
-                    dr.Mode,
-                    dr.Description
-                })
-            };
+                var func = new DBObject();
+                await func.OpenAsync(objectName, connection);
 
-            return JsonSerializer.Serialize(obj, new JsonSerializerOptions { WriteIndented = true });
+                var obj = new
+                {
+                    ObjectName = objectName.Name,
+                    ObjectSchema = objectName.Schema,
+                    ObjectType = ObjectTypeToString(objectName.ObjectType),
+                    func.Description,
+                    func.Definition,
+                    Parameters = func.Parameters?.ConvertAll(dr => new
+                    {
+                        dr.Ord,
+                        dr.Name,
+                        dr.DataType,
+                        dr.Mode,
+                        dr.Description
+                    })
+                };
+
+                return JsonSerializer.Serialize(obj, new JsonSerializerOptions { WriteIndented = true });
+            }
+
+            // reserved for future use
+            return string.Empty;
         }
 
         /// <summary>
@@ -56,41 +62,47 @@ namespace SQL_Document_Builder
         {
             if (connection == null)
             {
-                throw new ArgumentNullException(nameof(connection), "Connection cannot be null.");
+                return string.Empty;
             }
 
-            var tableView = new DBObject();
-            await tableView.OpenAsync(objectName, connection);
-
-            var obj = new
+            if (connection.DBMSType == DBMSTypeEnums.SQLServer)
             {
-                ObjectName = objectName.Name,
-                ObjectSchema = objectName.Schema,
-                ObjectType = ObjectTypeToString(objectName.ObjectType),
-                Description = string.IsNullOrEmpty(tableView.Description) ? " " : tableView.Description,
-                Columns = tableView.Columns?.ConvertAll(col => new
-                {
-                    OrdinalPosition = col.OrdinalPosition,
-                    col.ColumnName,
-                    col.DataType,
-                    col.Description
-                }),
-                Indexes = tableView.Indexes?.ConvertAll(idx => new
-                {
-                    idx.Name,
-                    idx.Type,
-                    idx.Columns,
-                    idx.IsUnique
-                }),
-                Constraints = tableView.Constraints?.ConvertAll(constraint => new
-                {
-                    constraint.Name,
-                    constraint.Type,
-                    Column = constraint.Column?.QuotedName()
-                })
-            };
+                var tableView = new DBObject();
+                await tableView.OpenAsync(objectName, connection);
 
-            return JsonSerializer.Serialize(obj, new JsonSerializerOptions { WriteIndented = true });
+                var obj = new
+                {
+                    ObjectName = objectName.Name,
+                    ObjectSchema = objectName.Schema,
+                    ObjectType = ObjectTypeToString(objectName.ObjectType),
+                    Description = string.IsNullOrEmpty(tableView.Description) ? " " : tableView.Description,
+                    Columns = tableView.Columns?.ConvertAll(col => new
+                    {
+                        OrdinalPosition = col.OrdinalPosition,
+                        col.ColumnName,
+                        col.DataType,
+                        col.Description
+                    }),
+                    Indexes = tableView.Indexes?.ConvertAll(idx => new
+                    {
+                        idx.Name,
+                        idx.Type,
+                        idx.Columns,
+                        idx.IsUnique
+                    }),
+                    Constraints = tableView.Constraints?.ConvertAll(constraint => new
+                    {
+                        constraint.Name,
+                        constraint.Type,
+                        Column = constraint.Column?.QuotedName()
+                    })
+                };
+
+                return JsonSerializer.Serialize(obj, new JsonSerializerOptions { WriteIndented = true });
+            }
+
+            // reserved for future use
+            return string.Empty;
         }
 
         /// <summary>
@@ -103,36 +115,42 @@ namespace SQL_Document_Builder
         {
             if (connection == null)
             {
-                throw new ArgumentNullException(nameof(connection), "Connection cannot be null.");
+                return string.Empty;
             }
 
-            var tableView = new DBObject();
-            await tableView.OpenAsync(objectName, connection);
-
-            var obj = new
+            if (connection.DBMSType == DBMSTypeEnums.SQLServer)
             {
-                ObjectName = objectName.Name,
-                ObjectSchema = objectName.Schema,
-                ObjectType = ObjectTypeToString(objectName.ObjectType),
-                Description = string.IsNullOrEmpty(tableView.Description) ? " " : tableView.Description,
-                tableView.Definition,
-                Columns = tableView.Columns?.ConvertAll(col => new
-                {
-                    OrdinalPosition = col.OrdinalPosition,
-                    col.ColumnName,
-                    col.DataType,
-                    col.Description
-                }),
-                Indexes = tableView.Indexes?.ConvertAll(idx => new
-                {
-                    idx.Name,
-                    idx.Type,
-                    idx.Columns,
-                    idx.IsUnique
-                })
-            };
+                var tableView = new DBObject();
+                await tableView.OpenAsync(objectName, connection);
 
-            return JsonSerializer.Serialize(obj, new JsonSerializerOptions { WriteIndented = true });
+                var obj = new
+                {
+                    ObjectName = objectName.Name,
+                    ObjectSchema = objectName.Schema,
+                    ObjectType = ObjectTypeToString(objectName.ObjectType),
+                    Description = string.IsNullOrEmpty(tableView.Description) ? " " : tableView.Description,
+                    tableView.Definition,
+                    Columns = tableView.Columns?.ConvertAll(col => new
+                    {
+                        OrdinalPosition = col.OrdinalPosition,
+                        col.ColumnName,
+                        col.DataType,
+                        col.Description
+                    }),
+                    Indexes = tableView.Indexes?.ConvertAll(idx => new
+                    {
+                        idx.Name,
+                        idx.Type,
+                        idx.Columns,
+                        idx.IsUnique
+                    })
+                };
+
+                return JsonSerializer.Serialize(obj, new JsonSerializerOptions { WriteIndented = true });
+            }
+
+            // reserved for future use
+            return string.Empty;
         }
 
         /// <summary>
@@ -142,34 +160,40 @@ namespace SQL_Document_Builder
         /// <param name="connectionString">The connection string.</param>
         /// <param name="progress">The progress.</param>
         /// <returns>A Task.</returns>
-        internal async Task<string> BuildObjectList(List<ObjectName> objectList, DatabaseConnectionItem? connection, IProgress<int> progress)
+        internal static async Task<string> BuildObjectList(List<ObjectName> objectList, DatabaseConnectionItem? connection, IProgress<int> progress)
         {
             if (connection == null || objectList?.Count == 0)
             {
-                return "[]";
+                return string.Empty;
             }
 
-            var list = new List<object>();
-
-            for (int i = 0; i < objectList.Count; i++)
+            if (connection.DBMSType == DBMSTypeEnums.SQLServer)
             {
-                int percentComplete = (i * 100) / objectList.Count;
-                if (percentComplete > 0 && percentComplete % 2 == 0)
+                var list = new List<object>();
+
+                for (int i = 0; i < objectList.Count; i++)
                 {
-                    progress.Report(percentComplete + 1);
+                    int percentComplete = (i * 100) / objectList.Count;
+                    if (percentComplete > 0 && percentComplete % 2 == 0)
+                    {
+                        progress.Report(percentComplete + 1);
+                    }
+
+                    ObjectName dr = objectList[i];
+                    string description = await SQLDatabaseHelper.GetTableDescriptionAsync(dr, connection.ConnectionString);
+                    list.Add(new
+                    {
+                        Schema = dr.Schema,
+                        Name = dr.Name,
+                        Description = description
+                    });
                 }
 
-                ObjectName dr = objectList[i];
-                string description = await SQLDatabaseHelper.GetTableDescriptionAsync(dr, connection.ConnectionString);
-                list.Add(new
-                {
-                    Schema = dr.Schema,
-                    Name = dr.Name,
-                    Description = description
-                });
+                return JsonSerializer.Serialize(list, new JsonSerializerOptions { WriteIndented = true });
             }
 
-            return JsonSerializer.Serialize(list, new JsonSerializerOptions { WriteIndented = true });
+            // reserved for future use
+            return string.Empty;
         }
 
         /// <summary>
@@ -185,12 +209,18 @@ namespace SQL_Document_Builder
                 return "";
             }
 
-            DataTable? dt = await SQLDatabaseHelper.GetDataTableAsync(sql, connection?.ConnectionString);
-            if (dt == null || dt.Rows.Count == 0)
+            if (connection.DBMSType == DBMSTypeEnums.SQLServer)
             {
-                return "";
+                DataTable? dt = await SQLDatabaseHelper.GetDataTableAsync(sql, connection?.ConnectionString);
+                if (dt == null || dt.Rows.Count == 0)
+                {
+                    return "";
+                }
+                return DataTableToJson(dt);
             }
-            return DataTableToJson(dt);
+
+            // reserved for future use
+            return string.Empty;
         }
 
         /// <summary>
@@ -218,7 +248,7 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="metaData">The meta data.</param>
         /// <returns>A string.</returns>
-        internal string TextToTable(string metaData)
+        internal static string TextToTable(string metaData)
         {
             if (string.IsNullOrWhiteSpace(metaData))
                 return "[]";
