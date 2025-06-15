@@ -99,7 +99,7 @@ namespace SQL_Document_Builder
         {
             var sb = new StringBuilder();
 
-            var dt = await DatabaseHelper.GetDataTableAsync(sql, connectionString);
+            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, connectionString);
 
             if (dt != null && dt.Rows.Count > 0)
             {

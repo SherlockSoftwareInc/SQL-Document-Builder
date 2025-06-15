@@ -96,7 +96,7 @@ JOIN sys.objects obj ON tr.parent_id = obj.object_id
 JOIN sys.schemas sch ON obj.schema_id = sch.schema_id
 WHERE tr.name = N'{objectName.Name}'";
 
-            var dt = await DatabaseHelper.GetDataTableAsync(sql, connectionString);
+            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, connectionString);
 
             if (dt?.Rows.Count > 0)
             {

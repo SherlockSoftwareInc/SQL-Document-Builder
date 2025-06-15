@@ -5,7 +5,6 @@ using SQL_Document_Builder.Template;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -84,7 +83,7 @@ namespace SQL_Document_Builder
 
                 if (!string.IsNullOrEmpty(query))
                 {
-                    var result = await DatabaseHelper.ExecuteSQLAsync(query, connection.ConnectionString);
+                    var result = await SQLDatabaseHelper.ExecuteSQLAsync(query, connection.ConnectionString);
                     if (result != string.Empty)
                     {
                         return result;
@@ -185,7 +184,7 @@ namespace SQL_Document_Builder
         private static async Task<bool> IsAddObjectDescriptionSPExists(string connectionString)
         {
             string sql = "select ROUTINE_NAME from INFORMATION_SCHEMA.ROUTINES where ROUTINE_SCHEMA = 'dbo' and ROUTINE_NAME = 'usp_addupdateextendedproperty'";
-            var returnValue = await DatabaseHelper.ExecuteScalarAsync(sql, connectionString);
+            var returnValue = await SQLDatabaseHelper.ExecuteScalarAsync(sql, connectionString);
             if (returnValue == null || returnValue == DBNull.Value)
             {
                 return false;
@@ -209,7 +208,7 @@ namespace SQL_Document_Builder
                 //Execute(builder.ConnectionString, sql);
                 if (sql.Length > 0)
                 {
-                    var result = await DatabaseHelper.SyntaxCheckAsync(sql, connectionString);
+                    var result = await SQLDatabaseHelper.SyntaxCheckAsync(sql, connectionString);
                     if (result != string.Empty)
                     {
                         return result;
@@ -373,43 +372,6 @@ namespace SQL_Document_Builder
 
             // Move caret to end and scroll to it
             ScrollToCaret();
-        }
-
-        /// <summary>
-        /// Handles the "Assistant content" tool strip menu item click event:
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private async void AssistantContentToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
-
-            if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Text) != DialogResult.Yes) return;
-
-            try
-            {
-                StartBuild(editBox);
-
-                var progress = new Progress<int>(value =>
-                {
-                    progressBar.Value = value;
-                });
-
-                MSSchemaContentBuilder builder = new();
-
-                string contents = String.Empty;
-                await Task.Run(() =>
-                {
-                    contents = builder.SchemaContent(_connectionString, progress);
-                });
-
-                AppendText(editBox, contents);
-            }
-            catch (Exception ex)
-            {
-                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
-            }
-            EndBuild(editBox);
         }
 
         /// <summary>
@@ -846,7 +808,7 @@ namespace SQL_Document_Builder
 
                     // get the insert statement for the object
                     // get the number of rows in the table
-                    var rowCount = await DatabaseHelper.GetRowCountAsync(obj.FullName, _connectionString);
+                    var rowCount = await SQLDatabaseHelper.GetRowCountAsync(obj.FullName, _connectionString);
 
                     // confirm if the user wants to continue when the number of rows is too much
                     if (rowCount > Properties.Settings.Default.InertMaxRows)
@@ -1538,7 +1500,7 @@ namespace SQL_Document_Builder
                     }
 
                     // get the number of rows in the table
-                    var rowCount = await DatabaseHelper.GetRowCountAsync(objectName.FullName, _connectionString);
+                    var rowCount = await SQLDatabaseHelper.GetRowCountAsync(objectName.FullName, _connectionString);
 
                     // confirm if the user wants to continue when the number of rows is too much
                     if (rowCount > 1000)
@@ -1721,32 +1683,32 @@ namespace SQL_Document_Builder
                 switch (objectTypeComboBox.SelectedIndex)
                 {
                     case 0:
-                        _tables = await DatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.Table, _connectionString);
+                        _tables = await SQLDatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.Table, _connectionString);
                         EnableTableValue(true);
                         break;
 
                     case 1:
-                        _tables = await DatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.View, _connectionString);
+                        _tables = await SQLDatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.View, _connectionString);
                         EnableTableValue(true);
                         break;
 
                     case 2:
-                        _tables = await DatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.StoredProcedure, _connectionString);
+                        _tables = await SQLDatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.StoredProcedure, _connectionString);
                         EnableTableValue(false);
                         break;
 
                     case 3:
-                        _tables = await DatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.Function, _connectionString);
+                        _tables = await SQLDatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.Function, _connectionString);
                         EnableTableValue(false);
                         break;
 
                     case 4:
-                        _tables = await DatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.Trigger, _connectionString);
+                        _tables = await SQLDatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.Trigger, _connectionString);
                         EnableTableValue(false);
                         break;
 
                     case 5:
-                        _tables = await DatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.Synonym, _connectionString);
+                        _tables = await SQLDatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.Synonym, _connectionString);
                         EnableTableValue(false);
                         break;
 
@@ -1916,7 +1878,7 @@ namespace SQL_Document_Builder
                         // ask for confirmation to execute the script
                         if (Common.MsgBox("The target database does not contains a usp_addupdateextendedproperty stored procedure. Do you want to create it?", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
                         {
-                            await DatabaseHelper.AddObjectDescriptionSPs(connection.ConnectionString);
+                            await SQLDatabaseHelper.AddObjectDescriptionSPs(connection.ConnectionString);
                         }
                         else
                         {
@@ -2781,7 +2743,6 @@ namespace SQL_Document_Builder
             //splitContainer1.SplitterDistance = Properties.Settings.Default.LeftSplitterDistance;
 
             startTimer.Start();
-
         }
 
         /// <summary>

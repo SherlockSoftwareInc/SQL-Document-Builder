@@ -39,7 +39,7 @@ namespace SQL_Document_Builder
                     ObjectName dr = objectList[i];
                     string tableSchema = dr.Schema;
                     string tableName = dr.Name;
-                    string description = await DatabaseHelper.GetTableDescriptionAsync(dr, connectionString);
+                    string description = await SQLDatabaseHelper.GetTableDescriptionAsync(dr, connectionString);
                     var objectName = new ObjectName(dr.ObjectType, dr.Schema, dr.Name);
 
                     string objItemDoc = objectItemTemplate
@@ -256,7 +256,7 @@ namespace SQL_Document_Builder
         /// <returns>A Task.</returns>
         internal static async Task<string> GetTableValuesAsync(string sql, string connectionString, TemplateItem template)
         {
-            DataTable? dt = await DatabaseHelper.GetDataTableAsync(sql, connectionString);
+            DataTable? dt = await SQLDatabaseHelper.GetDataTableAsync(sql, connectionString);
             if (dt == null || dt.Rows.Count == 0)
             {
                 return "''No data found.''";

@@ -77,7 +77,7 @@ LEFT JOIN
 WHERE
     s.object_id = OBJECT_ID(N'{objectName.FullName}')";
 
-            var dt = await DatabaseHelper.GetDataTableAsync(sql, connectionString);
+            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, connectionString);
 
             if (dt?.Rows.Count > 0)
             {

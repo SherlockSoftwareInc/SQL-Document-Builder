@@ -81,7 +81,7 @@ namespace SQL_Document_Builder
                 if (item != null)
                 {
                     var objectName = item.ToString();
-                    await DatabaseHelper.SaveColumnDescAsync(objectName, columnName, desc, ConnectionString);
+                    await SQLDatabaseHelper.SaveColumnDescAsync(objectName, columnName, desc, ConnectionString);
                 }
             }
         }
@@ -93,7 +93,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void BatchColumnDesc_Load(object sender, EventArgs e)
         {
-            _tables = await DatabaseHelper.GetDataTableAsync($"SELECT * FROM INFORMATION_SCHEMA.TABLES ORDER BY TABLE_SCHEMA, TABLE_NAME", ConnectionString);
+            _tables = await SQLDatabaseHelper.GetDataTableAsync($"SELECT * FROM INFORMATION_SCHEMA.TABLES ORDER BY TABLE_SCHEMA, TABLE_NAME", ConnectionString);
             PopulateSchema();
         }
 
@@ -114,7 +114,7 @@ namespace SQL_Document_Builder
             searchFor = searchFor.Replace("'", "''");
             string sql = $"SELECT DISTINCT TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, 'BASE TABLE' TABLE_TYPE, COLUMN_NAME FROM information_schema.columns WHERE column_name = '{searchFor}' ORDER BY TABLE_NAME";
 
-            var dt = await DatabaseHelper.GetDataTableAsync(sql, ConnectionString);
+            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, ConnectionString);
 
             if (dt?.Rows.Count > 0)
             {

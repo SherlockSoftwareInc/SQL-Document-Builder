@@ -67,7 +67,7 @@ JOIN sys.objects o ON p.object_id = o.object_id
 JOIN sys.schemas s ON p.schema_id = s.schema_id
 WHERE p.object_id = OBJECT_ID(N'{objectName.FullName}')";
 
-            DataTable? dt = await DatabaseHelper.GetDataTableAsync(sql, connectionString);
+            DataTable? dt = await SQLDatabaseHelper.GetDataTableAsync(sql, connectionString);
             if (dt != null && dt.Rows.Count > 0)
             {
                 DataRow row = dt.Rows[0];

@@ -162,7 +162,7 @@ BEGIN
 END;";
             }
 
-            await DatabaseHelper.ExecuteSQLAsync(query, ConnectionString);
+            await SQLDatabaseHelper.ExecuteSQLAsync(query, ConnectionString);
 
             if (objectType == ObjectTypeEnums.Table || objectType == ObjectTypeEnums.View)
             {
@@ -237,7 +237,7 @@ END;";
             @level1type = N'{level1type}', @level1name = N'{ObjectName.Name}';";
                 }
 
-                var result = await DatabaseHelper.ExecuteSQLAsync(query, ConnectionString);
+                var result = await SQLDatabaseHelper.ExecuteSQLAsync(query, ConnectionString);
                 if (result != string.Empty)
                 {
                     Common.MsgBox("Failed to update object description." + Environment.NewLine + result, MessageBoxIcon.Error);
@@ -275,7 +275,7 @@ WHERE
     o.name = N'{objectName.Name}' AND
     s.name = N'{objectName.Schema}'";
 
-            var dt = await DatabaseHelper.GetDataTableAsync(query, connectionString);
+            var dt = await SQLDatabaseHelper.GetDataTableAsync(query, connectionString);
             if (dt == null || dt.Rows.Count == 0)
                 return views;
 
@@ -310,7 +310,7 @@ INNER JOIN sys.schemas s ON t.schema_id = s.schema_id
 WHERE s.name = N'{ObjectName.Schema}' AND t.name = N'{ObjectName.Name}'
 ORDER BY cc.name;";
 
-            var dt = await DatabaseHelper.GetDataTableAsync(sql, ConnectionString);
+            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, ConnectionString);
             if (dt == null || dt.Rows.Count == 0)
                 return string.Empty;
 
@@ -352,7 +352,7 @@ INNER JOIN sys.schemas s ON t.schema_id = s.schema_id
 WHERE s.name = N'{ObjectName.Schema}' AND t.name = N'{ObjectName.Name}'
 ORDER BY dc.name;";
 
-            var dt = await DatabaseHelper.GetDataTableAsync(sql, ConnectionString);
+            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, ConnectionString);
             if (dt == null || dt.Rows.Count == 0)
                 return string.Empty;
 
@@ -405,7 +405,7 @@ WHERE s.name = N'{ObjectName.Schema}' AND tp.name = N'{ObjectName.Name}'
 ORDER BY fk.name, fkc.constraint_column_id;";
 
             // Use DatabaseHelper to get the data as a DataTable
-            var dt = await DatabaseHelper.GetDataTableAsync(sql, ConnectionString);
+            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, ConnectionString);
             if (dt == null || dt.Rows.Count == 0)
                 return string.Empty;
 
@@ -467,7 +467,7 @@ INNER JOIN sys.identity_columns AS ic ON t.object_id = ic.object_id
 WHERE t.name = N'{ObjectName.Name}'
 AND s.name = N'{ObjectName.Schema}';";
 
-            var dt = await DatabaseHelper.GetDataTableAsync(identityQuery, connectionString);
+            var dt = await SQLDatabaseHelper.GetDataTableAsync(identityQuery, connectionString);
             if (dt == null || dt.Rows.Count == 0)
                 return identityColumns;
 
@@ -504,7 +504,7 @@ FROM Information_SCHEMA.TABLES
 WHERE TABLE_SCHEMA = N'{objectName.Schema}'
   AND TABLE_NAME = N'{objectName.Name}'";
 
-                var dt = await DatabaseHelper.GetDataTableAsync(sql, connectionString);
+                var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, connectionString);
                 if (dt != null && dt.Rows.Count > 0)
                 {
                     string? objType = dt.Rows[0]["TABLE_TYPE"]?.ToString();
@@ -550,7 +550,7 @@ FROM sys.synonyms s
 INNER JOIN sys.schemas sch ON s.schema_id = sch.schema_id
 WHERE sch.name = N'{ObjectName.Schema}' AND s.name = N'{ObjectName.Name}'";
 
-            var dt = await DatabaseHelper.GetDataTableAsync(sql, ConnectionString);
+            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, ConnectionString);
             if (dt == null || dt.Rows.Count == 0)
                 return false;
 
@@ -558,7 +558,7 @@ WHERE sch.name = N'{ObjectName.Schema}' AND s.name = N'{ObjectName.Name}'";
             Definition = dt.Rows[0]["base_object_name"]?.ToString() ?? string.Empty;
 
             // Get the description (if any) from extended properties
-            Description = await DatabaseHelper.GetTableDescriptionAsync(ObjectName, ConnectionString);
+            Description = await SQLDatabaseHelper.GetTableDescriptionAsync(ObjectName, ConnectionString);
 
             return true;
         }
@@ -649,7 +649,7 @@ WHERE p.SPECIFIC_SCHEMA = N'{objectName.Schema}'
   AND p.ORDINAL_POSITION > 0
 ORDER BY p.ORDINAL_POSITION";
 
-            return await DatabaseHelper.GetDataTableAsync(paramSql, connectionString);
+            return await SQLDatabaseHelper.GetDataTableAsync(paramSql, connectionString);
         }
 
         /// <summary>
@@ -667,7 +667,7 @@ WHERE E.name = N'MS_Description'
   AND S.name = N'{ObjectName?.Schema}'
   AND T.name = N'{ObjectName?.Name}'";
 
-            var dt = await DatabaseHelper.GetDataTableAsync(sql, ConnectionString);
+            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, ConnectionString);
             if (dt == null || dt.Rows.Count == 0)
                 return;
 
@@ -704,7 +704,7 @@ FROM Information_schema.columns
 WHERE TABLE_SCHEMA = N'{ObjectName.Schema}' AND TABLE_NAME = N'{ObjectName.Name}'
 ORDER BY ORDINAL_POSITION";
 
-                var dt = await DatabaseHelper.GetDataTableAsync(sql, ConnectionString);
+                var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, ConnectionString);
 
                 if (dt != null && dt.Rows.Count > 0)
                 {
@@ -779,7 +779,7 @@ INNER JOIN sys.columns c ON dc.parent_object_id = c.object_id AND dc.parent_colu
 WHERE s.name = N'{schemaName}'
   AND t.name = N'{tableName}'";
 
-            var dt = await DatabaseHelper.GetDataTableAsync(sql, ConnectionString);
+            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, ConnectionString);
             if (dt == null || dt.Rows.Count == 0)
                 return;
 
@@ -817,7 +817,7 @@ WHERE s.name = N'{objectName.Schema}'
   AND ind.is_primary_key = 0 -- Exclude PK, unless you want to include it
 ORDER BY ind.name, ic.key_ordinal";
 
-            var dt = await DatabaseHelper.GetDataTableAsync(sql, ConnectionString);
+            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, ConnectionString);
             if (dt == null || dt.Rows.Count == 0)
                 return;
 
@@ -870,7 +870,7 @@ INNER JOIN sys.schemas s ON t.schema_id = s.schema_id
 WHERE s.name = N'{objectName.Schema}'
 AND t.name = N'{objectName.Name}'";
 
-            var dt = await DatabaseHelper.GetDataTableAsync(sql, ConnectionString);
+            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, ConnectionString);
             if (dt == null || dt.Rows.Count == 0)
                 return;
 
@@ -914,7 +914,7 @@ AND t.name = N'{objectName.Name}'";
 
                     string sql = $"SELECT value FROM fn_listextendedproperty (NULL, 'schema', '{ObjectName.Schema}', N'{objectType}', N'{ObjectName.Name}', default, default) WHERE name = N'MS_Description'";
 
-                    var returnValue = await DatabaseHelper.ExecuteScalarAsync(sql, ConnectionString);
+                    var returnValue = await SQLDatabaseHelper.ExecuteScalarAsync(sql, ConnectionString);
 
                     if (returnValue != null && returnValue != DBNull.Value)
                     {
@@ -955,7 +955,7 @@ WHERE ep.name = 'MS_Description'
   AND o.name = N'{ObjectName.Name}'
   AND s.name = N'{ObjectName.Schema}'";
 
-            var dt = await DatabaseHelper.GetDataTableAsync(sql, ConnectionString);
+            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, ConnectionString);
             if (dt == null || dt.Rows.Count == 0)
                 return;
 
@@ -989,7 +989,7 @@ WHERE OBJECTPROPERTY(OBJECT_ID(CONSTRAINT_SCHEMA + '.' + CONSTRAINT_NAME), 'IsPr
   AND TABLE_NAME = N'{objectName.Name}'
   AND TABLE_SCHEMA = N'{objectName.Schema}'";
 
-            var dt = await DatabaseHelper.GetDataTableAsync(sql, ConnectionString);
+            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, ConnectionString);
             if (dt == null || dt.Rows.Count == 0)
                 return;
 
@@ -1022,7 +1022,7 @@ WHERE OBJECTPROPERTY(OBJECT_ID(CONSTRAINT_SCHEMA + '.' + CONSTRAINT_NAME), 'IsPr
         {
             //get the object description and definition
             Description = await GetObjectDescriptionAsync();
-            Definition = await DatabaseHelper.GetObjectDefinitionAsync(ObjectName, ConnectionString);
+            Definition = await SQLDatabaseHelper.GetObjectDefinitionAsync(ObjectName, ConnectionString);
 
             // Get the function parameters
             Parameters.Clear();
@@ -1052,7 +1052,7 @@ WHERE OBJECTPROPERTY(OBJECT_ID(CONSTRAINT_SCHEMA + '.' + CONSTRAINT_NAME), 'IsPr
         {
             //get the object description and definition
             //Description = await GetObjectDescriptionAsync();
-            Definition = await DatabaseHelper.GetObjectDefinitionAsync(ObjectName, ConnectionString);
+            Definition = await SQLDatabaseHelper.GetObjectDefinitionAsync(ObjectName, ConnectionString);
 
             // Get the function parameters
             Parameters.Clear();
@@ -1101,7 +1101,7 @@ WHERE OBJECTPROPERTY(OBJECT_ID(CONSTRAINT_SCHEMA + '.' + CONSTRAINT_NAME), 'IsPr
                 // get the definition if it is a view
                 if (ObjectName.ObjectType == ObjectTypeEnums.View)
                 {
-                    Definition = await DatabaseHelper.GetObjectDefinitionAsync(ObjectName, ConnectionString);
+                    Definition = await SQLDatabaseHelper.GetObjectDefinitionAsync(ObjectName, ConnectionString);
                 }
             }
 

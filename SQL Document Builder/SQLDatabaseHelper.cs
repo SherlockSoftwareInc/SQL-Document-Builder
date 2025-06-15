@@ -14,7 +14,7 @@ namespace SQL_Document_Builder
     /// <summary>
     /// The database helper.
     /// </summary>
-    internal class DatabaseHelper
+    internal class SQLDatabaseHelper
     {
         /// <summary>
         /// Adds the object description s ps.
@@ -33,7 +33,7 @@ namespace SQL_Document_Builder
                 //Execute(builder.ConnectionString, sql);
                 if (sql.Length > 0)
                 {
-                    var result = await DatabaseHelper.ExecuteSQLAsync(sql, connectionString);
+                    var result = await SQLDatabaseHelper.ExecuteSQLAsync(sql, connectionString);
                     if (result != string.Empty)
                     {
                         return result;
@@ -784,5 +784,75 @@ END";
             return result != null && result != DBNull.Value ? result.ToString() ?? string.Empty : string.Empty;
         }
 
+        /// <summary>
+        /// Gets all foreign keys in the database.
+        /// </summary>
+        /// <param name="connectionString">The connection string.</param>
+        /// <returns>A DataTable containing all foreign key relationships.</returns>
+        internal static DataTable GetAllForeignKeys(string connectionString)
+        {
+            var dtForeignKeys = new DataTable();
+            using SqlConnection conn = new(connectionString);
+            try
+            {
+                using SqlCommand cmd = new() { Connection = conn };
+                cmd.CommandText = @"
+SELECT 
+    SCHEMA_NAME(fk.schema_id) AS SchemaName,
+    OBJECT_NAME(fk.parent_object_id) AS TableName,
+    COL_NAME(fkc.parent_object_id, fkc.parent_column_id) AS ColumnName,
+    SCHEMA_NAME(referencedObj.schema_id) AS ReferencedSchemaName,
+    OBJECT_NAME(fk.referenced_object_id) AS ReferencedTableName,
+    COL_NAME(fkc.referenced_object_id, fkc.referenced_column_id) AS ReferencedColumnName
+FROM sys.foreign_keys AS fk
+INNER JOIN sys.foreign_key_columns AS fkc ON fk.object_id = fkc.constraint_object_id
+INNER JOIN sys.objects AS referencedObj ON fk.referenced_object_id = referencedObj.object_id";
+                conn.Open();
+                var dr = cmd.ExecuteReader();
+                dtForeignKeys.Load(dr);
+                dr.Close();
+            }
+            catch (SqlException)
+            {
+                throw;
+            }
+            finally
+            {
+                conn.Close();
+            }
+            return dtForeignKeys;
+        }
+
+        /// <summary>
+        /// Gets the referenced foreign key(s) for a specific column in a table.
+        /// </summary>
+        /// <param name="dtForeignKeys">The DataTable of foreign keys (from GetAllForeignKeys).</param>
+        /// <param name="schemaName">The schema name.</param>
+        /// <param name="tableName">The table name.</param>
+        /// <param name="columnName">The column name.</param>
+        /// <returns>A string listing referenced columns, or empty if none.</returns>
+        internal static string GetForeignKey(DataTable dtForeignKeys, string schemaName, string tableName, string columnName)
+        {
+            if (dtForeignKeys == null || dtForeignKeys.Rows.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            var foreignKeys = from fk in dtForeignKeys.AsEnumerable()
+                              where fk.Field<string>("SchemaName") == schemaName
+                                 && fk.Field<string>("TableName") == tableName
+                                 && fk.Field<string>("ColumnName") == columnName
+                              select fk;
+
+            string foreignKey = string.Empty;
+            foreach (var fk in foreignKeys)
+            {
+                foreignKey += $"[{fk.Field<string>("ReferencedSchemaName")}].[{fk.Field<string>("ReferencedTableName")}].[{fk.Field<string>("ReferencedColumnName")}], ";
+            }
+            if (foreignKey.Length > 2)
+                foreignKey = foreignKey.Substring(0, foreignKey.Length - 2);
+
+            return foreignKey;
+        }
     }
 }

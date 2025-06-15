@@ -145,7 +145,7 @@ namespace SQL_Document_Builder
                 }
 
                 ObjectName dr = objectList[i];
-                string description = await DatabaseHelper.GetTableDescriptionAsync(dr, connectionString);
+                string description = await SQLDatabaseHelper.GetTableDescriptionAsync(dr, connectionString);
                 list.Add(new
                 {
                     Schema = dr.Schema,
@@ -165,7 +165,7 @@ namespace SQL_Document_Builder
         /// <returns>A Task.</returns>
         internal static async Task<string> GetTableValuesAsync(string sql, string connectionString)
         {
-            DataTable? dt = await DatabaseHelper.GetDataTableAsync(sql, connectionString);
+            DataTable? dt = await SQLDatabaseHelper.GetDataTableAsync(sql, connectionString);
             if (dt == null || dt.Rows.Count == 0)
             {
                 return "[]";

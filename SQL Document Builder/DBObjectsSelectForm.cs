@@ -210,7 +210,7 @@ namespace SQL_Document_Builder
                 }
 
                 // Retrieve the database objects asynchronously
-                _selectableObjects = await DatabaseHelper.GetDatabaseObjectsAsync(selectedObjectType, ConnectionString);
+                _selectableObjects = await SQLDatabaseHelper.GetDatabaseObjectsAsync(selectedObjectType, ConnectionString);
 
                 // Populate the selectable objects list box
                 PopulateSelectableObjects();
@@ -278,7 +278,7 @@ namespace SQL_Document_Builder
             schemaComboBox.Items.Clear();
             schemaComboBox.Items.Add("(All)");
 
-            var schemas = await DatabaseHelper.GetSchemasAsync(ConnectionString);
+            var schemas = await SQLDatabaseHelper.GetSchemasAsync(ConnectionString);
 
             // Add schemas to the combo box
             foreach (var schema in schemas)

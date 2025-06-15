@@ -80,7 +80,7 @@ WHERE
     o.object_id = OBJECT_ID(N'{objectName.Schema}.{objectName.Name}')
     AND o.type IN ('FN', 'IF', 'TF');";
 
-            DataTable? dt = await DatabaseHelper.GetDataTableAsync(sql, connectionString);
+            DataTable? dt = await SQLDatabaseHelper.GetDataTableAsync(sql, connectionString);
             if (dt != null && dt.Rows.Count > 0)
             {
                 DataRow row = dt.Rows[0];

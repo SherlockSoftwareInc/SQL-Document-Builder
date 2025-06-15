@@ -321,7 +321,7 @@ namespace SQL_Document_Builder
 
                 using (var cancellationTokenSource = new CancellationTokenSource())
                 {
-                    var databases = await DatabaseHelper.GetDatabases(server, cancellationTokenSource.Token);
+                    var databases = await SQLDatabaseHelper.GetDatabases(server, cancellationTokenSource.Token);
 
                     if (databases.Count > 0 && !cancellationTokenSource.Token.IsCancellationRequested)
                     {

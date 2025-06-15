@@ -1,5 +1,4 @@
-﻿using Microsoft.Data.SqlClient;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -73,7 +72,7 @@ FROM sys.synonyms s
 INNER JOIN sys.schemas sch ON s.schema_id = sch.schema_id
 WHERE sch.name = N'{dbObject.Schema}' AND s.name = N'{dbObject.Name}'";
 
-            var dt = await DatabaseHelper.GetDataTableAsync(sql, connectionString);
+            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, connectionString);
             if (dt == null || dt.Rows.Count == 0)
                 return string.Empty;
 
@@ -97,24 +96,16 @@ WHERE sch.name = N'{dbObject.Schema}' AND s.name = N'{dbObject.Name}'";
         public static async Task<string> QueryDataToInsertStatementAsync(string sql, string connectionString, string tableName = "YourTableName", bool hasIdentity = false)
         {
             var sb = new StringBuilder();
-            var conn = new SqlConnection(connectionString);
 
             try
             {
-                await using var cmd = new SqlCommand(sql, conn) { CommandType = CommandType.Text };
-                await conn.OpenAsync();
+                // Use SQLDatabaseHelper to get the data as a DataTable
+                var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, connectionString);
 
-                // Execute the query and read the data asynchronously
-                var reader = await cmd.ExecuteReaderAsync();
-                if (reader.HasRows)
+                if (dt != null && dt.Rows.Count > 0)
                 {
                     // Get the column names
-                    var columnNames = string.Empty;
-                    for (int i = 0; i < reader.FieldCount; i++)
-                    {
-                        columnNames += $"[{reader.GetName(i)}], ";
-                    }
-                    columnNames = columnNames[..^2]; // Remove trailing comma and space
+                    var columnNames = string.Join(", ", dt.Columns.Cast<DataColumn>().Select(c => $"[{c.ColumnName}]"));
 
                     int rowCount = 0;
                     int batchCount = 0;
@@ -131,82 +122,55 @@ WHERE sch.name = N'{dbObject.Schema}' AND s.name = N'{dbObject.Name}'";
                         batchSize = 20; // Default batch size
                     }
 
-                    while (await reader.ReadAsync())
+                    foreach (DataRow row in dt.Rows)
                     {
-                        // Start a new batch every 50 rows
+                        // Start a new batch every batchSize rows
                         if (rowCount % batchSize == 0)
                         {
                             if (batchCount > 0)
                             {
                                 // Remove the trailing comma from the previous batch
                                 sb.Length -= 3; // Remove ",\n"
-                                sb.AppendLine(";"); // Close the previous batch
+                                sb.AppendLine(";");
                             }
                             sb.AppendLine($"INSERT INTO {tableName} ({columnNames}) VALUES");
                             batchCount++;
                         }
 
-                        // Generate the values for the current row
                         sb.Append("\t(");
-                        for (int i = 0; i < reader.FieldCount; i++)
+                        for (int i = 0; i < dt.Columns.Count; i++)
                         {
-                            if (reader.IsDBNull(i))
+                            var value = row[i];
+                            var type = dt.Columns[i].DataType;
+
+                            if (value == DBNull.Value)
                             {
                                 sb.Append("NULL");
                             }
+                            else if (type == typeof(string))
+                            {
+                                sb.Append("N'" + value.ToString().Replace("'", "''") + "'");
+                            }
+                            else if (type == typeof(DateTime))
+                            {
+                                sb.Append("'" + ((DateTime)value).ToString("yyyy-MM-dd HH:mm:ss") + "'");
+                            }
+                            else if (type == typeof(Int16) || type == typeof(Int32) || type == typeof(Int64) ||
+                                     type == typeof(decimal) || type == typeof(double) || type == typeof(float) ||
+                                     type == typeof(byte))
+                            {
+                                sb.Append(Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture));
+                            }
+                            else if (type == typeof(bool))
+                            {
+                                sb.Append((bool)value ? "1" : "0");
+                            }
                             else
                             {
-                                var typeName = reader.GetFieldType(i).Name;
-                                //System.Diagnostics.Debug.Print(typeName);
-
-                                switch (typeName)
-                                {
-                                    case "String":
-                                        sb.Append("N'" + reader.GetString(i).Replace("'", "''") + "'");
-                                        break;
-
-                                    case "DateTime":
-                                        sb.Append("'" + reader.GetDateTime(i).ToString("yyyy-MM-dd HH:mm:ss") + "'");
-                                        break;
-
-                                    case "Int16":
-                                        sb.Append(reader.GetInt16(i));
-                                        break;
-
-                                    case "Int32":
-                                        sb.Append(reader.GetInt32(i));
-                                        break;
-
-                                    case "Int64":
-                                        sb.Append(reader.GetInt64(i));
-                                        break;
-
-                                    case "Decimal":
-                                        sb.Append(reader.GetDecimal(i));
-                                        break;
-
-                                    case "Double":
-                                        sb.Append(reader.GetDouble(i));
-                                        break;
-
-                                    case "Single":
-                                        sb.Append(reader.GetFloat(i));
-                                        break;
-
-                                    case "Boolean":
-                                        sb.Append(reader.GetBoolean(i) ? "1" : "0");
-                                        break;
-
-                                    case "Byte":
-                                        sb.Append(reader.GetByte(i));
-                                        break;
-
-                                    default:
-                                        sb.Append("N'" + reader.GetValue(i).ToString().Replace("'", "''") + "'");
-                                        break;
-                                }
+                                sb.Append("N'" + value.ToString().Replace("'", "''") + "'");
                             }
-                            if (i < reader.FieldCount - 1)
+
+                            if (i < dt.Columns.Count - 1)
                             {
                                 sb.Append(", ");
                             }
@@ -220,7 +184,7 @@ WHERE sch.name = N'{dbObject.Schema}' AND s.name = N'{dbObject.Name}'";
                     if (sb.Length > 0)
                     {
                         sb.Length -= 3; // Remove ",\n"
-                        sb.AppendLine(";"); // Close the last batch
+                        sb.AppendLine(";");
                     }
 
                     if (hasIdentity)
@@ -233,14 +197,9 @@ WHERE sch.name = N'{dbObject.Schema}' AND s.name = N'{dbObject.Name}'";
             {
                 Common.MsgBox(ex.Message, MessageBoxIcon.Error);
             }
-            finally
-            {
-                await conn.CloseAsync();
-            }
 
             return sb.ToString();
         }
-
         /// <summary>
         /// Pull data from a table or view and convert the data to insert statements.
         /// </summary>
@@ -249,7 +208,7 @@ WHERE sch.name = N'{dbObject.Schema}' AND s.name = N'{dbObject.Name}'";
         public static async Task<string> TableToInsertStatementAsync(ObjectName tableName, string connectionString)
         {
             var sql = $"select * from {tableName.FullName}";
-            var hasIdentity = await DatabaseHelper.HasIdentityColumnAsync(tableName, connectionString);
+            var hasIdentity = await SQLDatabaseHelper.HasIdentityColumnAsync(tableName, connectionString);
             return await QueryDataToInsertStatementAsync(sql, connectionString, tableName.FullName, hasIdentity);
         }
 
@@ -297,7 +256,7 @@ WHERE s.name = N'{objectName.Schema}'
   AND i.name IS NOT NULL
 ORDER BY i.name";
 
-            var dt = await DatabaseHelper.GetDataTableAsync(sql, connectionString);
+            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, connectionString);
             if (dt == null || dt.Rows.Count == 0)
                 return string.Empty;
 
@@ -665,7 +624,7 @@ GO";
                 createScript.AppendLine($"GO");
             }
 
-            var script = await DatabaseHelper.GetObjectDefinitionAsync(objectName, connectionString);
+            var script = await SQLDatabaseHelper.GetObjectDefinitionAsync(objectName, connectionString);
 
             if (string.IsNullOrEmpty(script))
             {
@@ -708,7 +667,7 @@ WHERE s.name = N'{objectName.Schema}'
   AND o.name = N'{objectName.Name}'
 ORDER BY tr.name";
 
-            var dt = await DatabaseHelper.GetDataTableAsync(sql, connectionString);
+            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, connectionString);
             if (dt == null || dt.Rows.Count == 0)
                 return string.Empty;
 
@@ -796,7 +755,7 @@ ORDER BY tr.name";
             // Validate the single full name parameter
             if (!string.IsNullOrWhiteSpace(objectName.FullName))
             {
-                string? definition = await DatabaseHelper.GetObjectDefinitionAsync(objectName, connectionString);
+                string? definition = await SQLDatabaseHelper.GetObjectDefinitionAsync(objectName, connectionString);
 
                 if (string.IsNullOrEmpty(definition))
                 {

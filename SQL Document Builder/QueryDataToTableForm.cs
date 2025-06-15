@@ -60,7 +60,7 @@ namespace SQL_Document_Builder
         {
             if (sqlTextBox.Text.Contains("select", StringComparison.CurrentCultureIgnoreCase))
             {
-                var syntaxCheck = await DatabaseHelper.SyntaxCheckAsync(sqlTextBox.Text, ConnectionString);
+                var syntaxCheck = await SQLDatabaseHelper.SyntaxCheckAsync(sqlTextBox.Text, ConnectionString);
 
                 if (string.IsNullOrEmpty(syntaxCheck))
                 {

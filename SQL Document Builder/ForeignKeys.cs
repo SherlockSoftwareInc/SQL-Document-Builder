@@ -20,11 +20,6 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Gets the data source.
-        /// </summary>
-        public DataTable DataSource { get => dtForeignKeys; }
-
-        /// <summary>
         /// Gets the foreign key.
         /// </summary>
         /// <param name="schemaName">The schema name.</param>

@@ -73,7 +73,7 @@ JOIN sys.partitions p ON i.object_id = p.object_id AND i.index_id = p.index_id
 JOIN sys.allocation_units au ON p.partition_id = au.container_id
 WHERE t.object_id = OBJECT_ID(N'{objectName.FullName}')";
 
-            var dt = await DatabaseHelper.GetDataTableAsync(sql, connectionString);
+            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, connectionString);
 
             if (dt?.Rows.Count > 0)
             {

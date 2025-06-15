@@ -129,7 +129,7 @@ namespace SQL_Document_Builder
                         columnDescription = GetColumnDescription(schemaName, tableName, columnName);
                     }
                     // get the column foreign key
-                    string columnForeignKey = foreignKeys.GetForeignKey(schemaName, tableName, columnName);
+                    string columnForeignKey = SQLDatabaseHelper.GetForeignKey(schemaName, tableName, columnName);
                     // get the column primary key
                     bool isPrimaryKey = primaryKeys.IsPrimaryKey(schemaName, tableName, columnName);
                     // build the content for the column

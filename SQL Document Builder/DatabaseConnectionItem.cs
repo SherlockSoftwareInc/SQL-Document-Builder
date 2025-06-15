@@ -239,7 +239,7 @@ namespace SQL_Document_Builder
                 }
             }
 
-            if (!await DatabaseHelper.TestConnectionAsync(connectionString))
+            if (!await SQLDatabaseHelper.TestConnectionAsync(connectionString))
             {
                 return string.Empty;
             }

@@ -22,11 +22,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="ForeignKeys.cs" />
     <Compile Remove="Form1.cs" />
     <Compile Remove="Form1.Designer.cs" />
     <Compile Remove="MainForm.cs" />
     <Compile Remove="MainForm.Designer.cs" />
     <Compile Remove="MarkdownBuilder.cs" />
+    <Compile Remove="MSSchemaContentBuilder.cs" />
+    <Compile Remove="PrimaryKeys.cs" />
     <Compile Remove="SharePointBuilder.cs" />
     <Compile Remove="Wiki.cs" />
     <Compile Remove="WikiBuilder.cs" />

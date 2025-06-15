@@ -68,7 +68,7 @@ namespace SQL_Document_Builder
             schemaListBox.Items.Clear();
             schemaListBox.Items.Add("(All)");
 
-            var schemas = await DatabaseHelper.GetSchemasAsync(ConnectionString);
+            var schemas = await SQLDatabaseHelper.GetSchemasAsync(ConnectionString);
 
             // Add schemas to the combo box
             foreach (var schema in schemas)
