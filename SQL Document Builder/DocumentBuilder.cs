@@ -43,16 +43,18 @@ namespace SQL_Document_Builder
                             progress.Report(percentComplete + 1);
                         }
 
+                        bool useQuotedId = Properties.Settings.Default.UseQuotedIdentifier;
                         ObjectName dr = objectList[i];
-                        string tableSchema = dr.Schema;
-                        string tableName = dr.Name;
+                        string tableSchema = useQuotedId ? dr.Schema.QuotedName() : dr.Schema.RemoveQuote();
+                        string tableName = useQuotedId ? dr.Name.QuotedName() : dr.Name.RemoveQuote();
                         string description = await SQLDatabaseHelper.GetTableDescriptionAsync(dr, connection.ConnectionString);
                         var objectName = new ObjectName(dr.ObjectType, dr.Schema, dr.Name);
+                        string fullName = useQuotedId ? objectName.FullName : objectName.FullNameNoQuote;
 
                         string objItemDoc = objectItemTemplate
                             .Replace("~ObjectName~", tableName)
                             .Replace("~ObjectSchema~", tableSchema)
-                            .Replace("~ObjectFullName~", objectName.FullName)
+                            .Replace("~ObjectFullName~", fullName)
                             .Replace("~ObjectType~", ObjectTypeToString(dr.ObjectType))
                             .Replace("~Description~", description);
 
@@ -179,7 +181,7 @@ namespace SQL_Document_Builder
         /// <param name="connectionString">The connection string.</param>
         /// <param name="templateBody">The template body.</param>
         /// <returns>A Task.</returns>
-        internal static async Task<string> GetObjectDef(ObjectName objectName, DatabaseConnectionItem? connection, Template.TemplateItem template)
+        internal static async Task<string> GetObjectDef(ObjectName objectName, DatabaseConnectionItem? connection, TemplateItem template, TemplateItem? dataTemplate)
         {
             if (objectName == null || connection == null || template == null)
             {
@@ -194,10 +196,12 @@ namespace SQL_Document_Builder
                 var tableView = new DBObject();
                 await tableView.OpenAsync(objectName, connection);
 
+                bool useQuotedId = Properties.Settings.Default.UseQuotedIdentifier;
+
                 // Replace placeholders with actual values
-                doc = doc.Replace("~ObjectName~", objectName.Name);
-                doc = doc.Replace("~ObjectSchema~", objectName.Schema);
-                doc = doc.Replace("~ObjectFullName~", objectName.FullName);
+                doc = doc.Replace("~ObjectName~", useQuotedId? objectName.Name : objectName.Name.RemoveQuote());
+                doc = doc.Replace("~ObjectSchema~", useQuotedId? objectName.Schema : objectName.Schema.RemoveQuote());
+                doc = doc.Replace("~ObjectFullName~", useQuotedId ? objectName.FullName : objectName.FullNameNoQuote);
                 doc = doc.Replace("~ObjectType~", ObjectTypeToString(objectName.ObjectType));
 
                 doc = doc.Replace("~Description~", tableView.Description.Length == 0 ? " " : tableView.Description);
@@ -260,6 +264,13 @@ namespace SQL_Document_Builder
                 {
                     doc = doc.Replace("~BaseObjectName~", tableView.SynonymInformation?.BaseObjectName);
                     doc = doc.Replace("~BaseObjectType~", tableView.SynonymInformation?.BaseObjectType);
+                }
+
+                // table values
+                if (doc.Contains("~TableValues~") && dataTemplate != null)
+                {
+                    string tableValuesDoc = await GetTableValuesAsync($"SELECT * FROM {objectName.FullName}", connection, dataTemplate);
+                    doc = doc.Replace("~TableValues~", tableValuesDoc);
                 }
 
                 //doc = doc.Replace("~Triggers~", objectName.Name);

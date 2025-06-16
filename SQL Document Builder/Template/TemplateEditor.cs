@@ -409,6 +409,7 @@ namespace SQL_Document_Builder.Template
                     ("~ObjectName~", "Object name"),
                     ("~ObjectSchema~", "Object schema"),
                     ("~ObjectType~", "Object type"),
+                    ("~TableValues~", "Table values"),
                 ],
                 "COLUMNS" =>
                 [
@@ -453,6 +454,7 @@ namespace SQL_Document_Builder.Template
                     ("~ObjectName~", "Object name"),
                     ("~ObjectSchema~", "Object schema"),
                     ("~ObjectType~", "Object type"),
+                    ("~TableValues~", "Table values"),
                 ],
                 "FUNCTION" or "STORED PROCEDURE" =>
                 [

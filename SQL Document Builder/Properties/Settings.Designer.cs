@@ -250,5 +250,17 @@ namespace SQL_Document_Builder.Properties {
                 this["DocumentType"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool UseQuotedIdentifier {
+            get {
+                return ((bool)(this["UseQuotedIdentifier"]));
+            }
+            set {
+                this["UseQuotedIdentifier"] = value;
+            }
+        }
     }
 }

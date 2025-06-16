@@ -62,6 +62,7 @@
             schemaComboBox = new System.Windows.Forms.ComboBox();
             label1 = new System.Windows.Forms.Label();
             tabPage2 = new System.Windows.Forms.TabPage();
+            quotedIDCheckBox = new System.Windows.Forms.CheckBox();
             groupBox2 = new System.Windows.Forms.GroupBox();
             label2 = new System.Windows.Forms.Label();
             label3 = new System.Windows.Forms.Label();
@@ -507,6 +508,7 @@
             // 
             // tabPage2
             // 
+            tabPage2.Controls.Add(quotedIDCheckBox);
             tabPage2.Controls.Add(groupBox2);
             tabPage2.Controls.Add(groupBox1);
             tabPage2.Controls.Add(indexesCheckBox);
@@ -523,13 +525,26 @@
             tabPage2.Text = "Output options";
             tabPage2.UseVisualStyleBackColor = true;
             // 
+            // quotedIDCheckBox
+            // 
+            quotedIDCheckBox.AutoSize = true;
+            quotedIDCheckBox.Checked = true;
+            quotedIDCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
+            quotedIDCheckBox.Location = new System.Drawing.Point(8, 57);
+            quotedIDCheckBox.Name = "quotedIDCheckBox";
+            quotedIDCheckBox.Size = new System.Drawing.Size(138, 19);
+            quotedIDCheckBox.TabIndex = 21;
+            quotedIDCheckBox.Text = "Use Quoted Identifier";
+            quotedIDCheckBox.UseVisualStyleBackColor = true;
+            quotedIDCheckBox.CheckedChanged += Options_Changed;
+            // 
             // groupBox2
             // 
             groupBox2.Controls.Add(label2);
             groupBox2.Controls.Add(label3);
             groupBox2.Controls.Add(insertMaxTextBox);
             groupBox2.Controls.Add(insertBatchTextBox);
-            groupBox2.Location = new System.Drawing.Point(8, 139);
+            groupBox2.Location = new System.Drawing.Point(8, 165);
             groupBox2.Name = "groupBox2";
             groupBox2.Size = new System.Drawing.Size(250, 113);
             groupBox2.TabIndex = 20;
@@ -580,7 +595,7 @@
             // 
             groupBox1.Controls.Add(useUspDescRadioButton);
             groupBox1.Controls.Add(useExtendedPropertyRadioButton);
-            groupBox1.Location = new System.Drawing.Point(8, 56);
+            groupBox1.Location = new System.Drawing.Point(8, 82);
             groupBox1.Name = "groupBox1";
             groupBox1.Size = new System.Drawing.Size(250, 74);
             groupBox1.TabIndex = 19;
@@ -666,11 +681,11 @@
             addDataSourceCheckBox.AutoSize = true;
             addDataSourceCheckBox.Checked = true;
             addDataSourceCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
-            addDataSourceCheckBox.Location = new System.Drawing.Point(8, 31);
+            addDataSourceCheckBox.Location = new System.Drawing.Point(8, 32);
             addDataSourceCheckBox.Name = "addDataSourceCheckBox";
-            addDataSourceCheckBox.Size = new System.Drawing.Size(182, 19);
+            addDataSourceCheckBox.Size = new System.Drawing.Size(184, 19);
             addDataSourceCheckBox.TabIndex = 15;
-            addDataSourceCheckBox.Text = "Add data source at beginning";
+            addDataSourceCheckBox.Text = "Add Data Source at Beginning";
             addDataSourceCheckBox.UseVisualStyleBackColor = true;
             addDataSourceCheckBox.CheckedChanged += Options_Changed;
             // 
@@ -681,9 +696,9 @@
             scriptDropsCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
             scriptDropsCheckBox.Location = new System.Drawing.Point(8, 6);
             scriptDropsCheckBox.Name = "scriptDropsCheckBox";
-            scriptDropsCheckBox.Size = new System.Drawing.Size(138, 19);
+            scriptDropsCheckBox.Size = new System.Drawing.Size(139, 19);
             scriptDropsCheckBox.TabIndex = 16;
-            scriptDropsCheckBox.Text = "Add DROP statement";
+            scriptDropsCheckBox.Text = "Add DROP Statement";
             scriptDropsCheckBox.UseVisualStyleBackColor = true;
             scriptDropsCheckBox.CheckedChanged += Options_Changed;
             // 
@@ -1847,5 +1862,6 @@
         private System.Windows.Forms.ToolStripMenuItem exportDescriptionsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem importDescriptionsToolStripMenuItem;
         private System.Windows.Forms.Timer startTimer;
+        private System.Windows.Forms.CheckBox quotedIDCheckBox;
     }
 }

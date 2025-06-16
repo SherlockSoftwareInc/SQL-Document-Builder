@@ -69,5 +69,8 @@ Back to [[DW: Database tables|Data warehouse tables]]
     <Setting Name="DocumentType" Type="System.String" Scope="User">
       <Value Profile="(Default)">Markdown</Value>
     </Setting>
+    <Setting Name="UseQuotedIdentifier" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

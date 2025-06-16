@@ -2036,6 +2036,7 @@ namespace SQL_Document_Builder
             Properties.Settings.Default.AddDataSource = addDataSourceCheckBox.Checked;
             Properties.Settings.Default.AddDropStatement = scriptDropsCheckBox.Checked;
             Properties.Settings.Default.UseExtendedProperties = useExtendedPropertyRadioButton.Checked;
+            Properties.Settings.Default.UseQuotedIdentifier = quotedIDCheckBox.Checked;
             Properties.Settings.Default.Save();
         }
 
@@ -2783,6 +2784,7 @@ namespace SQL_Document_Builder
             }
             Properties.Settings.Default.LeftSplitterDistance = splitContainer1.SplitterDistance;
             Properties.Settings.Default.RightSplitterDistance = defiCollapsibleSplitter.SplitterDistance;
+            Properties.Settings.Default.UseQuotedIdentifier = quotedIDCheckBox.Checked ;
             //Properties.Settings.Default.SchemaSettings = _settingItems.Settings;
             //Properties.Settings.Default.Templetes = templates.TemplatesValue;
             Properties.Settings.Default.Save();
@@ -3573,7 +3575,14 @@ namespace SQL_Document_Builder
                     return;
                 }
 
-                var scripts = await DocumentBuilder.GetObjectDef(objectName, _currentConnection, objectTemplate);
+                // get data table template if the object is a table or view
+                TemplateItem? datatableTemplate = null;
+                if (objectName.ObjectType == ObjectTypeEnums.Table || objectName.ObjectType == ObjectTypeEnums.View)
+                {
+                    datatableTemplate = template.TemplateLists.FirstOrDefault(t => t.ObjectType == TemplateItem.ObjectTypeEnums.DataTable);
+                }
+
+                var scripts = await DocumentBuilder.GetObjectDef(objectName, _currentConnection, objectTemplate, datatableTemplate);
                 if (scripts.Length == 0)
                 {
                     Common.MsgBox($"No definition found for {objectName.FullName}", MessageBoxIcon.Information);
@@ -4050,6 +4059,7 @@ namespace SQL_Document_Builder
 
             defiCollapsibleSplitter.SplitterDistance = Properties.Settings.Default.RightSplitterDistance;
             splitContainer1.SplitterDistance = Properties.Settings.Default.LeftSplitterDistance;
+            quotedIDCheckBox.Checked = Properties.Settings.Default.UseQuotedIdentifier;
 
             PopulateDocumentType();
 
