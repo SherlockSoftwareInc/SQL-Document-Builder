@@ -91,3 +91,18 @@ SQL Server Script and Document Builder is designed for growth. Adding support fo
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
+
+## 📦 Installation
+
+**SQL Server Script and Document Builder** is distributed via a **ClickOnce installer**.  
+
+👉 [Click here to install](https://www.sherlocksoftwareinc.com/SQLDocBuilder/Publish.html)
+
+When you visit the above link, the ClickOnce installer will guide you through the setup process.  
+
+📌 After installation, the application will be available in your **Start Menu** under  
+`SQL Server Script and Document Builder`  
+
+📌 The app is installed per-user (not in `C:\Program Files`) and automatically keeps itself up-to-date.
+
+
