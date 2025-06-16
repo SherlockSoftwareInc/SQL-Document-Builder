@@ -410,6 +410,13 @@ namespace SQL_Document_Builder.Template
                     ("~ObjectSchema~", "Object schema"),
                     ("~ObjectType~", "Object type"),
                     ("~TableValues~", "Table values"),
+                    ("~Triggers~", "Table triggers"),
+                    ("<!-- SECTION:Columns --><!-- ENDSECTION:Columns -->", "Columns spacehold"),
+                    ("<!-- SECTION:Constraints --><!-- ENDSECTION:Constraints -->", "Constraints spacehold"),
+                    ("<!-- SECTION:Description --><!-- ENDSECTION:Description -->", "Description spacehold"),
+                    ("<!-- SECTION:Indexes --><!-- ENDSECTION:Indexes -->", "Indexes spacehold"),
+                    ("<!-- SECTION:TableValues --><!-- ENDSECTION:TableValues -->", "Table Values spacehold"),
+                    ("<!-- SECTION:Triggers --><!-- ENDSECTION:Triggers -->", "Triggers spacehold"),
                 ],
                 "COLUMNS" =>
                 [
@@ -455,6 +462,12 @@ namespace SQL_Document_Builder.Template
                     ("~ObjectSchema~", "Object schema"),
                     ("~ObjectType~", "Object type"),
                     ("~TableValues~", "Table values"),
+                    ("~Triggers~", "Table triggers"),
+                    ("<!-- SECTION:Columns --><!-- ENDSECTION:Columns -->", "Columns spacehold"),
+                    ("<!-- SECTION:Description --><!-- ENDSECTION:Description -->", "Description spacehold"),
+                    ("<!-- SECTION:Indexes --><!-- ENDSECTION:Indexes -->", "Indexes spacehold"),
+                    ("<!-- SECTION:TableValues --><!-- ENDSECTION:TableValues -->", "Table Values spacehold"),
+                    ("<!-- SECTION:Triggers --><!-- ENDSECTION:Triggers -->", "Triggers spacehold"),
                 ],
                 "FUNCTION" or "STORED PROCEDURE" =>
                 [
@@ -465,6 +478,8 @@ namespace SQL_Document_Builder.Template
                     ("~ObjectSchema~", "Object schema"),
                     ("~ObjectType~", "Object type"),
                     ("~Parameters~", "Parameter section"),
+                    ("<!-- SECTION:Description --><!-- ENDSECTION:Description -->", "Description spacehold"),
+                    ("<!-- SECTION:Parameters --><!-- ENDSECTION:Parameters -->", "Parameters spacehold"),
                 ],
                 "PARAMETERS" =>
                 [

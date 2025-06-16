@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace SQL_Document_Builder
@@ -181,7 +182,7 @@ namespace SQL_Document_Builder
         /// <param name="connectionString">The connection string.</param>
         /// <param name="templateBody">The template body.</param>
         /// <returns>A Task.</returns>
-        internal static async Task<string> GetObjectDef(ObjectName objectName, DatabaseConnectionItem? connection, TemplateItem template, TemplateItem? dataTemplate)
+        internal static async Task<string> GetObjectDef(ObjectName objectName, DatabaseConnectionItem? connection, TemplateItem template, TemplateItem? dataTemplate, TemplateItem? triggerTemplate)
         {
             if (objectName == null || connection == null || template == null)
             {
@@ -204,8 +205,11 @@ namespace SQL_Document_Builder
                 doc = doc.Replace("~ObjectFullName~", useQuotedId ? objectName.FullName : objectName.FullNameNoQuote);
                 doc = doc.Replace("~ObjectType~", ObjectTypeToString(objectName.ObjectType));
 
-                doc = doc.Replace("~Description~", tableView.Description.Length == 0 ? " " : tableView.Description);
-                doc = doc.Replace("~Definition~", tableView.Definition);
+                //doc = doc.Replace("~Description~", tableView.Description.Length == 0 ? " " : tableView.Description);
+                doc = ProcessSection(doc, "Description", "~Description~", tableView.Description.Length == 0 ? " " : tableView.Description);
+
+                //doc = doc.Replace("~Definition~", tableView.Definition);
+                doc = ProcessSection(doc, "Definition", "~Definition~", tableView.Definition);
 
                 // Build the columns table
                 if (doc.Contains("~Columns~"))
@@ -217,7 +221,8 @@ namespace SQL_Document_Builder
                         var columnsBody = GetColumnsBody(tableView.Columns, columnItemTemplate);
                         columnsDoc = columnsDoc.Replace("~ColumnItem~", columnsBody);
                     }
-                    doc = doc.Replace("~Columns~", columnsDoc);
+                    //doc = doc.Replace("~Columns~", columnsDoc);
+                    doc = ProcessSection(doc, "Columns", "~Columns~", columnsDoc);
                 }
 
                 // Build the indexes table
@@ -230,7 +235,8 @@ namespace SQL_Document_Builder
                         var indexesBody = GetIndexesBody(tableView.Indexes, indexItemTemplate);
                         indexesDoc = indexesDoc.Replace("~IndexItem~", indexesBody);
                     }
-                    doc = doc.Replace("~Indexes~", indexesDoc);
+                    //doc = doc.Replace("~Indexes~", indexesDoc);
+                    doc = ProcessSection(doc, "Indexes", "~Indexes~", indexesDoc);
                 }
 
                 // Build the constraints table
@@ -243,7 +249,8 @@ namespace SQL_Document_Builder
                         var constraintsBody = GetConstraintsBody(tableView.Constraints, constraintItemTemplate);
                         constraintDoc = constraintDoc.Replace("~ConstraintItem~", constraintsBody);
                     }
-                    doc = doc.Replace("~Constraints~", constraintDoc);
+                    //doc = doc.Replace("~Constraints~", constraintDoc);
+                    doc = ProcessSection(doc, "Constraints", "~Constraints~", constraintDoc);
                 }
 
                 // Build the parameters table
@@ -256,7 +263,8 @@ namespace SQL_Document_Builder
                         var parametersBody = GetParametersBody(tableView.Parameters, parameterItemTemplate);
                         parameterDoc = parameterDoc.Replace("~ParameterItem~", parametersBody);
                     }
-                    doc = doc.Replace("~Parameters~", parameterDoc);
+                    //doc = doc.Replace("~Parameters~", parameterDoc);
+                    doc = ProcessSection(doc, "Parameters", "~Parameters~", parameterDoc);
                 }
 
                 // synonyms
@@ -270,10 +278,17 @@ namespace SQL_Document_Builder
                 if (doc.Contains("~TableValues~") && dataTemplate != null)
                 {
                     string tableValuesDoc = await GetTableValuesAsync($"SELECT * FROM {objectName.FullName}", connection, dataTemplate);
-                    doc = doc.Replace("~TableValues~", tableValuesDoc);
+                    //doc = doc.Replace("~TableValues~", tableValuesDoc);
+                    doc = ProcessSection(doc, "TableValues", "~TableValues~", tableValuesDoc);
                 }
 
-                //doc = doc.Replace("~Triggers~", objectName.Name);
+                // triggers
+                if (doc.Contains("~Triggers~") && triggerTemplate != null)
+                {
+                    string triggersDoc = await GetObjectTriggersAsync(objectName, connection, triggerTemplate);
+                    doc = ProcessSection(doc, "Triggers", "~Triggers~", triggersDoc);
+                }
+
                 //doc = doc.Replace("~Relationships~", objectName.Name);
 
                 return doc;
@@ -282,6 +297,121 @@ namespace SQL_Document_Builder
             // reserved for future use
             return string.Empty;
 
+        }
+
+        /// <summary>
+        /// Processes a template section: removes or replaces section with markers, or simply replaces placeholder if no markers exist.
+        /// </summary>
+        /// <param name="doc">The document template</param>
+        /// <param name="sectionName">The section name (e.g., Triggers, Indexes)</param>
+        /// <param name="placeholder">The placeholder (e.g., ~Triggers~)</param>
+        /// <param name="content">The content to insert</param>
+        /// <returns>The processed document</returns>
+        public static string ProcessSection(string doc, string sectionName, string placeholder, string content)
+        {
+            string pattern = $@"<!-- SECTION:{Regex.Escape(sectionName)} -->(.*?)<!-- ENDSECTION:{Regex.Escape(sectionName)} -->";
+
+            if (Regex.IsMatch(doc, pattern, RegexOptions.Singleline))
+            {
+                // Section markers found — process as section
+                if (string.IsNullOrWhiteSpace(content))
+                {
+                    // Remove whole section
+                    return Regex.Replace(
+                        doc,
+                        pattern,
+                        string.Empty,
+                        RegexOptions.Singleline);
+                }
+                else
+                {
+                    // Replace placeholder inside section and remove markers
+                    return Regex.Replace(
+                        doc,
+                        pattern,
+                        match =>
+                        {
+                            string sectionBody = match.Groups[1].Value;
+                            sectionBody = sectionBody.Replace(placeholder, content);
+                            return sectionBody.Trim();
+                        },
+                        RegexOptions.Singleline);
+                }
+            }
+            else
+            {
+                // No section markers — simple replace
+                if (string.IsNullOrWhiteSpace(content))
+                {
+                    return doc.Replace(placeholder, string.Empty);
+                }
+                else
+                {
+                    return doc.Replace(placeholder, content);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets the triggers async.
+        /// </summary>
+        /// <param name="objectName">The object name.</param>
+        /// <param name="connection">The connection.</param>
+        /// <param name="template">The template.</param>
+        /// <returns>A Task.</returns>
+        private static async Task<string> GetObjectTriggersAsync(ObjectName objectName, DatabaseConnectionItem? connection, TemplateItem template)
+        {
+            if (objectName == null || connection == null || template == null)
+            {
+                return string.Empty;
+            }
+
+            if (connection.DBMSType == DBMSTypeEnums.SQLServer)
+            {
+                StringBuilder sb = new();
+
+                // Query to get all triggers for the specified table/view
+                string sql = $@"
+SELECT
+    tr.name AS TriggerName,
+    sm.definition AS TriggerDefinition,
+    tr.is_disabled,
+    CASE
+        WHEN tr.is_instead_of_trigger = 1 THEN 'INSTEAD OF'
+        ELSE 'AFTER'
+    END AS TriggerType
+FROM sys.triggers tr
+INNER JOIN sys.objects o ON tr.parent_id = o.object_id
+INNER JOIN sys.schemas s ON o.schema_id = s.schema_id
+INNER JOIN sys.sql_modules sm ON tr.object_id = sm.object_id
+WHERE s.name = N'{objectName.Schema}'
+  AND o.name = N'{objectName.Name}'
+ORDER BY tr.name";
+
+                var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, connection.ConnectionString);
+                if (dt == null || dt.Rows.Count == 0)
+                    return "";
+
+                foreach (DataRow dr in dt.Rows)
+                {
+                    string triggerName = dr["TriggerName"].ToString() ?? "";
+                    string definition = dr["TriggerDefinition"].ToString() ?? "";
+                    //bool isDisabled = dr["is_disabled"] != DBNull.Value && (bool)dr["is_disabled"];
+                    string triggerType = dr["TriggerType"].ToString() ?? "UNKNOWN";
+
+                    string triggerDoc = template.Body;
+                    triggerDoc = triggerDoc
+                        .Replace("~TriggerName~", triggerName)
+                        .Replace("~TriggerType~", triggerType)
+                        .Replace("~Definition~", definition);
+                    sb.AppendLine(triggerDoc);
+                }
+
+                return sb.ToString();
+            }
+
+            // reserved for future use
+            return string.Empty;
         }
 
         /// <summary>
@@ -301,7 +431,7 @@ namespace SQL_Document_Builder
                 DataTable? dt = await SQLDatabaseHelper.GetDataTableAsync(sql, connection?.ConnectionString);
                 if (dt == null || dt.Rows.Count == 0)
                 {
-                    return "''No data found.''";
+                    return string.Empty;
                 }
                 return DataTableToTemplateDoc(dt, template);
             }
@@ -385,12 +515,13 @@ namespace SQL_Document_Builder
             }
             else
             {
-                return columnTemplate
-                        .Replace("~ColumnOrd~", "")
-                        .Replace("~ColumnName~", "_No column found_")
-                        .Replace("~ColumnDataType~", "")
-                        .Replace("~ColumnNullable~", "")
-                        .Replace("~ColumnDescription~", "");
+                //return columnTemplate
+                //        .Replace("~ColumnOrd~", "")
+                //        .Replace("~ColumnName~", "_No column found_")
+                //        .Replace("~ColumnDataType~", "")
+                //        .Replace("~ColumnNullable~", "")
+                //        .Replace("~ColumnDescription~", "");
+                return string.Empty;
             }
         }
 
@@ -417,10 +548,11 @@ namespace SQL_Document_Builder
             }
             else
             {
-                return strTemplate
-                        .Replace("~ConstraintName~", "_No constraint found_")
-                        .Replace("~ConstraintType~", "")
-                        .Replace("~ConstraintColumn~", "");
+                //return strTemplate
+                //        .Replace("~ConstraintName~", "_No constraint found_")
+                //        .Replace("~ConstraintType~", "")
+                //        .Replace("~ConstraintColumn~", "");
+                return string.Empty;
             }
         }
 
@@ -448,11 +580,12 @@ namespace SQL_Document_Builder
             }
             else
             {
-                return indexTemplate
-                        .Replace("~IndexName~", "_No index found_")
-                        .Replace("~IndexType~", "")
-                        .Replace("~IndexColumns~", "")
-                        .Replace("~UniqueIndex~", "");
+                //return indexTemplate
+                //        .Replace("~IndexName~", "_No index found_")
+                //        .Replace("~IndexType~", "")
+                //        .Replace("~IndexColumns~", "")
+                //        .Replace("~UniqueIndex~", "");
+                return string.Empty;
             }
         }
 
@@ -482,12 +615,13 @@ namespace SQL_Document_Builder
             }
             else
             {
-                return parameterTemplate
-                        .Replace("~ParameterOrd~", "")
-                        .Replace("~ParameterName~", "_No parameter found_")
-                        .Replace("~ParameterDataType~", "")
-                        .Replace("~ParameterDirection~", "")
-                        .Replace("~ParameterDescription~", "");
+                //return parameterTemplate
+                //        .Replace("~ParameterOrd~", "")
+                //        .Replace("~ParameterName~", "_No parameter found_")
+                //        .Replace("~ParameterDataType~", "")
+                //        .Replace("~ParameterDirection~", "")
+                //        .Replace("~ParameterDescription~", "");
+                return string.Empty;
             }
         }
 

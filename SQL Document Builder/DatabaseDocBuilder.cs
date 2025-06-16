@@ -576,10 +576,6 @@ GO";
             {
                 // if the createScript does not ended with a line of "GO", add it
                 AddGOStatement(createScript);
-                //if (!createScript.ToString().EndsWith(Environment.NewLine + "GO" + Environment.NewLine, StringComparison.OrdinalIgnoreCase))
-                //{
-                //    createScript.AppendLine($"GO");
-                //}
 
                 // remove the new line at the end of the script
                 triggerScript = triggerScript.TrimEnd('\r', '\n');

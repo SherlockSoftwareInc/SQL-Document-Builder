@@ -3577,12 +3577,14 @@ namespace SQL_Document_Builder
 
                 // get data table template if the object is a table or view
                 TemplateItem? datatableTemplate = null;
+                TemplateItem? triggerTemplate = null;
                 if (objectName.ObjectType == ObjectTypeEnums.Table || objectName.ObjectType == ObjectTypeEnums.View)
                 {
                     datatableTemplate = template.TemplateLists.FirstOrDefault(t => t.ObjectType == TemplateItem.ObjectTypeEnums.DataTable);
+                    triggerTemplate = template.TemplateLists.FirstOrDefault(t => t.ObjectType == TemplateItem.ObjectTypeEnums.Trigger);
                 }
 
-                var scripts = await DocumentBuilder.GetObjectDef(objectName, _currentConnection, objectTemplate, datatableTemplate);
+                var scripts = await DocumentBuilder.GetObjectDef(objectName, _currentConnection, objectTemplate, datatableTemplate, triggerTemplate);
                 if (scripts.Length == 0)
                 {
                     Common.MsgBox($"No definition found for {objectName.FullName}", MessageBoxIcon.Information);
