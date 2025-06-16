@@ -87,3 +87,7 @@ SQL Server Script and Document Builder is designed for growth. Adding support fo
 
 ### 📝 Template Editor
 ![Template Editor](SQL%20Document%20Builder/TemplateEditor.png)
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
