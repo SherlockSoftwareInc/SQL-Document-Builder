@@ -117,6 +117,11 @@ namespace SQL_Document_Builder.Template
                     Nodes.Add(new TemplateElementNode(templateItem, TemplateElementNode.TemplateElementType.RelationshipRow));
                     break;
 
+                case TemplateElementType.RelationshipRow:
+                    Text = "Relationship Item";
+                    ToolTipText = "Template for each relationship row";
+                    break;
+
                 default:
                     throw new ArgumentOutOfRangeException(nameof(elementType), elementType, null);
             }

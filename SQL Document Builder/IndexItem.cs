@@ -1,4 +1,7 @@
-﻿namespace SQL_Document_Builder
+﻿using System;
+using System.Linq;
+
+namespace SQL_Document_Builder
 {
     /// <summary>
     /// The index item.
@@ -16,6 +19,20 @@
         /// Gets or sets the columns included in the index.
         /// </summary>
         public string Columns { get; set; } = columns;
+
+        /// <summary>
+        /// Gets the quoted columns.
+        /// </summary>
+        public string QuotedColumns
+        {
+            get
+            {
+                // break the columns into column list
+                var columnList = Columns.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+                // join the column list with square brackets and add quotes
+                return string.Join(", ", columnList.Select(c => $"[{c.Trim()}]"));
+            }
+        }
 
         /// <summary>
         /// Gets or sets a value indicating whether the index is unique.

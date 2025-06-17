@@ -67,7 +67,7 @@
             menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { fileToolStripMenuItem, editToolStripMenuItem, insertToolStripMenuItem });
             menuStrip1.Location = new System.Drawing.Point(0, 0);
             menuStrip1.Name = "menuStrip1";
-            menuStrip1.Size = new System.Drawing.Size(923, 24);
+            menuStrip1.Size = new System.Drawing.Size(963, 24);
             menuStrip1.TabIndex = 0;
             menuStrip1.Text = "menuStrip1";
             // 
@@ -143,7 +143,7 @@
             cutToolStripMenuItem.ImageTransparentColor = System.Drawing.Color.Magenta;
             cutToolStripMenuItem.Name = "cutToolStripMenuItem";
             cutToolStripMenuItem.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.X;
-            cutToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            cutToolStripMenuItem.Size = new System.Drawing.Size(164, 22);
             cutToolStripMenuItem.Text = "Cu&t";
             cutToolStripMenuItem.Click += CutToolStripMenuItem_Click;
             // 
@@ -191,7 +191,7 @@
             toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { docTypeToolStripLabel, docTypeToolStripComboBox, toolStripSeparator6, exitToolStripButton });
             toolStrip1.Location = new System.Drawing.Point(0, 24);
             toolStrip1.Name = "toolStrip1";
-            toolStrip1.Size = new System.Drawing.Size(923, 25);
+            toolStrip1.Size = new System.Drawing.Size(963, 25);
             toolStrip1.TabIndex = 1;
             toolStrip1.Text = "toolStrip1";
             // 
@@ -225,23 +225,18 @@
             // 
             // templateTextBox
             // 
-            templateTextBox.Alias = "";
             templateTextBox.AllowDrop = true;
             templateTextBox.AutocompleteListSelectedBackColor = System.Drawing.Color.FromArgb(0, 120, 215);
             templateTextBox.AutomaticFold = ScintillaNET.AutomaticFold.Show | ScintillaNET.AutomaticFold.Click | ScintillaNET.AutomaticFold.Change;
             templateTextBox.CaretForeColor = System.Drawing.Color.White;
-            templateTextBox.DataSourceName = "";
-            templateTextBox.DefaultStyleFont = new System.Drawing.Font("Cascadia Mono", 10F);
             templateTextBox.Dock = System.Windows.Forms.DockStyle.Fill;
-            templateTextBox.DocumentType = SqlEditBox.DocumentTypeEnums.empty;
-            templateTextBox.FileName = "";
             templateTextBox.Font = new System.Drawing.Font("Cascadia Mono", 10F);
             templateTextBox.IndentationGuides = ScintillaNET.IndentView.LookBoth;
             templateTextBox.LexerName = "sql";
             templateTextBox.Location = new System.Drawing.Point(0, 0);
             templateTextBox.Name = "templateTextBox";
             templateTextBox.SelectionBackColor = System.Drawing.Color.FromArgb(17, 77, 156);
-            templateTextBox.Size = new System.Drawing.Size(719, 530);
+            templateTextBox.Size = new System.Drawing.Size(665, 631);
             templateTextBox.TabIndex = 2;
             // 
             // splitContainer1
@@ -257,8 +252,8 @@
             // splitContainer1.Panel2
             // 
             splitContainer1.Panel2.Controls.Add(templateTextBox);
-            splitContainer1.Size = new System.Drawing.Size(923, 530);
-            splitContainer1.SplitterDistance = 200;
+            splitContainer1.Size = new System.Drawing.Size(963, 631);
+            splitContainer1.SplitterDistance = 294;
             splitContainer1.TabIndex = 3;
             // 
             // templateTreeView
@@ -266,7 +261,7 @@
             templateTreeView.Dock = System.Windows.Forms.DockStyle.Fill;
             templateTreeView.Location = new System.Drawing.Point(0, 0);
             templateTreeView.Name = "templateTreeView";
-            templateTreeView.Size = new System.Drawing.Size(200, 530);
+            templateTreeView.Size = new System.Drawing.Size(294, 631);
             templateTreeView.TabIndex = 0;
             templateTreeView.BeforeSelect += TemplateTreeView_BeforeSelect;
             templateTreeView.AfterSelect += TemplateTreeView_AfterSelect;
@@ -275,7 +270,7 @@
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            ClientSize = new System.Drawing.Size(923, 579);
+            ClientSize = new System.Drawing.Size(963, 680);
             Controls.Add(splitContainer1);
             Controls.Add(toolStrip1);
             Controls.Add(menuStrip1);

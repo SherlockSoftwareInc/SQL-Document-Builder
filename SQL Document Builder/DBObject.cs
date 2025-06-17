@@ -842,7 +842,7 @@ ORDER BY ind.name, ic.key_ordinal";
                 string indexName = firstRow["IndexName"]?.ToString() ?? string.Empty;
                 string type = firstRow["Type"]?.ToString() ?? string.Empty;
                 bool isUnique = firstRow["IsUnique"] != DBNull.Value && Convert.ToBoolean(firstRow["IsUnique"]);
-                string columns = string.Join(", ", group.Select(r => $"[{r["ColumnName"]}]"));
+                string columns = string.Join(", ", group.Select(r => $"{r["ColumnName"]}"));
 
                 Indexes.Add(new IndexItem(indexName, type, columns, isUnique));
 

@@ -383,7 +383,7 @@ namespace SQL_Document_Builder.Template
                 [
                     ("~ColumnItem~", "Column row"),
                 ],
-                "Column Item" =>
+                "COLUMN ITEM" =>
                 [
                     ("~ColumnDataType~", "Column data type"),
                     ("~ColumnDescription~", "Column description"),
@@ -510,6 +510,22 @@ namespace SQL_Document_Builder.Template
                     ("~ObjectFullName~", "Object full name"),
                     ("~ObjectName~", "Object name"),
                     ("~ObjectSchema~", "Object schema"),
+                ],
+                "RELATIONSHIPS" =>
+                [
+                    ("~RelationshipItem~", "Relationship item"),
+                ],
+                "RELATIONSHIP ITEM" =>
+                [
+                    ("~ForeignKeyName~", "Foreign key name"),
+                    ("~FromSchema~", "Child object schema"),
+                    ("~FromTable~", "Child object table"),
+                    ("~FromColumn~", "Child object column"),
+                    ("~ToSchema~", "Parent object schema"),
+                    ("~ToTable~", "Parent object table"),
+                    ("~ToColumn~", "Parent object column"),
+                    ("~OnDelete~", "On delete action"),
+                    ("~OnUpdate~", "On update action"),
                 ],
                 _ => Array.Empty<(string Keyword, string Description)>() // Default case if no specific keywords are defined
             };

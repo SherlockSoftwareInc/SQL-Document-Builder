@@ -233,7 +233,14 @@ namespace SQL_Document_Builder
                     {
                         string indexItemTemplate = template.Indexes.IndexRow;
                         var indexesBody = GetIndexesBody(tableView.Indexes, indexItemTemplate);
-                        indexesDoc = indexesDoc.Replace("~IndexItem~", indexesBody);
+                        if(string.IsNullOrEmpty(indexesBody))
+                        {
+                            indexesDoc = string.Empty;
+                        }
+                        else
+                        {
+                            indexesDoc = indexesDoc.Replace("~IndexItem~", indexesBody);
+                        }
                     }
                     //doc = doc.Replace("~Indexes~", indexesDoc);
                     doc = ProcessSection(doc, "Indexes", "~Indexes~", indexesDoc);
@@ -247,7 +254,14 @@ namespace SQL_Document_Builder
                     {
                         string constraintItemTemplate = template.Constraints.ConstraintRow;
                         var constraintsBody = GetConstraintsBody(tableView.Constraints, constraintItemTemplate);
-                        constraintDoc = constraintDoc.Replace("~ConstraintItem~", constraintsBody);
+                        if (string.IsNullOrEmpty(constraintsBody))
+                        {
+                            constraintDoc = string.Empty;
+                        }
+                        else
+                        {
+                            constraintDoc = constraintDoc.Replace("~ConstraintItem~", constraintsBody);
+                        }
                     }
                     //doc = doc.Replace("~Constraints~", constraintDoc);
                     doc = ProcessSection(doc, "Constraints", "~Constraints~", constraintDoc);
@@ -261,7 +275,15 @@ namespace SQL_Document_Builder
                     {
                         string parameterItemTemplate = template.Parameters.ParameterRow;
                         var parametersBody = GetParametersBody(tableView.Parameters, parameterItemTemplate);
-                        parameterDoc = parameterDoc.Replace("~ParameterItem~", parametersBody);
+                        if (string.IsNullOrEmpty(parametersBody))
+                        {
+                            parameterDoc = string.Empty;
+                        }
+                        else
+                        {
+                            // Replace the placeholder with the actual parameters body
+                            parameterDoc = parameterDoc.Replace("~ParameterItem~", parametersBody);
+                        }
                     }
                     //doc = doc.Replace("~Parameters~", parameterDoc);
                     doc = ProcessSection(doc, "Parameters", "~Parameters~", parameterDoc);
@@ -297,7 +319,14 @@ namespace SQL_Document_Builder
                     {
                         string relationItemTemplate = template.Relationships.RelationshipRow;
                         var relationBody = await GetRelationshipsBody(objectName, relationItemTemplate, connection);
-                        relationshipsDoc = relationshipsDoc.Replace("~RelationshipItem~", relationBody);
+                        if (string.IsNullOrEmpty(relationBody))
+                        {
+                            relationshipsDoc = string.Empty;
+                        }
+                        else
+                        {
+                            relationshipsDoc = relationshipsDoc.Replace("~RelationshipItem~", relationBody);
+                        }
                     }
                     doc = ProcessSection(doc, "Relationships", "~Relationships~", relationshipsDoc);
                 }
@@ -647,10 +676,16 @@ ORDER BY tr.name";
             {
                 foreach (var index in indexes)
                 {
+                    string column = index.Columns;
+                    if(Properties.Settings.Default.UseQuotedIdentifier)
+                    {
+                        column = index.QuotedColumns;
+                    }
+
                     string colDoc = indexTemplate
                         .Replace("~IndexName~", index.Name)
                         .Replace("~IndexType~", index.Type)
-                        .Replace("~IndexColumns~", index.Columns)
+                        .Replace("~IndexColumns~", column)
                         .Replace("~UniqueIndex~", index.IsUnique ? "Yes" : "No");
 
                     sb.AppendLine(colDoc);
