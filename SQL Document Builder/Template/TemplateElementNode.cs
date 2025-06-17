@@ -160,8 +160,8 @@ namespace SQL_Document_Builder.Template
                     TemplateElementType.DataTableRow => Template.DataTable.DataRow ?? "",
                     TemplateElementType.DataTableHeaderCell => Template.DataTable.HeaderCell ?? "",
                     TemplateElementType.DataTableCell => Template.DataTable.Cell ?? "",
-                    TemplateElementType.Triggers => "",//return Template.Triggers?.Body ?? "";
-                                                       // Placeholder, as Triggers are not defined in the TemplateItem
+                    TemplateElementType.Triggers => Template.Triggers ?? "",
+                    // Placeholder, as Triggers are not defined in the TemplateItem
                     _ => "",
                 };
             }
@@ -243,9 +243,7 @@ namespace SQL_Document_Builder.Template
                         break;
 
                     case TemplateElementType.Triggers:
-                        // Placeholder, as Triggers are not defined in the TemplateItem
-                        // if (Template.Triggers != null)
-                        //     Template.Triggers.Body = value ?? "";
+                        Template.Triggers = value ?? "";
                         break;
 
                     default:

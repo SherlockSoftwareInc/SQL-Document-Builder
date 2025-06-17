@@ -502,6 +502,13 @@ namespace SQL_Document_Builder.Template
                     ("~ObjectSchema~", "Object schema"),
                     ("~ObjectType~", "Object type"),
                 ],
+                "TRIGGERS" =>
+                [
+                    ("~Definition~", "Object definition (source code)"),
+                    ("~Description~", "Object description"),
+                    ("~TriggerName~", "Trigger name"),
+                    ("~TriggerType~", "Trigger type"),
+                ],
                 "OBJECT LIST" =>
                 [
                     ("~ObjectItem~", "Object list item"),

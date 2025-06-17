@@ -115,7 +115,7 @@ namespace SQL_Document_Builder
         internal static string DataTableToTemplateDoc(DataTable dt, Template.TemplateItem template)
         {
             if (dt == null || dt.Columns.Count == 0)
-                return "_No data available_";
+                return "";
 
             string tableTemplate = template.Body;
             string headerCellTemplate = template.DataTable.HeaderCell;
@@ -182,7 +182,7 @@ namespace SQL_Document_Builder
         /// <param name="connectionString">The connection string.</param>
         /// <param name="templateBody">The template body.</param>
         /// <returns>A Task.</returns>
-        internal static async Task<string> GetObjectDef(ObjectName objectName, DatabaseConnectionItem? connection, TemplateItem template, TemplateItem? dataTemplate, TemplateItem? triggerTemplate)
+        internal static async Task<string> GetObjectDef(ObjectName objectName, DatabaseConnectionItem? connection, TemplateItem template, TemplateItem? dataTemplate)
         {
             if (objectName == null || connection == null || template == null)
             {
@@ -283,9 +283,9 @@ namespace SQL_Document_Builder
                 }
 
                 // triggers
-                if (doc.Contains("~Triggers~") && triggerTemplate != null)
+                if (doc.Contains("~Triggers~") && !string.IsNullOrEmpty( template.Triggers ))
                 {
-                    string triggersDoc = await GetObjectTriggersAsync(objectName, connection, triggerTemplate);
+                    string triggersDoc = await GetObjectTriggersAsync(objectName, connection, template.Triggers?? "");
                     doc = ProcessSection(doc, "Triggers", "~Triggers~", triggersDoc);
                 }
 
@@ -359,9 +359,9 @@ namespace SQL_Document_Builder
         /// <param name="connection">The connection.</param>
         /// <param name="template">The template.</param>
         /// <returns>A Task.</returns>
-        private static async Task<string> GetObjectTriggersAsync(ObjectName objectName, DatabaseConnectionItem? connection, TemplateItem template)
+        private static async Task<string> GetObjectTriggersAsync(ObjectName objectName, DatabaseConnectionItem? connection, string templateBody)
         {
-            if (objectName == null || connection == null || template == null)
+            if (objectName == null || connection == null || string.IsNullOrEmpty(templateBody))
             {
                 return string.Empty;
             }
@@ -399,7 +399,7 @@ ORDER BY tr.name";
                     //bool isDisabled = dr["is_disabled"] != DBNull.Value && (bool)dr["is_disabled"];
                     string triggerType = dr["TriggerType"].ToString() ?? "UNKNOWN";
 
-                    string triggerDoc = template.Body;
+                    string triggerDoc = templateBody;
                     triggerDoc = triggerDoc
                         .Replace("~TriggerName~", triggerName)
                         .Replace("~TriggerType~", triggerType)

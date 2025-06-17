@@ -64,6 +64,10 @@
         /// </summary>
         public DataTableTemplate DataTable { get; set; } = new DataTableTemplate();
 
+        /// <summary>
+        /// Gets the triggers template.
+        /// </summary>
+        public string Triggers { get; set; } = string.Empty;
     }
 
 }
