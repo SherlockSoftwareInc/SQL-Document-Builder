@@ -289,7 +289,18 @@ namespace SQL_Document_Builder
                     doc = ProcessSection(doc, "Triggers", "~Triggers~", triggersDoc);
                 }
 
-                //doc = doc.Replace("~Relationships~", objectName.Name);
+                // relationships
+                if (doc.Contains("~Relationships~"))
+                {
+                    string relationshipsDoc = template.Relationships.Body;
+                    if (relationshipsDoc.Contains("~RelationshipItem~", StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        string relationItemTemplate = template.Relationships.RelationshipRow;
+                        var relationBody = await GetRelationshipsBody(objectName, relationItemTemplate, connection);
+                        relationshipsDoc = relationshipsDoc.Replace("~RelationshipItem~", relationBody);
+                    }
+                    doc = ProcessSection(doc, "Relationships", "~Relationships~", relationshipsDoc);
+                }
 
                 return doc;
             }
@@ -297,6 +308,74 @@ namespace SQL_Document_Builder
             // reserved for future use
             return string.Empty;
 
+        }
+
+        /// <summary>
+        /// Gets the relationships body.
+        /// </summary>
+        /// <param name="objectName">The object name.</param>
+        /// <param name="relationItemTemplate">The relation item template.</param>
+        /// <returns>A string.</returns>
+        private static async Task<string> GetRelationshipsBody(ObjectName objectName, string relationItemTemplate, DatabaseConnectionItem connection)
+        {
+            if(connection.DBMSType != DBMSTypeEnums.SQLServer || objectName == null || string.IsNullOrEmpty(relationItemTemplate))
+            {
+                return string.Empty;
+            }
+
+            string query = $@"SELECT 
+    fk.name AS ForeignKeyName,
+    OBJECT_SCHEMA_NAME(fk.parent_object_id) AS FromSchema,
+    OBJECT_NAME(fk.parent_object_id) AS FromTable,
+    c1.name AS FromColumn,
+    OBJECT_SCHEMA_NAME(fk.referenced_object_id) AS ToSchema,
+    OBJECT_NAME(fk.referenced_object_id) AS ToTable,
+    c2.name AS ToColumn,
+    fk.delete_referential_action_desc AS OnDelete,
+    fk.update_referential_action_desc AS OnUpdate
+FROM sys.foreign_keys fk
+INNER JOIN sys.foreign_key_columns fkc 
+    ON fk.object_id = fkc.constraint_object_id
+INNER JOIN sys.columns c1 
+    ON fkc.parent_object_id = c1.object_id AND fkc.parent_column_id = c1.column_id
+INNER JOIN sys.columns c2 
+    ON fkc.referenced_object_id = c2.object_id AND fkc.referenced_column_id = c2.column_id
+WHERE (OBJECT_SCHEMA_NAME(fk.parent_object_id) = N'{objectName.Schema}' AND OBJECT_NAME(fk.parent_object_id) = N'{objectName.Name}')
+   OR (OBJECT_SCHEMA_NAME(fk.referenced_object_id) = N'{objectName.Schema}' AND OBJECT_NAME(fk.referenced_object_id) = N'{objectName.Name}')
+ORDER BY ForeignKeyName, fkc.constraint_column_id";
+
+            var dt = await SQLDatabaseHelper.GetDataTableAsync(query, connection.ConnectionString);
+
+            if(dt?.Rows.Count > 0)
+            {
+                var sb = new StringBuilder();
+                foreach (DataRow dr in dt.Rows)
+                {
+                    string foreignKeyName = dr["ForeignKeyName"].ToString() ?? string.Empty;
+                    string fromSchema = dr["FromSchema"].ToString() ?? string.Empty;
+                    string fromTable = dr["FromTable"].ToString() ?? string.Empty;
+                    string fromColumn = dr["FromColumn"].ToString() ?? string.Empty;
+                    string toSchema = dr["ToSchema"].ToString() ?? string.Empty;
+                    string toTable = dr["ToTable"].ToString() ?? string.Empty;
+                    string toColumn = dr["ToColumn"].ToString() ?? string.Empty;
+                    string onDelete = dr["OnDelete"].ToString() ?? "NO ACTION";
+                    string onUpdate = dr["OnUpdate"].ToString() ?? "NO ACTION";
+                    string relationDoc = relationItemTemplate
+                        .Replace("~ForeignKeyName~", foreignKeyName)
+                        .Replace("~FromSchema~", fromSchema)
+                        .Replace("~FromTable~", fromTable)
+                        .Replace("~FromColumn~", fromColumn)
+                        .Replace("~ToSchema~", toSchema)
+                        .Replace("~ToTable~", toTable)
+                        .Replace("~ToColumn~", toColumn)
+                        .Replace("~OnDelete~", onDelete)
+                        .Replace("~OnUpdate~", onUpdate);
+                    sb.AppendLine(relationDoc);
+                }
+                return sb.ToString();
+
+            }
+            return string.Empty;
         }
 
         /// <summary>

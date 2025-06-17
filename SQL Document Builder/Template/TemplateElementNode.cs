@@ -110,6 +110,13 @@ namespace SQL_Document_Builder.Template
                     ToolTipText = "Template for each data table cell (e.g., for value list of data table/view or query results)";
                     break;
 
+                case TemplateElementType.Relationships:
+                    Text = "Relationships";
+                    ToolTipText = "Relationships template";
+                    // add the relationship row template node
+                    Nodes.Add(new TemplateElementNode(templateItem, TemplateElementNode.TemplateElementType.RelationshipRow));
+                    break;
+
                 default:
                     throw new ArgumentOutOfRangeException(nameof(elementType), elementType, null);
             }
@@ -134,7 +141,9 @@ namespace SQL_Document_Builder.Template
             DataTable,
             DataTableRow,
             DataTableHeaderCell,
-            DataTableCell
+            DataTableCell,
+            Relationships,
+            RelationshipRow
         }
 
         /// <summary>
@@ -161,7 +170,8 @@ namespace SQL_Document_Builder.Template
                     TemplateElementType.DataTableHeaderCell => Template.DataTable.HeaderCell ?? "",
                     TemplateElementType.DataTableCell => Template.DataTable.Cell ?? "",
                     TemplateElementType.Triggers => Template.Triggers ?? "",
-                    // Placeholder, as Triggers are not defined in the TemplateItem
+                    TemplateElementType.Relationships => Template.Relationships?.Body ?? "",
+                    TemplateElementType.RelationshipRow => Template.Relationships?.RelationshipRow ?? "",
                     _ => "",
                 };
             }
@@ -244,6 +254,16 @@ namespace SQL_Document_Builder.Template
 
                     case TemplateElementType.Triggers:
                         Template.Triggers = value ?? "";
+                        break;
+
+                    case TemplateElementType.Relationships:
+                        if (Template.Relationships != null)
+                            Template.Relationships.Body = value ?? "";
+                        break;
+
+                    case TemplateElementType.RelationshipRow:
+                        if (Template.Relationships != null)
+                            Template.Relationships.RelationshipRow = value ?? "";
                         break;
 
                     default:

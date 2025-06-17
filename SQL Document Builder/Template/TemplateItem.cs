@@ -8,7 +8,6 @@
     /// </remarks>
     public partial class TemplateItem(TemplateItem.ObjectTypeEnums objectType)
     {
-
         /// <summary>
         /// The object type enums.
         /// </summary>
@@ -68,6 +67,10 @@
         /// Gets the triggers template.
         /// </summary>
         public string Triggers { get; set; } = string.Empty;
-    }
 
+        /// <summary>
+        /// Gets or sets the relationships.
+        /// </summary>
+        public RelationshipTemplate Relationships { get; set; } = new RelationshipTemplate();
+    }
 }

@@ -28,6 +28,11 @@ namespace SQL_Document_Builder.Template
             _templates.Load();
         }
 
+        /// <summary>
+        /// Gets or sets the current doc type.
+        /// </summary>
+        public string CurrentDocType { get; set; } = string.Empty;
+
         ///// <summary>
         ///// Gets or sets the document type.
         ///// </summary>
@@ -202,59 +207,6 @@ namespace SQL_Document_Builder.Template
             }
         }
 
-        /*
-        /// <summary>
-        /// Populates the keywords menu items.
-        /// </summary>
-        private void PopulateKeywordsMenuItems()
-        {
-            // Define the keywords and their descriptions
-            var keywords = new (string Keyword, string Description)[]
-            {
-                ("~Align~", "Alignment"),
-                ("~Cell~", "Table cell"),
-                ("~ColumnDataType~", "Column data type"),
-                ("~ColumnDescription~", "Column description"),
-                ("~ColumnItem~", "Column row"),
-                ("~ColumnName~", "Column name"),
-                ("~ColumnNullable~", "Column nullable"),
-                ("~ColumnOrd~", "Column ordinal position"),
-                ("~Columns~", "Column definition section"),
-                ("~ConstraintColumn~", "Constraint column"),
-                ("~ConstraintItem~", "Constraint item"),
-                ("~ConstraintName~", "Constraint name"),
-                ("~Constraints~", "Constraints section"),
-                ("~ConstraintType~", "Constraint type"),
-                ("~Definition~", "Object definition (source code)"),
-                ("~Description~", "Object description"),
-                ("~Header~", "Data table header section"),
-                ("~HeaderCell~", "Data table header cell"),
-                ("~IndexColumns~", "Index columns"),
-                ("~Indexes~", "Index section"),
-                ("~IndexItem~", "Index items"),
-                ("~IndexName~", "Index name"),
-                ("~IndexType~", "Index type"),
-                ("~ObjectFullName~", "Object full name"),
-                ("~ObjectItem~", "Object list item"),
-                ("~ObjectName~", "Object name"),
-                ("~ObjectSchema~", "Object schema"),
-                ("~ObjectType~", "Object type"),
-                ("~ParameterDataType~", "Parameter data type"),
-                ("~ParameterDescription~", "Parameter description"),
-                ("~ParameterDirection~", "Parameter direction"),
-                ("~ParameterItem~", "Parameter items"),
-                ("~ParameterName~", "Parameter name"),
-                ("~ParameterOrd~", "Parameter ordinal position"),
-                ("~Parameters~", "Parameter section"),
-                ("~Row~", "Data row"),
-                ("~Rows~", "Data rows sections"),
-                ("~UniqueIndex~", "Unique index indicator"),
-            };
-
-            PopulateKeywords(keywords);
-        }
-        */
-
         /// <summary>
         /// Handles the Click event of the UndoToolStripMenuItem control:
         /// </summary>
@@ -359,9 +311,16 @@ namespace SQL_Document_Builder.Template
 
             _init = false;
 
+            int selectedIndex = docTypeToolStripComboBox.Items.IndexOf(CurrentDocType);
+            if(selectedIndex < 0)
+            {
+                // If the current document type is not found, default to the first item
+                selectedIndex = 0;
+            }
+
             if (docTypeToolStripComboBox.Items.Count > 0)
             {
-                docTypeToolStripComboBox.SelectedIndex = 0; // Set default selection to the first item
+                docTypeToolStripComboBox.SelectedIndex = selectedIndex;
             }
         }
 
@@ -409,12 +368,14 @@ namespace SQL_Document_Builder.Template
                     ("~ObjectName~", "Object name"),
                     ("~ObjectSchema~", "Object schema"),
                     ("~ObjectType~", "Object type"),
+                    ("~Relationships~", "Object relationships"),
                     ("~TableValues~", "Table values"),
                     ("~Triggers~", "Table triggers"),
                     ("<!-- SECTION:Columns --><!-- ENDSECTION:Columns -->", "Columns spacehold"),
                     ("<!-- SECTION:Constraints --><!-- ENDSECTION:Constraints -->", "Constraints spacehold"),
                     ("<!-- SECTION:Description --><!-- ENDSECTION:Description -->", "Description spacehold"),
                     ("<!-- SECTION:Indexes --><!-- ENDSECTION:Indexes -->", "Indexes spacehold"),
+                    ("<!-- SECTION:Relationships --><!-- ENDSECTION:Relationships -->", "Relationships spacehold"),
                     ("<!-- SECTION:TableValues --><!-- ENDSECTION:TableValues -->", "Table Values spacehold"),
                     ("<!-- SECTION:Triggers --><!-- ENDSECTION:Triggers -->", "Triggers spacehold"),
                 ],

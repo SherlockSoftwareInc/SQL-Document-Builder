@@ -1640,7 +1640,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void ManageTemplateToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            using var templateEditor = new TemplateEditor();
+            using var templateEditor = new TemplateEditor() { CurrentDocType = docTypeToolStripComboBox.Text };
             templateEditor.ShowDialog(this);
             PopulateDocumentType();
         }
@@ -2784,7 +2784,7 @@ namespace SQL_Document_Builder
             }
             Properties.Settings.Default.LeftSplitterDistance = splitContainer1.SplitterDistance;
             Properties.Settings.Default.RightSplitterDistance = defiCollapsibleSplitter.SplitterDistance;
-            Properties.Settings.Default.UseQuotedIdentifier = quotedIDCheckBox.Checked ;
+            Properties.Settings.Default.UseQuotedIdentifier = quotedIDCheckBox.Checked;
             //Properties.Settings.Default.SchemaSettings = _settingItems.Settings;
             //Properties.Settings.Default.Templetes = templates.TemplatesValue;
             Properties.Settings.Default.Save();
