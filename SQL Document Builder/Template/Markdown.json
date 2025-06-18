@@ -1,0 +1,82 @@
+[
+  {
+    "ObjectType": 0,
+    "Body": "# Table: \u0060~ObjectFullName~\u0060\r\n\u003C!-- SECTION:Description --\u003E\u003E ~Description~\u003C!-- ENDSECTION:Description --\u003E\r\n\r\n**Columns:**\r\n~Columns~\r\n\r\n\u003C!-- SECTION:Indexes --\u003E**Indexes:**\r\n~Indexes~\u003C!-- ENDSECTION:Indexes --\u003E\r\n\r\n\u003C!-- SECTION:Constraints --\u003E**Constraints:**\r\n~Constraints~\u003C!-- ENDSECTION:Constraints --\u003E\r\n\r\n\u003C!-- SECTION:Triggers --\u003E**Triggers:**\r\n~Triggers~\u003C!-- ENDSECTION:Triggers --\u003E\r\n\r\n\u003C!-- SECTION:Relationships --\u003E**Relationships:**\r\n~Relationships~\u003C!-- ENDSECTION:Relationships --\u003E\r\n---\r\n",
+    "Columns": {
+      "Body": "| Ord | Name | Data Type | Description |\r\n|--------|------|-----------|-------------|\r\n~ColumnItem~",
+      "ColumnRow": "| ~ColumnOrd~ | \u0060~ColumnName~\u0060 | ~ColumnDataType~ | ~ColumnDescription~ |"
+    },
+    "Constraints": {
+      "Body": "| Constraint Name | Type | Column |\r\n|------------------|------|-------------|\r\n~ConstraintItem~",
+      "ConstraintRow": "| \u0060~ConstraintName~\u0060 | ~ConstraintType~ | ~ConstraintColumn~ |"
+    },
+    "Indexes": {
+      "Body": "| Index Name | Type | Columns | Unique |\r\n|------------|------|---------|--------|\r\n~IndexItem~",
+      "IndexRow": "| \u0060~IndexName~\u0060 | ~IndexType~ | ~IndexColumns~ | ~UniqueIndex~ |"
+    },
+    "Triggers": "### Trigger Name: \u0060~TriggerName~\u0060\r\n### Trigger Type: ~TriggerType~\r\n\r\n## Trigger SQL Code\r\n\u0060\u0060\u0060sql\r\n~Definition~\r\n\u0060\u0060\u0060\r\n",
+    "Relationships": {
+      "Body": "| Foreign Key Name | From Schema | From Table | From Column | To Schema | To Table | To Column | On Delete | On Update | \r\n|----------------|-------------|------------|-------------|------------|----------|-----------|-----------|-----------|\r\n~RelationshipItem~",
+      "RelationshipRow": "| \u0027~ForeignKeyName~\u0027 | ~FromSchema~ | ~FromTable~ | ~FromColumn~ | ~ToSchema~ | ~ToTable~ | ~ToColumn~ | ~OnDelete~ | ~OnUpdate~ |"
+    }
+  },
+  {
+    "ObjectType": 1,
+    "Body": "# View: \u0060~ObjectFullName~\u0060\r\n\r\n\u003C!-- SECTION:Description --\u003E\u003E ~Description~\u003C!-- ENDSECTION:Description --\u003E\r\n\r\n**Columns:**\r\n~Columns~\r\n\r\n\u003C!-- SECTION:Indexes --\u003E**Indexes:**\r\n~Indexes~\u003C!-- ENDSECTION:Indexes --\u003E\r\n\r\n**SQL Definition:**\r\n\u0060\u0060\u0060sql\r\n~Definition~\r\n\u0060\u0060\u0060\r\n\r\n\u003C!-- SECTION:Triggers --\u003E**Triggers:**\r\n~Triggers~\u003C!-- ENDSECTION:Triggers --\u003E\r\n---\r\n",
+    "Columns": {
+      "Body": "| Ord | Name | Data Type | Description |\r\n|--------|------|-----------|-------------|\r\n~ColumnItem~",
+      "ColumnRow": "| ~ColumnOrd~ | \u0060~ColumnName~\u0060 | ~ColumnDataType~ | ~ColumnDescription~ |"
+    },
+    "Indexes": {
+      "Body": "| Index Name | Type | Columns | Unique |\r\n|------------|------|---------|--------|\r\n~IndexItem~",
+      "IndexRow": "| \u0060~IndexName~\u0060 | ~IndexType~ | ~IndexColumns~ | ~UniqueIndex~ |"
+    },
+    "Triggers": "# Trigger: \u0060~TriggerName~\u0060\r\n\r\n\u003C!-- SECTION:Description --\u003E\u003E ~Description~\u003C!-- ENDSECTION:Description --\u003E\r\n\r\n## SQL Code\r\n\u0060\u0060\u0060sql\r\n~Definition~\r\n\u0060\u0060\u0060\r\n---\r\n",
+    "Relationships": {
+      "Body": "",
+      "RelationshipRow": ""
+    }
+  },
+  {
+    "ObjectType": 2,
+    "Body": "# Function: \u0060~ObjectFullName~\u0060\r\n\r\n\u003C!-- SECTION:Description --\u003E\u003E ~Description~\u003C!-- ENDSECTION:Description --\u003E\r\n\r\n\u003C!-- SECTION:Parameters --\u003E**Parameters:**\r\n~Parameters~\u003C!-- ENDSECTION:Parameters --\u003E\r\n\r\n## SQL Code\r\n\u0060\u0060\u0060sql\r\n~Definition~\r\n\u0060\u0060\u0060\r\n---\r\n",
+    "Parameters": {
+      "Body": "| Ord | Name | Data Type | Direction | Description |\r\n|-----|------|-----------|-----------|-------------|\r\n~ParameterItem~",
+      "ParameterRow": "| ~ParameterOrd~ | \u0060~ParameterName~\u0060 | ~ParameterDataType~ | ~ParameterDirection~ | ~ParameterDescription~ |"
+    }
+  },
+  {
+    "ObjectType": 3,
+    "Body": "# Stored Procedure: \u0060~ObjectFullName~\u0060\r\n\r\n\u003C!-- SECTION:Description --\u003E\u003E ~Description~\u003C!-- ENDSECTION:Description --\u003E\r\n\r\n\u003C!-- SECTION:Parameters --\u003E##Parameters:\r\n~Parameters~\u003C!-- ENDSECTION:Parameters --\u003E\r\n\r\n## SQL Code\r\n\u0060\u0060\u0060sql\r\n~Definition~\r\n\u0060\u0060\u0060\r\n---\r\n",
+    "Parameters": {
+      "Body": "| Ord | Name | Data Type | Direction | Description |\r\n|-----|------|-----------|-----------|-------------|\r\n~ParameterItem~",
+      "ParameterRow": "| ~ParameterOrd~ | \u0060~ParameterName~\u0060 | ~ParameterDataType~ | ~ParameterDirection~ | ~ParameterDescription~ |"
+    }
+  },
+  {
+    "ObjectType": 4,
+    "Body": "# Trigger: \u0060~TriggerName~\u0060\r\n\r\n\u003C!-- SECTION:Description --\u003E\u003E ~Description~\u003C!-- ENDSECTION:Description --\u003E\r\n\r\n## Trigger type: ~TriggerType~\r\n\r\n## Trigger SQL Code\r\n\u0060\u0060\u0060sql\r\n~Definition~\r\n\u0060\u0060\u0060\r\n"
+  },
+  {
+    "ObjectType": 5,
+    "Body": "| Schema | Name | Description |\r\n|--------|------|-------------|\r\n~ObjectItem~",
+    "ObjectLists": {
+      "Body": "",
+      "ObjectRow": "| ~ObjectSchema~ | \u0060~ObjectName~\u0060 | ~Description~ |"
+    }
+  },
+  {
+    "ObjectType": 6,
+    "Body": "| ~Header~ |\r\n| ~Align~ |\r\n~Rows~",
+    "DataTable": {
+      "Body": "",
+      "DataRow": "| ~Row~ |",
+      "HeaderCell": "~HeaderCell~",
+      "Cell": "~Cell~"
+    }
+  },
+  {
+    "ObjectType": 7,
+    "Body": "# Synonym: \u0060~ObjectFullName~\u0060\r\n\r\n\u003C!-- SECTION:Description --\u003E\u003E ~Description~\u003C!-- ENDSECTION:Description --\u003E\r\n\r\n### Base Object Name: ~BaseObjectName~\r\n### Base Object Type: ~BaseObjectType~\r\n"
+  }
+]

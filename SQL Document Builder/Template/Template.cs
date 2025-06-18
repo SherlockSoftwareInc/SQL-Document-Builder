@@ -187,13 +187,40 @@ namespace SQL_Document_Builder.Template
         /// <summary>
         /// Resets the.
         /// </summary>
-        /// <param name="templateJson">The json string of the template.</param>
-        internal bool Reset(string templateJson)
+        /// <param name="documentType">The type of document.</param>
+        internal bool Reset(string documentType)
         {
-            // Load the JSON file into TemplateLists
-            TemplateLists.Clear();
+            if (string.IsNullOrWhiteSpace(documentType))
+            {
+                return false; // Return false if documentType is null or empty
+            }
+
             try
             {
+                string templateFolder = Path.Combine(AppContext.BaseDirectory, "Template");
+                if (!Directory.Exists(templateFolder))
+                {
+                    return false; // Template folder does not exist
+                }
+
+                // Use the document type as the file name, e.g., "SharePoint.json"
+                string templateFileName = $"{documentType}.json";
+                string templateFilePath = Path.Combine(templateFolder, templateFileName);
+
+                if (!File.Exists(templateFilePath))
+                {
+                    return false; // Template file does not exist
+                }
+                // Read the template JSON file
+                string templateJson = File.ReadAllText(templateFilePath);
+
+                if (string.IsNullOrWhiteSpace(templateJson))
+                {
+                    return false; // Template JSON is empty or null
+                }
+
+                // Load the JSON file into TemplateLists
+                TemplateLists.Clear();
                 var templatesFromJson = System.Text.Json.JsonSerializer.Deserialize<List<TemplateItem>>(templateJson);
                 if (templatesFromJson != null)
                 {
@@ -203,6 +230,7 @@ namespace SQL_Document_Builder.Template
             }
             catch (Exception)
             {
+                // Optionally log the exception or handle it as needed
                 Load();
             }
             return false; // Failed to reset templates

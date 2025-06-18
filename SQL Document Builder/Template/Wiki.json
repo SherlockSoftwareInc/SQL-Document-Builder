@@ -1,0 +1,78 @@
+[
+  {
+    "ObjectType": 0,
+    "Body": "== Table: \u0060~ObjectFullName~\u0060\n\u003C!-- SECTION:Description --\u003E\u003E ~Description~\u003C!-- ENDSECTION:Description --\u003E\n\n\u0027\u0027\u0027Columns:\u0027\u0027\u0027\n~Columns~\n\n\u003C!-- SECTION:Indexes --\u003E\u0027\u0027\u0027Indexes:\u0027\u0027\u0027\n~Indexes~\u003C!-- ENDSECTION:Indexes --\u003E\n\n\u003C!-- SECTION:Constraints --\u003E\u0027\u0027\u0027Constraints:\u0027\u0027\u0027\n~Constraints~\u003C!-- ENDSECTION:Constraints --\u003E\n\n\u003C!-- SECTION:Triggers --\u003E\u0027\u0027\u0027Triggers:\u0027\u0027\u0027\n~Triggers~\u003C!-- ENDSECTION:Triggers --\u003E\n\n\u003C!-- SECTION:Relationships --\u003E\u0027\u0027\u0027Relationships:\u0027\u0027\u0027\n~Relationships~\u003C!-- ENDSECTION:Relationships --\u003E\n---\n",
+    "Columns": {
+      "Body": "| Ord | Name | Data Type | Description |\n|--------|------|-----------|-------------|\n~ColumnItem~",
+      "ColumnRow": "| ~ColumnOrd~ | \u0060~ColumnName~\u0060 | ~ColumnDataType~ | ~ColumnDescription~ |"
+    },
+    "Constraints": {
+      "Body": "| Constraint Name | Type | Column |\n|------------------|------|-------------|\n~ConstraintItem~",
+      "ConstraintRow": "| \u0060~ConstraintName~\u0060 | ~ConstraintType~ | ~ConstraintColumn~ |"
+    },
+    "Indexes": {
+      "Body": "| Index Name | Type | Columns | Unique |\n|------------|------|---------|--------|\n~IndexItem~",
+      "IndexRow": "| \u0060~IndexName~\u0060 | ~IndexType~ | ~IndexColumns~ | ~UniqueIndex~ |"
+    },
+    "Triggers": "##== Trigger Name: \u0060~TriggerName~\u0060\n##== Trigger Type: ~TriggerType~\n\n#== SQL Code\n\u003Csyntaxhighlight lang=\u0027sql\u0027\u003E\n~Definition~\n\u003C/syntaxhighlight\u003E\n",
+    "Relationships": {
+      "Body": "| Foreign Key Name | From Schema | From Table | From Column | To Schema | To Table | To Column | On Delete | On Update | \n|----------------|-------------|------------|-------------|------------|----------|-----------|-----------|-----------|\n~RelationshipItem~",
+      "RelationshipRow": "| \u0027~ForeignKeyName~\u0027 | ~FromSchema~ | ~FromTable~ | ~FromColumn~ | ~ToSchema~ | ~ToTable~ | ~ToColumn~ | ~OnDelete~ | ~OnUpdate~ |"
+    }
+  },
+  {
+    "ObjectType": 1,
+    "Body": "== View: \u0060~ObjectFullName~\u0060\n\n\u003C!-- SECTION:Description --\u003E\u003E ~Description~\u003C!-- ENDSECTION:Description --\u003E\n\n\u0027\u0027\u0027Columns:\u0027\u0027\u0027\n~Columns~\n\n\u003C!-- SECTION:Indexes --\u003E\u0027\u0027\u0027Indexes:\u0027\u0027\u0027\n~Indexes~\u003C!-- ENDSECTION:Indexes --\u003E\n\n\u0027\u0027\u0027SQL Definition:\u0027\u0027\u0027\n\u003Csyntaxhighlight lang=\u0027sql\u0027\u003E\n~Definition~\n\u003C/syntaxhighlight\u003E\n\n\u003C!-- SECTION:Triggers --\u003E\u0027\u0027\u0027Triggers:\u0027\u0027\u0027\n~Triggers~\u003C!-- ENDSECTION:Triggers --\u003E\n---\n",
+    "Columns": {
+      "Body": "| Ord | Name | Data Type | Description |\n|--------|------|-----------|-------------|\n~ColumnItem~",
+      "ColumnRow": "| ~ColumnOrd~ | \u0060~ColumnName~\u0060 | ~ColumnDataType~ | ~ColumnDescription~ |"
+    },
+    "Indexes": {
+      "Body": "| Index Name | Type | Columns | Unique |\n|------------|------|---------|--------|\n~IndexItem~",
+      "IndexRow": "| \u0060~IndexName~\u0060 | ~IndexType~ | ~IndexColumns~ | ~UniqueIndex~ |"
+    },
+    "Triggers": "== Trigger: \u0060~TriggerName~\u0060\n\n\u003C!-- SECTION:Description --\u003E\u003E ~Description~\u003C!-- ENDSECTION:Description --\u003E\n\n#== SQL Code\n\u003Csyntaxhighlight lang=\u0027sql\u0027\u003E\n~Definition~\n\u003C/syntaxhighlight\u003E\n---\n"
+  },
+  {
+    "ObjectType": 2,
+    "Body": "== Function: \u0060~ObjectFullName~\u0060\n\n\u003C!-- SECTION:Description --\u003E\u003E ~Description~\u003C!-- ENDSECTION:Description --\u003E\n\n\u003C!-- SECTION:Parameters --\u003E\u0027\u0027\u0027Parameters:\u0027\u0027\u0027\n~Parameters~\u003C!-- ENDSECTION:Parameters --\u003E\n\n#== SQL Code\n\u003Csyntaxhighlight lang=\u0027sql\u0027\u003E\n~Definition~\n\u003C/syntaxhighlight\u003E\n---\n",
+    "Parameters": {
+      "Body": "| Ord | Name | Data Type | Direction | Description |\n|-----|------|-----------|-----------|-------------|\n~ParameterItem~",
+      "ParameterRow": "| ~ParameterOrd~ | \u0060~ParameterName~\u0060 | ~ParameterDataType~ | ~ParameterDirection~ | ~ParameterDescription~ |"
+    }
+  },
+  {
+    "ObjectType": 3,
+    "Body": "== Stored Procedure: \u0060~ObjectFullName~\u0060\n\n\u003C!-- SECTION:Description --\u003E\u003E ~Description~\u003C!-- ENDSECTION:Description --\u003E\n\n\u003C!-- SECTION:Parameters --\u003E##Parameters:\n~Parameters~\u003C!-- ENDSECTION:Parameters --\u003E\n\n#== SQL Code\n\u003Csyntaxhighlight lang=\u0027sql\u0027\u003E\n~Definition~\n\u003C/syntaxhighlight\u003E\n---\n",
+    "Parameters": {
+      "Body": "| Ord | Name | Data Type | Direction | Description |\n|-----|------|-----------|-----------|-------------|\n~ParameterItem~",
+      "ParameterRow": "| ~ParameterOrd~ | \u0060~ParameterName~\u0060 | ~ParameterDataType~ | ~ParameterDirection~ | ~ParameterDescription~ |"
+    }
+  },
+  {
+    "ObjectType": 4,
+    "Body": "== Trigger: \u0060~ObjectName~\u0060\n\n\u003C!-- SECTION:Description --\u003E\u003E ~Description~\u003C!-- ENDSECTION:Description --\u003E\n\n#== Trigger type: ~TriggerType~\n\n#== Trigger SQL Code\n\u003Csyntaxhighlight lang=\u0027sql\u0027\u003E\n~Definition~\n\u003C/syntaxhighlight\u003E\n"
+  },
+  {
+    "ObjectType": 5,
+    "Body": "| Schema | Name | Description |\n|--------|------|-------------|\n~ObjectItem~",
+    "ObjectLists": {
+      "Body": "",
+      "ObjectRow": "| ~ObjectSchema~ | \u0060~ObjectName~\u0060 | ~Description~ |"
+    }
+  },
+  {
+    "ObjectType": 6,
+    "Body": "| ~Header~ |\n| ~Align~ |\n~Rows~",
+    "DataTable": {
+      "Body": "",
+      "DataRow": "| ~Row~ |",
+      "HeaderCell": "~HeaderCell~",
+      "Cell": "~Cell~"
+    }
+  },
+  {
+    "ObjectType": 7,
+    "Body": "== Synonym: \u0060~ObjectFullName~\u0060\n\n\u003C!-- SECTION:Description --\u003E\u003E ~Description~\u003C!-- ENDSECTION:Description --\u003E\n\n##== Base Object Name: ~BaseObjectName~\n##== Base Object Type: ~BaseObjectType~\n"
+  }
+]

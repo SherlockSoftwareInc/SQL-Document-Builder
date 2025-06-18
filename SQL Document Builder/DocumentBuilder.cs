@@ -204,6 +204,7 @@ namespace SQL_Document_Builder
                 doc = doc.Replace("~ObjectSchema~", useQuotedId? objectName.Schema : objectName.Schema.RemoveQuote());
                 doc = doc.Replace("~ObjectFullName~", useQuotedId ? objectName.FullName : objectName.FullNameNoQuote);
                 doc = doc.Replace("~ObjectType~", ObjectTypeToString(objectName.ObjectType));
+                doc = doc.Replace("~TriggerName~", useQuotedId ? objectName.Name : objectName.Name.RemoveQuote());
 
                 //doc = doc.Replace("~Description~", tableView.Description.Length == 0 ? " " : tableView.Description);
                 doc = ProcessSection(doc, "Description", "~Description~", tableView.Description.Length == 0 ? " " : tableView.Description);
@@ -309,6 +310,17 @@ namespace SQL_Document_Builder
                 {
                     string triggersDoc = await GetObjectTriggersAsync(objectName, connection, template.Triggers?? "");
                     doc = ProcessSection(doc, "Triggers", "~Triggers~", triggersDoc);
+                }
+
+                // trigger type
+                if (doc.Contains("~TriggerType~"))
+                {
+                    string triggerType = await GetTriggerTypeAsync(objectName, connection);
+                    if (string.IsNullOrEmpty(triggerType))
+                    {
+                        triggerType = "UNKNOWN";
+                    }
+                    doc = doc.Replace("~TriggerType~", triggerType);
                 }
 
                 // relationships
@@ -516,6 +528,44 @@ ORDER BY tr.name";
                 }
 
                 return sb.ToString();
+            }
+
+            // reserved for future use
+            return string.Empty;
+        }
+
+        /// <summary>
+        /// Gets the trigger type async.
+        /// </summary>
+        /// <param name="objectName">The object name.</param>
+        /// <param name="connection">The connection.</param>
+        /// <returns>A Task.</returns>
+        private static async Task<string> GetTriggerTypeAsync(ObjectName objectName, DatabaseConnectionItem? connection)
+        {
+            if (objectName == null || connection == null)
+            {
+                return string.Empty;
+            }
+
+            if (connection.DBMSType == DBMSTypeEnums.SQLServer)
+            {
+                // Query to get the trigger type for the specified trigger name
+                string sql = $@"
+SELECT 
+    CASE 
+        WHEN t.parent_class_desc = 'DATABASE' THEN 'DDL Trigger'
+        WHEN t.is_instead_of_trigger = 1 THEN 'INSTEAD OF Trigger'
+        ELSE 'AFTER Trigger'
+    END AS TriggerType
+FROM sys.triggers t
+JOIN sys.objects o ON t.object_id = o.object_id
+WHERE t.name = N'{objectName.Name}'";
+
+                var triggerType = await SQLDatabaseHelper.ExecuteScalarAsync(sql, connection.ConnectionString);
+                if (triggerType == null)
+                    return string.Empty;
+
+                return triggerType.ToString(); 
             }
 
             // reserved for future use

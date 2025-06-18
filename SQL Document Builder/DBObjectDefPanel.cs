@@ -176,6 +176,8 @@ namespace SQL_Document_Builder
             titleLabel.Text = (columnView.TableType == ObjectName.ObjectTypeEnums.View ? "View: " : "Table: ") + columnView.TableFullName;
             columnNameLabel.Text = string.Empty;
             descTextBox.Text = columnView.TableDescription;
+            // clear the modify flag of the descTextBox
+            descTextBox.Modified = false;
             _descChanged = false;
         }
 

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Data.SqlClient;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -187,10 +188,161 @@ END;";
         }
 
         /// <summary>
+        /// Updates the table desc async.
+        /// </summary>
+        /// <param name="newDescription">The new description.</param>
+        /// <returns>A Task.</returns>
+        public async Task UpdateTableDescAsync(string newDescription)
+        {
+            Description = newDescription;
+
+            if (string.IsNullOrEmpty(_connectionString) || ObjectName.IsEmpty()) return;
+
+            if (!ObjectName.IsEmpty())
+            {
+                string newDesc = (newDescription ?? string.Empty).Replace("'", "''");
+
+                string level1type;
+                string level1name;
+                string level2type = null;
+                string level2name = null;
+
+                switch (ObjectName.ObjectType)
+                {
+                    case ObjectTypeEnums.Table:
+                        level1type = "TABLE";
+                        level1name = ObjectName.Name;
+                        break;
+                    case ObjectTypeEnums.View:
+                        level1type = "VIEW";
+                        level1name = ObjectName.Name;
+                        break;
+                    case ObjectTypeEnums.StoredProcedure:
+                        level1type = "PROCEDURE";
+                        level1name = ObjectName.Name;
+                        break;
+                    case ObjectTypeEnums.Function:
+                        level1type = "FUNCTION";
+                        level1name = ObjectName.Name;
+                        break;
+                    case ObjectTypeEnums.Trigger:
+                        var (triggerParent, parentType) = await GetTriggerParentAsync(ObjectName.Name, Connection);
+                        level1type = parentType;
+                        level1name = triggerParent;
+                        level2type = "TRIGGER";
+                        level2name = ObjectName.Name;
+                        break;
+                    case ObjectTypeEnums.Synonym:
+                        level1type = "SYNONYM";
+                        level1name = ObjectName.Name;
+                        break;
+                    default:
+                        throw new InvalidOperationException("Unsupported object type for description update.");
+                }
+
+                string level2Clause = (level2type != null)
+                    ? $", @level2type = N'{level2type}', @level2name = N'{level2name}'"
+                    : string.Empty;
+
+                string query;
+                if (string.IsNullOrEmpty(newDescription))
+                {
+                    query = $@"IF EXISTS (
+    SELECT 1
+      FROM sys.extended_properties
+     WHERE class = 1 AND major_id = OBJECT_ID(N'{ObjectName.FullName}')
+       AND minor_id = 0
+       AND name = 'MS_Description')
+    BEGIN
+        EXEC sys.sp_dropextendedproperty
+@name = N'MS_Description',
+@level0type = N'SCHEMA', @level0name = N'{ObjectName.Schema}',
+@level1type = N'{level1type}', @level1name = N'{level1name}'{level2Clause};
+    END;";
+                }
+                else
+                {
+                    query = $@"IF EXISTS (
+    SELECT 1
+      FROM sys.extended_properties
+     WHERE class = 1 AND major_id = OBJECT_ID(N'{ObjectName.FullName}')
+       AND minor_id = 0
+       AND name = 'MS_Description')
+    BEGIN
+        EXEC sys.sp_updateextendedproperty
+            @name = N'MS_Description',
+            @value = N'{newDesc}',
+            @level0type = N'SCHEMA', @level0name = N'{ObjectName.Schema}',
+            @level1type = N'{level1type}', @level1name = N'{level1name}'{level2Clause};
+    END
+    ELSE
+    BEGIN
+        EXEC sys.sp_addextendedproperty
+            @name = N'MS_Description',
+            @value = N'{newDesc}',
+            @level0type = N'SCHEMA', @level0name = N'{ObjectName.Schema}',
+            @level1type = N'{level1type}', @level1name = N'{level1name}'{level2Clause};
+    END";
+                }
+
+                var result = await SQLDatabaseHelper.ExecuteSQLAsync(query, _connectionString);
+                if (!string.IsNullOrEmpty(result))
+                {
+                    Common.MsgBox("Failed to update object description." + Environment.NewLine + result, MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets the trigger parent async.
+        /// </summary>
+        /// <param name="triggerName">The trigger name.</param>
+        /// <param name="connectionString">The connection string.</param>
+        /// <returns>A Task.</returns>
+        private async Task<(string TriggerParent, string ParentType)> GetTriggerParentAsync(string triggerName, DatabaseConnectionItem connection)
+        {
+            string triggerParent = null;
+            string parentType = null;
+
+            string query = @"
+SELECT 
+    o.name AS ParentName,
+    o.type_desc AS ParentType
+FROM sys.triggers t
+INNER JOIN sys.objects o ON t.parent_id = o.object_id
+WHERE t.name = @TriggerName;";
+
+            using (var conn = new SqlConnection(connection.ConnectionString))
+            using (var cmd = new SqlCommand(query, conn))
+            {
+                cmd.Parameters.AddWithValue("@TriggerName", triggerName);
+
+                await conn.OpenAsync();
+                using (var reader = await cmd.ExecuteReaderAsync())
+                {
+                    if (await reader.ReadAsync())
+                    {
+                        triggerParent = reader["ParentName"]?.ToString();
+                        var typeDesc = reader["ParentType"]?.ToString();
+
+                        parentType = typeDesc switch
+                        {
+                            "USER_TABLE" => "TABLE",
+                            "VIEW" => "VIEW",
+                            _ => "UNKNOWN"
+                        };
+                    }
+                }
+            }
+
+            return (triggerParent, parentType);
+        }
+
+        /// <summary>
         /// Updates the table desc.
         /// </summary>
         /// <param name="newDescription">The description.</param>
-        public async Task UpdateTableDescAsync(string newDescription)
+        public async Task UpdateTableDescAsync1(string newDescription)
         {
             Description = newDescription;
 
@@ -901,11 +1053,97 @@ AND t.name = N'{objectName.Name}'";
             }
         }
 
+
         /// <summary>
         /// Gets the object description async.
         /// </summary>
         /// <returns>A Task.</returns>
         private async Task<string> GetObjectDescriptionAsync()
+        {
+            string result = string.Empty;
+
+            if (ObjectName != null)
+            {
+                try
+                {
+                    string sql = string.Empty;
+
+                    switch (ObjectName.ObjectType)
+                    {
+                        case ObjectTypeEnums.Table:
+                            sql = $@"
+SELECT value 
+FROM fn_listextendedproperty (
+    NULL, 'schema', '{ObjectName.Schema}', 'table', '{ObjectName.Name}', default, default
+)
+WHERE name = N'MS_Description'";
+                            break;
+
+                        case ObjectTypeEnums.View:
+                            sql = $@"
+SELECT value 
+FROM fn_listextendedproperty (
+    NULL, 'schema', '{ObjectName.Schema}', 'view', '{ObjectName.Name}', default, default
+)
+WHERE name = N'MS_Description'";
+                            break;
+
+                        case ObjectTypeEnums.StoredProcedure:
+                            sql = $@"
+SELECT value 
+FROM fn_listextendedproperty (
+    NULL, 'schema', '{ObjectName.Schema}', 'procedure', '{ObjectName.Name}', default, default
+)
+WHERE name = N'MS_Description'";
+                            break;
+
+                        case ObjectTypeEnums.Function:
+                            sql = $@"
+SELECT value 
+FROM fn_listextendedproperty (
+    NULL, 'schema', '{ObjectName.Schema}', 'function', '{ObjectName.Name}', default, default
+)
+WHERE name = N'MS_Description'";
+                            break;
+
+                        case ObjectTypeEnums.Trigger:
+                            // Get trigger parent info
+                            var (parentName, parentType) = await GetTriggerParentAsync(ObjectName.Name, Connection);
+                            if (string.IsNullOrEmpty(parentName) || string.IsNullOrEmpty(parentType)) return string.Empty;
+
+                            sql = $@"
+SELECT value 
+FROM fn_listextendedproperty (
+    NULL, 'schema', '{ObjectName.Schema}', '{parentType.ToLower()}', '{parentName}', 'trigger', '{ObjectName.Name}'
+)
+WHERE name = N'MS_Description'";
+                            break;
+
+                        default:
+                            return string.Empty;
+                    }
+
+                    var returnValue = await SQLDatabaseHelper.ExecuteScalarAsync(sql, _connectionString);
+
+                    if (returnValue != null && returnValue != DBNull.Value)
+                    {
+                        result = returnValue.ToString() ?? string.Empty;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Common.MsgBox(ex.Message, MessageBoxIcon.Error);
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Gets the object description async.
+        /// </summary>
+        /// <returns>A Task.</returns>
+        private async Task<string> GetObjectDescriptionAsync1()
         {
             string result = string.Empty;
             if (ObjectName != null)
@@ -1062,7 +1300,7 @@ WHERE OBJECTPROPERTY(OBJECT_ID(CONSTRAINT_SCHEMA + '.' + CONSTRAINT_NAME), 'IsPr
         private async Task<bool> OpenTriggerAsync()
         {
             //get the object description and definition
-            //Description = await GetObjectDescriptionAsync();
+            Description = await GetObjectDescriptionAsync();
             Definition = await SQLDatabaseHelper.GetObjectDefinitionAsync(ObjectName, _connectionString);
 
             // Get the function parameters

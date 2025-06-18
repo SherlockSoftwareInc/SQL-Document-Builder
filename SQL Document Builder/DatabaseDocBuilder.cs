@@ -338,12 +338,12 @@ ORDER BY i.name";
         internal static string UspAddObjectDescription()
         {
             return $@"IF OBJECT_ID('dbo.usp_addupdateextendedproperty', 'P') IS NOT NULL
-	DROP PROCEDURE dbo.usp_addupdateextendedproperty;
+    DROP PROCEDURE dbo.usp_addupdateextendedproperty;
 GO
 /*
 The usp_addupdateextendedproperty is an extension of the native sp_addextendedproperty
 and sp_updateextendedproperty of SQL Server. Since sp_addextendedproperty can only be used to
-add ,and sp_updateextendedproperty can only be used to update, the usp_addupdateextendedproperty
+add, and sp_updateextendedproperty can only be used to update, the usp_addupdateextendedproperty
 combines them to ensure that the description of an object can be added to or updated at any time.
 */
 CREATE PROCEDURE dbo.usp_addupdateextendedproperty
@@ -359,39 +359,63 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    IF EXISTS (
-        SELECT 1
-        FROM fn_listextendedproperty (
-            @name,
-            @level0type, @level0name,
-            @level1type, @level1name,
-            @level2type, @level2name
+    BEGIN TRY
+        IF EXISTS (
+            SELECT 1
+            FROM fn_listextendedproperty (
+                @name,
+                @level0type, @level0name,
+                @level1type, @level1name,
+                @level2type, @level2name
+            )
         )
-    )
-    BEGIN
-		IF COALESCE(@value, '') = ''
-			EXEC sys.sp_dropextendedproperty
-				@name = @name,
-                @level0type = @level0type, @level0name = @level0name,
-                @level1type = @level1type, @level1name = @level1name,
-                @level2type = @level2type, @level2name = @level2name;
-		ELSE
-            EXEC sys.sp_updateextendedproperty
-                @name = @name,
-                @value = @value,
-                @level0type = @level0type, @level0name = @level0name,
-                @level1type = @level1type, @level1name = @level1name,
-                @level2type = @level2type, @level2name = @level2name;
-    END
-    ELSE
-    BEGIN
-        EXEC sys.sp_addextendedproperty
-            @name = @name,
-            @value = @value,
-            @level0type = @level0type, @level0name = @level0name,
-            @level1type = @level1type, @level1name = @level1name,
-            @level2type = @level2type, @level2name = @level2name;
-    END
+        BEGIN
+            IF COALESCE(@value, '') = ''
+            BEGIN
+                BEGIN TRY
+                    EXEC sys.sp_dropextendedproperty
+                        @name = @name,
+                        @level0type = @level0type, @level0name = @level0name,
+                        @level1type = @level1type, @level1name = @level1name,
+                        @level2type = @level2type, @level2name = @level2name;
+                END TRY
+                BEGIN CATCH
+                    -- Suppress errors, optionally log if desired
+                END CATCH
+            END
+            ELSE
+            BEGIN
+                BEGIN TRY
+                    EXEC sys.sp_updateextendedproperty
+                        @name = @name,
+                        @value = @value,
+                        @level0type = @level0type, @level0name = @level0name,
+                        @level1type = @level1type, @level1name = @level1name,
+                        @level2type = @level2type, @level2name = @level2name;
+                END TRY
+                BEGIN CATCH
+                    -- Suppress errors, optionally log if desired
+                END CATCH
+            END
+        END
+        ELSE
+        BEGIN
+            BEGIN TRY
+                EXEC sys.sp_addextendedproperty
+                    @name = @name,
+                    @value = @value,
+                    @level0type = @level0type, @level0name = @level0name,
+                    @level1type = @level1type, @level1name = @level1name,
+                    @level2type = @level2type, @level2name = @level2name;
+            END TRY
+            BEGIN CATCH
+                -- Suppress errors, optionally log if desired
+            END CATCH
+        END
+    END TRY
+    BEGIN CATCH
+        -- Top-level CATCH: suppress or handle unexpected errors in the procedure
+    END CATCH
 END;
 GO";
         }

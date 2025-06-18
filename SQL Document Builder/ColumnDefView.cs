@@ -287,7 +287,7 @@ GO
             }
 
             // save the description of the current object if modified
-            if (tableDescTextBox.Modified || _dbObject.ObjectType != ObjectName.ObjectTypeEnums.None)
+            if (tableDescTextBox.Modified && _dbObject.ObjectType != ObjectName.ObjectTypeEnums.None)
             {
                 await _dbObject.UpdateTableDescAsync(tableDescTextBox.Text);
             }
