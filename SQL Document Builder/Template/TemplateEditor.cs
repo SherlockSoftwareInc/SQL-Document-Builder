@@ -261,6 +261,13 @@ namespace SQL_Document_Builder.Template
             if (resetReset)
             {
                 MessageBox.Show("Template has been reset to the default.", "Reset Successful", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                if (_activeTemplate != null)
+                {
+                    templateTreeView.Open(_activeTemplate, _documentType);
+                }
+                // select the root node in the template tree view
+                templateTreeView.SelectedNode = templateTreeView.Nodes[0];
             }
             else
             {
