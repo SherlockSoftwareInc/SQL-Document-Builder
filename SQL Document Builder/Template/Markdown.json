@@ -1,7 +1,7 @@
 [
   {
     "ObjectType": 0,
-    "Body": "# Table: \u0060~ObjectFullName~\u0060\r\n\u003C!-- SECTION:Description --\u003E\u003E ~Description~\u003C!-- ENDSECTION:Description --\u003E\r\n\r\n**Columns:**\r\n~Columns~\r\n\r\n\u003C!-- SECTION:Indexes --\u003E**Indexes:**\r\n~Indexes~\u003C!-- ENDSECTION:Indexes --\u003E\r\n\r\n\u003C!-- SECTION:Constraints --\u003E**Constraints:**\r\n~Constraints~\u003C!-- ENDSECTION:Constraints --\u003E\r\n\r\n\u003C!-- SECTION:Triggers --\u003E**Triggers:**\r\n~Triggers~\u003C!-- ENDSECTION:Triggers --\u003E\r\n\r\n\u003C!-- SECTION:Relationships --\u003E**Relationships:**\r\n~Relationships~\u003C!-- ENDSECTION:Relationships --\u003E\r\n---\r\n",
+    "Body": "# Table: \u0060~ObjectFullName~\u0060\r\n\u003C!-- SECTION:Description --\u003E\u003E ~Description~\u003C!-- ENDSECTION:Description --\u003E\r\n\r\n### Columns:\r\n~Columns~\r\n\r\n\u003C!-- SECTION:Indexes --\u003E### Indexes:\r\n~Indexes~\u003C!-- ENDSECTION:Indexes --\u003E\r\n\r\n\u003C!-- SECTION:Constraints --\u003E### Constraints:\r\n~Constraints~\u003C!-- ENDSECTION:Constraints --\u003E\r\n\r\n\u003C!-- SECTION:Relationships --\u003E### Relationships:\r\n~Relationships~\u003C!-- ENDSECTION:Relationships --\u003E\r\n\r\n\u003C!-- SECTION:Triggers --\u003E### Triggers:\r\n~Triggers~\u003C!-- ENDSECTION:Triggers --\u003E\r\n---\r\n",
     "Columns": {
       "Body": "| Ord | Name | Data Type | Description |\r\n|--------|------|-----------|-------------|\r\n~ColumnItem~",
       "ColumnRow": "| ~ColumnOrd~ | \u0060~ColumnName~\u0060 | ~ColumnDataType~ | ~ColumnDescription~ |"
@@ -14,7 +14,7 @@
       "Body": "| Index Name | Type | Columns | Unique |\r\n|------------|------|---------|--------|\r\n~IndexItem~",
       "IndexRow": "| \u0060~IndexName~\u0060 | ~IndexType~ | ~IndexColumns~ | ~UniqueIndex~ |"
     },
-    "Triggers": "### Trigger Name: \u0060~TriggerName~\u0060\r\n### Trigger Type: ~TriggerType~\r\n\r\n## Trigger SQL Code\r\n\u0060\u0060\u0060sql\r\n~Definition~\r\n\u0060\u0060\u0060\r\n",
+    "Triggers": "**Trigger Name:** \u0060~TriggerName~\u0060\r\n\r\n**Trigger Type:** ~TriggerType~\r\n\r\n**Trigger SQL Code:**\r\n\u0060\u0060\u0060sql\r\n~Definition~\r\n\u0060\u0060\u0060",
     "Relationships": {
       "Body": "| Foreign Key Name | From Schema | From Table | From Column | To Schema | To Table | To Column | On Delete | On Update | \r\n|----------------|-------------|------------|-------------|------------|----------|-----------|-----------|-----------|\r\n~RelationshipItem~",
       "RelationshipRow": "| \u0027~ForeignKeyName~\u0027 | ~FromSchema~ | ~FromTable~ | ~FromColumn~ | ~ToSchema~ | ~ToTable~ | ~ToColumn~ | ~OnDelete~ | ~OnUpdate~ |"
@@ -31,11 +31,7 @@
       "Body": "| Index Name | Type | Columns | Unique |\r\n|------------|------|---------|--------|\r\n~IndexItem~",
       "IndexRow": "| \u0060~IndexName~\u0060 | ~IndexType~ | ~IndexColumns~ | ~UniqueIndex~ |"
     },
-    "Triggers": "# Trigger: \u0060~TriggerName~\u0060\r\n\r\n\u003C!-- SECTION:Description --\u003E\u003E ~Description~\u003C!-- ENDSECTION:Description --\u003E\r\n\r\n## SQL Code\r\n\u0060\u0060\u0060sql\r\n~Definition~\r\n\u0060\u0060\u0060\r\n---\r\n",
-    "Relationships": {
-      "Body": "",
-      "RelationshipRow": ""
-    }
+    "Triggers": "# Trigger: \u0060~TriggerName~\u0060\r\n\r\n\u003C!-- SECTION:Description --\u003E\u003E ~Description~\u003C!-- ENDSECTION:Description --\u003E\r\n\r\n## SQL Code\r\n\u0060\u0060\u0060sql\r\n~Definition~\r\n\u0060\u0060\u0060\r\n---"
   },
   {
     "ObjectType": 2,
