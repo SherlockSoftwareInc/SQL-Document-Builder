@@ -201,8 +201,8 @@ namespace SQL_Document_Builder
             var objects = new List<ObjectName>();
 
             var query = @"
-SELECT 
-    sch.name AS SchemaName, 
+SELECT
+    sch.name AS SchemaName,
     syn.name AS SynonymName
 FROM sys.synonyms syn
 INNER JOIN sys.schemas sch ON syn.schema_id = sch.schema_id
@@ -318,7 +318,7 @@ JOIN sys.schemas s ON o.schema_id = s.schema_id";
         /// <returns>A DataTable? .</returns>
         internal static async Task<DataTable?> GetDataTableAsync(string sql, string? connectionString)
         {
-            if(string.IsNullOrEmpty(connectionString) || string.IsNullOrEmpty(sql))
+            if (string.IsNullOrEmpty(connectionString) || string.IsNullOrEmpty(sql))
             {
                 return null;
             }
@@ -357,7 +357,7 @@ JOIN sys.schemas s ON o.schema_id = s.schema_id";
         /// <returns>A Task.</returns>
         internal static async Task<List<ObjectName>> GetFunctionsAsync(string? connectionString)
         {
-            if(string.IsNullOrEmpty(connectionString))
+            if (string.IsNullOrEmpty(connectionString))
             {
                 return [];
             }
@@ -397,7 +397,7 @@ ORDER BY s.name, o.name;";
         /// <returns>A Task<int> representing the row count.</returns>
         internal static async Task<int> GetRowCountAsync(string fullName, string? connectionString)
         {
-            if(string.IsNullOrEmpty(connectionString) || string.IsNullOrEmpty(fullName))
+            if (string.IsNullOrEmpty(connectionString) || string.IsNullOrEmpty(fullName))
             {
                 return 0;
             }
@@ -525,13 +525,13 @@ ORDER BY s.name, p.name;";
             };
 
             // Build the SQL for all supported object types
-            string sql = $@"SELECT value 
+            string sql = $@"SELECT value
 FROM fn_listextendedproperty (
-    NULL, 
-    'schema', N'{objectName.Schema}', 
-    '{level1Type}', N'{objectName.Name}', 
+    NULL,
+    'schema', N'{objectName.Schema}',
+    '{level1Type}', N'{objectName.Name}',
     default, default
-) 
+)
 WHERE name = N'MS_Description'";
 
             await using var conn = new SqlConnection(connectionString);
@@ -650,7 +650,7 @@ AND s.name = @SchemaName;";
         /// </summary>
         internal static async Task SaveColumnDescAsync(string? objectName, string columnName, string desc, string? connectionString)
         {
-            if(string.IsNullOrEmpty(connectionString) || string.IsNullOrEmpty(objectName) || string.IsNullOrEmpty(columnName) || string.IsNullOrEmpty(desc))
+            if (string.IsNullOrEmpty(connectionString) || string.IsNullOrEmpty(objectName) || string.IsNullOrEmpty(columnName) || string.IsNullOrEmpty(desc))
             {
                 return;
             }
@@ -755,7 +755,6 @@ END";
             return resultBuilder.ToString().Trim();
         }
 
-
         /// <summary>
         /// Test connection.
         /// </summary>
@@ -772,7 +771,13 @@ END";
             try
             {
                 await connection.OpenAsync();
-                connection.Close();
+
+                // perform a simple query to ensure the connection is valid
+                using var command = new SqlCommand("SELECT 1", connection);
+                command.CommandTimeout = 50000;
+                await command.ExecuteNonQueryAsync();
+
+                await connection.CloseAsync();
                 return true;
             }
             catch (SqlException)
@@ -855,7 +860,7 @@ END";
             {
                 using SqlCommand cmd = new() { Connection = conn };
                 cmd.CommandText = @"
-SELECT 
+SELECT
     SCHEMA_NAME(fk.schema_id) AS SchemaName,
     OBJECT_NAME(fk.parent_object_id) AS TableName,
     COL_NAME(fkc.parent_object_id, fkc.parent_column_id) AS ColumnName,

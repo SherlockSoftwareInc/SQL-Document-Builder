@@ -439,40 +439,45 @@ namespace SQL_Document_Builder
         {
             if (connection != null)
             {
-                bool connectionChanged = true;
+                serverToolStripStatusLabel.Text = "";
+                databaseToolStripStatusLabel.Text = "";
+                objectsListBox.Items.Clear();
+                await definitionPanel.OpenAsync(null, null);
 
-                if (connectionChanged)
+                string? connectionString = connection?.ConnectionString?.Length == 0 ? await connection.Login() : connection?.ConnectionString;
+
+                if (connectionString?.Length > 0)
                 {
-                    serverToolStripStatusLabel.Text = "";
-                    databaseToolStripStatusLabel.Text = "";
-                    //schemaComboBox.Items.Clear();
-                    //searchTextBox.Text = string.Empty;
-                    objectsListBox.Items.Clear();
+                    serverToolStripStatusLabel.Text = $"Connect to {connection?.ServerName}...";
 
-                    string? connectionString = connection?.ConnectionString?.Length == 0 ? await connection.Login() : connection?.ConnectionString;
-
-                    if (connectionString?.Length > 0)
+                    // test the connection
+                    if (!await SQLDatabaseHelper.TestConnectionAsync(connectionString))
                     {
-                        serverToolStripStatusLabel.Text = connection?.ServerName;
+                        Common.MsgBox("Failed to connect to the database. Please check your connection settings.", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        serverToolStripStatusLabel.Text = $"Unable to connect to {connection?.ServerName}";
                         databaseToolStripStatusLabel.Text = connection?.Database;
-                        Properties.Settings.Default.dbConnectionString = connectionString;
-                        _currentConnection = connection;
+                        return;
                     }
 
-                    for (int i = 0; i < connectToToolStripMenuItem.DropDown.Items.Count; i++)
-                    {
-                        var submenuitem = (ConnectionMenuItem)connectToToolStripMenuItem.DropDown.Items[i];
-                        if (submenuitem.Connection.Equals(connection))
-                        {
-                            submenuitem.Checked = true;
+                    serverToolStripStatusLabel.Text = connection?.ServerName;
+                    databaseToolStripStatusLabel.Text = connection?.Database;
+                    Properties.Settings.Default.dbConnectionString = connectionString;
+                    _currentConnection = connection;
+                }
 
-                            Properties.Settings.Default.LastAccessConnection = submenuitem.Connection.ConnectionID.ToString();
-                            Properties.Settings.Default.Save();
-                        }
-                        else
-                        {
-                            submenuitem.Checked = false;
-                        }
+                for (int i = 0; i < connectToToolStripMenuItem.DropDown.Items.Count; i++)
+                {
+                    var submenuitem = (ConnectionMenuItem)connectToToolStripMenuItem.DropDown.Items[i];
+                    if (submenuitem.Connection.Equals(connection))
+                    {
+                        submenuitem.Checked = true;
+
+                        Properties.Settings.Default.LastAccessConnection = submenuitem.Connection.ConnectionID.ToString();
+                        Properties.Settings.Default.Save();
+                    }
+                    else
+                    {
+                        submenuitem.Checked = false;
                     }
                 }
             }
