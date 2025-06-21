@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace SQL_Document_Builder
 {
@@ -300,8 +301,18 @@ namespace SQL_Document_Builder
                 // table values
                 if (doc.Contains("~TableValues~") && dataTemplate != null)
                 {
-                    string tableValuesDoc = await GetTableValuesAsync($"SELECT * FROM {objectName.FullName}", connection, dataTemplate);
-                    //doc = doc.Replace("~TableValues~", tableValuesDoc);
+                    string tableValuesDoc = string.Empty;
+                    string sql = $"SELECT * FROM {objectName.FullName}";
+                    // Check if the SQL statement is a valid SELECT statement
+                    if (!await SQLDatabaseHelper.IsValidSelectStatement(sql, connection.ConnectionString))
+                    {
+                        tableValuesDoc = "Cannot generate the value list because the object contains columns with unsupported data types.";
+                    }
+                    else
+                    {
+                        tableValuesDoc = await GetTableValuesAsync(sql, connection, dataTemplate);
+                    }
+
                     doc = ProcessSection(doc, "TableValues", "~TableValues~", tableValuesDoc);
                 }
 

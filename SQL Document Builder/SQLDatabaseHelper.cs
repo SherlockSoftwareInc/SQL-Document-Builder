@@ -352,6 +352,69 @@ JOIN sys.schemas s ON o.schema_id = s.schema_id";
         }
 
         /// <summary>
+        /// Are the valid select statement.
+        /// </summary>
+        /// <param name="sql">The sql.</param>
+        /// <param name="connectionString">The connection string.</param>
+        /// <returns>A Task.</returns>
+        internal static async Task<bool> IsValidSelectStatement(string sql, string connectionString)
+        {
+            bool isValid = true;
+
+            // List of unsupported SQL Server types
+            var unsupportedTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    {
+        "timestamp",
+        "hierarchyid",
+        "geometry",
+        "geography",
+        "sql_variant",
+        "xml"
+    };
+
+            using var connection = new SqlConnection(connectionString);
+            try
+            {
+                await using var command = new SqlCommand(sql, connection)
+                {
+                    CommandType = System.Data.CommandType.Text,
+                    CommandTimeout = 50000
+                };
+
+                await connection.OpenAsync();
+                await using var reader = await command.ExecuteReaderAsync(CommandBehavior.SchemaOnly | CommandBehavior.KeyInfo);
+                var schemaTable = reader.GetSchemaTable();
+                if (schemaTable != null)
+                {
+                    foreach (DataRow row in schemaTable.Rows)
+                    {
+                        var dataTypeNameFull = row["DataTypeName"]?.ToString();
+                        var dataTypeName = dataTypeNameFull?.Split('.') is { Length: > 0 } parts
+                            ? parts[^1]
+                            : dataTypeNameFull;
+
+                        if (!string.IsNullOrEmpty(dataTypeName) && unsupportedTypes.Contains(dataTypeName))
+                        {
+                            isValid = false;
+                            break;
+                        }
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                // show error message
+                //MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                isValid = false;
+            }
+            finally
+            {
+                await connection.CloseAsync();
+            }
+            return isValid;
+        }
+
+        /// <summary>
         /// Gets the functions async.
         /// </summary>
         /// <returns>A Task.</returns>

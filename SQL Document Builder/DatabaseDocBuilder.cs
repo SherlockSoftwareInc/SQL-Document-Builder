@@ -214,6 +214,13 @@ WHERE sch.name = N'{dbObject.Schema}' AND s.name = N'{dbObject.Name}'";
             }
 
             var sql = $"select * from {tableName.FullName}";
+            // check if the SQL statement is a valid SELECT statement to generate JSON data
+            if (!await SQLDatabaseHelper.IsValidSelectStatement(sql, connection.ConnectionString))
+            {
+                MessageBox.Show("Cannot generate the JSON data because the table or view contains columns with unsupported data types.", "Invalid SQL", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return "";
+            }
+
             var hasIdentity = await SQLDatabaseHelper.HasIdentityColumnAsync(tableName, connection.ConnectionString);
             return await QueryDataToInsertStatementAsync(sql, connection, tableName.FullName, hasIdentity);
         }

@@ -7,9 +7,11 @@ using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Security.AccessControl;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using static ScintillaNET.Style;
 using static SQL_Document_Builder.ObjectName;
 
 namespace SQL_Document_Builder
@@ -2364,6 +2366,13 @@ namespace SQL_Document_Builder
 
                 if (BeginAddDDLScript())
                 {
+                    // Check if the SQL statement is a valid SELECT statement
+                    if (!await SQLDatabaseHelper.IsValidSelectStatement(form.SQL, connectionString))
+                    {
+                        MessageBox.Show("Cannot generate the INSERT statement because the table or view contains columns with unsupported data types.", "Invalid SQL", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return;
+                    }
+
                     var insertStatements = await DatabaseDocBuilder.QueryDataToInsertStatementAsync(form.SQL, _currentConnection);
 
                     AppendText(editBox, insertStatements);
@@ -3523,6 +3532,13 @@ namespace SQL_Document_Builder
                 var datatableTemplate = template.TemplateLists.FirstOrDefault(t => t.ObjectType == TemplateItem.ObjectTypeEnums.DataTable);
                 if (datatableTemplate != null)
                 {
+                    // Check if the SQL statement is a valid SELECT statement
+                    if (!await SQLDatabaseHelper.IsValidSelectStatement(form.SQL, connectionString))
+                    {
+                        MessageBox.Show("Cannot generate the INSERT statement because the table or view contains columns with unsupported data types.", "Invalid SQL", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return;
+                    }
+
                     AppendText(editBox, await DocumentBuilder.GetTableValuesAsync(form.SQL, _currentConnection, datatableTemplate));
                     CopyToClipboard(editBox);
                 }
@@ -3694,7 +3710,15 @@ namespace SQL_Document_Builder
                     return;
                 }
 
-                AppendText(editBox, await DocumentBuilder.GetTableValuesAsync($"select * from {objectName.FullName}", _currentConnection, datatableTemplate));
+                string sql = $"select * from {objectName.FullName}";
+                // Check if the SQL statement is a valid SELECT statement
+                if (!await SQLDatabaseHelper.IsValidSelectStatement(sql, connectionString))
+                {
+                    MessageBox.Show("Cannot generate script or document because the table or view contains columns with unsupported data types.", "Invalid SQL", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                AppendText(editBox, await DocumentBuilder.GetTableValuesAsync(sql, _currentConnection, datatableTemplate));
 
                 EndBuild(editBox);
             }
@@ -3876,6 +3900,13 @@ namespace SQL_Document_Builder
 
                 if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Json) != DialogResult.Yes) return;
 
+                // check if the SQL statement is a valid SELECT statement to generate JSON data
+                if (!await SQLDatabaseHelper.IsValidSelectStatement(form.SQL, connectionString))
+                {
+                    MessageBox.Show("Cannot generate the JSON data because the table or view contains columns with unsupported data types.", "Invalid SQL", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
                 AppendText(editBox, await JsonBuilder.GetTableValuesAsync(form.SQL, _currentConnection));
                 CopyToClipboard(editBox);
             }
@@ -3901,7 +3932,15 @@ namespace SQL_Document_Builder
                     return;
                 }
 
-                var scripts = await JsonBuilder.GetTableValuesAsync($"select * from {objectName.FullName}", _currentConnection);
+                // Check if the SQL statement is a valid SELECT statement
+                string sql = $"select * from {objectName.FullName}";
+                if (!await SQLDatabaseHelper.IsValidSelectStatement(sql, connectionString))
+                {
+                    MessageBox.Show("Cannot generate the JSON data because the table or view contains columns with unsupported data types.", "Invalid SQL", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                var scripts = await JsonBuilder.GetTableValuesAsync(sql, _currentConnection);
 
                 if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
 
