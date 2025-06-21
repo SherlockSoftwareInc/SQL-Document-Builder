@@ -804,6 +804,7 @@ namespace SQL_Document_Builder
             if (BeginAddDDLScript())
             {
                 AppendText(editBox, definitionPanel.CreateIndexScript());
+                CopyToClipboard(editBox);
             }
         }
 
@@ -910,6 +911,7 @@ namespace SQL_Document_Builder
             if (BeginAddDDLScript())
             {
                 AppendText(editBox, definitionPanel.PrimaryKeyScript());
+                CopyToClipboard(editBox);
             }
         }
 
@@ -937,6 +939,7 @@ namespace SQL_Document_Builder
                 AddDataSourceText();
 
                 AppendText(editBox, script);
+                CopyToClipboard(editBox);
             }
             Cursor = Cursors.Default;
         }
@@ -1161,6 +1164,8 @@ namespace SQL_Document_Builder
                 editBox.Enabled = true;
                 editBox.Cursor = Cursors.Default;
 
+                CopyToClipboard(editBox);
+
                 if (editBox == CurrentEditBox)
                 {
                     // If the current edit box is the one we just built, set focus to it
@@ -1205,6 +1210,7 @@ namespace SQL_Document_Builder
 
                     var dataHelper = new ExcelDataHelper(form.ResultDataTable);
                     AppendText(editBox, dataHelper.GetInsertStatement(form.TableName, form.NullForBlank));
+                    CopyToClipboard(editBox);
                 }
             }
         }
@@ -1606,6 +1612,7 @@ namespace SQL_Document_Builder
                         AppendText(editBox, script);
 
                         AppendText(editBox, "GO" + Environment.NewLine);
+                        CopyToClipboard(editBox);
                     }
                     else
                     {
@@ -2042,6 +2049,7 @@ namespace SQL_Document_Builder
             Properties.Settings.Default.AddDropStatement = scriptDropsCheckBox.Checked;
             Properties.Settings.Default.UseExtendedProperties = useExtendedPropertyRadioButton.Checked;
             Properties.Settings.Default.UseQuotedIdentifier = quotedIDCheckBox.Checked;
+            Properties.Settings.Default.CopyToClipboard = autoCopyCheckBox.Checked;
             Properties.Settings.Default.Save();
         }
 
@@ -2359,6 +2367,7 @@ namespace SQL_Document_Builder
                     var insertStatements = await DatabaseDocBuilder.QueryDataToInsertStatementAsync(form.SQL, _currentConnection);
 
                     AppendText(editBox, insertStatements);
+                    CopyToClipboard(editBox);
                 }
             }
         }
@@ -2738,6 +2747,17 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Copies the  to clipboard.
+        /// </summary>
+        private void CopyToClipboard(SqlEditBox editBox)
+        {
+            if (Properties.Settings.Default.CopyToClipboard && editBox != null && editBox?.Text.Trim().Length > 0)
+            {
+                Clipboard.SetText(editBox.Text);
+            }
+        }
+
+        /// <summary>
         /// Handles the resize event of the tab control:
         /// </summary>
         /// <param name="sender">The sender.</param>
@@ -2790,8 +2810,7 @@ namespace SQL_Document_Builder
             Properties.Settings.Default.LeftSplitterDistance = splitContainer1.SplitterDistance;
             Properties.Settings.Default.RightSplitterDistance = defiCollapsibleSplitter.SplitterDistance;
             Properties.Settings.Default.UseQuotedIdentifier = quotedIDCheckBox.Checked;
-            //Properties.Settings.Default.SchemaSettings = _settingItems.Settings;
-            //Properties.Settings.Default.Templetes = templates.TemplatesValue;
+            Properties.Settings.Default.CopyToClipboard = autoCopyCheckBox.Checked;
             Properties.Settings.Default.Save();
         }
 
@@ -2800,37 +2819,9 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The E.</param>
-        private async void TableBuilderForm_Load(object sender, EventArgs e)
+        private void TableBuilderForm_Load(object sender, EventArgs e)
         {
             WindowState = FormWindowState.Maximized;
-
-            //// INIT HOTKEYS
-            //InitHotkeys();
-
-            //_connections.Load();
-            //await PopulateConnections();
-
-            //RestoreLastConnection();
-
-            //addDataSourceCheckBox.Checked = Properties.Settings.Default.AddDataSource;
-            //scriptDropsCheckBox.Checked = Properties.Settings.Default.AddDropStatement;
-            //if (Properties.Settings.Default.UseExtendedProperties)
-            //    useExtendedPropertyRadioButton.Checked = true;
-            //else
-            //    useUspDescRadioButton.Checked = true;
-
-            //insertBatchTextBox.Text = Properties.Settings.Default.InsertBatchRows.ToString();
-            //insertMaxTextBox.Text = Properties.Settings.Default.InertMaxRows.ToString();
-
-            //defiCollapsibleSplitter.SplitterDistance = Properties.Settings.Default.RightSplitterDistance;
-            //splitContainer1.SplitterDistance = Properties.Settings.Default.LeftSplitterDistance;
-
-            WindowState = FormWindowState.Maximized;
-            //if (collapsibleSplitter1 != null)
-            //    collapsibleSplitter1.SplitterDistance = (int)(this.Width * 0.4F);
-
-            //defiCollapsibleSplitter.SplitterDistance = Properties.Settings.Default.RightSplitterDistance;
-            //splitContainer1.SplitterDistance = Properties.Settings.Default.LeftSplitterDistance;
 
             startTimer.Start();
         }
@@ -2861,6 +2852,7 @@ namespace SQL_Document_Builder
                         // add GO statement if the script not empty
                         description += "GO" + Environment.NewLine;
                         AppendText(editBox, description);
+                        CopyToClipboard(editBox);
                     }
                 }
                 else
@@ -2902,6 +2894,7 @@ namespace SQL_Document_Builder
             if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Sql) == DialogResult.Yes)
             {
                 AppendText(editBox, DatabaseDocBuilder.UspAddObjectDescription());
+                CopyToClipboard(editBox);
             }
         }
 
@@ -3531,6 +3524,7 @@ namespace SQL_Document_Builder
                 if (datatableTemplate != null)
                 {
                     AppendText(editBox, await DocumentBuilder.GetTableValuesAsync(form.SQL, _currentConnection, datatableTemplate));
+                    CopyToClipboard(editBox);
                 }
                 else
                 {
@@ -3883,6 +3877,7 @@ namespace SQL_Document_Builder
                 if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Json) != DialogResult.Yes) return;
 
                 AppendText(editBox, await JsonBuilder.GetTableValuesAsync(form.SQL, _currentConnection));
+                CopyToClipboard(editBox);
             }
         }
 
@@ -4065,6 +4060,7 @@ namespace SQL_Document_Builder
             defiCollapsibleSplitter.SplitterDistance = Properties.Settings.Default.RightSplitterDistance;
             splitContainer1.SplitterDistance = Properties.Settings.Default.LeftSplitterDistance;
             quotedIDCheckBox.Checked = Properties.Settings.Default.UseQuotedIdentifier;
+            autoCopyCheckBox.Checked = Properties.Settings.Default.CopyToClipboard;
 
             PopulateDocumentType();
 

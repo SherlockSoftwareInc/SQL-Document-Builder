@@ -62,6 +62,7 @@
             schemaComboBox = new System.Windows.Forms.ComboBox();
             label1 = new System.Windows.Forms.Label();
             tabPage2 = new System.Windows.Forms.TabPage();
+            autoCopyCheckBox = new System.Windows.Forms.CheckBox();
             quotedIDCheckBox = new System.Windows.Forms.CheckBox();
             groupBox2 = new System.Windows.Forms.GroupBox();
             label2 = new System.Windows.Forms.Label();
@@ -508,6 +509,7 @@
             // 
             // tabPage2
             // 
+            tabPage2.Controls.Add(autoCopyCheckBox);
             tabPage2.Controls.Add(quotedIDCheckBox);
             tabPage2.Controls.Add(groupBox2);
             tabPage2.Controls.Add(groupBox1);
@@ -524,6 +526,17 @@
             tabPage2.TabIndex = 1;
             tabPage2.Text = "Output options";
             tabPage2.UseVisualStyleBackColor = true;
+            // 
+            // autoCopyCheckBox
+            // 
+            autoCopyCheckBox.AutoSize = true;
+            autoCopyCheckBox.Location = new System.Drawing.Point(8, 284);
+            autoCopyCheckBox.Name = "autoCopyCheckBox";
+            autoCopyCheckBox.Size = new System.Drawing.Size(200, 19);
+            autoCopyCheckBox.TabIndex = 22;
+            autoCopyCheckBox.Text = "Copy to Clipboard Automatically";
+            autoCopyCheckBox.UseVisualStyleBackColor = true;
+            autoCopyCheckBox.CheckedChanged += Options_Changed;
             // 
             // quotedIDCheckBox
             // 
@@ -1863,5 +1876,6 @@
         private System.Windows.Forms.ToolStripMenuItem importDescriptionsToolStripMenuItem;
         private System.Windows.Forms.Timer startTimer;
         private System.Windows.Forms.CheckBox quotedIDCheckBox;
+        private System.Windows.Forms.CheckBox autoCopyCheckBox;
     }
 }
