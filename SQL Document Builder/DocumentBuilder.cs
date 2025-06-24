@@ -49,7 +49,7 @@ namespace SQL_Document_Builder
                         ObjectName dr = objectList[i];
                         string tableSchema = useQuotedId ? dr.Schema.QuotedName() : dr.Schema.RemoveQuote();
                         string tableName = useQuotedId ? dr.Name.QuotedName() : dr.Name.RemoveQuote();
-                        string description = await SQLDatabaseHelper.GetTableDescriptionAsync(dr, connection.ConnectionString);
+                        string description = await SQLDatabaseHelper.GetObjectDescriptionAsync(dr, connection.ConnectionString);
                         var objectName = new ObjectName(dr.ObjectType, dr.Schema, dr.Name);
                         string fullName = useQuotedId ? objectName.FullName : objectName.FullNameNoQuote;
 
@@ -535,6 +535,16 @@ ORDER BY tr.name";
                         .Replace("~TriggerName~", triggerName)
                         .Replace("~TriggerType~", triggerType)
                         .Replace("~Definition~", definition);
+
+                    // if has description, replace the placeholder
+                    if (triggerDoc.Contains("~Description~"))
+                    {
+                        // get trigger description
+                        string description = await SQLDatabaseHelper.GetObjectDescriptionAsync(new ObjectName(ObjectName.ObjectTypeEnums.Trigger, objectName.Schema, triggerName) , connection.ConnectionString);
+
+                        triggerDoc = ProcessSection(triggerDoc, "Description", "~Description~", description.Length == 0 ? " " : description);
+                    }
+
                     sb.AppendLine(triggerDoc);
                 }
 

@@ -77,11 +77,10 @@ namespace SQL_Document_Builder
                     //var percentComplete = (i * 100) / objectsListBox.CheckedItems.Count;
                     progress.Report(i);
                 }
-                var item = objectsListBox.CheckedItems[i];
+                var item = (ObjectName)objectsListBox.CheckedItems[i];
                 if (item != null)
                 {
-                    var objectName = item.ToString();
-                    await SQLDatabaseHelper.SaveColumnDescAsync(objectName, columnName, desc, ConnectionString);
+                    await SQLDatabaseHelper.UpdateLevel2DescriptionAsync(item, columnName, desc, ConnectionString);
                 }
             }
         }
@@ -112,7 +111,10 @@ namespace SQL_Document_Builder
 
             // replace single quotes with double quotes
             searchFor = searchFor.Replace("'", "''");
-            string sql = $"SELECT DISTINCT TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, 'BASE TABLE' TABLE_TYPE, COLUMN_NAME FROM information_schema.columns WHERE column_name = '{searchFor}' ORDER BY TABLE_NAME";
+            string sql = @$"SELECT DISTINCT c.TABLE_CATALOG,c.TABLE_SCHEMA,c.TABLE_NAME,t.TABLE_TYPE,c.COLUMN_NAME
+FROM INFORMATION_SCHEMA.columns AS c
+INNER JOIN INFORMATION_SCHEMA.Tables AS t ON c.TABLE_CATALOG = t.TABLE_CATALOG AND  c.TABLE_SCHEMA = t.TABLE_SCHEMA AND  c.TABLE_NAME = t.TABLE_NAME
+WHERE c.COLUMN_NAME = '{searchFor}' ORDER BY c.TABLE_CATALOG,c.TABLE_SCHEMA,c.TABLE_NAME";
 
             var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, ConnectionString);
 
@@ -125,20 +127,23 @@ namespace SQL_Document_Builder
 
                 foreach (DataRow dr in dt.Rows)
                 {
+                    //string tableCatalog = (string)dr["TABLE_CATALOG"];
                     string tableSchema = (string)dr["TABLE_SCHEMA"];
                     string tableName = (string)dr["TABLE_NAME"];
+                    string tableType = (string)dr["TABLE_TYPE"];
+                    var objectType = tableType.Equals("VIEW", StringComparison.CurrentCultureIgnoreCase) ? ObjectName.ObjectTypeEnums.View : ObjectName.ObjectTypeEnums.Table;
 
                     if (schemaName?.Length > 0)
                     {
                         if (tableSchema.Equals(schemaName, StringComparison.CurrentCultureIgnoreCase))
                         {
-                            objectsListBox.Items.Add(string.Format("{0}.{1}", tableSchema, tableName));
+                            objectsListBox.Items.Add(new ObjectName(objectType, tableSchema, tableName));
                         }
                     }
                     else
                     {
                         // add all tables
-                        objectsListBox.Items.Add(string.Format("{0}.{1}", tableSchema, tableName));
+                        objectsListBox.Items.Add(new ObjectName(objectType, tableSchema, tableName));
                     }
                 }
             }

@@ -1,21 +1,52 @@
-MIT License
+End User License Agreement (EULA)
+IMPORTANT: PLEASE READ THIS LICENSE AGREEMENT CAREFULLY BEFORE INSTALLING OR USING THIS SOFTWARE.
 
-Copyright (c) 2025 Sherlock Software Inc.
+This End User License Agreement ("Agreement") is a legal agreement between you (an individual or entity) and Sherlock Software Inc. ("Licensor") for the software product SQL Server Script and Document Builder ("Software").
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+By installing, copying, or using the Software, you agree to be bound by the terms of this Agreement. If you do not agree, do not install or use the Software.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+1. License Grant
+Licensor hereby grants you a limited, non-exclusive, non-transferable license to install and use the Software under the following conditions:
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+Personal Use: You may use the Software free of charge for personal, non-commercial purposes.
+
+Internal Use: Organizations may use the Software free of charge for internal purposes only, provided such use does not involve any direct or indirect commercial gain.
+
+Prohibited Commercial Use: You may not use the Software for any commercial purposes, including but not limited to:
+
+Providing services to third parties using the Software.
+
+Distributing the Software as part of a commercial product or service.
+
+Using the Software in a commercial environment where the Software contributes to revenue generation or business operations aimed at profit.
+
+For commercial use, you must obtain a separate commercial license from Licensor.
+
+2. Restrictions
+You shall not:
+
+Rent, lease, lend, sell, sublicense, or otherwise transfer the Software without written permission from Licensor.
+
+Remove or obscure any proprietary notices or labels on the Software.
+
+3. Ownership
+The Software is licensed, not sold. Licensor retains all rights, title, and interest in and to the Software, including all intellectual property rights.
+
+4. Disclaimer of Warranty
+The Software is provided "AS IS" without warranty of any kind, express or implied, including but not limited to warranties of merchantability, fitness for a particular purpose, or non-infringement.
+
+5. Limitation of Liability
+In no event shall Licensor be liable for any damages arising out of the use or inability to use the Software, even if Licensor has been advised of the possibility of such damages.
+
+6. Termination
+This license is effective until terminated. Licensor may terminate this license at any time if you fail to comply with the terms of this Agreement. Upon termination, you must destroy all copies of the Software.
+
+7. Governing Law
+This Agreement shall be governed by and construed in accordance with the laws of Canada, Province of British Columbia, without regard to its conflict of law principles.
+
+8. Contact Information
+For commercial licensing or other inquiries, contact:
+
+Sherlock Software Inc.
+support@sherlocksoftwareinc.com
+www.sherlocksoftwareinc.com

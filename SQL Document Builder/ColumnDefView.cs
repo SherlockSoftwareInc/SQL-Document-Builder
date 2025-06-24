@@ -118,21 +118,37 @@ namespace SQL_Document_Builder
         public void Clear()
         {
             _init = true;
+
+            // clear the name panel
             namePanel.Clear();
             SelectedColumn = "";
+
+            // clear the column definition data grid view
             if (columnDefDataGridView.DataSource != null)
             {
                 columnDefDataGridView.Visible = false;
                 columnDefDataGridView.Columns.Clear();
                 columnDefDataGridView.DataSource = null;
             }
+
+            // clar the parameter data grid view
             if (parameterGridView.DataSource != null)
             {
                 parameterGridView.Visible = false;
                 parameterGridView.Columns.Clear();
                 parameterGridView.DataSource = null;
             }
-            definitionTextBox.Text = string.Empty;
+
+            // clear the definition text box
+            definitionTextBox.ReadOnly = false;
+            definitionTextBox.ClearAll();
+            definitionTextBox.ReadOnly = true;
+
+            // clear the object description text box
+            tableDescTextBox.Clear();
+            tableDescTextBox.Enabled = false;
+
+            // clear the object property grid
             if (objectPropertyGrid.SelectedObject != null)
             {
                 objectPropertyGrid.SelectedObject = null;
@@ -279,20 +295,20 @@ GO
         /// <param name="objectName">The object name.</param>
         public async Task OpenAsync(ObjectName? objectName, DatabaseConnectionItem? connection)
         {
+            // save the description of the current object if modified
+            if (tableDescTextBox.Modified && _dbObject.ObjectType != ObjectName.ObjectTypeEnums.None)
+            {
+                await _dbObject.UpdateObjectDescAsync(tableDescTextBox.Text);
+            }
+
+            Clear();
+
             if (objectName == null || connection == null || string.IsNullOrEmpty(connection.ConnectionString))
             {
-                Clear();
                 namePanel.Open(null);
                 return;
             }
 
-            // save the description of the current object if modified
-            if (tableDescTextBox.Modified && _dbObject.ObjectType != ObjectName.ObjectTypeEnums.None)
-            {
-                await _dbObject.UpdateTableDescAsync(tableDescTextBox.Text);
-            }
-
-            Clear();
             namePanel.Open(objectName);
 
             Connection = connection;
@@ -407,6 +423,7 @@ GO
             // enable/disable the column value frequency menu item based on the object type
             columnValueFrequencyToolStripMenuItem.Enabled = _dbObject.ObjectType == ObjectName.ObjectTypeEnums.Table || _dbObject.ObjectType == ObjectName.ObjectTypeEnums.View;
 
+            tableDescTextBox.Enabled = true;
         }
 
         /// <summary>
@@ -494,7 +511,7 @@ GO
         /// <param name="description">The description.</param>
         public async Task UpdateColumnDescAsync(string columnName, string description)
         {
-            await _dbObject.UpdateLevel1DescriptionAsync(columnName, description, _dbObject.ObjectType);
+            await _dbObject.UpdateLevel2DescriptionAsync(columnName, description, _dbObject.ObjectType);
         }
 
         /// <summary>
@@ -503,7 +520,7 @@ GO
         /// <param name="description">The description.</param>
         public async Task UpdateTableDescriptionAsync(string description)
         {
-            await _dbObject.UpdateTableDescAsync(description);
+            await _dbObject.UpdateObjectDescAsync(description);
             TableDescription = description;
         }
 
@@ -551,7 +568,7 @@ GO
             description += await GetTableDependencyScriptAsync();
 
             tableDescTextBox.Text = description;
-            await _dbObject.UpdateTableDescAsync(description);
+            await _dbObject.UpdateObjectDescAsync(description);
         }
 
         /// <summary>
@@ -692,12 +709,12 @@ GO
         /// <returns>A string.</returns>
         private async Task<string> GetTableDependencyScriptAsync()
         {
-            var viewList = await DBObject.GetViewsUsingTableAsync(_dbObject.ObjectName, Connection);
+            var viewList = await DBObject.GetObjectsUsingTableAsync(_dbObject.ObjectName, Connection);
 
             if (viewList != null && viewList.Count > 0)
             {
                 // build the view list string
-                var viewListString = string.Join(", ", viewList.Select(v => $"[{v.SchemaName}].[{v.ViewName}]"));
+                var viewListString = string.Join(", ", viewList.Select(v => $"[{v.Schema}].[{v.Name}]"));
 
                 return $"This table, [{Schema}].[{TableName}], serves as a reference table defining .... It is utilized in the views: {viewListString}.";
             }
@@ -765,7 +782,7 @@ GO
         private async void PasteToolStripMenuItem_Click(object sender, EventArgs e)
         {
             tableDescTextBox.Paste();
-            await _dbObject.UpdateTableDescAsync(tableDescTextBox.Text);
+            await _dbObject.UpdateObjectDescAsync(tableDescTextBox.Text);
         }
 
         /// <summary>
@@ -777,7 +794,7 @@ GO
         {
             if (tableDescTextBox.Modified || _dbObject.ObjectType != ObjectName.ObjectTypeEnums.None)
             {
-                await _dbObject.UpdateTableDescAsync(tableDescTextBox.Text);
+                await _dbObject.UpdateObjectDescAsync(tableDescTextBox.Text);
                 tableDescTextBox.Modified = false;
             }
         }
@@ -801,7 +818,7 @@ GO
         /// <returns>A Task.</returns>
         private async Task UpdateParameterDescAsync(string name, string parameterDesc)
         {
-            await _dbObject.UpdateLevel1DescriptionAsync(name, parameterDesc, _dbObject.ObjectType);
+            await _dbObject.UpdateLevel2DescriptionAsync(name, parameterDesc, _dbObject.ObjectType);
         }
     }
 }

@@ -16,32 +16,7 @@ namespace SQL_Document_Builder
     /// </summary>
     internal class SQLDatabaseHelper
     {
-        /// <summary>
-        /// Adds the object description s ps.
-        /// </summary>
-        /// <param name="connectionString">The connection string.</param>
-        /// <returns>A Task.</returns>
-        internal static async Task<string> AddObjectDescriptionSPs(string connectionString)
-        {
-            var script = DatabaseDocBuilder.UspAddObjectDescription();
-
-            var sqlStatements = Regex.Split(script, @"\bGO\b", RegexOptions.IgnoreCase | RegexOptions.Multiline);
-
-            // execute each statement
-            foreach (var sql in sqlStatements)
-            {
-                //Execute(builder.ConnectionString, sql);
-                if (sql.Length > 0)
-                {
-                    var result = await SQLDatabaseHelper.ExecuteSQLAsync(sql, connectionString);
-                    if (result != string.Empty)
-                    {
-                        return result;
-                    }
-                }
-            }
-            return string.Empty;
-        }
+        #region SQL Execution & Validation
 
         /// <summary>
         /// Executes the scalar async.
@@ -114,201 +89,6 @@ namespace SQL_Document_Builder
             }
 
             return string.Empty; // Return an empty string if no error occurred
-        }
-
-        /// <summary>
-        /// Gets the column description.
-        /// </summary>
-        /// <param name="objectName">The object name.</param>
-        /// <param name="column">The column.</param>
-        /// <returns>A string.</returns>
-        internal static async Task<string> GetColumnDescriptionAsync(ObjectName objectName, string column, string connectionString)
-        {
-            string result = string.Empty;
-            string sql;
-            if (objectName.ObjectType == ObjectName.ObjectTypeEnums.View)
-            {
-                sql = $"SELECT E.value Description FROM sys.schemas S INNER JOIN sys.views T ON S.schema_id = T.schema_id INNER JOIN sys.columns C ON T.object_id = C.object_id INNER JOIN sys.extended_properties E ON T.object_id = E.major_id AND C.column_id = E.minor_id AND E.name = 'MS_Description' AND S.name = N'{objectName.Schema}' AND T.name = N'{objectName.Name}' AND C.name = N'{column}'";
-            }
-            else
-            {
-                sql = $"SELECT E.value Description FROM sys.schemas S INNER JOIN sys.tables T ON S.schema_id = T.schema_id INNER JOIN sys.columns C ON T.object_id = C.object_id INNER JOIN sys.extended_properties E ON T.object_id = E.major_id AND C.column_id = E.minor_id AND E.name = 'MS_Description' AND S.name = N'{objectName.Schema}' AND T.name = N'{objectName.Name}' AND C.name = N'{column}'";
-            }
-            var conn = new SqlConnection(connectionString);
-            try
-            {
-                await conn.OpenAsync();
-                await using var cmd = new SqlCommand(sql, conn)
-                {
-                    CommandType = CommandType.Text,
-                    CommandTimeout = 50000
-                };
-                await using var dr = await cmd.ExecuteReaderAsync();
-                if (await dr.ReadAsync())
-                {
-                    result = dr.GetString(0);
-                }
-
-                dr.Close();
-            }
-            catch (Exception ex)
-            {
-                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                await conn.CloseAsync();
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        /// Gets the database objects asynchronously based on the specified object type.
-        /// </summary>
-        /// <param name="tableType">The type of database object (e.g., Table, View, StoredProcedure, Function).</param>
-        /// <returns>A Task containing a list of ObjectName objects.</returns>
-        internal static async Task<List<ObjectName>> GetDatabaseObjectsAsync(ObjectTypeEnums tableType, string connectionString)
-        {
-            try
-            {
-                return tableType switch
-                {
-                    ObjectTypeEnums.Table => await GetTablesAsync(connectionString),
-                    ObjectTypeEnums.View => await GetViewsAsync(connectionString),
-                    ObjectTypeEnums.StoredProcedure => await GetStoredProceduresAsync(connectionString),
-                    ObjectTypeEnums.Function => await GetFunctionsAsync(connectionString),
-                    ObjectTypeEnums.Trigger => await GetTriggersAsync(connectionString),
-                    ObjectTypeEnums.Synonym => await GetSynonymsAsync(connectionString),
-                    _ => throw new NotSupportedException($"Unsupported object type: {tableType}.")
-                };
-            }
-            catch (Exception ex)
-            {
-                // Log or handle the exception as needed
-                MessageBox.Show($"Error retrieving database objects: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return []; // Return an empty list in case of an error
-            }
-        }
-
-        /// <summary>
-        /// Gets the synonyms async.
-        /// </summary>
-        /// <param name="connectionString">The connection string.</param>
-        /// <returns>A Task.</returns>
-        private static async Task<List<ObjectName>> GetSynonymsAsync(string connectionString)
-        {
-            var objects = new List<ObjectName>();
-
-            var query = @"
-SELECT
-    sch.name AS SchemaName,
-    syn.name AS SynonymName
-FROM sys.synonyms syn
-INNER JOIN sys.schemas sch ON syn.schema_id = sch.schema_id
-ORDER BY sch.name, syn.name;";
-
-            using var connection = new SqlConnection(connectionString);
-            using var command = new SqlCommand(query, connection)
-            {
-                CommandType = CommandType.Text,
-                CommandTimeout = 50000
-            };
-            await connection.OpenAsync();
-
-            using var reader = await command.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
-            {
-                objects.Add(new ObjectName(ObjectTypeEnums.Synonym, reader["SchemaName"].ToString(), reader["SynonymName"].ToString()));
-            }
-
-            return objects;
-        }
-
-        /// <summary>
-        /// Gets the triggers.
-        /// </summary>
-        /// <param name="connectionString">The connection string.</param>
-        /// <returns>A Task.</returns>
-        private static async Task<List<ObjectName>> GetTriggersAsync(string connectionString)
-        {
-            var objects = new List<ObjectName>();
-
-            var query = @"SELECT s.name AS SchemaName, tr.name AS TriggerName
-FROM sys.triggers tr
-JOIN sys.objects o ON tr.parent_id = o.object_id
-JOIN sys.schemas s ON o.schema_id = s.schema_id";
-
-            using var connection = new SqlConnection(connectionString);
-            using var command = new SqlCommand(query, connection)
-            {
-                CommandType = CommandType.Text,
-                CommandTimeout = 50000
-            };
-            await connection.OpenAsync();
-
-            using var reader = await command.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
-            {
-                objects.Add(new ObjectName(ObjectTypeEnums.Trigger, reader["SchemaName"].ToString(), reader["TriggerName"].ToString()));
-            }
-
-            return objects;
-        }
-
-        /// <summary>
-        /// Get database list of a sql server
-        /// </summary>
-        /// <param name="serverName"></param>
-        /// <returns></returns>
-        internal static async Task<List<string>> GetDatabases(string serverName, CancellationToken cancellationToken)
-        {
-            List<String> databases = [];
-
-            try
-            {
-                Microsoft.Data.SqlClient.SqlConnectionStringBuilder connection = new()
-                {
-                    DataSource = serverName,
-                    IntegratedSecurity = true,
-                    Encrypt = true,
-                    TrustServerCertificate = true
-                };
-
-                String strConn = connection.ToString();
-                SqlConnection sqlConn = new(strConn);
-                await sqlConn.OpenAsync(cancellationToken);
-
-                //get databases
-                DataTable tblDatabases = sqlConn.GetSchema("Databases");
-
-                sqlConn.Close();
-
-                foreach (DataRow row in tblDatabases.Rows)
-                {
-                    String? strDatabaseName = row["database_name"].ToString();
-
-                    if (!string.IsNullOrEmpty(strDatabaseName))
-                    {
-                        databases.Add(strDatabaseName);
-                    }
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                // ignore
-            }
-            catch (SqlException)
-            {
-                //Ignore the error
-            }
-            catch (Exception)
-            {
-                throw;
-            }
-
-            databases.Sort();
-            return databases;
         }
 
         /// <summary>
@@ -415,359 +195,6 @@ JOIN sys.schemas s ON o.schema_id = s.schema_id";
         }
 
         /// <summary>
-        /// Gets the functions async.
-        /// </summary>
-        /// <returns>A Task.</returns>
-        internal static async Task<List<ObjectName>> GetFunctionsAsync(string? connectionString)
-        {
-            if (string.IsNullOrEmpty(connectionString))
-            {
-                return [];
-            }
-
-            var objects = new List<ObjectName>();
-
-            var query = @"SELECT
-    s.name AS SchemaName,
-    o.name AS FunctionName,
-    o.type_desc AS FunctionType
-FROM sys.objects o
-JOIN sys.schemas s ON o.schema_id = s.schema_id
-WHERE o.type IN ('FN', 'IF', 'TF')
-ORDER BY s.name, o.name;";
-
-            using var connection = new SqlConnection(connectionString);
-            using var command = new SqlCommand(query, connection)
-            {
-                CommandType = CommandType.Text,
-                CommandTimeout = 50000
-            };
-            await connection.OpenAsync();
-
-            using var reader = await command.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
-            {
-                objects.Add(new ObjectName(ObjectTypeEnums.Function, reader["SchemaName"].ToString(), reader["FunctionName"].ToString()));
-            }
-
-            return objects;
-        }
-
-        /// <summary>
-        /// Gets the row count of a table or view asynchronously.
-        /// </summary>
-        /// <param name="fullName">The full name of the object.</param>
-        /// <returns>A Task<int> representing the row count.</returns>
-        internal static async Task<int> GetRowCountAsync(string fullName, string? connectionString)
-        {
-            if (string.IsNullOrEmpty(connectionString) || string.IsNullOrEmpty(fullName))
-            {
-                return 0;
-            }
-
-            var sql = $"SELECT COUNT(*) FROM {fullName}";
-            try
-            {
-                using var connection = new SqlConnection(connectionString);
-                using var command = new SqlCommand(sql, connection)
-                {
-                    CommandType = CommandType.Text,
-                    CommandTimeout = 50000
-                };
-
-                await connection.OpenAsync();
-                var result = await command.ExecuteScalarAsync();
-                return result != null ? Convert.ToInt32(result) : 0;
-            }
-            catch (Exception ex)
-            {
-                // Show error message
-                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-            return 0;
-        }
-
-        /// <summary>
-        /// Gets the schemas async.
-        /// </summary>
-        /// <returns>A Task.</returns>
-        internal static async Task<List<string>> GetSchemasAsync(string? connectionString)
-        {
-            if (string.IsNullOrEmpty(connectionString))
-            {
-                return [];
-            }
-
-            var schemas = new List<string>();
-            var query = "SELECT name FROM sys.schemas ORDER BY name";
-            using var connection = new SqlConnection(connectionString);
-            using var command = new SqlCommand(query, connection)
-            {
-                CommandType = CommandType.Text,
-                CommandTimeout = 50000
-            };
-
-            try
-            {
-                await connection.OpenAsync();
-                using var reader = await command.ExecuteReaderAsync();
-
-                while (await reader.ReadAsync())
-                {
-                    var schemaName = reader["name"].ToString();
-                    if (!string.IsNullOrEmpty(schemaName))
-                        schemas.Add(schemaName);
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error loading schemas: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                await connection.CloseAsync();
-            }
-            return schemas;
-        }
-
-        /// <summary>
-        /// Gets the stored procedures async.
-        /// </summary>
-        /// <returns>A Task.</returns>
-        internal static async Task<List<ObjectName>> GetStoredProceduresAsync(string? connectionString)
-        {
-            if (string.IsNullOrEmpty(connectionString))
-            {
-                return [];
-            }
-
-            var objects = new List<ObjectName>();
-
-            var query = @"SELECT
-    s.name AS SchemaName,
-    p.name AS SPName
-FROM sys.procedures p
-JOIN sys.schemas s ON p.schema_id = s.schema_id
-ORDER BY s.name, p.name;";
-
-            using var connection = new SqlConnection(connectionString);
-            using var command = new SqlCommand(query, connection) { CommandType = CommandType.Text, CommandTimeout = 50000 };
-            await connection.OpenAsync();
-
-            using var reader = await command.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
-            {
-                objects.Add(new ObjectName(ObjectTypeEnums.StoredProcedure, reader["SchemaName"].ToString(), reader["SPName"].ToString()));
-            }
-
-            return objects;
-        }
-
-        /// <summary>
-        /// Gets the table description asynchronously.
-        /// </summary>
-        /// <param name="objectName">The object name.</param>
-        /// <returns>A Task<string> containing the description.</returns>
-        internal static async Task<string> GetTableDescriptionAsync(ObjectName? objectName, string? connectionString)
-        {
-            if (objectName == null || objectName?.ObjectType == ObjectTypeEnums.None || string.IsNullOrEmpty(connectionString))
-                return string.Empty;
-
-            string result = string.Empty;
-
-            // Map object type to the correct level1type for fn_listextendedproperty
-            string level1Type = objectName?.ObjectType switch
-            {
-                ObjectTypeEnums.Table => "table",
-                ObjectTypeEnums.View => "view",
-                ObjectTypeEnums.StoredProcedure => "procedure",
-                ObjectTypeEnums.Function => "function",
-                ObjectTypeEnums.Trigger => "trigger",
-                ObjectTypeEnums.Synonym => "synonym",
-                _ => throw new NotSupportedException($"Unsupported object type: {objectName?.ObjectType}.")
-            };
-
-            // Build the SQL for all supported object types
-            string sql = $@"SELECT value
-FROM fn_listextendedproperty (
-    NULL,
-    'schema', N'{objectName.Schema}',
-    '{level1Type}', N'{objectName.Name}',
-    default, default
-)
-WHERE name = N'MS_Description'";
-
-            await using var conn = new SqlConnection(connectionString);
-            try
-            {
-                await conn.OpenAsync();
-                await using var cmd = new SqlCommand(sql, conn)
-                {
-                    CommandType = CommandType.Text,
-                    CommandTimeout = 50000
-                };
-                await using var dr = await cmd.ExecuteReaderAsync();
-                if (await dr.ReadAsync())
-                {
-                    result = dr.GetString(0);
-                }
-            }
-            catch (Exception ex)
-            {
-                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                await conn.CloseAsync();
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        /// Gets the tables async.
-        /// </summary>
-        /// <returns>A Task.</returns>
-        internal static async Task<List<ObjectName>> GetTablesAsync(string? connectionString)
-        {
-            if (string.IsNullOrEmpty(connectionString))
-            {
-                return [];
-            }
-
-            var objects = new List<ObjectName>();
-
-            var query = @"
-                SELECT
-                    TABLE_SCHEMA,
-                    TABLE_NAME
-                FROM INFORMATION_SCHEMA.TABLES
-                WHERE TABLE_TYPE = 'BASE TABLE'
-                ORDER BY TABLE_SCHEMA, TABLE_NAME";
-
-            using var connection = new SqlConnection(connectionString);
-            using var command = new SqlCommand(query, connection) { CommandType = CommandType.Text, CommandTimeout = 50000 };
-            await connection.OpenAsync();
-
-            using var reader = await command.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
-            {
-                objects.Add(new ObjectName(ObjectTypeEnums.Table, reader["TABLE_SCHEMA"].ToString(), reader["TABLE_NAME"].ToString()));
-            }
-
-            return objects;
-        }
-
-        /// <summary>
-        /// Gets the identity column name for the specified table asynchronously, or null if none exists.
-        /// </summary>
-        /// <param name="objectName">The object name.</param>
-        /// <returns>The identity column name, or null.</returns>
-        internal static async Task<bool> HasIdentityColumnAsync(ObjectName? objectName, string? connectionString)
-        {
-            if (objectName == null || objectName?.ObjectType == ObjectTypeEnums.None || string.IsNullOrEmpty(connectionString))
-                return false;
-
-            bool result = false;
-            string sql = @"
-SELECT
-    ic.name AS identity_column_name
-FROM sys.tables AS t
-INNER JOIN sys.schemas AS s ON t.schema_id = s.schema_id
-INNER JOIN sys.identity_columns AS ic ON t.object_id = ic.object_id
-WHERE t.name = @TableName
-AND s.name = @SchemaName;";
-
-            await using var conn = new SqlConnection(connectionString);
-            try
-            {
-                await conn.OpenAsync();
-                await using var cmd = new SqlCommand(sql, conn)
-                {
-                    CommandType = CommandType.Text,
-                    CommandTimeout = 50000
-                };
-                cmd.Parameters.AddWithValue("@TableName", objectName?.Name);
-                cmd.Parameters.AddWithValue("@SchemaName", objectName?.Schema);
-
-                await using var reader = await cmd.ExecuteReaderAsync();
-                if (await reader.ReadAsync())
-                {
-                    result = true;
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                await conn.CloseAsync();
-            }
-
-            return result;
-        }
-
-        /// <summary>
-        /// Save the description of the selected column
-        /// </summary>
-        internal static async Task SaveColumnDescAsync(string? objectName, string columnName, string desc, string? connectionString)
-        {
-            if (string.IsNullOrEmpty(connectionString) || string.IsNullOrEmpty(objectName) || string.IsNullOrEmpty(columnName) || string.IsNullOrEmpty(desc))
-            {
-                return;
-            }
-
-            const string sql = @"
-IF EXISTS (SELECT name
-           FROM sys.columns
-           WHERE object_id = OBJECT_ID(@TableName)
-             AND name = @ColumnName)
-BEGIN
-    DECLARE @Schema varchar(100) = OBJECT_SCHEMA_NAME(OBJECT_ID(@TableName));
-    DECLARE @ObjectName varchar(100) = OBJECT_NAME(OBJECT_ID(@TableName));
-    DECLARE @ObjectType varchar(100);
-    SELECT @ObjectType = CASE type_desc WHEN 'USER_TABLE' THEN 'TABLE' ELSE 'VIEW' END
-      FROM sys.objects
-     WHERE object_id = OBJECT_ID(@TableName);
-
-    IF EXISTS (SELECT value
-               FROM sys.extended_properties
-               WHERE class = 1 AND major_id = OBJECT_ID(@TableName)
-                 AND minor_id = (SELECT column_id FROM sys.columns WHERE name = @ColumnName AND object_id = OBJECT_ID(@TableName))
-                 AND name = 'MS_Description')
-        EXEC sp_updateextendedproperty @name = N'MS_Description', @value = @Description,
-            @level0type = N'SCHEMA', @level0name = @Schema,
-            @level1type = @ObjectType, @level1name = @ObjectName,
-            @level2type = N'COLUMN', @level2name = @ColumnName
-    ELSE
-        EXEC sp_addextendedproperty @name = N'MS_Description', @value = @Description,
-            @level0type = N'SCHEMA', @level0name = @Schema,
-            @level1type = @ObjectType, @level1name = @ObjectName,
-            @level2type = N'COLUMN', @level2name = @ColumnName
-END";
-            await using var conn = new SqlConnection(connectionString);
-            try
-            {
-                await using var cmd = new SqlCommand(sql, conn) { CommandType = CommandType.Text, CommandTimeout = 5000 };
-                cmd.Parameters.AddWithValue("@TableName", objectName ?? (object)DBNull.Value);
-                cmd.Parameters.AddWithValue("@ColumnName", columnName ?? (object)DBNull.Value);
-                cmd.Parameters.AddWithValue("@Description", desc ?? (object)DBNull.Value);
-
-                await conn.OpenAsync();
-                await cmd.ExecuteNonQueryAsync();
-            }
-            catch (Exception ex)
-            {
-                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                await conn.CloseAsync();
-            }
-        }
-
-        /// <summary>
         /// Syntaxes the check async.
         /// </summary>
         /// <param name="userQuery">The user query.</param>
@@ -849,6 +276,307 @@ END";
             }
         }
 
+        #endregion SQL Execution & Validation
+
+        #region Database Object Metadata Retrieval
+
+        /// <summary>
+        /// Gets the database objects asynchronously based on the specified object type.
+        /// </summary>
+        /// <param name="tableType">The type of database object (e.g., Table, View, StoredProcedure, Function).</param>
+        /// <returns>A Task containing a list of ObjectName objects.</returns>
+        internal static async Task<List<ObjectName>> GetDatabaseObjectsAsync(ObjectTypeEnums tableType, string connectionString)
+        {
+            try
+            {
+                return tableType switch
+                {
+                    ObjectTypeEnums.Table => await GetTablesAsync(connectionString),
+                    ObjectTypeEnums.View => await GetViewsAsync(connectionString),
+                    ObjectTypeEnums.StoredProcedure => await GetStoredProceduresAsync(connectionString),
+                    ObjectTypeEnums.Function => await GetFunctionsAsync(connectionString),
+                    ObjectTypeEnums.Trigger => await GetTriggersAsync(connectionString),
+                    ObjectTypeEnums.Synonym => await GetSynonymsAsync(connectionString),
+                    _ => throw new NotSupportedException($"Unsupported object type: {tableType}.")
+                };
+            }
+            catch (Exception ex)
+            {
+                // Log or handle the exception as needed
+                MessageBox.Show($"Error retrieving database objects: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return []; // Return an empty list in case of an error
+            }
+        }
+
+        /// <summary>
+        /// Get database list of a sql server
+        /// </summary>
+        /// <param name="serverName"></param>
+        /// <returns></returns>
+        internal static async Task<List<string>> GetDatabases(string serverName, CancellationToken cancellationToken)
+        {
+            List<String> databases = [];
+
+            try
+            {
+                Microsoft.Data.SqlClient.SqlConnectionStringBuilder connection = new()
+                {
+                    DataSource = serverName,
+                    IntegratedSecurity = true,
+                    Encrypt = true,
+                    TrustServerCertificate = true
+                };
+
+                String strConn = connection.ToString();
+                SqlConnection sqlConn = new(strConn);
+                await sqlConn.OpenAsync(cancellationToken);
+
+                //get databases
+                DataTable tblDatabases = sqlConn.GetSchema("Databases");
+
+                sqlConn.Close();
+
+                foreach (DataRow row in tblDatabases.Rows)
+                {
+                    String? strDatabaseName = row["database_name"].ToString();
+
+                    if (!string.IsNullOrEmpty(strDatabaseName))
+                    {
+                        databases.Add(strDatabaseName);
+                    }
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // ignore
+            }
+            catch (SqlException)
+            {
+                //Ignore the error
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+
+            databases.Sort();
+            return databases;
+        }
+
+        /// <summary>
+        /// Gets the functions async.
+        /// </summary>
+        /// <returns>A Task.</returns>
+        internal static async Task<List<ObjectName>> GetFunctionsAsync(string? connectionString)
+        {
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                return [];
+            }
+
+            var objects = new List<ObjectName>();
+
+            var query = @"SELECT
+    s.name AS SchemaName,
+    o.name AS FunctionName,
+    o.type_desc AS FunctionType
+FROM sys.objects o
+JOIN sys.schemas s ON o.schema_id = s.schema_id
+WHERE o.type IN ('FN', 'IF', 'TF')
+ORDER BY s.name, o.name;";
+
+            using var connection = new SqlConnection(connectionString);
+            using var command = new SqlCommand(query, connection)
+            {
+                CommandType = CommandType.Text,
+                CommandTimeout = 50000
+            };
+            await connection.OpenAsync();
+
+            using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                objects.Add(new ObjectName(ObjectTypeEnums.Function, reader["SchemaName"].ToString(), reader["FunctionName"].ToString()));
+            }
+
+            return objects;
+        }
+
+        /// <summary>
+        /// Gets the schemas async.
+        /// </summary>
+        /// <returns>A Task.</returns>
+        internal static async Task<List<string>> GetSchemasAsync(string? connectionString)
+        {
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                return [];
+            }
+
+            var schemas = new List<string>();
+            var query = "SELECT name FROM sys.schemas ORDER BY name";
+            using var connection = new SqlConnection(connectionString);
+            using var command = new SqlCommand(query, connection)
+            {
+                CommandType = CommandType.Text,
+                CommandTimeout = 50000
+            };
+
+            try
+            {
+                await connection.OpenAsync();
+                using var reader = await command.ExecuteReaderAsync();
+
+                while (await reader.ReadAsync())
+                {
+                    var schemaName = reader["name"].ToString();
+                    if (!string.IsNullOrEmpty(schemaName))
+                        schemas.Add(schemaName);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error loading schemas: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                await connection.CloseAsync();
+            }
+            return schemas;
+        }
+
+        /// <summary>
+        /// Gets the stored procedures async.
+        /// </summary>
+        /// <returns>A Task.</returns>
+        internal static async Task<List<ObjectName>> GetStoredProceduresAsync(string? connectionString)
+        {
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                return [];
+            }
+
+            var objects = new List<ObjectName>();
+
+            var query = @"SELECT
+    s.name AS SchemaName,
+    p.name AS SPName
+FROM sys.procedures p
+JOIN sys.schemas s ON p.schema_id = s.schema_id
+ORDER BY s.name, p.name;";
+
+            using var connection = new SqlConnection(connectionString);
+            using var command = new SqlCommand(query, connection) { CommandType = CommandType.Text, CommandTimeout = 50000 };
+            await connection.OpenAsync();
+
+            using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                objects.Add(new ObjectName(ObjectTypeEnums.StoredProcedure, reader["SchemaName"].ToString(), reader["SPName"].ToString()));
+            }
+
+            return objects;
+        }
+
+        /// <summary>
+        /// Gets the tables async.
+        /// </summary>
+        /// <returns>A Task.</returns>
+        internal static async Task<List<ObjectName>> GetTablesAsync(string? connectionString)
+        {
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                return [];
+            }
+
+            var objects = new List<ObjectName>();
+
+            var query = @"
+                SELECT
+                    TABLE_SCHEMA,
+                    TABLE_NAME
+                FROM INFORMATION_SCHEMA.TABLES
+                WHERE TABLE_TYPE = 'BASE TABLE'
+                ORDER BY TABLE_SCHEMA, TABLE_NAME";
+
+            using var connection = new SqlConnection(connectionString);
+            using var command = new SqlCommand(query, connection) { CommandType = CommandType.Text, CommandTimeout = 50000 };
+            await connection.OpenAsync();
+
+            using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                objects.Add(new ObjectName(ObjectTypeEnums.Table, reader["TABLE_SCHEMA"].ToString(), reader["TABLE_NAME"].ToString()));
+            }
+
+            return objects;
+        }
+
+        /// <summary>
+        /// Gets the synonyms async.
+        /// </summary>
+        /// <param name="connectionString">The connection string.</param>
+        /// <returns>A Task.</returns>
+        private static async Task<List<ObjectName>> GetSynonymsAsync(string connectionString)
+        {
+            var objects = new List<ObjectName>();
+
+            var query = @"
+SELECT
+    sch.name AS SchemaName,
+    syn.name AS SynonymName
+FROM sys.synonyms syn
+INNER JOIN sys.schemas sch ON syn.schema_id = sch.schema_id
+ORDER BY sch.name, syn.name;";
+
+            using var connection = new SqlConnection(connectionString);
+            using var command = new SqlCommand(query, connection)
+            {
+                CommandType = CommandType.Text,
+                CommandTimeout = 50000
+            };
+            await connection.OpenAsync();
+
+            using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                objects.Add(new ObjectName(ObjectTypeEnums.Synonym, reader["SchemaName"].ToString(), reader["SynonymName"].ToString()));
+            }
+
+            return objects;
+        }
+
+        /// <summary>
+        /// Gets the triggers.
+        /// </summary>
+        /// <param name="connectionString">The connection string.</param>
+        /// <returns>A Task.</returns>
+        private static async Task<List<ObjectName>> GetTriggersAsync(string connectionString)
+        {
+            var objects = new List<ObjectName>();
+
+            var query = @"SELECT s.name AS SchemaName, tr.name AS TriggerName
+FROM sys.triggers tr
+JOIN sys.objects o ON tr.parent_id = o.object_id
+JOIN sys.schemas s ON o.schema_id = s.schema_id";
+
+            using var connection = new SqlConnection(connectionString);
+            using var command = new SqlCommand(query, connection)
+            {
+                CommandType = CommandType.Text,
+                CommandTimeout = 50000
+            };
+            await connection.OpenAsync();
+
+            using var reader = await command.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+            {
+                objects.Add(new ObjectName(ObjectTypeEnums.Trigger, reader["SchemaName"].ToString(), reader["TriggerName"].ToString()));
+            }
+
+            return objects;
+        }
+
         /// <summary>
         /// Gets the views async.
         /// </summary>
@@ -887,6 +615,402 @@ END";
             return objects;
         }
 
+        #endregion Database Object Metadata Retrieval
+
+        #region Object & Column Descriptions
+
+        /// <summary>
+        /// Adds the usp_addupdateextendedproperty stored procedures to the database.
+        /// </summary>
+        /// <param name="connectionString">The connection string.</param>
+        /// <returns>A Task.</returns>
+        internal static async Task<string> AddObjectDescriptionSPs(string connectionString)
+        {
+            var script = DatabaseDocBuilder.UspAddObjectDescription();
+
+            var sqlStatements = Regex.Split(script, @"\bGO\b", RegexOptions.IgnoreCase | RegexOptions.Multiline);
+
+            // execute each statement
+            foreach (var sql in sqlStatements)
+            {
+                //Execute(builder.ConnectionString, sql);
+                if (sql.Length > 0)
+                {
+                    var result = await SQLDatabaseHelper.ExecuteSQLAsync(sql, connectionString);
+                    if (result != string.Empty)
+                    {
+                        return result;
+                    }
+                }
+            }
+            return string.Empty;
+        }
+
+        /// <summary>
+        /// Gets the column description.
+        /// </summary>
+        /// <param name="objectName">The object name.</param>
+        /// <param name="column">The column.</param>
+        /// <returns>A string.</returns>
+        internal static async Task<string> GetColumnDescriptionAsync(ObjectName objectName, string column, string connectionString)
+        {
+            string result = string.Empty;
+            string sql;
+            if (objectName.ObjectType == ObjectName.ObjectTypeEnums.View)
+            {
+                sql = $"SELECT E.value Description FROM sys.schemas S INNER JOIN sys.views T ON S.schema_id = T.schema_id INNER JOIN sys.columns C ON T.object_id = C.object_id INNER JOIN sys.extended_properties E ON T.object_id = E.major_id AND C.column_id = E.minor_id AND E.name = 'MS_Description' AND S.name = N'{objectName.Schema}' AND T.name = N'{objectName.Name}' AND C.name = N'{column}'";
+            }
+            else
+            {
+                sql = $"SELECT E.value Description FROM sys.schemas S INNER JOIN sys.tables T ON S.schema_id = T.schema_id INNER JOIN sys.columns C ON T.object_id = C.object_id INNER JOIN sys.extended_properties E ON T.object_id = E.major_id AND C.column_id = E.minor_id AND E.name = 'MS_Description' AND S.name = N'{objectName.Schema}' AND T.name = N'{objectName.Name}' AND C.name = N'{column}'";
+            }
+            var conn = new SqlConnection(connectionString);
+            try
+            {
+                await conn.OpenAsync();
+                await using var cmd = new SqlCommand(sql, conn)
+                {
+                    CommandType = CommandType.Text,
+                    CommandTimeout = 50000
+                };
+                await using var dr = await cmd.ExecuteReaderAsync();
+                if (await dr.ReadAsync())
+                {
+                    result = dr.GetString(0);
+                }
+
+                dr.Close();
+            }
+            catch (Exception ex)
+            {
+                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                await conn.CloseAsync();
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Gets the object description async.
+        /// </summary>
+        /// <returns>A Task.</returns>
+        internal static async Task<string> GetObjectDescriptionAsync(ObjectName? objectName, string? connectionString)
+        {
+            if (objectName == null || objectName?.ObjectType == ObjectTypeEnums.None || string.IsNullOrEmpty(connectionString))
+                return string.Empty;
+
+            string result = string.Empty;
+
+            if (objectName != null)
+            {
+                try
+                {
+                    string sql = string.Empty;
+
+                    switch (objectName.ObjectType)
+                    {
+                        case ObjectTypeEnums.Table:
+                            sql = $@"
+SELECT value
+FROM fn_listextendedproperty (
+    NULL, 'schema', '{objectName.Schema}', 'table', '{objectName.Name}', default, default
+)
+WHERE name = N'MS_Description'";
+                            break;
+
+                        case ObjectTypeEnums.View:
+                            sql = $@"
+SELECT value
+FROM fn_listextendedproperty (
+    NULL, 'schema', '{objectName.Schema}', 'view', '{objectName.Name}', default, default
+)
+WHERE name = N'MS_Description'";
+                            break;
+
+                        case ObjectTypeEnums.StoredProcedure:
+                            sql = $@"
+SELECT value
+FROM fn_listextendedproperty (
+    NULL, 'schema', '{objectName.Schema}', 'procedure', '{objectName.Name}', default, default
+)
+WHERE name = N'MS_Description'";
+                            break;
+
+                        case ObjectTypeEnums.Function:
+                            sql = $@"
+SELECT value
+FROM fn_listextendedproperty (
+    NULL, 'schema', '{objectName.Schema}', 'function', '{objectName.Name}', default, default
+)
+WHERE name = N'MS_Description'";
+                            break;
+
+                        case ObjectTypeEnums.Trigger:
+                            // Get trigger parent info
+                            var (parentName, parentType) = await GetTriggerParentAsync(objectName.Name, connectionString);
+                            if (string.IsNullOrEmpty(parentName) || string.IsNullOrEmpty(parentType)) return string.Empty;
+
+                            sql = $@"
+SELECT value
+FROM fn_listextendedproperty (
+    NULL, 'schema', '{objectName.Schema}', '{parentType.ToLower()}', '{parentName}', 'trigger', '{objectName.Name}'
+)
+WHERE name = N'MS_Description'";
+                            break;
+
+                        default:
+                            return string.Empty;
+                    }
+
+                    var returnValue = await SQLDatabaseHelper.ExecuteScalarAsync(sql, connectionString);
+
+                    if (returnValue != null && returnValue != DBNull.Value)
+                    {
+                        result = returnValue.ToString() ?? string.Empty;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Common.MsgBox(ex.Message, MessageBoxIcon.Error);
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Updates the discription for the object.
+        /// </summary>
+        /// <param name="newDescription">The new description.</param>
+        /// <returns>A Task.</returns>
+        public static async Task UpdateObjectDescAsync(ObjectName objectName, string newDescription, string? connectionString)
+        {
+            if (string.IsNullOrEmpty(connectionString) || objectName.IsEmpty()) return;
+
+            string newDesc = (newDescription ?? string.Empty).Replace("'", "''");
+
+            string level1type;
+            string level1name;
+            string level2type = null;
+            string level2name = null;
+
+            switch (objectName.ObjectType)
+            {
+                case ObjectTypeEnums.Table:
+                    level1type = "TABLE";
+                    level1name = objectName.Name;
+                    break;
+
+                case ObjectTypeEnums.View:
+                    level1type = "VIEW";
+                    level1name = objectName.Name;
+                    break;
+
+                case ObjectTypeEnums.StoredProcedure:
+                    level1type = "PROCEDURE";
+                    level1name = objectName.Name;
+                    break;
+
+                case ObjectTypeEnums.Function:
+                    level1type = "FUNCTION";
+                    level1name = objectName.Name;
+                    break;
+
+                case ObjectTypeEnums.Trigger:
+                    var (triggerParent, parentType) = await GetTriggerParentAsync(objectName.Name, connectionString);
+                    level1type = parentType;
+                    level1name = triggerParent;
+                    level2type = "TRIGGER";
+                    level2name = objectName.Name;
+                    break;
+
+                case ObjectTypeEnums.Synonym:
+                    level1type = "SYNONYM";
+                    level1name = objectName.Name;
+                    break;
+
+                default:
+                    throw new InvalidOperationException("Unsupported object type for description update.");
+            }
+
+            string level2Clause = (level2type != null)
+                ? $", @level2type = N'{level2type}', @level2name = N'{level2name}'"
+                : string.Empty;
+
+            string query;
+            if (string.IsNullOrEmpty(newDescription))
+            {
+                query = $@"IF EXISTS (
+    SELECT 1
+      FROM sys.extended_properties
+     WHERE class = 1 AND major_id = OBJECT_ID(N'{objectName.FullName}')
+       AND minor_id = 0
+       AND name = 'MS_Description')
+    BEGIN
+        EXEC sys.sp_dropextendedproperty
+@name = N'MS_Description',
+@level0type = N'SCHEMA', @level0name = N'{objectName.Schema}',
+@level1type = N'{level1type}', @level1name = N'{level1name}'{level2Clause};
+    END;";
+            }
+            else
+            {
+                query = $@"IF EXISTS (
+    SELECT 1
+      FROM sys.extended_properties
+     WHERE class = 1 AND major_id = OBJECT_ID(N'{objectName.FullName}')
+       AND minor_id = 0
+       AND name = 'MS_Description')
+    BEGIN
+        EXEC sys.sp_updateextendedproperty
+            @name = N'MS_Description',
+            @value = N'{newDesc}',
+            @level0type = N'SCHEMA', @level0name = N'{objectName.Schema}',
+            @level1type = N'{level1type}', @level1name = N'{level1name}'{level2Clause};
+    END
+    ELSE
+    BEGIN
+        EXEC sys.sp_addextendedproperty
+            @name = N'MS_Description',
+            @value = N'{newDesc}',
+            @level0type = N'SCHEMA', @level0name = N'{objectName.Schema}',
+            @level1type = N'{level1type}', @level1name = N'{level1name}'{level2Clause};
+    END";
+            }
+
+            var result = await SQLDatabaseHelper.ExecuteSQLAsync(query, connectionString);
+            if (!string.IsNullOrEmpty(result))
+            {
+                Common.MsgBox("Failed to update object description." + Environment.NewLine + result, MessageBoxIcon.Error);
+            }
+        }
+
+        /// <summary>
+        /// Updates the column/parameter (level2) description.
+        /// </summary>
+        /// <param name="columnOrParameter">The column name.</param>
+        /// <param name="newDescription">The new description.</param>
+        public static async Task UpdateLevel2DescriptionAsync(ObjectName objectName, string columnOrParameter, string newDescription, string connectionString)
+        {
+            if (string.IsNullOrEmpty(connectionString) || objectName.IsEmpty()) return;
+
+            var objectType = objectName.ObjectType;
+            string newDesc = newDescription.Replace("'", "''");
+            string level1type = objectType switch
+            {
+                ObjectTypeEnums.Table => "TABLE",
+                ObjectTypeEnums.View => "VIEW",
+                ObjectTypeEnums.StoredProcedure => "PROCEDURE",
+                ObjectTypeEnums.Function => "FUNCTION",
+                ObjectTypeEnums.Trigger => "TRIGGER",
+                ObjectTypeEnums.Synonym => "Synonym",
+                _ => throw new InvalidOperationException("Unsupported object type for description update.")
+            };
+
+            string level2Type = objectType switch
+            {
+                ObjectTypeEnums.Table or ObjectTypeEnums.View => "COLUMN",
+                ObjectTypeEnums.StoredProcedure or ObjectTypeEnums.Function => "PARAMETER",
+                _ => throw new InvalidOperationException("Unsupported object type for description update.")
+            };
+
+            string query;
+            if (string.IsNullOrEmpty(newDescription))
+            {
+                query = $@"EXEC sys.sp_dropextendedproperty
+@name = N'MS_Description',
+@level0type = N'SCHEMA', @level0name = N'{objectName.Schema}',
+@level1type = N'{level1type}', @level1name = N'{objectName.Name}',
+@level2type = N'{level2Type}', @level2name = N'{columnOrParameter}'";
+            }
+            else
+            {
+                query = $@"
+IF EXISTS (
+    SELECT 1
+    FROM fn_listextendedproperty (
+		N'MS_Description',
+        N'SCHEMA',
+        N'{objectName.Schema}',
+        N'{level1type}',
+        N'{objectName.Name}',
+        N'{level2Type}',
+        N'{columnOrParameter}')
+)
+BEGIN
+    EXEC sys.sp_updateextendedproperty
+        @name = N'MS_Description',
+        @value = N'{newDesc}',
+        @level0type = N'SCHEMA', @level0name = N'{objectName.Schema}',
+        @level1type = N'{level1type}', @level1name = N'{objectName.Name}',
+        @level2type = N'{level2Type}', @level2name = N'{columnOrParameter}';
+END
+ELSE
+BEGIN
+    EXEC sys.sp_addextendedproperty
+        @name = N'MS_Description',
+        @value = N'{newDesc}',
+        @level0type = N'SCHEMA', @level0name = N'{objectName.Schema}',
+        @level1type = N'{level1type}', @level1name = N'{objectName.Name}',
+        @level2type = N'{level2Type}', @level2name = N'{columnOrParameter}';
+END;";
+            }
+
+            await SQLDatabaseHelper.ExecuteSQLAsync(query, connectionString);
+        }
+
+        /// <summary>
+        /// Gets the trigger parent async.
+        /// </summary>
+        /// <param name="triggerName">The trigger name.</param>
+        /// <param name="connectionString">The connection string.</param>
+        /// <returns>A Task.</returns>
+        private static async Task<(string TriggerParent, string ParentType)> GetTriggerParentAsync(string triggerName, string connectionString)
+        {
+            string triggerParent = null;
+            string parentType = null;
+
+            string query = @"
+SELECT
+    o.name AS ParentName,
+    o.type_desc AS ParentType
+FROM sys.triggers t
+INNER JOIN sys.objects o ON t.parent_id = o.object_id
+WHERE t.name = @TriggerName;";
+
+            using (var conn = new SqlConnection(connectionString))
+            using (var cmd = new SqlCommand(query, conn))
+            {
+                cmd.Parameters.AddWithValue("@TriggerName", triggerName);
+
+                await conn.OpenAsync();
+                using (var reader = await cmd.ExecuteReaderAsync())
+                {
+                    if (await reader.ReadAsync())
+                    {
+                        triggerParent = reader["ParentName"]?.ToString();
+                        var typeDesc = reader["ParentType"]?.ToString();
+
+                        parentType = typeDesc switch
+                        {
+                            "USER_TABLE" => "TABLE",
+                            "VIEW" => "VIEW",
+                            _ => "UNKNOWN"
+                        };
+                    }
+                }
+            }
+
+            return (triggerParent, parentType);
+        }
+
+        #endregion Object & Column Descriptions
+
+        #region Object Definitions
+
         /// <summary>
         /// Gets the object definition async.
         /// </summary>
@@ -905,6 +1029,150 @@ END";
             return result != null && result != DBNull.Value ? result.ToString() ?? string.Empty : string.Empty;
         }
 
+        #endregion Object Definitions
+
+        #region Miscellaneous Methods
+
+        /// <summary>
+        /// Gets the row count of a table or view asynchronously.
+        /// </summary>
+        /// <param name="fullName">The full name of the object.</param>
+        /// <returns>A Task<int> representing the row count.</returns>
+        internal static async Task<int> GetRowCountAsync(string fullName, string? connectionString)
+        {
+            if (string.IsNullOrEmpty(connectionString) || string.IsNullOrEmpty(fullName))
+            {
+                return 0;
+            }
+
+            var sql = $"SELECT COUNT(*) FROM {fullName}";
+            try
+            {
+                using var connection = new SqlConnection(connectionString);
+                using var command = new SqlCommand(sql, connection)
+                {
+                    CommandType = CommandType.Text,
+                    CommandTimeout = 50000
+                };
+
+                await connection.OpenAsync();
+                var result = await command.ExecuteScalarAsync();
+                return result != null ? Convert.ToInt32(result) : 0;
+            }
+            catch (Exception ex)
+            {
+                // Show error message
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            return 0;
+        }
+
+        /// <summary>
+        /// Gets the identity column name for the specified table asynchronously, or null if none exists.
+        /// </summary>
+        /// <param name="objectName">The object name.</param>
+        /// <returns>The identity column name, or null.</returns>
+        internal static async Task<bool> HasIdentityColumnAsync(ObjectName? objectName, string? connectionString)
+        {
+            if (objectName == null || objectName?.ObjectType == ObjectTypeEnums.None || string.IsNullOrEmpty(connectionString))
+                return false;
+
+            bool result = false;
+            string sql = @"
+SELECT
+    ic.name AS identity_column_name
+FROM sys.tables AS t
+INNER JOIN sys.schemas AS s ON t.schema_id = s.schema_id
+INNER JOIN sys.identity_columns AS ic ON t.object_id = ic.object_id
+WHERE t.name = @TableName
+AND s.name = @SchemaName;";
+
+            await using var conn = new SqlConnection(connectionString);
+            try
+            {
+                await conn.OpenAsync();
+                await using var cmd = new SqlCommand(sql, conn)
+                {
+                    CommandType = CommandType.Text,
+                    CommandTimeout = 50000
+                };
+                cmd.Parameters.AddWithValue("@TableName", objectName?.Name);
+                cmd.Parameters.AddWithValue("@SchemaName", objectName?.Schema);
+
+                await using var reader = await cmd.ExecuteReaderAsync();
+                if (await reader.ReadAsync())
+                {
+                    result = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                await conn.CloseAsync();
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Gets the objects using table async.
+        /// </summary>
+        /// <param name="objectName">The object name.</param>
+        /// <param name="connectionString">The connection string.</param>
+        /// <returns>A Task.</returns>
+        internal static async Task<List<ObjectName>> GetObjectsUsingTableAsync(ObjectName objectName, string connectionString)
+        {
+            var views = new List<ObjectName>();
+
+            //var tableSchema = string.IsNullOrEmpty(objectName.Schema) ? "dbo" : objectName.Schema;
+
+            string query = $@"
+SELECT
+    o.type_desc AS ReferencingObjectType,
+    s.name AS ReferencingSchema,
+    o.name AS ReferencingObjectName
+FROM
+    sys.sql_expression_dependencies d
+INNER JOIN
+    sys.objects o ON d.referencing_id = o.object_id
+INNER JOIN
+    sys.schemas s ON o.schema_id = s.schema_id
+WHERE
+    d.referenced_schema_name = N'{objectName.Schema}'
+    AND d.referenced_entity_name = N'{objectName.Name}'";
+
+            var dt = await GetDataTableAsync(query, connectionString);
+            if (dt == null || dt.Rows.Count == 0)
+                return views;
+
+            foreach (DataRow row in dt.Rows)
+            {
+                string typeName = row["ReferencingObjectType"]?.ToString() ?? "";
+                var objectType = typeName switch
+                {
+                    "VIEW" => ObjectName.ObjectTypeEnums.View,
+                    "SQL_SCALAR_FUNCTION" => ObjectName.ObjectTypeEnums.Function,
+                    "SQL_STORED_PROCEDURE" => ObjectName.ObjectTypeEnums.StoredProcedure,
+                    _ => ObjectName.ObjectTypeEnums.Table
+                };
+
+                string name = row["ReferencingObjectName"]?.ToString() ?? "";
+                string schema = row["ReferencingSchema"]?.ToString() ?? "";
+                if (!string.IsNullOrEmpty(name) && !string.IsNullOrEmpty(schema))
+                {
+                    views.Add(new ObjectName(objectType, schema, name));
+                }
+            }
+
+            return views;
+        }
+
+        #endregion Miscellaneous Methods
+
+        /*
         /// <summary>
         /// Gets all foreign keys in the database.
         /// </summary>
@@ -980,5 +1248,6 @@ INNER JOIN sys.objects AS referencedObj ON fk.referenced_object_id = referencedO
 
             return foreignKey;
         }
+        */
     }
 }

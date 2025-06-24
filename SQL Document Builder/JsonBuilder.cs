@@ -180,7 +180,7 @@ namespace SQL_Document_Builder
                     }
 
                     ObjectName dr = objectList[i];
-                    string description = await SQLDatabaseHelper.GetTableDescriptionAsync(dr, connection.ConnectionString);
+                    string description = await SQLDatabaseHelper.GetObjectDescriptionAsync(dr, connection.ConnectionString);
                     list.Add(new
                     {
                         Schema = dr.Schema,
