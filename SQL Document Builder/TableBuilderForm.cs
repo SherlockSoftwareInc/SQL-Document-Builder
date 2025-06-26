@@ -1,5 +1,4 @@
-﻿using DarkModeForms;
-using ScintillaNET;
+﻿using ScintillaNET;
 using SQL_Document_Builder.ScintillaNetUtils;
 using SQL_Document_Builder.Template;
 using System;
@@ -7,11 +6,9 @@ using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
 using System.Linq;
-using System.Security.AccessControl;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using static ScintillaNET.Style;
 using static SQL_Document_Builder.ObjectName;
 
 namespace SQL_Document_Builder
@@ -43,7 +40,7 @@ namespace SQL_Document_Builder
         public TableBuilderForm()
         {
             InitializeComponent();
-            _ = new DarkModeCS(this);
+            //_ = new DarkMode(this);
         }
 
         /// <summary>
@@ -1308,7 +1305,8 @@ namespace SQL_Document_Builder
                 Dock = DockStyle.Fill,
                 Location = new Point(6, 6),
                 Margin = new Padding(6),
-                TabIndex = _tabNo
+                TabIndex = _tabNo,
+                DarkMode = Properties.Settings.Default.DarkMode,
             };
 
             //queryTextBox.QueryTextFontChanged += new System.EventHandler(this.SqlTextBox_FontChanged);
@@ -2720,17 +2718,87 @@ namespace SQL_Document_Builder
         /// <param name="e"></param>
         private void TabControl1_DrawItem(object sender, DrawItemEventArgs e)
         {
-            Color tabColor = e.Index == tabControl1.SelectedIndex ? Color.LightBlue : SystemColors.Control;
-            using Brush br = new SolidBrush(tabColor);
-            e.Graphics.FillRectangle(br, e.Bounds);
-            SizeF sz = e.Graphics.MeasureString(tabControl1.TabPages[e.Index].Text, e.Font);
-            e.Graphics.DrawString(tabControl1.TabPages[e.Index].Text, e.Font, Brushes.Black, e.Bounds.Left + (e.Bounds.Width - sz.Width) / 2, e.Bounds.Top + (e.Bounds.Height - sz.Height) / 2 + 1);
+            //// Draw tab background
+            //Color tabColor = e.Index == tabControl1.SelectedIndex ? Color.LightBlue : SystemColors.Control;
+            //using Brush br = new SolidBrush(tabColor);
+            //e.Graphics.FillRectangle(br, e.Bounds);
 
-            Rectangle rect = e.Bounds;
-            rect.Offset(0, 1);
-            rect.Inflate(0, -1);
-            e.Graphics.DrawRectangle(Pens.DarkGray, rect);
-            e.DrawFocusRectangle();
+            //// Draw tab text
+            //SizeF sz = e.Graphics.MeasureString(tabControl1.TabPages[e.Index].Text, e.Font);
+            //float textX = e.Bounds.Left + (e.Bounds.Width - sz.Width) / 2;
+            //float textY = e.Bounds.Top + (e.Bounds.Height - sz.Height) / 2 + 1;
+            //e.Graphics.DrawString(tabControl1.TabPages[e.Index].Text, e.Font, Brushes.Black, textX, textY);
+
+            const int CloseButtonSize = 15;
+            const int CloseButtonMargin = 5;
+            bool _darkModeEnabled = true;
+
+            //this.tabControl1.Padding = new Point(12, 4);
+            //this.tabControl1.DrawMode = System.Windows.Forms.TabDrawMode.OwnerDrawFixed;
+
+            var tabRect = tabControl1.GetTabRect(e.Index);
+            var tabPage = tabControl1.TabPages[e.Index];
+            var tabText = tabPage.Text;
+
+            bool isSelected = (e.Index == tabControl1.SelectedIndex);
+
+            // Use a lighter color for the selected tab
+            Color backColor = _darkModeEnabled
+                ? (isSelected ? Color.FromArgb(70, 70, 70) : Color.FromArgb(40, 40, 40))
+                : (isSelected ? SystemColors.ControlLightLight : SystemColors.Control);
+            Color textColor = Color.White; // Always white for visibility
+            Color closeColor = _darkModeEnabled ? Color.LightGray : Color.Black;
+
+            // Fill background
+            using (var b = new SolidBrush(backColor))
+                e.Graphics.FillRectangle(b, tabRect);
+
+            // Draw a border for the selected tab
+            if (isSelected)
+            {
+                using var borderPen = new Pen(Color.FromArgb(120, 120, 120), 2);
+                Rectangle borderRect = tabRect;
+                borderRect.Width -= 1;
+                borderRect.Height -= 1;
+                e.Graphics.DrawRectangle(borderPen, borderRect);
+            }
+
+            // Vertically center the text
+            using (var textBrush = new SolidBrush(textColor))
+            {
+                var sf = new StringFormat
+                {
+                    Alignment = StringAlignment.Near,
+                    LineAlignment = StringAlignment.Center
+                };
+                Rectangle textRect = new(
+                    tabRect.X + 4,
+                    tabRect.Y,
+                    tabRect.Width - CloseButtonSize - CloseButtonMargin - 8,
+                    tabRect.Height
+                );
+                e.Graphics.DrawString(tabText, this.Font, textBrush, textRect, sf);
+            }
+
+            // Draw close button (simple X), vertically centered
+            Rectangle closeRect = new(
+                tabRect.Right - CloseButtonSize - CloseButtonMargin,
+                tabRect.Top + (tabRect.Height - CloseButtonSize) / 2,
+                CloseButtonSize,
+                CloseButtonSize);
+
+            using var pen = new Pen(closeColor, 2);
+            int padding = 4;
+            e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+            e.Graphics.DrawLine(pen, closeRect.Left + padding, closeRect.Top + padding, closeRect.Right - padding, closeRect.Bottom - padding);
+            e.Graphics.DrawLine(pen, closeRect.Right - padding, closeRect.Top + padding, closeRect.Left + padding, closeRect.Bottom - padding);
+
+            //// Draw tab border
+            //Rectangle rect = e.Bounds;
+            //rect.Offset(0, 1);
+            //rect.Inflate(0, -1);
+            //e.Graphics.DrawRectangle(Pens.DarkGray, rect);
+            //e.DrawFocusRectangle();
         }
 
         /// <summary>
@@ -2830,6 +2898,12 @@ namespace SQL_Document_Builder
         /// <param name="e">The E.</param>
         private void TableBuilderForm_Load(object sender, EventArgs e)
         {
+            if (Properties.Settings.Default.DarkMode)
+            {
+                darkModeToolStripMenuItem.Checked = true;
+                _ = new DarkMode(this);
+            }
+
             WindowState = FormWindowState.Maximized;
 
             startTimer.Start();
@@ -4107,6 +4181,73 @@ namespace SQL_Document_Builder
             PopulateMRUFiles();
 
             AddTab("");
+        }
+
+        /// <summary>
+        /// Handles the tab close requested event of the tab control.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void TabControl1_TabCloseRequested(object sender, TabCloseRequestedEventArgs e)
+        {
+            if (e.TabPage.Controls[0] is SqlEditBox queryTextBox)
+            {
+                if (queryTextBox.SaveCheck() == DialogResult.Cancel)
+                {
+                    e.Cancel = true; // Cancel the tab close if SaveCheck returns Cancel
+                    return;
+                }
+                ;
+
+                // Remove the menu item in Windows dropdown menu
+                for (int i = 0; i < windowsToolStripMenuItem.DropDownItems.Count; i++)
+                {
+                    if (queryTextBox.ID == windowsToolStripMenuItem.DropDownItems[i].Tag?.ToString())
+                    {
+                        var menuItem = windowsToolStripMenuItem.DropDownItems[i];
+                        menuItem.Click -= WindowItem_Click;
+                        windowsToolStripMenuItem.DropDownItems.RemoveAt(i);
+                    }
+                }
+
+                // Remove the query edit box
+                queryTextBox.Dispose();
+
+                // Remove the tab page
+                tabControl1.TabPages.Remove(e.TabPage);
+
+                if (tabControl1.TabCount == 0) AddTab("");
+            }
+        }
+
+        /// <summary>
+        /// Handles the click event of the dark mode tool strip menu item.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void DarkModeToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            darkModeToolStripMenuItem.Checked = !darkModeToolStripMenuItem.Checked;
+            Properties.Settings.Default.DarkMode = !Properties.Settings.Default.DarkMode;
+            ApplyDarkMode(Properties.Settings.Default.DarkMode);
+            Properties.Settings.Default.Save();
+        }
+
+        /// <summary>
+        /// Applies the dark mode.
+        /// </summary>
+        /// <param name="darkMode">If true, dark mode.</param>
+        private void ApplyDarkMode(bool darkMode)
+        {
+            if (darkMode)
+            {
+                _ = new DarkMode(this);
+            }
+            else
+            {
+                // restart the application to apply light mode
+                Application.Restart();
+            }
         }
     }
 }

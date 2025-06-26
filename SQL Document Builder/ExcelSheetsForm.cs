@@ -1,4 +1,4 @@
-﻿using DarkModeForms;
+﻿
 using ExcelDataReader;
 using System;
 using System.ComponentModel;
@@ -22,7 +22,7 @@ namespace SQL_Document_Builder
         public ExcelSheetsForm()
         {
             InitializeComponent();
-            _ = new DarkModeCS(this);
+            _ = new DarkMode(this);
         }
 
         /// <summary>

@@ -1,4 +1,4 @@
-﻿using DarkModeForms;
+﻿
 using System;
 using System.ComponentModel;
 using System.Linq;
@@ -24,7 +24,7 @@ namespace SQL_Document_Builder.Template
         public TemplateEditor()
         {
             InitializeComponent();
-            _ = new DarkModeCS(this);
+            _ = new DarkMode(this);
             _templates.Load();
         }
 

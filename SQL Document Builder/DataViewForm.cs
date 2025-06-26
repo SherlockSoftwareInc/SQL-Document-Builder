@@ -1,4 +1,4 @@
-﻿using DarkModeForms;
+﻿
 using Microsoft.Data.SqlClient;
 using System;
 using System.ComponentModel;
@@ -28,7 +28,7 @@ namespace SQL_Document_Builder
         public DataViewForm()
         {
             InitializeComponent();
-            _ = new DarkModeCS(this);
+            _ = new DarkMode(this);
             //if (Properties.Settings.Default.DarkMode)
             //    _ = new DarkModeCS(this, false);
             dataGridView.RowTemplate.Height = Font.Height + 6;

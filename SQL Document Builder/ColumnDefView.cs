@@ -366,10 +366,10 @@ GO
                 // change the tab page text to "Columns"
                 tabControl1.TabPages[0].Text = "Columns";
 
-                if (_dbObject.ObjectType == ObjectName.ObjectTypeEnums.Table)
-                    objectPropertyGrid.SelectedObject = _dbObject.TableInformation;
-                else
-                    objectPropertyGrid.SelectedObject = _dbObject.ViewInformation;
+                //if (_dbObject.ObjectType == ObjectName.ObjectTypeEnums.Table)
+                //    objectPropertyGrid.SelectedObject = _dbObject.TableInformation;
+                //else
+                //    objectPropertyGrid.SelectedObject = _dbObject.ViewInformation;
             }
             else if (_dbObject.ObjectType == ObjectName.ObjectTypeEnums.StoredProcedure || _dbObject.ObjectType == ObjectName.ObjectTypeEnums.Function)
             {

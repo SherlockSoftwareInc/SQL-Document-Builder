@@ -13,6 +13,7 @@ namespace SQL_Document_Builder
     internal class SqlEditBox : ScintillaNET.Scintilla
     {
         private DocumentTypeEnums _documentType = DocumentTypeEnums.empty;
+        private bool _darkMode = false;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="SqlEditBox"/> class.
@@ -23,18 +24,18 @@ namespace SQL_Document_Builder
             this.WrapMode = WrapMode.None;
             this.IndentationGuides = IndentView.LookBoth;
 
-            // STYLING
-            InitColors();
-            InitSyntaxColoringSQL();
+            //// STYLING
+            ////InitColors();
+            //InitSyntaxColoringSQL();
 
-            // NUMBER MARGIN
-            InitNumberMargin();
+            //// NUMBER MARGIN
+            //InitNumberMargin();
 
-            // BOOKMARK MARGIN
-            InitBookmarkMargin();
+            //// BOOKMARK MARGIN
+            //InitBookmarkMargin();
 
-            // CODE FOLDING MARGIN
-            InitCodeFolding();
+            //// CODE FOLDING MARGIN
+            //InitCodeFolding();
 
             // DRAG DROP
             InitDragDropFile();
@@ -172,6 +173,10 @@ namespace SQL_Document_Builder
             }
         }
 
+        public void ChangeDocumentType(DocumentTypeEnums documentType)
+        { 
+        }
+
         /// <summary>
         /// File name of current query script
         /// </summary>
@@ -222,11 +227,75 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Gets a value indicating whether dark mode.
+        /// </summary>
+        public bool DarkMode
+        {
+            set
+            {
+                if (_darkMode != value)
+                {
+                    _darkMode = value;
+
+                    // reset the Scintilla styles and colors
+                    this.StyleResetDefault();
+                    if (_darkMode)
+                    {
+                        this.BackColor = IntToColor(0x212121);
+                        this.ForeColor = IntToColor(0xFFFFFF);
+                    }
+                    else
+                    {
+                        this.BackColor = Color.White;
+                        this.ForeColor = Color.Black;
+                    }
+
+                    // STYLING
+                    // Reinitialize colors and styles
+                    InitColors();
+
+                    // syntax coloring based on document type
+                    switch (_documentType)
+                    {
+                        case DocumentTypeEnums.Sql:
+                            InitSyntaxColoringSQL();
+                            break;
+
+                        case DocumentTypeEnums.Html:
+                        case DocumentTypeEnums.Xml:
+                            InitSyntaxColoringHtml();
+                            break;
+
+                        case DocumentTypeEnums.Markdown:
+                            InitSyntaxColoringMarkdown();
+                            break;
+
+                        case DocumentTypeEnums.Json:
+                            InitSyntaxColoringJson();
+                            break;
+
+                        default:
+                            InitSyntaxColoringDefault();
+                            break;
+                    }
+
+                    // NUMBER MARGIN
+                    InitNumberMargin();
+
+                    // BOOKMARK MARGIN
+                    InitBookmarkMargin();
+
+                    // CODE FOLDING MARGIN
+                    InitCodeFolding();
+                }
+            }
+        }
+
         /// Handles the text changed event of the SQL text box:
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
-        internal void OnTextChanged(object sender, EventArgs e)
+        internal void OnTextChanged(object? sender, EventArgs e)
         {
             //Changed = true;
             //statusToolStripStatusLabe.Text = string.Empty;
@@ -280,11 +349,21 @@ namespace SQL_Document_Builder
             this.StyleResetDefault();
             this.Styles[Style.Default].Font = "Cascadia Mono";
             this.Styles[Style.Default].Size = 10;
-            this.Styles[Style.Default].BackColor = IntToColor(0x212121);
-            this.Styles[Style.Default].ForeColor = IntToColor(0xFFFFFF);
-            this.StyleClearAll();
+            if (_darkMode)
+            {
+                this.Styles[Style.Default].BackColor = IntToColor(0x212121);
+                this.Styles[Style.Default].ForeColor = IntToColor(0xFFFFFF);
+                this.StyleClearAll();
 
-            this.CaretForeColor = Color.White;
+                this.CaretForeColor = Color.White;
+            }
+            else
+            {
+                this.Styles[Style.Default].BackColor = Color.White;
+                this.Styles[Style.Default].ForeColor = Color.Black;
+                this.StyleClearAll();
+                this.CaretForeColor = Color.Black;
+            }
         }
 
         /// <summary>
@@ -299,31 +378,63 @@ namespace SQL_Document_Builder
             this.StyleResetDefault();
             this.Styles[Style.Default].Font = "Cascadia Mono";
             this.Styles[Style.Default].Size = 10;
-            this.Styles[Style.Default].BackColor = IntToColor(0x212121);
-            this.Styles[Style.Default].ForeColor = IntToColor(0xFFFFFF);
-            this.StyleClearAll();
 
-            // HTML styles
-            this.Styles[Style.Html.Default].ForeColor = Color.White;
-            this.Styles[Style.Html.Tag].ForeColor = Color.DeepSkyBlue;           // <tag>
-            this.Styles[Style.Html.TagEnd].ForeColor = Color.DeepSkyBlue;        // </tag>
-            this.Styles[Style.Html.TagUnknown].ForeColor = Color.Red;
-            this.Styles[Style.Html.Attribute].ForeColor = Color.Orange;          // attribute=
-            this.Styles[Style.Html.AttributeUnknown].ForeColor = Color.Red;
-            this.Styles[Style.Html.Number].ForeColor = Color.LightGreen;
-            this.Styles[Style.Html.DoubleString].ForeColor = Color.LightYellow;  // "string"
-            this.Styles[Style.Html.SingleString].ForeColor = Color.LightYellow;  // 'string'
-            this.Styles[Style.Html.Other].ForeColor = Color.LightGray;
-            this.Styles[Style.Html.Comment].ForeColor = Color.MediumSeaGreen;    // <!-- comment -->
-            this.Styles[Style.Html.Entity].ForeColor = Color.Violet;             // &entity;
-            this.Styles[Style.Html.Value].ForeColor = Color.LightYellow;
+            if (_darkMode)
+            {
+                this.Styles[Style.Default].BackColor = IntToColor(0x212121);
+                this.Styles[Style.Default].ForeColor = IntToColor(0xFFFFFF);
+                this.StyleClearAll();
 
-            // Script/CSS blocks inside HTML
-            this.Styles[Style.Html.Script].ForeColor = Color.LightPink;
-            this.Styles[Style.Html.Asp].ForeColor = Color.LightSkyBlue;
-            this.Styles[Style.Html.CData].ForeColor = Color.LightSlateGray;
+                // HTML styles
+                this.Styles[Style.Html.Default].ForeColor = Color.White;
+                this.Styles[Style.Html.Tag].ForeColor = Color.DeepSkyBlue;           // <tag>
+                this.Styles[Style.Html.TagEnd].ForeColor = Color.DeepSkyBlue;        // </tag>
+                this.Styles[Style.Html.TagUnknown].ForeColor = Color.Red;
+                this.Styles[Style.Html.Attribute].ForeColor = Color.Orange;          // attribute=
+                this.Styles[Style.Html.AttributeUnknown].ForeColor = Color.Red;
+                this.Styles[Style.Html.Number].ForeColor = Color.LightGreen;
+                this.Styles[Style.Html.DoubleString].ForeColor = Color.LightYellow;  // "string"
+                this.Styles[Style.Html.SingleString].ForeColor = Color.LightYellow;  // 'string'
+                this.Styles[Style.Html.Other].ForeColor = Color.LightGray;
+                this.Styles[Style.Html.Comment].ForeColor = Color.MediumSeaGreen;    // <!-- comment -->
+                this.Styles[Style.Html.Entity].ForeColor = Color.Violet;             // &entity;
+                this.Styles[Style.Html.Value].ForeColor = Color.LightYellow;
 
-            this.CaretForeColor = Color.White;
+                // Script/CSS blocks inside HTML
+                this.Styles[Style.Html.Script].ForeColor = Color.LightPink;
+                this.Styles[Style.Html.Asp].ForeColor = Color.LightSkyBlue;
+                this.Styles[Style.Html.CData].ForeColor = Color.LightSlateGray;
+
+                this.CaretForeColor = Color.White;
+            }
+            else
+            {
+                this.Styles[Style.Default].BackColor = Color.White;
+                this.Styles[Style.Default].ForeColor = Color.Black;
+                this.StyleClearAll();
+
+                // HTML styles for light mode
+                this.Styles[Style.Html.Default].ForeColor = Color.Black;
+                this.Styles[Style.Html.Tag].ForeColor = Color.Blue;                  // <tag>
+                this.Styles[Style.Html.TagEnd].ForeColor = Color.Blue;               // </tag>
+                this.Styles[Style.Html.TagUnknown].ForeColor = Color.Red;
+                this.Styles[Style.Html.Attribute].ForeColor = Color.Brown;           // attribute=
+                this.Styles[Style.Html.AttributeUnknown].ForeColor = Color.Red;
+                this.Styles[Style.Html.Number].ForeColor = Color.DarkCyan;
+                this.Styles[Style.Html.DoubleString].ForeColor = Color.DarkGreen;    // "string"
+                this.Styles[Style.Html.SingleString].ForeColor = Color.DarkGreen;    // 'string'
+                this.Styles[Style.Html.Other].ForeColor = Color.Gray;
+                this.Styles[Style.Html.Comment].ForeColor = Color.Green;             // <!-- comment -->
+                this.Styles[Style.Html.Entity].ForeColor = Color.Purple;             // &entity;
+                this.Styles[Style.Html.Value].ForeColor = Color.DarkGoldenrod;
+
+                // Script/CSS blocks inside HTML
+                this.Styles[Style.Html.Script].ForeColor = Color.MediumVioletRed;
+                this.Styles[Style.Html.Asp].ForeColor = Color.MediumBlue;
+                this.Styles[Style.Html.CData].ForeColor = Color.Gray;
+
+                this.CaretForeColor = Color.Black;
+            }
         }
 
         /// <summary>
@@ -337,24 +448,49 @@ namespace SQL_Document_Builder
             this.StyleResetDefault();
             this.Styles[Style.Default].Font = "Cascadia Mono";
             this.Styles[Style.Default].Size = 10;
-            this.Styles[Style.Default].BackColor = IntToColor(0x212121);
-            this.Styles[Style.Default].ForeColor = IntToColor(0xFFFFFF);
-            this.StyleClearAll();
 
-            // JSON styles
-            this.Styles[Style.Json.Default].ForeColor = Color.White;
-            this.Styles[Style.Json.Number].ForeColor = Color.LightGreen;
-            this.Styles[Style.Json.String].ForeColor = Color.LightYellow;
-            this.Styles[Style.Json.PropertyName].ForeColor = Color.DeepSkyBlue;
-            this.Styles[Style.Json.EscapeSequence].ForeColor = Color.Violet;
-            this.Styles[Style.Json.Keyword].ForeColor = Color.DodgerBlue; // true, false, null
-            this.Styles[Style.Json.LdKeyword].ForeColor = Color.Orange;   // JSON-LD keywords
-            this.Styles[Style.Json.Operator].ForeColor = Color.LightGray; // : , { } [ ]
-            this.Styles[Style.Json.BlockComment].ForeColor = Color.MediumSeaGreen;
-            this.Styles[Style.Json.LineComment].ForeColor = Color.MediumSeaGreen;
+            if (_darkMode)
+            {
+                this.Styles[Style.Default].BackColor = IntToColor(0x212121);
+                this.Styles[Style.Default].ForeColor = IntToColor(0xFFFFFF);
+                this.StyleClearAll();
 
-            this.CaretForeColor = Color.White;
+                // JSON styles
+                this.Styles[Style.Json.Default].ForeColor = Color.White;
+                this.Styles[Style.Json.Number].ForeColor = Color.LightGreen;
+                this.Styles[Style.Json.String].ForeColor = Color.LightYellow;
+                this.Styles[Style.Json.PropertyName].ForeColor = Color.DeepSkyBlue;
+                this.Styles[Style.Json.EscapeSequence].ForeColor = Color.Violet;
+                this.Styles[Style.Json.Keyword].ForeColor = Color.DodgerBlue; // true, false, null
+                this.Styles[Style.Json.LdKeyword].ForeColor = Color.Orange;   // JSON-LD keywords
+                this.Styles[Style.Json.Operator].ForeColor = Color.LightGray; // : , { } [ ]
+                this.Styles[Style.Json.BlockComment].ForeColor = Color.MediumSeaGreen;
+                this.Styles[Style.Json.LineComment].ForeColor = Color.MediumSeaGreen;
+
+                this.CaretForeColor = Color.White;
+            }
+            else
+            {
+                this.Styles[Style.Default].BackColor = Color.White;
+                this.Styles[Style.Default].ForeColor = Color.Black;
+                this.StyleClearAll();
+
+                // JSON styles for light mode
+                this.Styles[Style.Json.Default].ForeColor = Color.Black;
+                this.Styles[Style.Json.Number].ForeColor = Color.DarkCyan;
+                this.Styles[Style.Json.String].ForeColor = Color.Brown;
+                this.Styles[Style.Json.PropertyName].ForeColor = Color.RoyalBlue;
+                this.Styles[Style.Json.EscapeSequence].ForeColor = Color.Purple;
+                this.Styles[Style.Json.Keyword].ForeColor = Color.Blue; // true, false, null
+                this.Styles[Style.Json.LdKeyword].ForeColor = Color.DarkOrange;   // JSON-LD keywords
+                this.Styles[Style.Json.Operator].ForeColor = Color.Gray; // : , { } [ ]
+                this.Styles[Style.Json.BlockComment].ForeColor = Color.ForestGreen;
+                this.Styles[Style.Json.LineComment].ForeColor = Color.ForestGreen;
+
+                this.CaretForeColor = Color.Black;
+            }
         }
+
         /// <summary>
         /// Initializes syntax coloring for Markdown documents.
         /// </summary>
@@ -366,35 +502,71 @@ namespace SQL_Document_Builder
             this.StyleResetDefault();
             this.Styles[Style.Default].Font = "Cascadia Mono";
             this.Styles[Style.Default].Size = 10;
-            this.Styles[Style.Default].BackColor = IntToColor(0x212121);
-            this.Styles[Style.Default].ForeColor = IntToColor(0xFFFFFF);
-            this.StyleClearAll();
 
-            // Markdown styles
-            this.Styles[Style.Markdown.Default].ForeColor = Color.White;
-            this.Styles[Style.Markdown.LineBegin].ForeColor = Color.Gray;
-            this.Styles[Style.Markdown.Strong1].ForeColor = Color.Orange;      // Bold **
-            this.Styles[Style.Markdown.Strong2].ForeColor = Color.Orange;      // Bold __
-            this.Styles[Style.Markdown.Em1].ForeColor = Color.Gold;            // Italic *
-            this.Styles[Style.Markdown.Em2].ForeColor = Color.Gold;            // Italic _
-            this.Styles[Style.Markdown.Header1].ForeColor = Color.DeepSkyBlue;
-            this.Styles[Style.Markdown.Header2].ForeColor = Color.DodgerBlue;
-            this.Styles[Style.Markdown.Header3].ForeColor = Color.LightSkyBlue;
-            this.Styles[Style.Markdown.Header4].ForeColor = Color.LightBlue;
-            this.Styles[Style.Markdown.Header5].ForeColor = Color.LightSteelBlue;
-            this.Styles[Style.Markdown.Header6].ForeColor = Color.SkyBlue;
-            this.Styles[Style.Markdown.PreChar].ForeColor = Color.LightGreen;  // Code block marker (`)
-            this.Styles[Style.Markdown.UListItem].ForeColor = Color.LightSalmon;
-            this.Styles[Style.Markdown.OListItem].ForeColor = Color.LightSalmon;
-            this.Styles[Style.Markdown.BlockQuote].ForeColor = Color.MediumSeaGreen;
-            this.Styles[Style.Markdown.Strikeout].ForeColor = Color.LightGray;
-            this.Styles[Style.Markdown.HRule].ForeColor = Color.DarkGray;
-            this.Styles[Style.Markdown.Link].ForeColor = Color.Violet;
-            this.Styles[Style.Markdown.Code].ForeColor = Color.LightGreen;
-            this.Styles[Style.Markdown.Code2].ForeColor = Color.LightGreen;
-            this.Styles[Style.Markdown.CodeBk].BackColor = Color.FromArgb(40, 60, 40);
+            if (_darkMode)
+            {
+                this.Styles[Style.Default].BackColor = IntToColor(0x212121);
+                this.Styles[Style.Default].ForeColor = IntToColor(0xFFFFFF);
+                this.StyleClearAll();
 
-            this.CaretForeColor = Color.White;
+                // Markdown styles
+                this.Styles[Style.Markdown.Default].ForeColor = Color.White;
+                this.Styles[Style.Markdown.LineBegin].ForeColor = Color.Gray;
+                this.Styles[Style.Markdown.Strong1].ForeColor = Color.Orange;      // Bold **
+                this.Styles[Style.Markdown.Strong2].ForeColor = Color.Orange;      // Bold __
+                this.Styles[Style.Markdown.Em1].ForeColor = Color.Gold;            // Italic *
+                this.Styles[Style.Markdown.Em2].ForeColor = Color.Gold;            // Italic _
+                this.Styles[Style.Markdown.Header1].ForeColor = Color.DeepSkyBlue;
+                this.Styles[Style.Markdown.Header2].ForeColor = Color.DodgerBlue;
+                this.Styles[Style.Markdown.Header3].ForeColor = Color.LightSkyBlue;
+                this.Styles[Style.Markdown.Header4].ForeColor = Color.LightBlue;
+                this.Styles[Style.Markdown.Header5].ForeColor = Color.LightSteelBlue;
+                this.Styles[Style.Markdown.Header6].ForeColor = Color.SkyBlue;
+                this.Styles[Style.Markdown.PreChar].ForeColor = Color.LightGreen;  // Code block marker (`)
+                this.Styles[Style.Markdown.UListItem].ForeColor = Color.LightSalmon;
+                this.Styles[Style.Markdown.OListItem].ForeColor = Color.LightSalmon;
+                this.Styles[Style.Markdown.BlockQuote].ForeColor = Color.MediumSeaGreen;
+                this.Styles[Style.Markdown.Strikeout].ForeColor = Color.LightGray;
+                this.Styles[Style.Markdown.HRule].ForeColor = Color.DarkGray;
+                this.Styles[Style.Markdown.Link].ForeColor = Color.Violet;
+                this.Styles[Style.Markdown.Code].ForeColor = Color.LightGreen;
+                this.Styles[Style.Markdown.Code2].ForeColor = Color.LightGreen;
+                this.Styles[Style.Markdown.CodeBk].BackColor = Color.FromArgb(40, 60, 40);
+
+                this.CaretForeColor = Color.White;
+            }
+            else
+            {
+                this.Styles[Style.Default].BackColor = Color.White;
+                this.Styles[Style.Default].ForeColor = Color.Black;
+                this.StyleClearAll();
+
+                // Markdown styles for light mode
+                this.Styles[Style.Markdown.Default].ForeColor = Color.Black;
+                this.Styles[Style.Markdown.LineBegin].ForeColor = Color.DarkGray;
+                this.Styles[Style.Markdown.Strong1].ForeColor = Color.DarkOrange;      // Bold **
+                this.Styles[Style.Markdown.Strong2].ForeColor = Color.DarkOrange;      // Bold __
+                this.Styles[Style.Markdown.Em1].ForeColor = Color.Goldenrod;           // Italic *
+                this.Styles[Style.Markdown.Em2].ForeColor = Color.Goldenrod;           // Italic _
+                this.Styles[Style.Markdown.Header1].ForeColor = Color.RoyalBlue;
+                this.Styles[Style.Markdown.Header2].ForeColor = Color.MediumBlue;
+                this.Styles[Style.Markdown.Header3].ForeColor = Color.SteelBlue;
+                this.Styles[Style.Markdown.Header4].ForeColor = Color.CadetBlue;
+                this.Styles[Style.Markdown.Header5].ForeColor = Color.SlateGray;
+                this.Styles[Style.Markdown.Header6].ForeColor = Color.Gray;
+                this.Styles[Style.Markdown.PreChar].ForeColor = Color.ForestGreen;     // Code block marker (`)
+                this.Styles[Style.Markdown.UListItem].ForeColor = Color.OrangeRed;
+                this.Styles[Style.Markdown.OListItem].ForeColor = Color.OrangeRed;
+                this.Styles[Style.Markdown.BlockQuote].ForeColor = Color.SeaGreen;
+                this.Styles[Style.Markdown.Strikeout].ForeColor = Color.Gray;
+                this.Styles[Style.Markdown.HRule].ForeColor = Color.DarkGray;
+                this.Styles[Style.Markdown.Link].ForeColor = Color.Purple;
+                this.Styles[Style.Markdown.Code].ForeColor = Color.ForestGreen;
+                this.Styles[Style.Markdown.Code2].ForeColor = Color.ForestGreen;
+                this.Styles[Style.Markdown.CodeBk].BackColor = Color.FromArgb(230, 230, 210);
+
+                this.CaretForeColor = Color.Black;
+            }
         }
 
         /// <summary>
@@ -408,35 +580,71 @@ namespace SQL_Document_Builder
             this.StyleResetDefault();
             this.Styles[Style.Default].Font = "Cascadia Mono";   // "Consolas";
             this.Styles[Style.Default].Size = 10;
-            this.Styles[Style.Default].BackColor = IntToColor(0x212121);
-            this.Styles[Style.Default].ForeColor = IntToColor(0xFFFFFF);
-            this.StyleClearAll();
 
-            // Configure the SQL lexer styles
-            this.Styles[Style.Sql.Comment].ForeColor = Color.RosyBrown; // IntToColor(0xBD758B);
-            this.Styles[Style.Sql.CommentLine].ForeColor = Color.MediumSeaGreen; // IntToColor(0x40BF57);
-            this.Styles[Style.Sql.CommentDoc].ForeColor = Color.SeaGreen; // IntToColor(0x2FAE35);
-            this.Styles[Style.Sql.Number].ForeColor = Color.Yellow; // IntToColor(0xFFFF00);
-            this.Styles[Style.Sql.String].ForeColor = Color.Yellow; // IntToColor(0xFFFF00);
-            this.Styles[Style.Sql.Character].ForeColor = Color.IndianRed; // IntToColor(0xE95454);
-            this.Styles[Style.Sql.Operator].ForeColor = Color.LightGray; // IntToColor(0xE0E0E0);
-            this.Styles[Style.Sql.Identifier].ForeColor = Color.LightSteelBlue; // IntToColor(0xD0DAE2);
-            this.Styles[Style.Sql.CommentLineDoc].ForeColor = Color.CornflowerBlue; // IntToColor(0x77A7DB);
-            this.Styles[Style.Sql.Word].ForeColor = Color.DodgerBlue; // IntToColor(0x48A8EE);
-            this.Styles[Style.Sql.Word2].ForeColor = Color.DarkOrange; // IntToColor(0xF98906);
-            this.Styles[Style.Sql.CommentDocKeyword].ForeColor = Color.DarkSeaGreen; // IntToColor(0xB3D991);
-            this.Styles[Style.Sql.CommentDocKeywordError].ForeColor = Color.Red; // IntToColor(0xFF0000);
-            this.Styles[Style.Sql.SqlPlus].ForeColor = Color.LightGray;	// IntToColor(0xD3D3D3);
-            this.Styles[Style.Sql.SqlPlusPrompt].ForeColor = Color.LightGreen;	// IntToColor(0x90EE90);
-            this.Styles[Style.Sql.SqlPlusComment].ForeColor = Color.DarkGray;	// IntToColor(0xA9A9A9);
-            this.Styles[Style.Sql.User1].ForeColor = Color.LightBlue;	// IntToColor(0xADD8E6);
-            this.Styles[Style.Sql.User2].ForeColor = Color.LightPink;	// IntToColor(0xFFB6C1);
-            this.Styles[Style.Sql.User3].ForeColor = Color.Orange;	// IntToColor(0xFFA500);
-            this.Styles[Style.Sql.User4].ForeColor = Color.Cyan;	// IntToColor(0x00FFFF);
-            this.Styles[Style.Sql.QuotedIdentifier].ForeColor = Color.LightYellow;	// IntToColor(0xFFFF00);
-            this.Styles[Style.Sql.QOperator].ForeColor = Color.Magenta; // IntToColor(0xFF00FF);
+            if (_darkMode)
+            {
+                this.Styles[Style.Default].BackColor = IntToColor(0x212121);
+                this.Styles[Style.Default].ForeColor = IntToColor(0xFFFFFF);
+                this.StyleClearAll();
 
-            this.CaretForeColor = Color.White;
+                // Configure the SQL lexer styles
+                this.Styles[Style.Sql.Comment].ForeColor = Color.RosyBrown; // IntToColor(0xBD758B);
+                this.Styles[Style.Sql.CommentLine].ForeColor = Color.MediumSeaGreen; // IntToColor(0x40BF57);
+                this.Styles[Style.Sql.CommentDoc].ForeColor = Color.SeaGreen; // IntToColor(0x2FAE35);
+                this.Styles[Style.Sql.Number].ForeColor = Color.Yellow; // IntToColor(0xFFFF00);
+                this.Styles[Style.Sql.String].ForeColor = Color.Yellow; // IntToColor(0xFFFF00);
+                this.Styles[Style.Sql.Character].ForeColor = Color.IndianRed; // IntToColor(0xE95454);
+                this.Styles[Style.Sql.Operator].ForeColor = Color.LightGray; // IntToColor(0xE0E0E0);
+                this.Styles[Style.Sql.Identifier].ForeColor = Color.LightSteelBlue; // IntToColor(0xD0DAE2);
+                this.Styles[Style.Sql.CommentLineDoc].ForeColor = Color.CornflowerBlue; // IntToColor(0x77A7DB);
+                this.Styles[Style.Sql.Word].ForeColor = Color.DodgerBlue; // IntToColor(0x48A8EE);
+                this.Styles[Style.Sql.Word2].ForeColor = Color.DarkOrange; // IntToColor(0xF98906);
+                this.Styles[Style.Sql.CommentDocKeyword].ForeColor = Color.DarkSeaGreen; // IntToColor(0xB3D991);
+                this.Styles[Style.Sql.CommentDocKeywordError].ForeColor = Color.Red; // IntToColor(0xFF0000);
+                this.Styles[Style.Sql.SqlPlus].ForeColor = Color.LightGray; // IntToColor(0xD3D3D3);
+                this.Styles[Style.Sql.SqlPlusPrompt].ForeColor = Color.LightGreen;  // IntToColor(0x90EE90);
+                this.Styles[Style.Sql.SqlPlusComment].ForeColor = Color.DarkGray;   // IntToColor(0xA9A9A9);
+                this.Styles[Style.Sql.User1].ForeColor = Color.LightBlue;   // IntToColor(0xADD8E6);
+                this.Styles[Style.Sql.User2].ForeColor = Color.LightPink;   // IntToColor(0xFFB6C1);
+                this.Styles[Style.Sql.User3].ForeColor = Color.Orange;  // IntToColor(0xFFA500);
+                this.Styles[Style.Sql.User4].ForeColor = Color.Cyan;    // IntToColor(0x00FFFF);
+                this.Styles[Style.Sql.QuotedIdentifier].ForeColor = Color.LightYellow;  // IntToColor(0xFFFF00);
+                this.Styles[Style.Sql.QOperator].ForeColor = Color.Magenta; // IntToColor(0xFF00FF);
+
+                this.CaretForeColor = Color.White;
+            }
+            else
+            {
+                this.Styles[Style.Default].BackColor = Color.White;
+                this.Styles[Style.Default].ForeColor = Color.Black;
+                this.StyleClearAll();
+
+                // Configure the SQL lexer styles for light mode
+                this.Styles[Style.Sql.Comment].ForeColor = Color.Green;
+                this.Styles[Style.Sql.CommentLine].ForeColor = Color.Green;
+                this.Styles[Style.Sql.CommentDoc].ForeColor = Color.ForestGreen;
+                this.Styles[Style.Sql.Number].ForeColor = Color.DarkCyan;
+                this.Styles[Style.Sql.String].ForeColor = Color.Brown;
+                this.Styles[Style.Sql.Character].ForeColor = Color.DarkRed;
+                this.Styles[Style.Sql.Operator].ForeColor = Color.DarkBlue;
+                this.Styles[Style.Sql.Identifier].ForeColor = Color.Black;
+                this.Styles[Style.Sql.CommentLineDoc].ForeColor = Color.Teal;
+                this.Styles[Style.Sql.Word].ForeColor = Color.Blue;
+                this.Styles[Style.Sql.Word2].ForeColor = Color.DarkMagenta;
+                this.Styles[Style.Sql.CommentDocKeyword].ForeColor = Color.OliveDrab;
+                this.Styles[Style.Sql.CommentDocKeywordError].ForeColor = Color.Red;
+                this.Styles[Style.Sql.SqlPlus].ForeColor = Color.Gray;
+                this.Styles[Style.Sql.SqlPlusPrompt].ForeColor = Color.DarkGreen;
+                this.Styles[Style.Sql.SqlPlusComment].ForeColor = Color.Gray;
+                this.Styles[Style.Sql.User1].ForeColor = Color.MediumBlue;
+                this.Styles[Style.Sql.User2].ForeColor = Color.MediumVioletRed;
+                this.Styles[Style.Sql.User3].ForeColor = Color.DarkOrange;
+                this.Styles[Style.Sql.User4].ForeColor = Color.DarkCyan;
+                this.Styles[Style.Sql.QuotedIdentifier].ForeColor = Color.DarkGoldenrod;
+                this.Styles[Style.Sql.QOperator].ForeColor = Color.Purple;
+
+                this.CaretForeColor = Color.Black;
+            }
 
             const string SQL_KeyWords = "add alter as authorization backup begin break browse bulk by cascade case catch check checkpoint close clustered column commit compute constraint containstable continue create current cursor database dbcc deallocate declare default delete deny desc disk distinct distributed double drop dump else end errlvl escape except exec execute exit external fetch file fillfactor for foreign freetext freetexttable from full function go goto grant group having holdlock identity identity_insert identitycol if index insert intersect into key kill lineno load merge national nocheck nocount nolock nonclustered of off offsets on open opendatasource openquery openrowset openxml option order over percent plan precision primary print proc procedure public raiserror read readtext reconfigure references replication restore restrict return revert revoke rollback rowcount rowguidcol rule save schema securityaudit select set setuser shutdown statistics table tablesample textsize then to top tran transaction trigger truncate try union unique update updatetext use user values varying view waitfor when where while with writetext ";
 
@@ -516,8 +724,18 @@ namespace SQL_Document_Builder
 
             var marker = this.Markers[BOOKMARK_MARKER];
             marker.Symbol = MarkerSymbol.Circle;
-            marker.SetBackColor(IntToColor(0xFF003B));
-            marker.SetForeColor(IntToColor(0x000000));
+            if(_darkMode)
+            {
+                //marker.SetBackColor(IntToColor(0xFF003B));
+                //marker.SetForeColor(IntToColor(0xFFFFFF));
+                marker.SetBackColor(IntToColor(BACK_COLOR));
+                marker.SetForeColor(IntToColor(0xFFFFFF));
+            }
+            else
+            {
+                marker.SetBackColor(Color.Red);
+                marker.SetForeColor(Color.White);
+            }
             marker.SetAlpha(100);
         }
 
@@ -526,24 +744,45 @@ namespace SQL_Document_Builder
         /// </summary>
         private void InitCodeFolding()
         {
-            this.SetFoldMarginColor(true, IntToColor(BACK_COLOR));
-            this.SetFoldMarginHighlightColor(true, IntToColor(BACK_COLOR));
+            // Set margin background for folding
+            if (_darkMode)
+            {
+                this.SetFoldMarginColor(true, IntToColor(BACK_COLOR));
+                this.SetFoldMarginHighlightColor(true, IntToColor(BACK_COLOR));
+            }
+            else
+            {
+                this.SetFoldMarginColor(true, Color.White);
+                this.SetFoldMarginHighlightColor(true, Color.White);
+            }
 
             // Enable code folding
             this.SetProperty("fold", "1");
             this.SetProperty("fold.compact", "1");
 
             // Configure a margin to display folding symbols
-            this.Margins[FOLDING_MARGIN].Type = MarginType.Symbol;
-            this.Margins[FOLDING_MARGIN].Mask = Marker.MaskFolders;
-            this.Margins[FOLDING_MARGIN].Sensitive = true;
-            this.Margins[FOLDING_MARGIN].Width = 20;
+            var foldingMargin = this.Margins[FOLDING_MARGIN];
+            foldingMargin.Type = MarginType.Symbol;
+            foldingMargin.Mask = Marker.MaskFolders;
+            foldingMargin.Sensitive = true;
+            foldingMargin.Width = 20;
 
-            // Set colors for all folding markers
-            for (int i = 25; i <= 31; i++)
+            // Set colors and symbols for all folding markers
+            if (_darkMode)
             {
-                this.Markers[i].SetForeColor(IntToColor(BACK_COLOR)); // styles for [+] and [-]
-                this.Markers[i].SetBackColor(IntToColor(FORE_COLOR)); // styles for [+] and [-]
+                for (int i = 25; i <= 31; i++)
+                {
+                    this.Markers[i].SetForeColor(IntToColor(BACK_COLOR)); // Foreground for [+] and [-]
+                    this.Markers[i].SetBackColor(IntToColor(FORE_COLOR)); // Background for [+] and [-]
+                }
+            }
+            else
+            {
+                for (int i = 25; i <= 31; i++)
+                {
+                    this.Markers[i].SetForeColor(Color.White); // Foreground for [+] and [-]
+                    this.Markers[i].SetBackColor(Color.Gray);  // Background for [+] and [-]
+                }
             }
 
             // Configure folding markers with respective symbols
@@ -558,16 +797,25 @@ namespace SQL_Document_Builder
             // Enable automatic folding
             this.AutomaticFold = (AutomaticFold.Show | AutomaticFold.Click | AutomaticFold.Change);
         }
-
         /// <summary>
         /// Inits the number margin.
         /// </summary>
         private void InitNumberMargin()
         {
-            this.Styles[Style.LineNumber].BackColor = IntToColor(BACK_COLOR);
-            this.Styles[Style.LineNumber].ForeColor = IntToColor(FORE_COLOR);
-            this.Styles[Style.IndentGuide].ForeColor = IntToColor(FORE_COLOR);
-            this.Styles[Style.IndentGuide].BackColor = IntToColor(BACK_COLOR);
+            if(_darkMode)
+            {
+                this.Styles[Style.LineNumber].BackColor = IntToColor(BACK_COLOR);
+                this.Styles[Style.LineNumber].ForeColor = IntToColor(FORE_COLOR);
+                this.Styles[Style.IndentGuide].ForeColor = IntToColor(FORE_COLOR);
+                this.Styles[Style.IndentGuide].BackColor = IntToColor(BACK_COLOR);
+            }
+            else
+            {
+                this.Styles[Style.LineNumber].BackColor = Color.White;
+                this.Styles[Style.LineNumber].ForeColor = Color.Gray;
+                this.Styles[Style.IndentGuide].ForeColor = Color.LightGray;
+                this.Styles[Style.IndentGuide].BackColor = Color.White;
+            }
 
             var nums = this.Margins[NUMBER_MARGIN];
             nums.Width = 20;
