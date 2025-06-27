@@ -76,13 +76,13 @@ public class ClosableTabControl : TabControl
             Color tabColor, textColor, closeColor;
             if (_darkmode)
             {
-                tabColor = isSelected ? Color.FromArgb(60, 60, 70) : Color.FromArgb(40, 40, 50);
+                tabColor = Color.FromArgb(60, 60, 70);
                 textColor = isSelected ? SystemColors.HighlightText : SystemColors.GrayText;
                 closeColor = textColor;
             }
             else
             {
-                tabColor = isSelected ? Color.LightBlue : SystemColors.Control;
+                tabColor = SystemColors.Control;
                 textColor = this.ForeColor;
                 closeColor = isSelected ? this.ForeColor : Color.Gray;
             }
