@@ -1,4 +1,4 @@
-﻿
+﻿using NPOI.OpenXmlFormats.Vml.Spreadsheet;
 using System;
 using System.ComponentModel;
 using System.Linq;
@@ -15,7 +15,6 @@ namespace SQL_Document_Builder.Template
         private Template? _activeTemplate;
         private string _documentType = string.Empty;
         private bool _init = false;
-        private TemplateItem.ObjectTypeEnums _objectType = TemplateItem.ObjectTypeEnums.Table;
         private TreeNode? _selectedNode;
 
         /// <summary>
@@ -319,7 +318,7 @@ namespace SQL_Document_Builder.Template
             _init = false;
 
             int selectedIndex = docTypeToolStripComboBox.Items.IndexOf(CurrentDocType);
-            if(selectedIndex < 0)
+            if (selectedIndex < 0)
             {
                 // If the current document type is not found, default to the first item
                 selectedIndex = 0;
@@ -607,6 +606,144 @@ namespace SQL_Document_Builder.Template
             // add the new document type to the combo box
             docTypeToolStripComboBox.Items.Add(newDocumentType);
             docTypeToolStripComboBox.SelectedItem = newDocumentType; // Select the newly added document type
+        }
+
+        /// <summary>
+        /// Handles the Click event of the ResetSelectedNodeToolStripMenuItem control:
+        /// Resets the selected node in the template tree view to its default state.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void ResetSelectedNodeToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // Check if a node is selected
+            if (_selectedNode == null)
+            {
+                MessageBox.Show("No node selected to reset.", "Reset Failed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Check if the selected node is the root node
+            if (_selectedNode != null && _selectedNode.Parent == null)
+            {
+                // Reset the entire template
+                if (_activeTemplate != null && _templates.ResetTemplate(_activeTemplate.DocumentType))
+                {
+                    resetToDefaultToolStripMenuItem.PerformClick();
+                }
+            }
+            else
+            {
+                // Load the default template for the current document type
+                var defaultTemplate = new Template(_documentType);
+                if (defaultTemplate == null)
+                {
+                    MessageBox.Show("Default template not found.", "Reset Failed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+                if (!defaultTemplate.Reset(_documentType))
+                {
+                    defaultTemplate.Load();
+                }
+
+                // Find the object type of the selected node
+                TemplateItem.ObjectTypeEnums objectType = TemplateItem.ObjectTypeEnums.Table;
+                bool typeFound = false;
+                if (_selectedNode is TemplateNode templateNode)
+                {
+                    if (templateNode.Template != null)
+                    {
+                        objectType = templateNode.Template.ObjectType;
+                        typeFound = true;
+                    }
+                }
+                else if (_selectedNode is TemplateElementNode templateElementNode)
+                {
+                    if (templateElementNode.Template != null)
+                    {
+                        objectType = templateElementNode.Template.ObjectType;
+                        typeFound = true;
+                    }
+                }
+
+                if (!typeFound)
+                {
+                    MessageBox.Show("Selected node does not have a valid template object type.", "Reset Failed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                // Find the corresponding TemplateItem by object type
+                var defaultTemplateItem = defaultTemplate.GetTemplateItem(objectType);
+
+                if (_selectedNode is TemplateNode)
+                {
+                    // For TemplateNode, set the main Body
+                    templateTextBox.Text = defaultTemplateItem?.Body ?? string.Empty;
+                }
+                else if (_selectedNode is TemplateElementNode templateElementNode)
+                {
+                    // For TemplateElementNode, set the corresponding ElementBody
+                    string elementBody = string.Empty;
+                    switch (_selectedNode.Text.ToUpperInvariant())
+                    {
+                        case "COLUMNS":
+                            elementBody = defaultTemplateItem?.Columns?.Body ?? string.Empty;
+                            break;
+                        case "COLUMN ITEM":
+                            elementBody = defaultTemplateItem?.Columns?.ColumnRow ?? string.Empty;
+                            break;
+                        case "CONSTRAINTS":
+                            elementBody = defaultTemplateItem?.Constraints?.Body ?? string.Empty;
+                            break;
+                        case "CONSTRAINT ITEM":
+                            elementBody = defaultTemplateItem?.Constraints?.ConstraintRow ?? string.Empty;
+                            break;
+                        case "INDEXES":
+                            elementBody = defaultTemplateItem?.Indexes?.Body ?? string.Empty;
+                            break;
+                        case "INDEX ITEM":
+                            elementBody = defaultTemplateItem?.Indexes?.IndexRow ?? string.Empty;
+                            break;
+                        case "PARAMETERS":
+                            elementBody = defaultTemplateItem?.Parameters?.Body ?? string.Empty;
+                            break;
+                        case "PARAMETER ITEM":
+                            elementBody = defaultTemplateItem?.Parameters?.ParameterRow ?? string.Empty;
+                            break;
+                        case "OBJECT LIST":
+                            elementBody = defaultTemplateItem?.ObjectLists?.Body ?? string.Empty;
+                            break;
+                        case "OBJECT ITEM":
+                            elementBody = defaultTemplateItem?.ObjectLists?.ObjectRow ?? string.Empty;
+                            break;
+                        case "DATA TABLE":
+                            elementBody = defaultTemplateItem?.DataTable?.Body ?? string.Empty;
+                            break;
+                        case "DATA TABLE ROW":
+                            elementBody = defaultTemplateItem?.DataTable?.DataRow ?? string.Empty;
+                            break;
+                        case "DATA TABLE HEADER CELL":
+                            elementBody = defaultTemplateItem?.DataTable?.HeaderCell ?? string.Empty;
+                            break;
+                        case "DATA TABLE CELL":
+                            elementBody = defaultTemplateItem?.DataTable?.Cell ?? string.Empty;
+                            break;
+                        case "TRIGGERS":
+                            elementBody = defaultTemplateItem?.Triggers ?? string.Empty;
+                            break;
+                        case "RELATIONSHIPS":
+                            elementBody = defaultTemplateItem?.Relationships?.Body ?? string.Empty;
+                            break;
+                        case "RELATIONSHIP ITEM":
+                            elementBody = defaultTemplateItem?.Relationships?.RelationshipRow ?? string.Empty;
+                            break;
+                        default:
+                            elementBody = string.Empty;
+                            break;
+                    }
+                    templateTextBox.Text = elementBody;
+                }
+            }
         }
     }
 }

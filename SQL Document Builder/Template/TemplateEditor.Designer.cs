@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(TemplateEditor));
             menuStrip1 = new System.Windows.Forms.MenuStrip();
             fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -54,12 +55,15 @@
             templateTextBox = new SqlEditBox();
             splitContainer1 = new System.Windows.Forms.SplitContainer();
             templateTreeView = new TemplateTree();
+            resetContextMenuStrip = new System.Windows.Forms.ContextMenuStrip(components);
+            resetSelectedNodeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             menuStrip1.SuspendLayout();
             toolStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
             splitContainer1.Panel1.SuspendLayout();
             splitContainer1.Panel2.SuspendLayout();
             splitContainer1.SuspendLayout();
+            resetContextMenuStrip.SuspendLayout();
             SuspendLayout();
             // 
             // menuStrip1
@@ -258,6 +262,7 @@
             // 
             // templateTreeView
             // 
+            templateTreeView.ContextMenuStrip = resetContextMenuStrip;
             templateTreeView.Dock = System.Windows.Forms.DockStyle.Fill;
             templateTreeView.Location = new System.Drawing.Point(0, 0);
             templateTreeView.Name = "templateTreeView";
@@ -265,6 +270,19 @@
             templateTreeView.TabIndex = 0;
             templateTreeView.BeforeSelect += TemplateTreeView_BeforeSelect;
             templateTreeView.AfterSelect += TemplateTreeView_AfterSelect;
+            // 
+            // resetContextMenuStrip
+            // 
+            resetContextMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { resetSelectedNodeToolStripMenuItem });
+            resetContextMenuStrip.Name = "resetContextMenuStrip";
+            resetContextMenuStrip.Size = new System.Drawing.Size(182, 26);
+            // 
+            // resetSelectedNodeToolStripMenuItem
+            // 
+            resetSelectedNodeToolStripMenuItem.Name = "resetSelectedNodeToolStripMenuItem";
+            resetSelectedNodeToolStripMenuItem.Size = new System.Drawing.Size(181, 22);
+            resetSelectedNodeToolStripMenuItem.Text = "Reset Selected Node";
+            resetSelectedNodeToolStripMenuItem.Click += ResetSelectedNodeToolStripMenuItem_Click;
             // 
             // TemplateEditor
             // 
@@ -287,6 +305,7 @@
             splitContainer1.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)splitContainer1).EndInit();
             splitContainer1.ResumeLayout(false);
+            resetContextMenuStrip.ResumeLayout(false);
             ResumeLayout(false);
             PerformLayout();
         }
@@ -318,5 +337,7 @@
         private System.Windows.Forms.ToolStripMenuItem insertToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem addDocumentTypeToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
+        private System.Windows.Forms.ContextMenuStrip resetContextMenuStrip;
+        private System.Windows.Forms.ToolStripMenuItem resetSelectedNodeToolStripMenuItem;
     }
 }
