@@ -28,9 +28,8 @@ namespace SQL_Document_Builder
         public DataViewForm()
         {
             InitializeComponent();
-            _ = new DarkMode(this);
-            //if (Properties.Settings.Default.DarkMode)
-            //    _ = new DarkModeCS(this, false);
+            if (Properties.Settings.Default.DarkMode) _ = new DarkMode(this);
+
             dataGridView.RowTemplate.Height = Font.Height + 6;
             dataGridView.RowHeadersWidth = Font.Height + 12;
         }

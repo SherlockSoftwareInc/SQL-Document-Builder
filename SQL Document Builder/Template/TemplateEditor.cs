@@ -24,7 +24,7 @@ namespace SQL_Document_Builder.Template
         public TemplateEditor()
         {
             InitializeComponent();
-            _ = new DarkMode(this);
+            if (Properties.Settings.Default.DarkMode) _ = new DarkMode(this);
             _templates.Load();
         }
 

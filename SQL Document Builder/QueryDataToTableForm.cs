@@ -16,7 +16,7 @@ namespace SQL_Document_Builder
         public QueryDataToTableForm()
         {
             InitializeComponent();
-            _ = new DarkMode(this);
+            if (Properties.Settings.Default.DarkMode) _ = new DarkMode(this);
         }
 
         /// <summary>

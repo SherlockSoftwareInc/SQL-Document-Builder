@@ -462,7 +462,7 @@ namespace SQL_Document_Builder
             }
             else if (control is TreeView tree)
             {
-                SetTreeViewTheme(tree);
+                //SetTreeViewTheme(tree);
             }
             else if (control is DataGridView grid)
             {
