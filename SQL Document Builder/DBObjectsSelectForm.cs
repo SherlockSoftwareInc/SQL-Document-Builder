@@ -238,7 +238,7 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
-        private void PasteButton_Click(object sender, EventArgs e)
+        private async void PasteButton_Click(object sender, EventArgs e)
         {
             // Paste the items from the clipboard to the selected list box
             string clipboardText = Clipboard.GetText();
@@ -246,23 +246,30 @@ namespace SQL_Document_Builder
             {
                 string[] items = clipboardText.Split([Environment.NewLine], StringSplitOptions.RemoveEmptyEntries);
 
-                // set the schema combo box to (All)
-                schemaComboBox.SelectedIndex = 0;
+                // Get all database objects
+                var allObjects = await SQLDatabaseHelper.GetAllObjectsAsync(ConnectionString);
 
+                // Loop through each item in the clipboard text
                 foreach (string item in items)
                 {
+                    // Create a new ObjectName instance for the item
                     var name = new ObjectName(ObjectTypeEnums.None, item.Trim());
 
-                    // find the item in the selectable list box
-                    foreach (ObjectName selectableItem in selectableListBox.Items)
+                    // find the item in the allObjects list that matches the name and schema
+                    var matchingObject = allObjects.Find(o => o.Name.Equals(name.Name, StringComparison.OrdinalIgnoreCase) && o.Schema.Equals(name.Schema, StringComparison.OrdinalIgnoreCase));
+                    
+                    if (matchingObject != null)
                     {
-                        // check if the item is already in the selectable list box
-                        if (selectableItem.Schema.Equals(name.Schema, StringComparison.OrdinalIgnoreCase) &&
-                            selectableItem.Name.Equals(name.Name, StringComparison.OrdinalIgnoreCase))
+                        // If the item is not already in the selected list box, add it
+                        if (!IsItemInSelectedList(matchingObject))
                         {
-                            selectableListBox.SelectedItem = selectableItem;
-                            addButton.PerformClick();
-                            break;
+                            selectedListBox.Items.Add(matchingObject);
+                        }
+
+                        // remove the item from the selectable list box if it exists
+                        if (selectableListBox.Items.Contains(name))
+                        {
+                            selectableListBox.Items.Remove(name);
                         }
                     }
                 }

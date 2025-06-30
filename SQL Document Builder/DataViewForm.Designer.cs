@@ -43,8 +43,6 @@ namespace SQL_Document_Builder
             toolStripLabel1 = new ToolStripLabel();
             topToolStripComboBox = new ToolStripComboBox();
             toolStripSeparator4 = new ToolStripSeparator();
-            saveToolStripButton = new ToolStripButton();
-            toolStripSeparator1 = new ToolStripSeparator();
             exitToolStripButton = new ToolStripButton();
             statusStrip1 = new StatusStrip();
             messageLabel = new ToolStripStatusLabel();
@@ -115,7 +113,7 @@ namespace SQL_Document_Builder
             // 
             // toolStrip1
             // 
-            toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripLabel1, topToolStripComboBox, toolStripSeparator4, saveToolStripButton, toolStripSeparator1, exitToolStripButton });
+            toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripLabel1, topToolStripComboBox, toolStripSeparator4, exitToolStripButton });
             toolStrip1.Location = new Point(0, 24);
             toolStrip1.Name = "toolStrip1";
             toolStrip1.Padding = new Padding(0, 0, 2, 0);
@@ -141,20 +139,6 @@ namespace SQL_Document_Builder
             // 
             toolStripSeparator4.Name = "toolStripSeparator4";
             toolStripSeparator4.Size = new Size(6, 25);
-            // 
-            // saveToolStripButton
-            // 
-            saveToolStripButton.ImageTransparentColor = Color.Magenta;
-            saveToolStripButton.Name = "saveToolStripButton";
-            saveToolStripButton.Size = new Size(35, 22);
-            saveToolStripButton.Text = "&Save";
-            saveToolStripButton.Visible = false;
-            saveToolStripButton.Click += SaveToolStripButton_Click;
-            // 
-            // toolStripSeparator1
-            // 
-            toolStripSeparator1.Name = "toolStripSeparator1";
-            toolStripSeparator1.Size = new Size(6, 25);
             // 
             // exitToolStripButton
             // 
@@ -258,14 +242,12 @@ namespace SQL_Document_Builder
         private ToolStripSeparator toolStripSeparator2;
         private ToolStripMenuItem exitToolStripMenuItem;
         private ToolStrip toolStrip1;
-        private ToolStripButton saveToolStripButton;
         private StatusStrip statusStrip1;
         private ToolStripStatusLabel messageLabel;
         private DataGridView dataGridView;
         private System.Windows.Forms.Timer timer1;
         private ToolStripProgressBar progressBar;
         private System.Windows.Forms.Timer timer2;
-        private ToolStripSeparator toolStripSeparator1;
         private ToolStripButton exitToolStripButton;
         private ToolStripMenuItem copySQLToClipboardToolStripMenuItem;
         private ToolStripSeparator toolStripSeparator3;

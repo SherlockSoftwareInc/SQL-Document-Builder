@@ -50,52 +50,45 @@ namespace SQL_Document_Builder
         {
             base.OnPaint(e);
 
-            // clear the background
+            // Clear the background
             e.Graphics.Clear(this.BackColor);
 
-            if (_objectName == null)
-            {
-                return;
-            }
+            if (_objectName == null) { return; }
 
-            int wh = this.Height - 9;
-            if (wh < 8)
-            {
-                wh = 8; // Ensure minimum size for image
-            }
-
-            // draw the object image
+            // Prepare image and text
             Bitmap? image = GetImage();
             string objectNameText = _objectName.FullName ?? string.Empty;
 
-            //using Font font = new("Microsoft Sans Serif", 11.25f, FontStyle.Regular);
+            // Set image size to font height
+            int imageHeight = (int)Math.Ceiling(this.Font.GetHeight(e.Graphics));
+            if (imageHeight < 8) imageHeight = 8; // Minimum image size
+
+            int imageWidth = imageHeight;
+            int spacing = 3; // Space between image and text
+
+            // Measure text
             SizeF textSize = e.Graphics.MeasureString(objectNameText, this.Font);
 
-            int imageWidth = wh;
-            int imageHeight = wh;
-            int spacing = 6; // space between image and text
+            // Calculate total block size (width and height)
+            float totalHeight = Math.Max(imageHeight, textSize.Height);
 
-            // Calculate total content height
-            float contentHeight = Math.Max(imageHeight, textSize.Height);
+            // Calculate top-left position to center the block
+            float startY = (this.Height - totalHeight) / 2f;
+            float startX = startY; // Padding from left
 
-            // Calculate top Y to center content
-            float y = (this.Height - contentHeight) / 2f;
-
-            // Draw image vertically centered
+            // Draw image (vertically centered within the block)
             if (image != null)
             {
-                e.Graphics.DrawImage(image, 0, y, imageWidth, imageHeight);
+                float imageY = startY;
+                e.Graphics.DrawImage(image, startX, imageY, imageWidth, imageHeight);
+                startX += imageWidth + spacing;
             }
 
-            // Draw text vertically centered
+            // Draw text (vertically centered within the block)
             if (!string.IsNullOrEmpty(objectNameText))
             {
                 using Brush brush = new SolidBrush(this.ForeColor);
-                float textY = y + (imageHeight - textSize.Height) / 2f;
-                if (textSize.Height > imageHeight)
-                    textY = y; // If text is taller, align to top of content area
-
-                e.Graphics.DrawString(objectNameText, this.Font, brush, imageWidth + 3, textY);
+                e.Graphics.DrawString(objectNameText, this.Font, brush, startX, startY);
             }
         }
 

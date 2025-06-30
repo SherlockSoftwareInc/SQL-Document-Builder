@@ -309,6 +309,48 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Gets the all objects async.
+        /// </summary>
+        /// <param name="connectionString">The connection string.</param>
+        /// <returns>A Task.</returns>
+        internal static async Task<List<ObjectName>> GetAllObjectsAsync(string? connectionString)
+        {
+            List < ObjectName > objects = [];
+
+            if (!string.IsNullOrEmpty(connectionString))
+            {
+                string sql = $@"SELECT 
+s.name AS SchemaName,
+o.name AS ObjectName,
+o.type AS ObjectType
+FROM sys.objects o
+INNER JOIN sys.schemas s ON o.schema_id = s.schema_id
+WHERE o.type NOT IN ('D','IT', 'PK', 'S', 'SQ', 'UQ')";
+
+                try
+                {
+                    var dt = await GetDataTableAsync(sql, connectionString);
+                    if (dt?.Rows.Count > 0)
+                    {
+                        foreach (DataRow row in dt.Rows)
+                        {
+                            string schemaName = row["SchemaName"].ToString();
+                            string objectName = row["ObjectName"].ToString();
+                            ObjectTypeEnums objectType = ObjectName.ConvertObjectType(row["ObjectType"].ToString());
+
+                            objects.Add(new ObjectName(objectType, schemaName, objectName));
+                        }
+                    }
+                }
+                catch (Exception)
+                {
+                }
+            }
+
+            return objects;
+        }
+
+        /// <summary>
         /// Get database list of a sql server
         /// </summary>
         /// <param name="serverName"></param>

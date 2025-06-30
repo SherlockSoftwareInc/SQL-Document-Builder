@@ -26,9 +26,10 @@ namespace SQL_Document_Builder
                 throw new ArgumentNullException(nameof(dbObject), "The database object cannot be null.");
             }
 
-            if (dbObject.IsEmpty())
+            if (dbObject.IsEmpty() || dbObject.ObjectType == ObjectTypeEnums.None)
             {
-                throw new InvalidOperationException("The database object must have a valid schema and name.");
+                //throw new InvalidOperationException("The database object must have a valid schema and name.");
+                return string.Empty; // Return empty string if the object is not valid
             }
 
             // Determine the object type and retrieve the corresponding creation script

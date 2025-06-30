@@ -334,5 +334,29 @@ namespace SQL_Document_Builder
             // If parsing fails, return false
             return false;
         }
+
+        /// <summary>
+        /// Converts the object type.
+        /// </summary>
+        /// <param name="v">The v.</param>
+        /// <returns>An ObjectTypeEnums.</returns>
+        internal static ObjectTypeEnums ConvertObjectType(string? v)
+        {
+            if (string.IsNullOrEmpty(v))
+            {
+                return ObjectTypeEnums.None;
+            }
+
+            return v.TrimEnd().ToUpper() switch
+            {
+                "TABLE" or "U" => ObjectTypeEnums.Table,
+                "VIEW" or "V" => ObjectTypeEnums.View,
+                "STOREDPROCEDURE" or "P" => ObjectTypeEnums.StoredProcedure,
+                "FUNCTION" or "FN" or "IF" or "TF" => ObjectTypeEnums.Function,
+                "TRIGGER" or "TR" => ObjectTypeEnums.Trigger,
+                "SYNONYM" or "SN" => ObjectTypeEnums.Synonym,
+                _ => ObjectTypeEnums.None,
+            };
+        }
     }
 }

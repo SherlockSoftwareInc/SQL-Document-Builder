@@ -443,7 +443,6 @@ namespace SQL_Document_Builder
             // 
             // clearSerachButton
             // 
-            clearSerachButton.FlatStyle = FlatStyle.Flat;
             clearSerachButton.Location = new System.Drawing.Point(123, 107);
             clearSerachButton.Name = "clearSerachButton";
             clearSerachButton.Size = new System.Drawing.Size(23, 23);
