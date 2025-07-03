@@ -1079,6 +1079,12 @@ namespace SQL_Document_Builder
                         _ => "All files(*.*)|*.*",
                     }
                 };
+                // set the file name if the current file name is not empty
+                if (!string.IsNullOrEmpty(FileName))
+                {
+                    oFile.FileName = FileName;
+                }
+
                 result = oFile.ShowDialog();
 
                 if (result == DialogResult.OK)
