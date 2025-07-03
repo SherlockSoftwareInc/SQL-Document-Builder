@@ -4280,19 +4280,32 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void OpenFolderInFileExplorerToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            // if the current edit has a file name, open the folder in file explorer
             if (CurrentEditBox != null && !string.IsNullOrEmpty(CurrentEditBox.FileName))
             {
                 var folderPath = System.IO.Path.GetDirectoryName(CurrentEditBox.FileName);
-                if (folderPath != null)
+                if (!string.IsNullOrEmpty(folderPath))
                 {
                     try
                     {
-                        System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("explorer.exe", folderPath) { UseShellExecute = true });
+                        if (System.IO.Directory.Exists(folderPath))
+                        {
+                            // Use quotes to handle spaces and special characters
+                            var psi = new System.Diagnostics.ProcessStartInfo
+                            {
+                                FileName = "explorer.exe",
+                                Arguments = $"\"{folderPath}\"",
+                                UseShellExecute = true
+                            };
+                            System.Diagnostics.Process.Start(psi);
+                        }
+                        else
+                        {
+                            Common.MsgBox($"Folder does not exist:\n{folderPath}", MessageBoxIcon.Error);
+                        }
                     }
                     catch (Exception ex)
                     {
-                        Common.MsgBox($"Error opening folder: {ex.Message}", MessageBoxIcon.Error);
+                        Common.MsgBox($"Error opening folder:\n{folderPath}\n{ex.Message}", MessageBoxIcon.Error);
                     }
                 }
             }
