@@ -1212,6 +1212,71 @@ WHERE
             return views;
         }
 
+        /// <summary>
+        /// Gets the recent objects.
+        /// </summary>
+        /// <param name="startDate">The start date.</param>
+        /// <param name="endDate">The end date.</param>
+        /// <param name="connectionString">The connection string.</param>
+        /// <returns>A list of ObjectNames.</returns>
+        internal static List<ObjectName> GetRecentObjects(DateTime startDate, DateTime endDate, string connectionString)
+        {
+            var objects = new List<ObjectName>();
+
+            if (string.IsNullOrEmpty(connectionString))
+                return objects;
+
+            const string sql = @"
+SELECT 
+    s.name AS SchemaName,
+    o.name AS ObjectName,
+    o.type_desc AS ObjectType
+FROM 
+    sys.objects o
+    INNER JOIN sys.schemas s ON o.schema_id = s.schema_id
+WHERE
+    o.type NOT IN ('D','IT', 'PK', 'S', 'SQ', 'UQ')
+    AND (
+        (o.create_date BETWEEN @StartDate AND @EndDate)
+        OR (o.modify_date BETWEEN @StartDate AND @EndDate)
+    )";
+
+            using var connection = new SqlConnection(connectionString);
+            using var command = new SqlCommand(sql, connection)
+            {
+                CommandType = CommandType.Text,
+                CommandTimeout = 50000
+            };
+
+            command.Parameters.AddWithValue("@StartDate", startDate);
+            command.Parameters.AddWithValue("@EndDate", endDate);
+
+            try
+            {
+                connection.Open();
+                using var reader = command.ExecuteReader();
+                while (reader.Read())
+                {
+                    string schema = reader["SchemaName"]?.ToString() ?? "";
+                    string name = reader["ObjectName"]?.ToString() ?? "";
+                    string typeDesc = reader["ObjectType"]?.ToString() ?? "";
+
+                    var objectType = ObjectName.ConvertObjectType(typeDesc);
+                    objects.Add(new ObjectName(objectType, schema, name));
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                connection.Close();
+            }
+
+            return objects;
+        }
+
         #endregion Miscellaneous Methods
 
         /*

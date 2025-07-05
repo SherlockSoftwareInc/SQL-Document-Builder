@@ -2721,23 +2721,10 @@ namespace SQL_Document_Builder
         /// <param name="e"></param>
         private void TabControl1_DrawItem(object sender, DrawItemEventArgs e)
         {
-            //// Draw tab background
-            //Color tabColor = e.Index == tabControl1.SelectedIndex ? Color.LightBlue : SystemColors.Control;
-            //using Brush br = new SolidBrush(tabColor);
-            //e.Graphics.FillRectangle(br, e.Bounds);
-
-            //// Draw tab text
-            //SizeF sz = e.Graphics.MeasureString(tabControl1.TabPages[e.Index].Text, e.Font);
-            //float textX = e.Bounds.Left + (e.Bounds.Width - sz.Width) / 2;
-            //float textY = e.Bounds.Top + (e.Bounds.Height - sz.Height) / 2 + 1;
-            //e.Graphics.DrawString(tabControl1.TabPages[e.Index].Text, e.Font, Brushes.Black, textX, textY);
-
+            /*
             const int CloseButtonSize = 15;
             const int CloseButtonMargin = 5;
             bool _darkModeEnabled = true;
-
-            //this.tabControl1.Padding = new Point(12, 4);
-            //this.tabControl1.DrawMode = System.Windows.Forms.TabDrawMode.OwnerDrawFixed;
 
             var tabRect = tabControl1.GetTabRect(e.Index);
             var tabPage = tabControl1.TabPages[e.Index];
@@ -2795,13 +2782,7 @@ namespace SQL_Document_Builder
             e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
             e.Graphics.DrawLine(pen, closeRect.Left + padding, closeRect.Top + padding, closeRect.Right - padding, closeRect.Bottom - padding);
             e.Graphics.DrawLine(pen, closeRect.Right - padding, closeRect.Top + padding, closeRect.Left + padding, closeRect.Bottom - padding);
-
-            //// Draw tab border
-            //Rectangle rect = e.Bounds;
-            //rect.Offset(0, 1);
-            //rect.Inflate(0, -1);
-            //e.Graphics.DrawRectangle(Pens.DarkGray, rect);
-            //e.DrawFocusRectangle();
+            */
         }
 
         /// <summary>
