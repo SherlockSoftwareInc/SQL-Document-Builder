@@ -1230,7 +1230,7 @@ WHERE
 SELECT 
     s.name AS SchemaName,
     o.name AS ObjectName,
-    o.type_desc AS ObjectType
+    o.type AS ObjectType
 FROM 
     sys.objects o
     INNER JOIN sys.schemas s ON o.schema_id = s.schema_id

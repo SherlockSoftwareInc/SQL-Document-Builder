@@ -205,6 +205,7 @@
             MaximizeBox = false;
             MinimizeBox = false;
             Name = "DateRangeSelector";
+            StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             Text = "Date Range Selector";
             specifyDateGroupBox.ResumeLayout(false);
             specifyDateGroupBox.PerformLayout();
