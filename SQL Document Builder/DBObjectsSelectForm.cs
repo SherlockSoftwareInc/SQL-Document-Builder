@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Text;
@@ -160,6 +159,25 @@ namespace SQL_Document_Builder
                 // populate the selectable objects list box
                 PopulateSelectableObjects();
             }
+        }
+
+        /// <summary>
+        /// Gets the recent objects.
+        /// </summary>
+        /// <returns>A list of ObjectNames.</returns>
+        private List<ObjectName> GetRecentObjects()
+        {
+            // get the date range for the recent objects
+            var dlg = new DateRangeSelector();
+            if (dlg.ShowDialog() == DialogResult.OK)
+            {
+                var startDate = dlg.StartDate;
+                var endDate = dlg.EndDate;
+
+                return SQLDatabaseHelper.GetRecentObjects(startDate, endDate, ConnectionString);
+            }
+
+            return [];
         }
 
         /// <summary>
@@ -337,6 +355,34 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Handles the click event of the recent objects tool strip menu item.
+        /// Get the list of recently used objects and add them to the selectable list box.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void RecentObjectsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // Get the list of recently used objects
+            var recentObjects = GetRecentObjects();
+
+            // Add them to the selectable list box
+            foreach (var obj in recentObjects)
+            {
+                // If the item is not already in the selected list box, add it
+                if (!IsItemInSelectedList(obj))
+                {
+                    selectedListBox.Items.Add(obj);
+                }
+
+                // remove the item from the selectable list box if it exists
+                if (selectableListBox.Items.Contains(obj))
+                {
+                    selectableListBox.Items.Remove(obj);
+                }
+            }
+        }
+
+        /// <summary>
         /// Removes the all button_ click.
         /// </summary>
         /// <param name="sender">The sender.</param>
@@ -406,53 +452,6 @@ namespace SQL_Document_Builder
         private void SelectedListBox_DoubleClick(object sender, EventArgs e)
         {
             removeButton.PerformClick();
-        }
-
-        /// <summary>
-        /// Handles the click event of the recent objects tool strip menu item.
-        /// Get the list of recently used objects and add them to the selectable list box.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void RecentObjectsToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            // Get the list of recently used objects
-            var recentObjects = GetRecentObjects();
-
-            // Add them to the selectable list box
-            foreach (var obj in recentObjects)
-            {
-                // If the item is not already in the selected list box, add it
-                if (!IsItemInSelectedList(obj))
-                {
-                    selectedListBox.Items.Add(obj);
-                }
-
-                // remove the item from the selectable list box if it exists
-                if (selectableListBox.Items.Contains(obj))
-                {
-                    selectableListBox.Items.Remove(obj);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Gets the recent objects.
-        /// </summary>
-        /// <returns>A list of ObjectNames.</returns>
-        private List<ObjectName> GetRecentObjects()
-        {
-            // get the date range for the recent objects
-            var dlg = new DateRangeSelector();
-            if (dlg.ShowDialog() == DialogResult.OK)
-            {
-                var startDate = dlg.StartDate;
-                var endDate = dlg.EndDate;
-
-                return SQLDatabaseHelper.GetRecentObjects(startDate, endDate, ConnectionString);
-            }
-
-            return [];
         }
     }
 }

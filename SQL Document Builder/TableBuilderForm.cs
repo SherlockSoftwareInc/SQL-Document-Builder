@@ -3032,6 +3032,25 @@ namespace SQL_Document_Builder
             HotKeyManager.AddHotKey(this, ZoomOut, Keys.OemMinus, true);
             HotKeyManager.AddHotKey(this, ZoomDefault, Keys.D0, true);
             HotKeyManager.AddHotKey(this, CloseSearch, Keys.Escape);
+        
+            HotKeyManager.AddHotKey(this, FindNextF3, Keys.F3);
+        }
+
+        /// <summary>
+        /// Finds the next match by F3 key.
+        /// </summary>
+        private void FindNextF3()
+        {
+            if (SearchIsOpen)
+            {
+                // Quick search mode: use last search term
+                SearchManager.Find(true, false);
+            }
+            else if (ReplaceIsOpen)
+            {
+                // Replace mode: use last search term
+                ReplaceManager.Find(true, false);
+            }
         }
 
         /// <summary>
@@ -3377,6 +3396,18 @@ namespace SQL_Document_Builder
             SearchManager.SearchBox = searchSQLTextBox;
             SearchManager.TextArea = CurrentEditBox;
 
+            if (string.IsNullOrWhiteSpace(searchSQLTextBox.Text))
+            {
+                int caretPos = CurrentEditBox.CurrentPosition;
+                string word = CurrentEditBox.SelectedText;
+                if (string.IsNullOrWhiteSpace(word)) word = CurrentEditBox.GetWordFromPosition(caretPos);
+                if (!string.IsNullOrWhiteSpace(word))
+                {
+                    SearchManager.LastSearch = word;
+                    //searchSQLTextBox.Text = word;
+                }
+            }
+
             if (!SearchIsOpen)
             {
                 SearchIsOpen = true;
@@ -3479,9 +3510,13 @@ namespace SQL_Document_Builder
             if (string.IsNullOrWhiteSpace(replaceSearchTextBox.Text))
             {
                 int caretPos = CurrentEditBox.CurrentPosition;
-                string word = CurrentEditBox.GetWordFromPosition(caretPos);
+                string word = CurrentEditBox.SelectedText;
+                if (string.IsNullOrWhiteSpace(word)) word = CurrentEditBox.GetWordFromPosition(caretPos);
                 if (!string.IsNullOrWhiteSpace(word))
-                    replaceSearchTextBox.Text = word;
+                {
+                    ReplaceManager.LastSearch = word;
+                    //replaceSearchTextBox.Text = word;
+                }
             }
 
             if (!ReplaceIsOpen)
