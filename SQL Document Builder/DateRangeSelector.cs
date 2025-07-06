@@ -8,6 +8,10 @@ namespace SQL_Document_Builder
     /// </summary>
     public partial class DateRangeSelector : Form
     {
+        private DateTime endDate;
+
+        private DateTime startDate;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="DateRangeSelector"/> class.
         /// </summary>
@@ -17,7 +21,14 @@ namespace SQL_Document_Builder
             if (Properties.Settings.Default.DarkMode) _ = new DarkMode(this);
         }
 
-        private DateTime startDate;
+        /// <summary>
+        /// Gets or sets the end date.
+        /// </summary>
+        public DateTime EndDate
+        {
+            get { return endDate.Date.AddDays(1).AddTicks(-1); }
+            set { endDate = value.Date; }
+        }
 
         /// <summary>
         /// Gets or sets the start date.
@@ -28,15 +39,15 @@ namespace SQL_Document_Builder
             set { startDate = value.Date; }
         }
 
-        private DateTime endDate;
-
         /// <summary>
-        /// Gets or sets the end date.
+        /// Handles the click event of the CancelButton control.
         /// </summary>
-        public DateTime EndDate
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void CancelButton_Click(object sender, EventArgs e)
         {
-            get { return endDate.Date.AddDays(1).AddTicks(-1); }
-            set { endDate = value.Date; }
+            DialogResult = DialogResult.Cancel;
+            Close();
         }
 
         /// <summary>

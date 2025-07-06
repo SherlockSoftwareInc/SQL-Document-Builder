@@ -185,6 +185,7 @@
             cancelButton.TabIndex = 3;
             cancelButton.Text = "&Cancel";
             cancelButton.UseVisualStyleBackColor = true;
+            cancelButton.Click += CancelButton_Click;
             // 
             // DateRangeSelector
             // 
