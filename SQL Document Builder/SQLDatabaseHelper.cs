@@ -1241,7 +1241,8 @@ WHERE
     AND (
         (o.create_date BETWEEN @StartDate AND @EndDate)
         OR (o.modify_date BETWEEN @StartDate AND @EndDate)
-    )";
+    )
+ORDER BY o.type, s.name, o.name";
 
             using var connection = new SqlConnection(connectionString);
             using var command = new SqlCommand(sql, connection)
