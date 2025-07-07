@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -256,7 +257,10 @@ namespace SQL_Document_Builder
                     if (matchingObject != null)
                     {
                         // If the item is not already in the selected list box, add it
-                        if (selectableListBox.Items.Contains(name) && !selectedListBox.Items.Contains(matchingObject))
+                        if (selectableListBox.Items.Cast<ObjectName>().Any(o =>
+                                o.Name.Equals(name.Name, StringComparison.OrdinalIgnoreCase) &&
+                                o.Schema.Equals(name.Schema, StringComparison.OrdinalIgnoreCase))
+                            && !selectedListBox.Items.Contains(matchingObject))
                         {
                             selectedListBox.Items.Add(matchingObject);
                             selectableListBox.Items.Remove(name);
