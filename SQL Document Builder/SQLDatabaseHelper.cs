@@ -297,6 +297,7 @@ namespace SQL_Document_Builder
                     ObjectTypeEnums.Function => await GetFunctionsAsync(connectionString),
                     ObjectTypeEnums.Trigger => await GetTriggersAsync(connectionString),
                     ObjectTypeEnums.Synonym => await GetSynonymsAsync(connectionString),
+                    ObjectTypeEnums.All => await GetAllObjectsAsync(connectionString),
                     _ => throw new NotSupportedException($"Unsupported object type: {tableType}.")
                 };
             }
@@ -325,7 +326,8 @@ o.name AS ObjectName,
 o.type AS ObjectType
 FROM sys.objects o
 INNER JOIN sys.schemas s ON o.schema_id = s.schema_id
-WHERE o.type NOT IN ('D','IT', 'PK', 'S', 'SQ', 'UQ')";
+WHERE o.type NOT IN ('D','IT', 'PK', 'S', 'SQ', 'UQ')
+ORDER BY o.type, s.name, o.name";
 
                 try
                 {

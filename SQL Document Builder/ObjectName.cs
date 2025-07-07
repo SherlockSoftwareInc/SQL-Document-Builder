@@ -94,6 +94,7 @@ namespace SQL_Document_Builder
             Function,
             Trigger,
             Synonym,
+            All = 255
         }
 
         /// <summary>

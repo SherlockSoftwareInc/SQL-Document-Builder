@@ -57,7 +57,7 @@ namespace SQL_Document_Builder
             // move all items from the selectable list box to the selected list box
             foreach (ObjectName item in selectableListBox.Items)
             {
-                if (!IsItemInSelectedList(item))
+                if (!selectedListBox.Items.Contains(item))
                 {
                     selectedListBox.Items.Add(item);
                 }
@@ -75,7 +75,7 @@ namespace SQL_Document_Builder
             // move the selected item from the selectable list box to the selected list box
             if (selectableListBox.SelectedItem is ObjectName selectedItem)
             {
-                if (!IsItemInSelectedList(selectedItem))
+                if (!selectedListBox.Items.Contains(selectedItem))
                 {
                     selectedListBox.Items.Add(selectedItem);
                 }
@@ -135,11 +135,7 @@ namespace SQL_Document_Builder
             try
             {
                 await PopulateSchemasAsync();
-                objectTypeComboBox.SelectedIndex = 0; // Set default selection
-
-                //_selectableObjects = await GetDatabaseObjectsAsync();
-
-                //PopulateSelectableObjects();
+                objectTypeComboBox.SelectedIndex = 1; // Set default selection
             }
             catch (Exception ex)
             {
@@ -181,26 +177,6 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Are the item in selected list.
-        /// </summary>
-        /// <param name="selectedItem">The selected item.</param>
-        /// <returns>A bool.</returns>
-        private bool IsItemInSelectedList(ObjectName selectedItem)
-        {
-            // go through the selected list box items
-            foreach (ObjectName item in selectedListBox.Items)
-            {
-                // check if the item is already in the selected list box
-                if (item.Equals(selectedItem))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        /// <summary>
         /// Handles the selected index changed event of the object type combo box.
         /// </summary>
         /// <param name="sender">The sender.</param>
@@ -218,6 +194,7 @@ namespace SQL_Document_Builder
                     "Function" => ObjectTypeEnums.Function,
                     "Trigger" => ObjectTypeEnums.Trigger,
                     "Synonym" => ObjectTypeEnums.Synonym,
+                    "(All)" => ObjectTypeEnums.All,
                     _ => ObjectTypeEnums.None
                 };
 
@@ -279,14 +256,9 @@ namespace SQL_Document_Builder
                     if (matchingObject != null)
                     {
                         // If the item is not already in the selected list box, add it
-                        if (!IsItemInSelectedList(matchingObject))
+                        if (selectableListBox.Items.Contains(name) && !selectedListBox.Items.Contains(matchingObject))
                         {
                             selectedListBox.Items.Add(matchingObject);
-                        }
-
-                        // remove the item from the selectable list box if it exists
-                        if (selectableListBox.Items.Contains(name))
-                        {
                             selectableListBox.Items.Remove(name);
                         }
                     }
@@ -369,14 +341,9 @@ namespace SQL_Document_Builder
             foreach (var obj in recentObjects)
             {
                 // If the item is not already in the selected list box, add it
-                if (!IsItemInSelectedList(obj))
+                if (selectableListBox.Items.Contains(obj) && !selectedListBox.Items.Contains(obj))
                 {
                     selectedListBox.Items.Add(obj);
-                }
-
-                // remove the item from the selectable list box if it exists
-                if (selectableListBox.Items.Contains(obj))
-                {
                     selectableListBox.Items.Remove(obj);
                 }
             }
