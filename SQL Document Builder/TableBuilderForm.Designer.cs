@@ -91,6 +91,7 @@ namespace SQL_Document_Builder
             toolStripSeparator4 = new ToolStripSeparator();
             newToolStripMenuItem1 = new ToolStripMenuItem();
             openToolStripMenuItem = new ToolStripMenuItem();
+            openFolderToolStripMenuItem = new ToolStripMenuItem();
             saveToolStripMenuItem = new ToolStripMenuItem();
             saveAsToolStripMenuItem = new ToolStripMenuItem();
             closeToolStripMenuItem1 = new ToolStripMenuItem();
@@ -205,7 +206,6 @@ namespace SQL_Document_Builder
             openFolderInFileExplorerToolStripMenuItem = new ToolStripMenuItem();
             toolTip1 = new ToolTip(components);
             startTimer = new Timer(components);
-            openFolderToolStripMenuItem = new ToolStripMenuItem();
             toolStrip1.SuspendLayout();
             objectsTabControl.SuspendLayout();
             tabPage1.SuspendLayout();
@@ -802,6 +802,13 @@ namespace SQL_Document_Builder
             openToolStripMenuItem.Size = new System.Drawing.Size(218, 22);
             openToolStripMenuItem.Text = "&Open";
             openToolStripMenuItem.Click += OpenToolStripMenuItem_Click;
+            // 
+            // openFolderToolStripMenuItem
+            // 
+            openFolderToolStripMenuItem.Name = "openFolderToolStripMenuItem";
+            openFolderToolStripMenuItem.Size = new System.Drawing.Size(218, 22);
+            openFolderToolStripMenuItem.Text = "Open Folder in File Explorer";
+            openFolderToolStripMenuItem.Click += OpenFolderInFileExplorerToolStripMenuItem_Click;
             // 
             // saveToolStripMenuItem
             // 
@@ -1693,13 +1700,6 @@ namespace SQL_Document_Builder
             // startTimer
             // 
             startTimer.Tick += StartTimer_Tick;
-            // 
-            // openFolderToolStripMenuItem
-            // 
-            openFolderToolStripMenuItem.Name = "openFolderToolStripMenuItem";
-            openFolderToolStripMenuItem.Size = new System.Drawing.Size(218, 22);
-            openFolderToolStripMenuItem.Text = "Open Folder in File Explorer";
-            openFolderToolStripMenuItem.Click += OpenFolderInFileExplorerToolStripMenuItem_Click;
             // 
             // TableBuilderForm
             // 

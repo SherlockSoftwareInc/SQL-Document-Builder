@@ -455,13 +455,25 @@ namespace SQL_Document_Builder
                         Common.MsgBox("Failed to connect to the database. Please check your connection settings.", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         serverToolStripStatusLabel.Text = $"Unable to connect to {connection?.ServerName}";
                         databaseToolStripStatusLabel.Text = connection?.Database;
+
+                        // restore the previous connection if it exists
+                        if (_currentConnection != null && _currentConnection.ConnectionString?.Length > 0)
+                        {
+                            // restore the dataSourcesToolStripComboBox to the previous connection
+                            dataSourcesToolStripComboBox.SelectedItem = _currentConnection;
+
+                            //serverToolStripStatusLabel.Text = _currentConnection?.ServerName;
+                            //databaseToolStripStatusLabel.Text = _currentConnection?.Database;
+                        }
                         return;
                     }
-
-                    serverToolStripStatusLabel.Text = connection?.ServerName;
-                    databaseToolStripStatusLabel.Text = connection?.Database;
-                    Properties.Settings.Default.dbConnectionString = connectionString;
-                    _currentConnection = connection;
+                    else
+                    {
+                        serverToolStripStatusLabel.Text = connection?.ServerName;
+                        databaseToolStripStatusLabel.Text = connection?.Database;
+                        Properties.Settings.Default.dbConnectionString = connectionString;
+                        _currentConnection = connection;
+                    }
                 }
 
                 for (int i = 0; i < connectToToolStripMenuItem.DropDown.Items.Count; i++)
@@ -1042,13 +1054,8 @@ namespace SQL_Document_Builder
         {
             if (dataSourcesToolStripComboBox.SelectedItem != null && !_ignoreConnectionComboBoxIndexChange)
             {
-                Cursor = Cursors.WaitCursor;
-                Application.DoEvents();
-
                 if (dataSourcesToolStripComboBox.SelectedItem is DatabaseConnectionItem selectedItem)
                 {
-                    //await ChangeDBConnectionAsync(selectedItem);
-
                     // find the menu item
                     foreach (ToolStripMenuItem item in connectToToolStripMenuItem.DropDown.Items)
                     {
@@ -1070,7 +1077,6 @@ namespace SQL_Document_Builder
                     }
                 }
 
-                Cursor = Cursors.Default;
                 statusToolStripStatusLabe.Text = "";
             }
         }
