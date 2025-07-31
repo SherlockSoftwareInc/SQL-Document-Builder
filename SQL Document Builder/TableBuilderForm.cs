@@ -1998,6 +1998,9 @@ namespace SQL_Document_Builder
                 else
                 {
                     Common.MsgBox("Execute completed successfully", MessageBoxIcon.Information);
+
+                    // re-load all objects from the database in a background thread
+                    _allObjects = await Task.Run(() => SQLDatabaseHelper.GetAllObjectsAsync(connection?.ConnectionString));
                 }
 
                 Cursor = Cursors.Default;
