@@ -56,6 +56,7 @@ namespace SQL_Document_Builder
             tabPage1 = new TabPage();
             objectsListBox = new ListBox();
             panel2 = new Panel();
+            searchButton = new Button();
             clearSerachButton = new Button();
             searchTextBox = new TextBox();
             schemaLabel = new Label();
@@ -430,6 +431,7 @@ namespace SQL_Document_Builder
             // 
             // panel2
             // 
+            panel2.Controls.Add(searchButton);
             panel2.Controls.Add(clearSerachButton);
             panel2.Controls.Add(searchTextBox);
             panel2.Controls.Add(schemaLabel);
@@ -444,6 +446,18 @@ namespace SQL_Document_Builder
             panel2.TabIndex = 0;
             panel2.Resize += Panel2_Resize;
             // 
+            // searchButton
+            // 
+            searchButton.Font = new System.Drawing.Font("Segoe UI", 9F);
+            searchButton.Location = new System.Drawing.Point(152, 107);
+            searchButton.Name = "searchButton";
+            searchButton.Size = new System.Drawing.Size(23, 23);
+            searchButton.TabIndex = 7;
+            searchButton.Text = "🔍";
+            toolTip1.SetToolTip(searchButton, "Global search");
+            searchButton.UseVisualStyleBackColor = true;
+            searchButton.Click += SearchButton_Click;
+            // 
             // clearSerachButton
             // 
             clearSerachButton.Location = new System.Drawing.Point(123, 107);
@@ -451,6 +465,7 @@ namespace SQL_Document_Builder
             clearSerachButton.Size = new System.Drawing.Size(23, 23);
             clearSerachButton.TabIndex = 6;
             clearSerachButton.Text = "X";
+            toolTip1.SetToolTip(clearSerachButton, "Clear the search box");
             clearSerachButton.UseVisualStyleBackColor = true;
             clearSerachButton.Click += ClearSerachButton_Click;
             // 
@@ -461,6 +476,7 @@ namespace SQL_Document_Builder
             searchTextBox.Size = new System.Drawing.Size(114, 23);
             searchTextBox.TabIndex = 5;
             searchTextBox.TextChanged += SearchTextBox_TextChanged;
+            searchTextBox.KeyUp += SearchTextBox_KeyUp;
             // 
             // schemaLabel
             // 
@@ -484,7 +500,6 @@ namespace SQL_Document_Builder
             // 
             objectTypeComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
             objectTypeComboBox.FormattingEnabled = true;
-            objectTypeComboBox.Items.AddRange(new object[] { "Table", "View", "Stored Procedure", "Function", "Trigger", "Synonym" });
             objectTypeComboBox.Location = new System.Drawing.Point(3, 21);
             objectTypeComboBox.Name = "objectTypeComboBox";
             objectTypeComboBox.Size = new System.Drawing.Size(168, 23);
@@ -1925,5 +1940,6 @@ namespace SQL_Document_Builder
         private ToolStripMenuItem openFolderInFileExplorerToolStripMenuItem;
         private ToolStripMenuItem saveAsToolStripMenuItem1;
         private ToolStripMenuItem openFolderToolStripMenuItem;
+        private Button searchButton;
     }
 }

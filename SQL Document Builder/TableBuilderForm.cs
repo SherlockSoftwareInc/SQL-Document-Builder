@@ -24,8 +24,9 @@ namespace SQL_Document_Builder
         private readonly DatabaseConnections _connections = new();
 
         private DatabaseConnectionItem? _currentConnection;
-
+        private List<ObjectName> _allObjects = new();
         private ObjectName? _selectedObject;
+        private bool _init = false;
 
         /// <summary>
         /// The tables.
@@ -473,6 +474,9 @@ namespace SQL_Document_Builder
                         databaseToolStripStatusLabel.Text = connection?.Database;
                         Properties.Settings.Default.dbConnectionString = connectionString;
                         _currentConnection = connection;
+
+                        // load all objects from the database in a background thread
+                        _allObjects = await Task.Run(() => SQLDatabaseHelper.GetAllObjectsAsync(connection?.ConnectionString));
                     }
                 }
 
@@ -1765,7 +1769,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void ObjectTypeComboBox_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
+            if (_init || !GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
 
             // keep the selected schema
             string schemaName = schemaComboBox.Text;
@@ -2069,14 +2073,23 @@ namespace SQL_Document_Builder
         /// <param {e">The e.</param>
         private void Panel2_Resize(object sender, EventArgs e)
         {
-            int width = panel2.Width - 6;
+            int margin = 2;
+            int spacing = 2;
+            int width = panel2.Width - 2 * margin;
+
             if (width > 0)
             {
                 objectTypeComboBox.Width = width;
                 schemaComboBox.Width = width;
-                clearSerachButton.Left = panel2.Width - clearSerachButton.Width - 2;
-                searchTextBox.Width = panel2.Width - clearSerachButton.Width - 6;
-                panel2.Height = searchTextBox.Top + searchTextBox.Height + 2;
+
+                // Layout searchTextBox, searchButton, clearSerachButton in one row
+                searchTextBox.Left = margin;
+                searchTextBox.Width = width - searchButton.Width - clearSerachButton.Width - 2 * spacing;
+
+                searchButton.Left = searchTextBox.Right + spacing;
+                clearSerachButton.Left = searchButton.Right + spacing;
+
+                panel2.Height = searchTextBox.Top + searchTextBox.Height + margin;
             }
         }
 
@@ -2916,6 +2929,23 @@ namespace SQL_Document_Builder
 
             WindowState = FormWindowState.Maximized;
 
+            _init = true;
+            // Populate the object types combo box with dictionary values
+            var objectTypeDict = new Dictionary<ObjectName.ObjectTypeEnums, string>
+            {
+                { ObjectName.ObjectTypeEnums.Table, "Table" },
+                { ObjectName.ObjectTypeEnums.View, "View" },
+                { ObjectName.ObjectTypeEnums.StoredProcedure, "Stored Procedure" },
+                { ObjectName.ObjectTypeEnums.Function, "Function" },
+                { ObjectName.ObjectTypeEnums.Trigger, "Trigger" },
+                { ObjectName.ObjectTypeEnums.Synonym, "Synonym" }
+            };
+
+            objectTypeComboBox.DataSource = new BindingSource(objectTypeDict, null);
+            objectTypeComboBox.DisplayMember = "Value";
+            objectTypeComboBox.ValueMember = "Key";
+            _init = false;
+
             startTimer.Start();
         }
 
@@ -3038,7 +3068,7 @@ namespace SQL_Document_Builder
             HotKeyManager.AddHotKey(this, ZoomOut, Keys.OemMinus, true);
             HotKeyManager.AddHotKey(this, ZoomDefault, Keys.D0, true);
             HotKeyManager.AddHotKey(this, CloseSearch, Keys.Escape);
-        
+
             HotKeyManager.AddHotKey(this, FindNextF3, Keys.F3);
         }
 
@@ -4328,6 +4358,70 @@ namespace SQL_Document_Builder
                     catch (Exception ex)
                     {
                         Common.MsgBox($"Error opening folder:\n{folderPath}\n{ex.Message}", MessageBoxIcon.Error);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Handles the key up event of the search text box.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private async void SearchTextBox_KeyUp(object sender, KeyEventArgs e)
+        {
+            // If the user presses Enter, perform the search
+            if (e.KeyCode == Keys.Enter)
+            {
+                e.SuppressKeyPress = true; // Prevent the beep sound on Enter key press
+                if (!string.IsNullOrEmpty(searchTextBox.Text))
+                {
+                    // Fallback: perform the regular search logic
+                    await PopulateAsync();
+
+                    // If no matches found, perform a global search by name
+                    if (objectsListBox.Items.Count == 0)
+                    {
+                        searchButton.PerformClick();
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Handles the click event of the search button.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void SearchButton_Click(object sender, EventArgs e)
+        {
+            if (!string.IsNullOrEmpty(searchTextBox.Text))
+            {
+                // Try to parse the search text into schema and name
+                if (ObjectName.TryParse(searchTextBox.Text.Trim(), out ObjectName searchObj))
+                {
+                    // Remove any quotes/brackets from schema and name
+                    string schema = searchObj.Schema.RemoveQuote();
+                    string name = searchObj.Name.RemoveQuote();
+
+                    // Find all matches in _allObjects
+                    var matches = _allObjects
+                        .Where(obj =>
+                            obj.Schema.Equals(schema, StringComparison.OrdinalIgnoreCase) &&
+                            obj.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
+                        .ToList();
+
+                    if (matches.Count == 1)
+                    {
+                        // Set object type combo box to the matched type using ValueMember (ObjectTypeEnums)
+                        var matched = matches[0];
+                        objectTypeComboBox.SelectedValue = matched.ObjectType;
+
+                        // List only the matched object in the list box
+                        objectsListBox.Items.Clear();
+                        objectsListBox.Items.Add(matched);
+                        objectsListBox.SelectedIndex = 0;
+                        return;
                     }
                 }
             }
