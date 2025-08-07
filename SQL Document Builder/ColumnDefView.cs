@@ -71,6 +71,11 @@ namespace SQL_Document_Builder
         public DatabaseConnectionItem? Connection { get; set; }
 
         /// <summary>
+        /// Gets or sets the object name.
+        /// </summary>
+        public ObjectName? ObjectName { get; private set; }
+
+        /// <summary>
         /// Gets object schema
         /// </summary>
         public string? Schema => _dbObject?.Schema;
@@ -303,6 +308,8 @@ GO
 
             Clear();
 
+            ObjectName = objectName;
+
             if (objectName == null || connection == null || string.IsNullOrEmpty(connection.ConnectionString))
             {
                 namePanel.Open(null);
@@ -424,6 +431,45 @@ GO
             columnValueFrequencyToolStripMenuItem.Enabled = _dbObject.ObjectType == ObjectName.ObjectTypeEnums.Table || _dbObject.ObjectType == ObjectName.ObjectTypeEnums.View;
 
             tableDescTextBox.Enabled = true;
+
+            referencedDataGridView.Visible = false;
+            referencingDataGridView.Visible = false;
+
+            // Retrieve referenced and referencing objects in parallel using Task.Run
+            if (objectName != null && connection != null && !string.IsNullOrEmpty(connection.ConnectionString))
+            {
+                // Use Task.Run to avoid blocking the UI thread
+                var referencedTask = Task.Run(() => _dbObject.GetReferencedObjectsAsync(connection));
+                var referencedObjects = await referencedTask;
+                // Populate the data grids on the UI thread
+                if (referencedDataGridView.InvokeRequired)
+                {
+                    referencedDataGridView.Invoke(new Action(() =>
+                    {
+                        referencedDataGridView.DataSource = referencedObjects;
+                    }));
+                }
+                else
+                {
+                    referencedDataGridView.DataSource = referencedObjects;
+                }
+                referencedDataGridView.Visible = true;
+
+                var referencingTask = Task.Run(() => _dbObject.GetReferencingObjectsAsync(connection));
+                var referencingObjects = await referencingTask;
+                if (referencingDataGridView.InvokeRequired)
+                {
+                    referencingDataGridView.Invoke(new Action(() =>
+                    {
+                        referencingDataGridView.DataSource = referencingObjects;
+                    }));
+                }
+                else
+                {
+                    referencingDataGridView.DataSource = referencingObjects;
+                }
+                referencingDataGridView.Visible = true;
+            }
         }
 
         /// <summary>
@@ -660,7 +706,7 @@ GO
         /// <param name="e">The e.</param>
         private void ColumnValueFrequencyToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if(Connection == null)
+            if (Connection == null)
             {
                 return;
             }
@@ -819,6 +865,49 @@ GO
         private async Task UpdateParameterDescAsync(string name, string parameterDesc)
         {
             await _dbObject.UpdateLevel2DescriptionAsync(name, parameterDesc, _dbObject.ObjectType);
+        }
+
+        /// <summary>
+        /// opens the object tool strip menu item_ click.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private async void OpenObjectToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            string schema = string.Empty;
+            string objectName = string.Empty;
+            string objectTypeStr = string.Empty;
+            int rowIndex = -1;
+
+            // when tab is referenced objects, open the referenced object
+            if (tabControl1.SelectedIndex == 3 && referencedDataGridView.Rows.Count > 0)
+            {
+                // Get the selected row in the referenced objects grid view
+                rowIndex = referencedDataGridView.CurrentCell.RowIndex;
+                var selectedRow = referencedDataGridView.Rows[rowIndex];
+                schema = (string)selectedRow.Cells["Schema"].Value;
+                objectName = (string)selectedRow.Cells["ObjectName"].Value;
+                objectTypeStr = (string)selectedRow.Cells["ObjectType"].Value;
+            }
+            else if (tabControl1.SelectedIndex == 4 && referencingDataGridView.Rows.Count > 0)
+            {
+                // Get the selected row in the current objects grid view
+                rowIndex = referencingDataGridView.CurrentCell.RowIndex;
+                var selectedRow = referencingDataGridView.Rows[rowIndex];
+                schema = (string)selectedRow.Cells["Schema"].Value;
+                objectName = (string)selectedRow.Cells["ObjectName"].Value;
+                objectTypeStr = (string)selectedRow.Cells["ObjectType"].Value;
+            }
+
+            if(rowIndex == -1 || string.IsNullOrEmpty(schema) || string.IsNullOrEmpty(objectName) || string.IsNullOrEmpty(objectTypeStr))
+            {
+                return;
+            }
+
+            // convert the object type string to ObjectName.ObjectTypeEnums
+            ObjectName.ObjectTypeEnums objectType = ObjectName.ConvertObjectType(objectTypeStr);
+
+            await OpenAsync(new ObjectName(objectType, schema, objectName), Connection);
         }
     }
 }

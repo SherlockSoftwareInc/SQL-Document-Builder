@@ -1280,6 +1280,56 @@ ORDER BY o.type, s.name, o.name";
             return objects;
         }
 
+        /// <summary>
+        /// Gets the referencing objects async.
+        /// </summary>
+        /// <param name="objectName">The object name.</param>
+        /// <param name="connectionString">The connection string.</param>
+        /// <returns>A Task.</returns>
+        internal static async Task<DataTable?> GetReferencingObjectsAsync(ObjectName objectName, string connectionString)
+        {
+            if (objectName == null || string.IsNullOrEmpty(objectName.Schema) || string.IsNullOrEmpty(objectName.Name) || string.IsNullOrEmpty(connectionString))
+                return null;
+
+            string sql = $@"
+SELECT 
+    OBJECT_SCHEMA_NAME(referencing_id) AS [Schema],
+    OBJECT_NAME(referencing_id) AS ObjectName,
+    o.type_desc AS ObjectType
+FROM sys.sql_expression_dependencies d
+JOIN sys.objects o ON d.referencing_id = o.object_id
+WHERE d.referenced_id = OBJECT_ID(N'{objectName.FullName}')
+ORDER BY [Schema], ObjectName";
+
+            return await GetDataTableAsync(sql, connectionString);
+        }
+
+        /// <summary>
+        /// Gets the referenced objects async.
+        /// </summary>
+        /// <param name="objectName">The object name.</param>
+        /// <param name="connectionString">The connection string.</param>
+        /// <returns>A Task.</returns>
+        internal static async Task<DataTable?> GetReferencedObjectsAsync(ObjectName objectName, string connectionString)
+        {
+            if (objectName == null || string.IsNullOrEmpty(objectName.Schema) || string.IsNullOrEmpty(objectName.Name) || string.IsNullOrEmpty(connectionString))
+                return null;
+
+            string sql = $@"
+SELECT 
+    d.referenced_schema_name AS [Schema],
+    d.referenced_entity_name AS ObjectName,
+    o.type_desc AS ObjectType
+FROM sys.sql_expression_dependencies d
+JOIN sys.objects o 
+    ON o.name = d.referenced_entity_name 
+    AND o.schema_id = SCHEMA_ID(d.referenced_schema_name)
+WHERE d.referencing_id = OBJECT_ID(N'{objectName.FullName}')
+ORDER BY [Schema], ObjectName";
+
+            return await GetDataTableAsync(sql, connectionString);
+        }
+
         #endregion Miscellaneous Methods
 
         /*

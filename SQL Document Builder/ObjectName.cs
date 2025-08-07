@@ -350,11 +350,11 @@ namespace SQL_Document_Builder
 
             return v.TrimEnd().ToUpper() switch
             {
-                "TABLE" or "U" => ObjectTypeEnums.Table,
+                "TABLE" or "U" or "USER_TABLE" => ObjectTypeEnums.Table,
                 "VIEW" or "V" => ObjectTypeEnums.View,
-                "STOREDPROCEDURE" or "P" => ObjectTypeEnums.StoredProcedure,
-                "FUNCTION" or "FN" or "IF" or "TF" => ObjectTypeEnums.Function,
-                "TRIGGER" or "TR" => ObjectTypeEnums.Trigger,
+                "STOREDPROCEDURE" or "P" or "SQL_STORED_PROCEDURE" => ObjectTypeEnums.StoredProcedure,
+                "FUNCTION" or "FN" or "IF" or "TF" or "SQL_INLINE_TABLE_VALUED_FUNCTION" or "SQL_SCALAR_FUNCTION" or "SQL_TABLE_VALUED_FUNCTION" => ObjectTypeEnums.Function,
+                "TRIGGER" or "TR" or "SQL_TRIGGER" => ObjectTypeEnums.Trigger,
                 "SYNONYM" or "SN" => ObjectTypeEnums.Synonym,
                 _ => ObjectTypeEnums.None,
             };

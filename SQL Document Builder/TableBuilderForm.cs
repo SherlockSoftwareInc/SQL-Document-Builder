@@ -65,6 +65,11 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Gets the selected object.
+        /// </summary>
+        private ObjectName? SelectedObject => definitionPanel.ObjectName;
+
+        /// <summary>
         /// Executes the scripts.
         /// </summary>
         private static async Task<string> ExecuteScriptsAsync(DatabaseConnectionItem connection, string script)
@@ -940,10 +945,10 @@ namespace SQL_Document_Builder
         {
             if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
 
-            if (objectsListBox.SelectedItem is not ObjectName objectName) return;
+            if (SelectedObject == null || SelectedObject?.ObjectType == ObjectTypeEnums.None) return;
 
             Cursor = Cursors.WaitCursor;
-            var script = await GetObjectCreateScriptAsync(objectName, _currentConnection);
+            var script = await GetObjectCreateScriptAsync(SelectedObject, _currentConnection);
 
             if (!string.IsNullOrEmpty(script))
             {
@@ -1576,10 +1581,12 @@ namespace SQL_Document_Builder
         {
             if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
 
-            if (objectsListBox.SelectedItem is ObjectName objectName)
+            if (SelectedObject == null || SelectedObject?.ObjectType == ObjectTypeEnums.None) return;
+
+            if (SelectedObject is ObjectName objectName)
             {
                 // return if object type is not a table or view
-                if (objectName.ObjectType == ObjectName.ObjectTypeEnums.Table || objectName.ObjectType == ObjectTypeEnums.View)
+                if (objectName.ObjectType == ObjectName.ObjectTypeEnums.Table || objectName.ObjectType == ObjectName.ObjectTypeEnums.View)
                 {
                     // checks if the object is a table or view
                     if (objectName.ObjectType != ObjectName.ObjectTypeEnums.Table)
@@ -2960,9 +2967,9 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void TableDescriptionToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
+            if (SelectedObject == null || !GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
 
-            var objectName = objectsListBox.SelectedItem as ObjectName;
+            var objectName = SelectedObject;
             if (!string.IsNullOrEmpty(objectName?.Name))
             {
                 var description = await ObjectDescription.BuildObjectDescription(objectName, _currentConnection, Properties.Settings.Default.UseExtendedProperties);
@@ -3711,9 +3718,9 @@ namespace SQL_Document_Builder
         {
             if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
 
-            if (objectsListBox.SelectedItem != null)
+            if (SelectedObject != null)
             {
-                var objectName = (ObjectName)objectsListBox.SelectedItem;
+                var objectName = SelectedObject;
 
                 var docType = GetDocumentType();
                 // get the template for the object list
@@ -3828,9 +3835,9 @@ namespace SQL_Document_Builder
         {
             if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
 
-            if (objectsListBox.SelectedItem != null)
+            if (SelectedObject != null)
             {
-                var objectName = (ObjectName)objectsListBox.SelectedItem;
+                var objectName = SelectedObject;
 
                 // check if the object is a table or view
                 if (objectName.ObjectType != ObjectTypeEnums.Table && objectName.ObjectType != ObjectTypeEnums.View)
@@ -3969,9 +3976,9 @@ namespace SQL_Document_Builder
         {
             if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
 
-            if (objectsListBox.SelectedItem != null)
+            if (SelectedObject != null)
             {
-                var objectName = (ObjectName)objectsListBox.SelectedItem;
+                var objectName = SelectedObject;
 
                 var scripts = objectName.ObjectType switch
                 {
@@ -4073,9 +4080,9 @@ namespace SQL_Document_Builder
         {
             if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
 
-            if (objectsListBox.SelectedItem != null)
+            if (SelectedObject != null)
             {
-                var objectName = (ObjectName)objectsListBox.SelectedItem;
+                var objectName = SelectedObject;
 
                 // check if the object is a table or view
                 if (objectName.ObjectType != ObjectTypeEnums.Table && objectName.ObjectType != ObjectTypeEnums.View)

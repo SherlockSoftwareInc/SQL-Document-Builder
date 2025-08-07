@@ -56,6 +56,12 @@ namespace SQL_Document_Builder
             definitionTextBox = new SqlEditBox();
             tabPage3 = new System.Windows.Forms.TabPage();
             objectPropertyGrid = new System.Windows.Forms.PropertyGrid();
+            tabPage5 = new System.Windows.Forms.TabPage();
+            referencedDataGridView = new System.Windows.Forms.DataGridView();
+            openObjectContextMenuStrip = new System.Windows.Forms.ContextMenuStrip(components);
+            openObjectToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            tabPage4 = new System.Windows.Forms.TabPage();
+            referencingDataGridView = new System.Windows.Forms.DataGridView();
             panel1 = new System.Windows.Forms.Panel();
             saveTableDescButton = new System.Windows.Forms.Button();
             descriptionLabel = new System.Windows.Forms.Label();
@@ -74,6 +80,11 @@ namespace SQL_Document_Builder
             ((System.ComponentModel.ISupportInitialize)parameterGridView).BeginInit();
             tabPage2.SuspendLayout();
             tabPage3.SuspendLayout();
+            tabPage5.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)referencedDataGridView).BeginInit();
+            openObjectContextMenuStrip.SuspendLayout();
+            tabPage4.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)referencingDataGridView).BeginInit();
             panel1.SuspendLayout();
             SuspendLayout();
             // 
@@ -233,6 +244,8 @@ namespace SQL_Document_Builder
             tabControl1.Controls.Add(tabPage1);
             tabControl1.Controls.Add(tabPage2);
             tabControl1.Controls.Add(tabPage3);
+            tabControl1.Controls.Add(tabPage5);
+            tabControl1.Controls.Add(tabPage4);
             tabControl1.Dock = System.Windows.Forms.DockStyle.Fill;
             tabControl1.Location = new System.Drawing.Point(0, 0);
             tabControl1.Name = "tabControl1";
@@ -293,7 +306,7 @@ namespace SQL_Document_Builder
             tabPage2.Location = new System.Drawing.Point(4, 4);
             tabPage2.Name = "tabPage2";
             tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            tabPage2.Size = new System.Drawing.Size(351, 437);
+            tabPage2.Size = new System.Drawing.Size(351, 438);
             tabPage2.TabIndex = 1;
             tabPage2.Text = "Definition";
             tabPage2.UseVisualStyleBackColor = true;
@@ -311,7 +324,7 @@ namespace SQL_Document_Builder
             definitionTextBox.Location = new System.Drawing.Point(3, 3);
             definitionTextBox.Name = "definitionTextBox";
             definitionTextBox.SelectionBackColor = System.Drawing.Color.FromArgb(17, 77, 156);
-            definitionTextBox.Size = new System.Drawing.Size(345, 431);
+            definitionTextBox.Size = new System.Drawing.Size(345, 432);
             definitionTextBox.TabIndex = 0;
             // 
             // tabPage3
@@ -320,7 +333,7 @@ namespace SQL_Document_Builder
             tabPage3.Location = new System.Drawing.Point(4, 4);
             tabPage3.Name = "tabPage3";
             tabPage3.Padding = new System.Windows.Forms.Padding(3);
-            tabPage3.Size = new System.Drawing.Size(351, 437);
+            tabPage3.Size = new System.Drawing.Size(351, 438);
             tabPage3.TabIndex = 2;
             tabPage3.Text = "Properties";
             tabPage3.UseVisualStyleBackColor = true;
@@ -330,8 +343,73 @@ namespace SQL_Document_Builder
             objectPropertyGrid.Dock = System.Windows.Forms.DockStyle.Fill;
             objectPropertyGrid.Location = new System.Drawing.Point(3, 3);
             objectPropertyGrid.Name = "objectPropertyGrid";
-            objectPropertyGrid.Size = new System.Drawing.Size(345, 431);
+            objectPropertyGrid.Size = new System.Drawing.Size(345, 432);
             objectPropertyGrid.TabIndex = 4;
+            // 
+            // tabPage5
+            // 
+            tabPage5.Controls.Add(referencedDataGridView);
+            tabPage5.Location = new System.Drawing.Point(4, 4);
+            tabPage5.Name = "tabPage5";
+            tabPage5.Size = new System.Drawing.Size(351, 438);
+            tabPage5.TabIndex = 4;
+            tabPage5.Text = "Referenced";
+            tabPage5.UseVisualStyleBackColor = true;
+            // 
+            // referencedDataGridView
+            // 
+            referencedDataGridView.AllowUserToAddRows = false;
+            referencedDataGridView.AllowUserToDeleteRows = false;
+            referencedDataGridView.AutoSizeRowsMode = System.Windows.Forms.DataGridViewAutoSizeRowsMode.AllCells;
+            referencedDataGridView.ClipboardCopyMode = System.Windows.Forms.DataGridViewClipboardCopyMode.EnableWithoutHeaderText;
+            referencedDataGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            referencedDataGridView.ContextMenuStrip = openObjectContextMenuStrip;
+            referencedDataGridView.Dock = System.Windows.Forms.DockStyle.Fill;
+            referencedDataGridView.Location = new System.Drawing.Point(0, 0);
+            referencedDataGridView.Name = "referencedDataGridView";
+            referencedDataGridView.ReadOnly = true;
+            referencedDataGridView.RowTemplate.Resizable = System.Windows.Forms.DataGridViewTriState.True;
+            referencedDataGridView.Size = new System.Drawing.Size(351, 438);
+            referencedDataGridView.TabIndex = 3;
+            // 
+            // openObjectContextMenuStrip
+            // 
+            openObjectContextMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { openObjectToolStripMenuItem });
+            openObjectContextMenuStrip.Name = "openTableContextMenuStrip";
+            openObjectContextMenuStrip.Size = new System.Drawing.Size(181, 48);
+            // 
+            // openObjectToolStripMenuItem
+            // 
+            openObjectToolStripMenuItem.Name = "openObjectToolStripMenuItem";
+            openObjectToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            openObjectToolStripMenuItem.Text = "Open Object";
+            openObjectToolStripMenuItem.Click += OpenObjectToolStripMenuItem_Click;
+            // 
+            // tabPage4
+            // 
+            tabPage4.Controls.Add(referencingDataGridView);
+            tabPage4.Location = new System.Drawing.Point(4, 4);
+            tabPage4.Name = "tabPage4";
+            tabPage4.Size = new System.Drawing.Size(351, 438);
+            tabPage4.TabIndex = 3;
+            tabPage4.Text = "Referencing";
+            tabPage4.UseVisualStyleBackColor = true;
+            // 
+            // referencingDataGridView
+            // 
+            referencingDataGridView.AllowUserToAddRows = false;
+            referencingDataGridView.AllowUserToDeleteRows = false;
+            referencingDataGridView.AutoSizeRowsMode = System.Windows.Forms.DataGridViewAutoSizeRowsMode.AllCells;
+            referencingDataGridView.ClipboardCopyMode = System.Windows.Forms.DataGridViewClipboardCopyMode.EnableWithoutHeaderText;
+            referencingDataGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            referencingDataGridView.ContextMenuStrip = openObjectContextMenuStrip;
+            referencingDataGridView.Dock = System.Windows.Forms.DockStyle.Fill;
+            referencingDataGridView.Location = new System.Drawing.Point(0, 0);
+            referencingDataGridView.Name = "referencingDataGridView";
+            referencingDataGridView.ReadOnly = true;
+            referencingDataGridView.RowTemplate.Resizable = System.Windows.Forms.DataGridViewTriState.True;
+            referencingDataGridView.Size = new System.Drawing.Size(351, 438);
+            referencingDataGridView.TabIndex = 3;
             // 
             // panel1
             // 
@@ -387,6 +465,11 @@ namespace SQL_Document_Builder
             ((System.ComponentModel.ISupportInitialize)parameterGridView).EndInit();
             tabPage2.ResumeLayout(false);
             tabPage3.ResumeLayout(false);
+            tabPage5.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)referencedDataGridView).EndInit();
+            openObjectContextMenuStrip.ResumeLayout(false);
+            tabPage4.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)referencingDataGridView).EndInit();
             panel1.ResumeLayout(false);
             panel1.PerformLayout();
             ResumeLayout(false);
@@ -422,5 +505,11 @@ namespace SQL_Document_Builder
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
         private System.Windows.Forms.ToolStripMenuItem addIndexToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem addPrimaryKeyToolStripMenuItem;
+        private System.Windows.Forms.TabPage tabPage4;
+        private System.Windows.Forms.DataGridView referencingDataGridView;
+        private System.Windows.Forms.TabPage tabPage5;
+        private System.Windows.Forms.DataGridView referencedDataGridView;
+        private System.Windows.Forms.ContextMenuStrip openObjectContextMenuStrip;
+        private System.Windows.Forms.ToolStripMenuItem openObjectToolStripMenuItem;
     }
 }

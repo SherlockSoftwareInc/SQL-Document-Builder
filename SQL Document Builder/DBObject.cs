@@ -1,5 +1,4 @@
-﻿using Microsoft.Data.SqlClient;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -884,6 +883,42 @@ WHERE sch.name = N'{ObjectName.Schema}' AND s.name = N'{ObjectName.Name}'";
             Parameters.Clear();
 
             return true;
+        }
+
+        /// <summary>
+        /// Gets the referencing objects async.
+        /// </summary>
+        /// <param name="connection">The connection.</param>
+        /// <returns>A Task.</returns>
+        internal async Task<DataTable?> GetReferencingObjectsAsync(DatabaseConnectionItem connection)
+        {
+            if (connection == null || string.IsNullOrEmpty(connection.ConnectionString) || ObjectName.IsEmpty())
+            {
+                return null;
+            }
+            if (connection?.DBMSType == DBMSTypeEnums.SQLServer)
+            {
+                return await SQLDatabaseHelper.GetReferencingObjectsAsync(ObjectName, connection.ConnectionString);
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Gets the objects that are referenced by this object (e.g., tables/views/functions/procedures this object depends on).
+        /// </summary>
+        /// <param name="connection">The database connection item.</param>
+        /// <returns>A Task containing a list of referenced ObjectName objects.</returns>
+        internal async Task<DataTable?> GetReferencedObjectsAsync(DatabaseConnectionItem connection)
+        {
+            if (connection == null || string.IsNullOrEmpty(connection.ConnectionString) || ObjectName.IsEmpty())
+            {
+                return null;
+            }
+            if (connection?.DBMSType == DBMSTypeEnums.SQLServer)
+            {
+                return await SQLDatabaseHelper.GetReferencedObjectsAsync(ObjectName, connection.ConnectionString);
+            }
+            return null;
         }
     }
 }
