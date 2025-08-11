@@ -19,6 +19,7 @@ namespace SQL_Document_Builder
         public RecentFilesManageForm()
         {
             InitializeComponent();
+            if (Properties.Settings.Default.DarkMode) _ = new DarkMode(this);
         }
 
         /// <summary>
@@ -298,6 +299,9 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void RecentFilesManageForm_Load(object sender, EventArgs e)
         {
+            // set the window status to maximized
+            this.WindowState = FormWindowState.Maximized;
+
             // Load the recent files into the local variable
             LoadMRUFiles();
 
