@@ -193,6 +193,16 @@ namespace SQL_Document_Builder.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap move_file {
+            get {
+                object obj = ResourceManager.GetObject("move_file", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap openfile {
             get {
                 object obj = ResourceManager.GetObject("openfile", resourceCulture);

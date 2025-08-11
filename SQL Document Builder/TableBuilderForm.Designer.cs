@@ -207,6 +207,7 @@ namespace SQL_Document_Builder
             openFolderInFileExplorerToolStripMenuItem = new ToolStripMenuItem();
             toolTip1 = new ToolTip(components);
             startTimer = new Timer(components);
+            manageRecentFilesToolStripMenuItem = new ToolStripMenuItem();
             toolStrip1.SuspendLayout();
             objectsTabControl.SuspendLayout();
             tabPage1.SuspendLayout();
@@ -747,7 +748,7 @@ namespace SQL_Document_Builder
             // 
             // fileToolStripMenuItem
             // 
-            fileToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { connectToToolStripMenuItem, newConnectionToolStripMenuItem, manageConnectionsToolStripMenuItem, manageTemplateToolStripMenuItem, toolStripSeparator4, newToolStripMenuItem1, openToolStripMenuItem, openFolderToolStripMenuItem, saveToolStripMenuItem, saveAsToolStripMenuItem, closeToolStripMenuItem1, closeAllToolStripMenuItem, toolStripSeparator21, recentToolStripMenuItem, toolStripSeparator5, exitToolStripMenuItem });
+            fileToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { connectToToolStripMenuItem, newConnectionToolStripMenuItem, manageConnectionsToolStripMenuItem, manageTemplateToolStripMenuItem, toolStripSeparator4, newToolStripMenuItem1, openToolStripMenuItem, openFolderToolStripMenuItem, saveToolStripMenuItem, saveAsToolStripMenuItem, closeToolStripMenuItem1, closeAllToolStripMenuItem, toolStripSeparator21, recentToolStripMenuItem, manageRecentFilesToolStripMenuItem, toolStripSeparator5, exitToolStripMenuItem });
             fileToolStripMenuItem.Name = "fileToolStripMenuItem";
             fileToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
             fileToolStripMenuItem.Text = "&File";
@@ -1716,6 +1717,13 @@ namespace SQL_Document_Builder
             // 
             startTimer.Tick += StartTimer_Tick;
             // 
+            // manageRecentFilesToolStripMenuItem
+            // 
+            manageRecentFilesToolStripMenuItem.Name = "manageRecentFilesToolStripMenuItem";
+            manageRecentFilesToolStripMenuItem.Size = new System.Drawing.Size(218, 22);
+            manageRecentFilesToolStripMenuItem.Text = "Manage recent files";
+            manageRecentFilesToolStripMenuItem.Click += ManageRecentFilesToolStripMenuItem_Click;
+            // 
             // TableBuilderForm
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -1941,5 +1949,6 @@ namespace SQL_Document_Builder
         private ToolStripMenuItem saveAsToolStripMenuItem1;
         private ToolStripMenuItem openFolderToolStripMenuItem;
         private Button searchButton;
+        private ToolStripMenuItem manageRecentFilesToolStripMenuItem;
     }
 }

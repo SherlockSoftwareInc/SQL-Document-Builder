@@ -17,11 +17,6 @@ namespace SQL_Document_Builder
         public string[]? Files => _mruList?.ToArray();
 
         /// <summary>
-        /// Maximum files to remember
-        /// </summary>
-        public int MaxFiles { get; set; } = 50;
-
-        /// <summary>
         /// Save recent used files
         /// </summary>
         /// <param name="strPath"></param>
@@ -32,20 +27,11 @@ namespace SQL_Document_Builder
                 _mruList.Remove(strPath);
                 _mruList.Insert(0, strPath);
 
-                StreamWriter stringToWrite = new(MRUFileName());
-
-                int count = 0;
+                using StreamWriter stringToWrite = new(MRUFileName());
                 foreach (string item in _mruList)
                 {
                     stringToWrite.WriteLine(item);
-                    if (count++ > MaxFiles)
-                    {
-                        break;
-                    }
                 }
-
-                stringToWrite.Flush();
-                stringToWrite.Close();
             }
         }
 
@@ -110,6 +96,26 @@ namespace SQL_Document_Builder
             }
 
             return Path.Combine(dataPath, "mrufiles.txt");
+        }
+
+        /// <summary>
+        /// Removes the.
+        /// </summary>
+        /// <param name="oldFullPath">The old full path.</param>
+        internal void Remove(string oldFullPath)
+        {
+            // Check if the oldFullPath exists in the _mruList
+            if (_mruList.Contains(oldFullPath))
+            {
+                // Remove the oldFullPath from the list
+                _mruList.Remove(oldFullPath);
+
+                using StreamWriter stringToWrite = new(MRUFileName());
+                foreach (string item in _mruList)
+                {
+                    stringToWrite.WriteLine(item);
+                }
+            }
         }
     }
 }

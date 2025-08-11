@@ -3904,14 +3904,15 @@ namespace SQL_Document_Builder
                 RemoveMRUFileMenuItems();
             }
 
-            foreach (string item in _mruFiles?.Files)
+            // Only take the first 30 files
+            foreach (string item in _mruFiles?.Files?.Take(30) ?? Array.Empty<string>())
             {
                 ToolStripMenuItem fileRecent = new(item);
                 fileRecent.Click += RecentFile_click;
 
                 recentToolStripMenuItem.DropDownItems.Add(fileRecent);
             }
-            recentToolStripMenuItem.Enabled = _mruFiles.Files.Length > 0;
+            recentToolStripMenuItem.Enabled = (_mruFiles?.Files?.Length ?? 0) > 0;
         }
 
         /// <summary>
@@ -4435,6 +4436,28 @@ namespace SQL_Document_Builder
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Handles the click event of the manage recent files tool strip menu item.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void ManageRecentFilesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // Open the RecentFilesManageForm to manage recent files
+            using RecentFilesManageForm form = new();
+            if (form.ShowDialog() == DialogResult.OK)
+            {
+                // If a file was selected to open, open it
+                if (!string.IsNullOrEmpty(form.FileToOpen))
+                {
+                    OpenFile(form.FileToOpen);
+                }
+            }
+
+            // Refresh the MRU files in the menu
+            PopulateMRUFiles();
         }
     }
 }
