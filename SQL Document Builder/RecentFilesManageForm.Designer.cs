@@ -34,9 +34,9 @@
             openToolStripButton = new System.Windows.Forms.ToolStripButton();
             moveFileToolStripButton = new System.Windows.Forms.ToolStripButton();
             deleteFileToolStripButton = new System.Windows.Forms.ToolStripButton();
-            filesDataGridView = new System.Windows.Forms.DataGridView();
             toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             closeToolStripButton = new System.Windows.Forms.ToolStripButton();
+            filesDataGridView = new System.Windows.Forms.DataGridView();
             toolStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)filesDataGridView).BeginInit();
             SuspendLayout();
@@ -92,18 +92,6 @@
             deleteFileToolStripButton.Text = "Delete";
             deleteFileToolStripButton.Click += DeleteFileToolStripButton_Click;
             // 
-            // filesDataGridView
-            // 
-            filesDataGridView.AllowUserToAddRows = false;
-            filesDataGridView.AllowUserToDeleteRows = false;
-            filesDataGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            filesDataGridView.Dock = System.Windows.Forms.DockStyle.Fill;
-            filesDataGridView.Location = new System.Drawing.Point(0, 25);
-            filesDataGridView.Name = "filesDataGridView";
-            filesDataGridView.ReadOnly = true;
-            filesDataGridView.Size = new System.Drawing.Size(800, 425);
-            filesDataGridView.TabIndex = 1;
-            // 
             // toolStripSeparator1
             // 
             toolStripSeparator1.Name = "toolStripSeparator1";
@@ -118,6 +106,19 @@
             closeToolStripButton.Size = new System.Drawing.Size(23, 22);
             closeToolStripButton.Text = "Close";
             closeToolStripButton.Click += CloseToolStripButton_Click;
+            // 
+            // filesDataGridView
+            // 
+            filesDataGridView.AllowUserToAddRows = false;
+            filesDataGridView.AllowUserToDeleteRows = false;
+            filesDataGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            filesDataGridView.Dock = System.Windows.Forms.DockStyle.Fill;
+            filesDataGridView.Location = new System.Drawing.Point(0, 25);
+            filesDataGridView.Name = "filesDataGridView";
+            filesDataGridView.ReadOnly = true;
+            filesDataGridView.Size = new System.Drawing.Size(800, 425);
+            filesDataGridView.TabIndex = 1;
+            filesDataGridView.CellDoubleClick += FilesDataGridView_CellDoubleClick;
             // 
             // RecentFilesManageForm
             // 
