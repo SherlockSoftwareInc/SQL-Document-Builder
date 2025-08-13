@@ -27,11 +27,7 @@ namespace SQL_Document_Builder
                 _mruList.Remove(strPath);
                 _mruList.Insert(0, strPath);
 
-                using StreamWriter stringToWrite = new(MRUFileName());
-                foreach (string item in _mruList)
-                {
-                    stringToWrite.WriteLine(item);
-                }
+                Save();
             }
         }
 
@@ -110,12 +106,17 @@ namespace SQL_Document_Builder
                 // Remove the oldFullPath from the list
                 _mruList.Remove(oldFullPath);
 
-                using StreamWriter stringToWrite = new(MRUFileName());
-                foreach (string item in _mruList)
-                {
-                    stringToWrite.WriteLine(item);
-                }
+                Save();
             }
         }
+
+        /// <summary>
+        /// Saves the.
+        /// </summary>
+        private void Save()
+        {
+            File.WriteAllLines(MRUFileName(), _mruList);
+        }
+
     }
 }

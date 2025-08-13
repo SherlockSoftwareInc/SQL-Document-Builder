@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            components = new System.ComponentModel.Container();
             toolStrip1 = new System.Windows.Forms.ToolStrip();
             toolStripLabel1 = new System.Windows.Forms.ToolStripLabel();
             searchToolStripTextBox = new System.Windows.Forms.ToolStripTextBox();
@@ -37,6 +38,7 @@
             toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             closeToolStripButton = new System.Windows.Forms.ToolStripButton();
             filesDataGridView = new System.Windows.Forms.DataGridView();
+            toolTip1 = new System.Windows.Forms.ToolTip(components);
             toolStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)filesDataGridView).BeginInit();
             SuspendLayout();
@@ -70,6 +72,7 @@
             openToolStripButton.Name = "openToolStripButton";
             openToolStripButton.Size = new System.Drawing.Size(23, 22);
             openToolStripButton.Text = "Open";
+            openToolStripButton.ToolTipText = "Open the selected file";
             openToolStripButton.Click += OpenToolStripButton_Click;
             // 
             // moveFileToolStripButton
@@ -80,6 +83,7 @@
             moveFileToolStripButton.Name = "moveFileToolStripButton";
             moveFileToolStripButton.Size = new System.Drawing.Size(23, 22);
             moveFileToolStripButton.Text = "Move";
+            moveFileToolStripButton.ToolTipText = "Move the selected file to different location";
             moveFileToolStripButton.Click += MoveFileToolStripButton_Click;
             // 
             // deleteFileToolStripButton
@@ -89,7 +93,8 @@
             deleteFileToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
             deleteFileToolStripButton.Name = "deleteFileToolStripButton";
             deleteFileToolStripButton.Size = new System.Drawing.Size(23, 22);
-            deleteFileToolStripButton.Text = "Delete";
+            deleteFileToolStripButton.Text = "Remove";
+            deleteFileToolStripButton.ToolTipText = "Remove the selected file from the list";
             deleteFileToolStripButton.Click += DeleteFileToolStripButton_Click;
             // 
             // toolStripSeparator1
@@ -129,7 +134,7 @@
             Controls.Add(toolStrip1);
             Name = "RecentFilesManageForm";
             StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            Text = "Recent Files Manage Form";
+            Text = "Manage My Files";
             Load += RecentFilesManageForm_Load;
             toolStrip1.ResumeLayout(false);
             toolStrip1.PerformLayout();
@@ -149,5 +154,6 @@
         private System.Windows.Forms.DataGridView filesDataGridView;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
         private System.Windows.Forms.ToolStripButton closeToolStripButton;
+        private System.Windows.Forms.ToolTip toolTip1;
     }
 }

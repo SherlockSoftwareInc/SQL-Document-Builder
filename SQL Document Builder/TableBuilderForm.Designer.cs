@@ -99,6 +99,7 @@ namespace SQL_Document_Builder
             closeAllToolStripMenuItem = new ToolStripMenuItem();
             toolStripSeparator21 = new ToolStripSeparator();
             recentToolStripMenuItem = new ToolStripMenuItem();
+            manageRecentFilesToolStripMenuItem = new ToolStripMenuItem();
             toolStripSeparator5 = new ToolStripSeparator();
             exitToolStripMenuItem = new ToolStripMenuItem();
             editToolStripMenuItem = new ToolStripMenuItem();
@@ -207,7 +208,6 @@ namespace SQL_Document_Builder
             openFolderInFileExplorerToolStripMenuItem = new ToolStripMenuItem();
             toolTip1 = new ToolTip(components);
             startTimer = new Timer(components);
-            manageRecentFilesToolStripMenuItem = new ToolStripMenuItem();
             toolStrip1.SuspendLayout();
             objectsTabControl.SuspendLayout();
             tabPage1.SuspendLayout();
@@ -777,21 +777,21 @@ namespace SQL_Document_Builder
             newConnectionToolStripMenuItem.Image = Properties.Resources.add;
             newConnectionToolStripMenuItem.Name = "newConnectionToolStripMenuItem";
             newConnectionToolStripMenuItem.Size = new System.Drawing.Size(218, 22);
-            newConnectionToolStripMenuItem.Text = "New connection";
+            newConnectionToolStripMenuItem.Text = "New Connection";
             newConnectionToolStripMenuItem.Click += NewConnectionToolStripMenuItem_Click;
             // 
             // manageConnectionsToolStripMenuItem
             // 
             manageConnectionsToolStripMenuItem.Name = "manageConnectionsToolStripMenuItem";
             manageConnectionsToolStripMenuItem.Size = new System.Drawing.Size(218, 22);
-            manageConnectionsToolStripMenuItem.Text = "Manage connections";
+            manageConnectionsToolStripMenuItem.Text = "Manage Connections";
             manageConnectionsToolStripMenuItem.Click += ManageConnectionsToolStripMenuItem_Click;
             // 
             // manageTemplateToolStripMenuItem
             // 
             manageTemplateToolStripMenuItem.Name = "manageTemplateToolStripMenuItem";
             manageTemplateToolStripMenuItem.Size = new System.Drawing.Size(218, 22);
-            manageTemplateToolStripMenuItem.Text = "Manage template";
+            manageTemplateToolStripMenuItem.Text = "Manage Template";
             manageTemplateToolStripMenuItem.Click += ManageTemplateToolStripMenuItem_Click;
             // 
             // toolStripSeparator4
@@ -867,7 +867,14 @@ namespace SQL_Document_Builder
             // 
             recentToolStripMenuItem.Name = "recentToolStripMenuItem";
             recentToolStripMenuItem.Size = new System.Drawing.Size(218, 22);
-            recentToolStripMenuItem.Text = "Recent files";
+            recentToolStripMenuItem.Text = "Recent Files";
+            // 
+            // manageRecentFilesToolStripMenuItem
+            // 
+            manageRecentFilesToolStripMenuItem.Name = "manageRecentFilesToolStripMenuItem";
+            manageRecentFilesToolStripMenuItem.Size = new System.Drawing.Size(218, 22);
+            manageRecentFilesToolStripMenuItem.Text = "Manage My Files";
+            manageRecentFilesToolStripMenuItem.Click += ManageRecentFilesToolStripMenuItem_Click;
             // 
             // toolStripSeparator5
             // 
@@ -1080,45 +1087,45 @@ namespace SQL_Document_Builder
             // objectListToolStripMenuItem
             // 
             objectListToolStripMenuItem.Name = "objectListToolStripMenuItem";
-            objectListToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
+            objectListToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             objectListToolStripMenuItem.Text = "Object List";
             objectListToolStripMenuItem.Click += JsonObjectListToolStripMenuItem_Click;
             // 
             // toolStripSeparator25
             // 
             toolStripSeparator25.Name = "toolStripSeparator25";
-            toolStripSeparator25.Size = new System.Drawing.Size(175, 6);
+            toolStripSeparator25.Size = new System.Drawing.Size(177, 6);
             // 
             // jsonObjectDefinitionToolStripMenuItem
             // 
             jsonObjectDefinitionToolStripMenuItem.Name = "jsonObjectDefinitionToolStripMenuItem";
-            jsonObjectDefinitionToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
+            jsonObjectDefinitionToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             jsonObjectDefinitionToolStripMenuItem.Text = "Object Definition";
             jsonObjectDefinitionToolStripMenuItem.Click += JsonObjectDefinitionToolStripMenuItem_Click;
             // 
             // jsonTableViewValuesToolStripMenuItem
             // 
             jsonTableViewValuesToolStripMenuItem.Name = "jsonTableViewValuesToolStripMenuItem";
-            jsonTableViewValuesToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
+            jsonTableViewValuesToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             jsonTableViewValuesToolStripMenuItem.Text = "Table/View Values";
             jsonTableViewValuesToolStripMenuItem.Click += JsonTableViewValuesToolStripMenuItem_Click;
             // 
             // toolStripSeparator26
             // 
             toolStripSeparator26.Name = "toolStripSeparator26";
-            toolStripSeparator26.Size = new System.Drawing.Size(175, 6);
+            toolStripSeparator26.Size = new System.Drawing.Size(177, 6);
             // 
             // jsonClipboardToTableToolStripMenuItem
             // 
             jsonClipboardToTableToolStripMenuItem.Name = "jsonClipboardToTableToolStripMenuItem";
-            jsonClipboardToTableToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
+            jsonClipboardToTableToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             jsonClipboardToTableToolStripMenuItem.Text = "Clipboard to JSON";
             jsonClipboardToTableToolStripMenuItem.Click += JsonClipboardToTableToolStripMenuItem_Click;
             // 
             // jsonQueryDataToTableToolStripMenuItem
             // 
             jsonQueryDataToTableToolStripMenuItem.Name = "jsonQueryDataToTableToolStripMenuItem";
-            jsonQueryDataToTableToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
+            jsonQueryDataToTableToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             jsonQueryDataToTableToolStripMenuItem.Text = "Query Data to JSON";
             jsonQueryDataToTableToolStripMenuItem.Click += JsonQueryDataToTableToolStripMenuItem_Click;
             // 
@@ -1132,46 +1139,46 @@ namespace SQL_Document_Builder
             // customizeToolStripMenuItem
             // 
             customizeToolStripMenuItem.Name = "customizeToolStripMenuItem";
-            customizeToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
+            customizeToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             customizeToolStripMenuItem.Text = "&Customize";
             customizeToolStripMenuItem.Visible = false;
             // 
             // optionsToolStripMenuItem
             // 
             optionsToolStripMenuItem.Name = "optionsToolStripMenuItem";
-            optionsToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
+            optionsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             optionsToolStripMenuItem.Text = "&Options";
             optionsToolStripMenuItem.Visible = false;
             // 
             // toolStripSeparator1
             // 
             toolStripSeparator1.Name = "toolStripSeparator1";
-            toolStripSeparator1.Size = new System.Drawing.Size(175, 6);
+            toolStripSeparator1.Size = new System.Drawing.Size(177, 6);
             toolStripSeparator1.Visible = false;
             // 
             // batchColumnDescToolStripMenuItem
             // 
             batchColumnDescToolStripMenuItem.Name = "batchColumnDescToolStripMenuItem";
-            batchColumnDescToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
+            batchColumnDescToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             batchColumnDescToolStripMenuItem.Text = "Batch Column Desc";
             batchColumnDescToolStripMenuItem.Click += BatchToolStripButton_Click;
             // 
             // toolStripSeparator10
             // 
             toolStripSeparator10.Name = "toolStripSeparator10";
-            toolStripSeparator10.Size = new System.Drawing.Size(175, 6);
+            toolStripSeparator10.Size = new System.Drawing.Size(177, 6);
             // 
             // exportDescriptionsToolStripMenuItem
             // 
             exportDescriptionsToolStripMenuItem.Name = "exportDescriptionsToolStripMenuItem";
-            exportDescriptionsToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
+            exportDescriptionsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             exportDescriptionsToolStripMenuItem.Text = "Export Descriptions";
             exportDescriptionsToolStripMenuItem.Click += ExportDescriptionsToolStripMenuItem_Click;
             // 
             // importDescriptionsToolStripMenuItem
             // 
             importDescriptionsToolStripMenuItem.Name = "importDescriptionsToolStripMenuItem";
-            importDescriptionsToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
+            importDescriptionsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             importDescriptionsToolStripMenuItem.Text = "Import Descriptions";
             importDescriptionsToolStripMenuItem.Click += ImportDescriptionsToolStripMenuItem_Click;
             // 
@@ -1243,14 +1250,14 @@ namespace SQL_Document_Builder
             // 
             queryInsertToolStripMenuItem.Name = "queryInsertToolStripMenuItem";
             queryInsertToolStripMenuItem.Size = new System.Drawing.Size(248, 22);
-            queryInsertToolStripMenuItem.Text = "Query to INSERT statements";
+            queryInsertToolStripMenuItem.Text = "Query to INSERT Statements";
             queryInsertToolStripMenuItem.Click += QueryInsertToolStripMenuItem_Click;
             // 
             // excelToINSERTToolStripMenuItem
             // 
             excelToINSERTToolStripMenuItem.Name = "excelToINSERTToolStripMenuItem";
             excelToINSERTToolStripMenuItem.Size = new System.Drawing.Size(248, 22);
-            excelToINSERTToolStripMenuItem.Text = "Excel to INSERT statements";
+            excelToINSERTToolStripMenuItem.Text = "Excel to INSERT Statements";
             excelToINSERTToolStripMenuItem.Click += ExcelToINSERTToolStripMenuItem_Click;
             // 
             // toolStripSeparator15
@@ -1268,21 +1275,21 @@ namespace SQL_Document_Builder
             // cREATEToolStripMenuItem
             // 
             cREATEToolStripMenuItem.Name = "cREATEToolStripMenuItem";
-            cREATEToolStripMenuItem.Size = new System.Drawing.Size(177, 22);
+            cREATEToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             cREATEToolStripMenuItem.Text = "CREATE";
             cREATEToolStripMenuItem.Click += CreateToolStripMenuItem_Click;
             // 
             // cREATEINSERTToolStripMenuItem
             // 
             cREATEINSERTToolStripMenuItem.Name = "cREATEINSERTToolStripMenuItem";
-            cREATEINSERTToolStripMenuItem.Size = new System.Drawing.Size(177, 22);
+            cREATEINSERTToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             cREATEINSERTToolStripMenuItem.Text = "CREATE + INSERT";
             cREATEINSERTToolStripMenuItem.Click += CreateInsertToolStripMenuItem_Click;
             // 
             // objectsDescriptionToolStripMenuItem
             // 
             objectsDescriptionToolStripMenuItem.Name = "objectsDescriptionToolStripMenuItem";
-            objectsDescriptionToolStripMenuItem.Size = new System.Drawing.Size(177, 22);
+            objectsDescriptionToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             objectsDescriptionToolStripMenuItem.Text = "Objects Description";
             objectsDescriptionToolStripMenuItem.Click += ObjectsDescriptionToolStripMenuItem_Click;
             // 
@@ -1716,13 +1723,6 @@ namespace SQL_Document_Builder
             // startTimer
             // 
             startTimer.Tick += StartTimer_Tick;
-            // 
-            // manageRecentFilesToolStripMenuItem
-            // 
-            manageRecentFilesToolStripMenuItem.Name = "manageRecentFilesToolStripMenuItem";
-            manageRecentFilesToolStripMenuItem.Size = new System.Drawing.Size(218, 22);
-            manageRecentFilesToolStripMenuItem.Text = "Manage recent files";
-            manageRecentFilesToolStripMenuItem.Click += ManageRecentFilesToolStripMenuItem_Click;
             // 
             // TableBuilderForm
             // 

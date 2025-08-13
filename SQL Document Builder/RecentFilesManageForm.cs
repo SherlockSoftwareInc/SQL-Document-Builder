@@ -51,8 +51,8 @@ namespace SQL_Document_Builder
 
             // Show confirmation dialog
             var result = MessageBox.Show(
-                $"Are you sure you want to delete the file:\n\n{selectedFile}?",
-                "Confirm Delete",
+                $"Are you sure you want to remove the file from the list:\n\n{selectedFile}?",
+                "Confirm Remove",
                 MessageBoxButtons.YesNo,
                 MessageBoxIcon.Warning,
                 MessageBoxDefaultButton.Button2);
@@ -72,11 +72,11 @@ namespace SQL_Document_Builder
                 // Refresh the display
                 PopulateFiles();
 
-                MessageBox.Show("File deleted successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("File removed successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error deleting file: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Error removing file: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 

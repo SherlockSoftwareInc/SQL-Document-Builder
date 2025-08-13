@@ -1150,7 +1150,10 @@ namespace SQL_Document_Builder
                 }
 
                 // add the file to the MRU files list
-                _mruFiles.AddFile(editBox.FileName);
+                var mruFiles = new MostRecentUsedFiles();
+                mruFiles.Load();
+
+                mruFiles.AddFile(editBox.FileName);
                 PopulateMRUFiles();
             }
         }
@@ -2039,7 +2042,10 @@ namespace SQL_Document_Builder
             AddTab(fileName);
 
             // add the file to the MRU files list
-            _mruFiles.AddFile(fileName);
+            var mruFiles = new MostRecentUsedFiles();
+            mruFiles.Load();
+            mruFiles.AddFile(fileName);
+
             PopulateMRUFiles();
         }
 
@@ -3887,32 +3893,25 @@ namespace SQL_Document_Builder
 
         #region "MRU files"
 
-        private MostRecentUsedFiles? _mruFiles;
-
         /// <summary>
         /// Populate the MRU files to the menu strip
         /// </summary>
         private void PopulateMRUFiles()
         {
-            if (_mruFiles == null)
-            {
-                _mruFiles = new MostRecentUsedFiles();
-                _mruFiles.Load();
-            }
-            else
-            {
-                RemoveMRUFileMenuItems();
-            }
+            var mruFiles = new MostRecentUsedFiles();
+            mruFiles.Load();
+
+            // Remove existing MRU file menu items
+            RemoveMRUFileMenuItems();
 
             // Only take the first 30 files
-            foreach (string item in _mruFiles?.Files?.Take(30) ?? Array.Empty<string>())
+            foreach (string item in mruFiles.Files?.Take(30) ?? Array.Empty<string>())
             {
                 ToolStripMenuItem fileRecent = new(item);
                 fileRecent.Click += RecentFile_click;
-
                 recentToolStripMenuItem.DropDownItems.Add(fileRecent);
             }
-            recentToolStripMenuItem.Enabled = (_mruFiles?.Files?.Length ?? 0) > 0;
+            recentToolStripMenuItem.Enabled = (mruFiles.Files?.Length ?? 0) > 0;
         }
 
         /// <summary>
