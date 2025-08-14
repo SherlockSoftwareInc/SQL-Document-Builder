@@ -1087,15 +1087,13 @@ namespace SQL_Document_Builder
 
                 result = oFile.ShowDialog();
 
-                if (result == DialogResult.OK)
+                if (result == DialogResult.OK && !string.IsNullOrEmpty(oFile.FileName))
                 {
-                    if (FileName != oFile.FileName)
-                    {
-                        FileName = oFile.FileName;
-                        FileNameChanged?.Invoke(this, EventArgs.Empty);
-                    }
-
+                    FileName = oFile.FileName;
                     System.IO.File.WriteAllText(FileName, Text);
+
+                    FileNameChanged?.Invoke(this, EventArgs.Empty);
+
                     this.SetSavePoint();
                 }
             }
