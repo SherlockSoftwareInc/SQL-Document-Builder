@@ -457,7 +457,7 @@ namespace SQL_Document_Builder
         {
             // If the selected tab is the second tab (index 1), disable move and remove buttons
             bool isSecondTab = tabControl1.SelectedIndex == 1;
-            moveFileToolStripButton.Enabled = !isSecondTab;
+            moveFileToolStripButton.Visible = !isSecondTab;
             //deleteFileToolStripButton.Enabled = !isSecondTab;
         }
 

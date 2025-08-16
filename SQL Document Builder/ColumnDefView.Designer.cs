@@ -103,7 +103,7 @@ namespace SQL_Document_Builder
             // 
             openButton.Dock = System.Windows.Forms.DockStyle.Right;
             openButton.Font = new System.Drawing.Font("Segoe UI", 9F);
-            openButton.Image = Resources.openfile20;
+            openButton.Image = Resources.openfile16;
             openButton.Location = new System.Drawing.Point(331, 0);
             openButton.Name = "openButton";
             openButton.Padding = new System.Windows.Forms.Padding(3);
@@ -376,12 +376,12 @@ namespace SQL_Document_Builder
             // 
             openObjectContextMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { openObjectToolStripMenuItem });
             openObjectContextMenuStrip.Name = "openTableContextMenuStrip";
-            openObjectContextMenuStrip.Size = new System.Drawing.Size(181, 48);
+            openObjectContextMenuStrip.Size = new System.Drawing.Size(142, 26);
             // 
             // openObjectToolStripMenuItem
             // 
             openObjectToolStripMenuItem.Name = "openObjectToolStripMenuItem";
-            openObjectToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            openObjectToolStripMenuItem.Size = new System.Drawing.Size(141, 22);
             openObjectToolStripMenuItem.Text = "Open Object";
             openObjectToolStripMenuItem.Click += OpenObjectToolStripMenuItem_Click;
             // 

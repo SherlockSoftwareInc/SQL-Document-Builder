@@ -76,7 +76,7 @@
             // 
             openToolStripButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
             openToolStripButton.Image = Properties.Resources.openfile24;
-            openToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            openToolStripButton.ImageTransparentColor = System.Drawing.Color.Transparent;
             openToolStripButton.Name = "openToolStripButton";
             openToolStripButton.Size = new System.Drawing.Size(23, 22);
             openToolStripButton.Text = "Open";
@@ -86,8 +86,8 @@
             // moveFileToolStripButton
             // 
             moveFileToolStripButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            moveFileToolStripButton.Image = Properties.Resources.move_file;
-            moveFileToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            moveFileToolStripButton.Image = Properties.Resources.MoveFile;
+            moveFileToolStripButton.ImageTransparentColor = System.Drawing.Color.Transparent;
             moveFileToolStripButton.Name = "moveFileToolStripButton";
             moveFileToolStripButton.Size = new System.Drawing.Size(23, 22);
             moveFileToolStripButton.Text = "Move";
@@ -97,8 +97,8 @@
             // deleteFileToolStripButton
             // 
             deleteFileToolStripButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            deleteFileToolStripButton.Image = Properties.Resources.delete_icon;
-            deleteFileToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            deleteFileToolStripButton.Image = Properties.Resources.delete_icon32;
+            deleteFileToolStripButton.ImageTransparentColor = System.Drawing.Color.Transparent;
             deleteFileToolStripButton.Name = "deleteFileToolStripButton";
             deleteFileToolStripButton.Size = new System.Drawing.Size(23, 22);
             deleteFileToolStripButton.Text = "Remove";
@@ -114,7 +114,7 @@
             // 
             closeToolStripButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
             closeToolStripButton.Image = Properties.Resources.icon_exit;
-            closeToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            closeToolStripButton.ImageTransparentColor = System.Drawing.Color.Transparent;
             closeToolStripButton.Name = "closeToolStripButton";
             closeToolStripButton.Size = new System.Drawing.Size(23, 22);
             closeToolStripButton.Text = "Close";

@@ -1506,7 +1506,7 @@ namespace SQL_Document_Builder
             Graphics g = e.Graphics;
             Rectangle bounds = new Rectangle(Point.Empty, e.Item.Size);
 
-            Color gradientBegin = MyColors.Background; // Color.FromArgb(203, 225, 252);
+            Color gradientBegin = MyColors.Background;
             Color gradientEnd = MyColors.Background;
 
             Pen BordersPencil = new Pen(MyColors.Background);
@@ -1532,36 +1532,65 @@ namespace SQL_Document_Builder
                 g.FillRectangle(b, bounds);
             }
 
-            e.Graphics.DrawRectangle(
-                BordersPencil,
-                bounds);
+            e.Graphics.DrawRectangle(BordersPencil, bounds);
 
-            g.DrawLine(
-                BordersPencil,
-                bounds.X,
-                bounds.Y,
-                bounds.Width - 1,
-                bounds.Y);
-
-            g.DrawLine(
-                BordersPencil,
-                bounds.X,
-                bounds.Y,
-                bounds.X,
-                bounds.Height - 1);
-
-            ToolStrip toolStrip = button.Owner;
+            g.DrawLine(BordersPencil, bounds.X, bounds.Y, bounds.Width - 1, bounds.Y);
+            g.DrawLine(BordersPencil, bounds.X, bounds.Y, bounds.X, bounds.Height - 1);
 
             if (!(button.Owner.GetItemAt(button.Bounds.X, button.Bounds.Bottom + 1) is ToolStripButton nextItem))
             {
-                g.DrawLine(
-                    BordersPencil,
-                    bounds.X,
-                    bounds.Height - 1,
-                    bounds.X + bounds.Width - 1,
-                    bounds.Height - 1);
+                g.DrawLine(BordersPencil, bounds.X, bounds.Height - 1, bounds.X + bounds.Width - 1, bounds.Height - 1);
             }
+
+            // Do NOT draw the image here; let OnRenderItemImage handle it.
         }
+
+        /// <summary>
+        /// Re-Colors the Icon Images to a Clear color
+        /// </summary>
+        /// <param name="e">The e.</param>
+        protected override void OnRenderItemImage(ToolStripItemImageRenderEventArgs e)
+        {
+            if (e.Item is ToolStripButton button && ColorizeIcons && MyColors != null && button.Image != null)
+            {
+                Color imageColor = e.Item.Enabled ? MyColors.TextActive : MyColors.TextInactive;
+                using Image adjustedImage = DarkMode.ChangeToColor(new Bitmap(button.Image), imageColor);
+                // Draw the image in the correct rectangle (left-aligned if image+text)
+                e.Graphics.InterpolationMode = InterpolationMode.HighQualityBilinear;
+                e.Graphics.CompositingQuality = CompositingQuality.HighQuality;
+                e.Graphics.SmoothingMode = SmoothingMode.HighQuality;
+                e.Graphics.DrawImage(adjustedImage, e.ImageRectangle);
+                return; // Suppress base drawing
+            }
+
+            // Default behavior for other cases
+            base.OnRenderItemImage(e);
+        }
+
+        //protected override void OnRenderItemImage(ToolStripItemImageRenderEventArgs e)
+        //{
+        //    if (e.Item is ToolStripStatusLabel && e.Image != null)
+        //    {
+        //        // Use TextActive for enabled, TextInactive for disabled
+        //        Color imageColor = e.Item.Enabled ? MyColors.TextActive : MyColors.TextInactive;
+        //        using (Image adjustedImage = DarkMode.ChangeToColor(e.Image, imageColor))
+        //        {
+        //            e.Graphics.InterpolationMode = InterpolationMode.HighQualityBilinear;
+        //            e.Graphics.CompositingQuality = CompositingQuality.HighQuality;
+        //            e.Graphics.SmoothingMode = SmoothingMode.HighQuality;
+        //            e.Graphics.DrawImage(adjustedImage, e.ImageRectangle);
+        //        }
+        //        return;
+        //    }
+        //    else
+        //    {
+        //        //System.Diagnostics.Debug.Print("MyRenderer: " + e.Item.GetType().FullName);
+        //    }
+
+        //    // Existing logic for other items
+        //    base.OnRenderItemImage(e);
+        //}
+
 
         /// <summary>
         /// For DropDown Buttons on a ToolBar
@@ -1762,34 +1791,6 @@ namespace SQL_Document_Builder
                     g.FillRectangle(b, bounds);
                 }
             }
-        }
-
-        /// <summary>
-        /// Re-Colors the Icon Images to a Clear color
-        /// </summary>
-        /// <param name="e">The e.</param>
-        protected override void OnRenderItemImage(ToolStripItemImageRenderEventArgs e)
-        {
-            if (e.Item is ToolStripStatusLabel && e.Image != null)
-            {
-                // Use TextActive for enabled, TextInactive for disabled
-                Color imageColor = e.Item.Enabled ? MyColors.TextActive : MyColors.TextInactive;
-                using (Image adjustedImage = DarkMode.ChangeToColor(e.Image, imageColor))
-                {
-                    e.Graphics.InterpolationMode = InterpolationMode.HighQualityBilinear;
-                    e.Graphics.CompositingQuality = CompositingQuality.HighQuality;
-                    e.Graphics.SmoothingMode = SmoothingMode.HighQuality;
-                    e.Graphics.DrawImage(adjustedImage, e.ImageRectangle);
-                }
-                return;
-            }
-            else
-            {
-                //System.Diagnostics.Debug.Print("MyRenderer: " + e.Item.GetType().FullName);
-            }
-
-            // Existing logic for other items
-            base.OnRenderItemImage(e);
         }
     }
 
