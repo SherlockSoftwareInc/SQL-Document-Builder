@@ -39,8 +39,16 @@
             closeToolStripButton = new System.Windows.Forms.ToolStripButton();
             filesDataGridView = new System.Windows.Forms.DataGridView();
             toolTip1 = new System.Windows.Forms.ToolTip(components);
+            tabControl1 = new System.Windows.Forms.TabControl();
+            tabPage1 = new System.Windows.Forms.TabPage();
+            tabPage2 = new System.Windows.Forms.TabPage();
+            logsDataGridView = new System.Windows.Forms.DataGridView();
             toolStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)filesDataGridView).BeginInit();
+            tabControl1.SuspendLayout();
+            tabPage1.SuspendLayout();
+            tabPage2.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)logsDataGridView).BeginInit();
             SuspendLayout();
             // 
             // toolStrip1
@@ -118,27 +126,79 @@
             filesDataGridView.AllowUserToDeleteRows = false;
             filesDataGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             filesDataGridView.Dock = System.Windows.Forms.DockStyle.Fill;
-            filesDataGridView.Location = new System.Drawing.Point(0, 25);
+            filesDataGridView.Location = new System.Drawing.Point(3, 3);
             filesDataGridView.Name = "filesDataGridView";
             filesDataGridView.ReadOnly = true;
-            filesDataGridView.Size = new System.Drawing.Size(800, 425);
+            filesDataGridView.Size = new System.Drawing.Size(786, 391);
             filesDataGridView.TabIndex = 1;
             filesDataGridView.CellDoubleClick += FilesDataGridView_CellDoubleClick;
+            filesDataGridView.Resize += FilesDataGridView_Resize;
+            // 
+            // tabControl1
+            // 
+            tabControl1.Controls.Add(tabPage1);
+            tabControl1.Controls.Add(tabPage2);
+            tabControl1.Dock = System.Windows.Forms.DockStyle.Fill;
+            tabControl1.Location = new System.Drawing.Point(0, 25);
+            tabControl1.Name = "tabControl1";
+            tabControl1.SelectedIndex = 0;
+            tabControl1.Size = new System.Drawing.Size(800, 425);
+            tabControl1.TabIndex = 2;
+            tabControl1.SelectedIndexChanged += TabControl1_SelectedIndexChanged;
+            // 
+            // tabPage1
+            // 
+            tabPage1.Controls.Add(filesDataGridView);
+            tabPage1.Location = new System.Drawing.Point(4, 24);
+            tabPage1.Name = "tabPage1";
+            tabPage1.Padding = new System.Windows.Forms.Padding(3);
+            tabPage1.Size = new System.Drawing.Size(792, 397);
+            tabPage1.TabIndex = 0;
+            tabPage1.Text = "My Files";
+            tabPage1.UseVisualStyleBackColor = true;
+            // 
+            // tabPage2
+            // 
+            tabPage2.Controls.Add(logsDataGridView);
+            tabPage2.Location = new System.Drawing.Point(4, 24);
+            tabPage2.Name = "tabPage2";
+            tabPage2.Padding = new System.Windows.Forms.Padding(3);
+            tabPage2.Size = new System.Drawing.Size(792, 397);
+            tabPage2.TabIndex = 1;
+            tabPage2.Text = "Logs";
+            tabPage2.UseVisualStyleBackColor = true;
+            // 
+            // logsDataGridView
+            // 
+            logsDataGridView.AllowUserToAddRows = false;
+            logsDataGridView.AllowUserToDeleteRows = false;
+            logsDataGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            logsDataGridView.Dock = System.Windows.Forms.DockStyle.Fill;
+            logsDataGridView.Location = new System.Drawing.Point(3, 3);
+            logsDataGridView.Name = "logsDataGridView";
+            logsDataGridView.ReadOnly = true;
+            logsDataGridView.Size = new System.Drawing.Size(786, 391);
+            logsDataGridView.TabIndex = 0;
+            logsDataGridView.CellDoubleClick += FilesDataGridView_CellDoubleClick;
             // 
             // RecentFilesManageForm
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             ClientSize = new System.Drawing.Size(800, 450);
-            Controls.Add(filesDataGridView);
+            Controls.Add(tabControl1);
             Controls.Add(toolStrip1);
             Name = "RecentFilesManageForm";
             StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            Text = "Manage My Files";
+            Text = "My Files";
             Load += RecentFilesManageForm_Load;
             toolStrip1.ResumeLayout(false);
             toolStrip1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)filesDataGridView).EndInit();
+            tabControl1.ResumeLayout(false);
+            tabPage1.ResumeLayout(false);
+            tabPage2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)logsDataGridView).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -155,5 +215,9 @@
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
         private System.Windows.Forms.ToolStripButton closeToolStripButton;
         private System.Windows.Forms.ToolTip toolTip1;
+        private System.Windows.Forms.TabControl tabControl1;
+        private System.Windows.Forms.TabPage tabPage1;
+        private System.Windows.Forms.TabPage tabPage2;
+        private System.Windows.Forms.DataGridView logsDataGridView;
     }
 }

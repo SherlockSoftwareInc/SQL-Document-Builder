@@ -44,39 +44,106 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void DeleteFileToolStripButton_Click(object sender, EventArgs e)
         {
-            var selectedFile = GetSelectedFile();
-
-            if (selectedFile == null)
-                return;
-
-            // Show confirmation dialog
-            var result = MessageBox.Show(
-                $"Are you sure you want to remove the file from the list:\n\n{selectedFile}?",
-                "Confirm Remove",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Warning,
-                MessageBoxDefaultButton.Button2);
-
-            if (result != DialogResult.Yes)
-                return;
-
-            try
+            // If the logs tab is selected, remove the selected log entry
+            if (tabControl1.SelectedIndex == 1)
             {
-                MostRecentUsedFiles mruFiles = new();
-                mruFiles.Load();
-                mruFiles.Remove(selectedFile);
+                if (logsDataGridView.SelectedCells.Count > 0)
+                {
+                    int selectedRowIndex = logsDataGridView.SelectedCells[0].RowIndex;
+                    if (selectedRowIndex >= 0 && selectedRowIndex < logsDataGridView.Rows.Count)
+                    {
+                        var selectedRow = logsDataGridView.Rows[selectedRowIndex];
+                        var logTimeStr = selectedRow.Cells["Log Time"].Value?.ToString() ?? string.Empty;
+                        var operationStr = selectedRow.Cells["Operation"].Value?.ToString() ?? string.Empty;
+                        var fileName = selectedRow.Cells["File Name"].Value?.ToString() ?? string.Empty;
 
-                // Load the recent files into the local variable
-                LoadMRUFiles();
+                        if (DateTime.TryParse(logTimeStr, out DateTime logTime))
+                        {
+                            // Confirm deletion
+                            var result = MessageBox.Show(
+                                $"Are you sure you want to remove this log entry?\n\n{operationStr} - {fileName} - {logTimeStr}",
+                                "Confirm Remove",
+                                MessageBoxButtons.YesNo,
+                                MessageBoxIcon.Warning,
+                                MessageBoxDefaultButton.Button2);
 
-                // Refresh the display
-                PopulateFiles();
+                            if (result != DialogResult.Yes)
+                                return;
 
-                MessageBox.Show("File removed successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            // Load all logs, remove the matching one, and rewrite the log file
+                            var logs = MyFileOperationLogs.GetAllLogs();
+                            var logToRemove = logs.FirstOrDefault(l =>
+                                l.LogTime.ToString("g") == logTimeStr &&
+                                l.LogType.ToString() == operationStr &&
+                                l.FileName == fileName);
+
+                            if (logToRemove != null)
+                            {
+                                logs.Remove(logToRemove);
+
+                                // Rewrite the log file
+                                string logFilePath = typeof(SQL_Document_Builder.MyFileOperationLogs)
+                                    .GetMethod("LogFileName", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)
+                                    ?.Invoke(null, null) as string ?? string.Empty;
+
+                                if (!string.IsNullOrEmpty(logFilePath))
+                                {
+                                    using (var sw = new System.IO.StreamWriter(logFilePath, false))
+                                    {
+                                        foreach (var log in logs)
+                                        {
+                                            string jsonString = System.Text.Json.JsonSerializer.Serialize(log);
+                                            sw.WriteLine(jsonString);
+                                        }
+                                    }
+                                }
+
+                                // Refresh logs grid
+                                PopulateLogs();
+
+                                MessageBox.Show("Log entry removed successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            }
+                        }
+                    }
+                }
             }
-            catch (Exception ex)
+            else
             {
-                MessageBox.Show($"Error removing file: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                // Default: remove file from MRU
+                var selectedFile = GetSelectedFile();
+
+                if (selectedFile == null)
+                    return;
+
+                // Show confirmation dialog
+                var fileResult = MessageBox.Show(
+                    $"Are you sure you want to remove the file from the list:\n\n{selectedFile}?",
+                    "Confirm Remove",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Warning,
+                    MessageBoxDefaultButton.Button2);
+
+                if (fileResult != DialogResult.Yes)
+                    return;
+
+                try
+                {
+                    MostRecentUsedFiles mruFiles = new();
+                    mruFiles.Load();
+                    mruFiles.Remove(selectedFile);
+
+                    // Load the recent files into the local variable
+                    LoadMRUFiles();
+
+                    // Refresh the display
+                    PopulateFiles();
+
+                    MessageBox.Show("File removed successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error removing file: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
 
@@ -101,7 +168,34 @@ namespace SQL_Document_Builder
         /// <returns>A string? .</returns>
         private string? GetSelectedFile()
         {
-            // get the file name and path from the first selected row
+            // If the second tab ("Operation Logs") is selected, get file name from logsDataGridView
+            if (tabControl1.SelectedIndex == 1)
+            {
+                if (logsDataGridView.SelectedCells.Count > 0)
+                {
+                    int selectedRowIndex = logsDataGridView.SelectedCells[0].RowIndex;
+                    if (selectedRowIndex >= 0 && selectedRowIndex < logsDataGridView.Rows.Count)
+                    {
+                        var selectedRow = logsDataGridView.Rows[selectedRowIndex];
+                        // "File Name" is the third column in the logs grid
+                        var fileName = selectedRow.Cells["File Name"].Value?.ToString() ?? string.Empty;
+
+                        // check if the file is exists in the file system
+                        if (System.IO.File.Exists(fileName))
+                        {
+                            return fileName;
+                        }
+                        else
+                        {
+                            MessageBox.Show($"The file has been removed or deleted:\n\n{fileName}", "File Not Found", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            return null;
+                        }
+                    }
+                }
+                return null;
+            }
+
+            // Default: get the file name and path from the first selected row in filesDataGridView
             if (filesDataGridView.SelectedCells.Count > 0)
             {
                 int selectedRowIndex = filesDataGridView.SelectedCells[0].RowIndex;
@@ -189,11 +283,16 @@ namespace SQL_Document_Builder
                         // Add the new path
                         mruFiles.AddFile(newFullPath);
 
+                        // add a log entry for the move operation
+                        MyFileOperationLogs.AddLog(MyFileLogItem.FileOperationTypeEnums.Move, newFullPath);
+
                         // Reload the recent files and repopulate
                         LoadMRUFiles();
 
                         // Refresh the display
                         PopulateFiles();
+
+                        PopulateLogs();
 
                         MessageBox.Show("File moved successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
@@ -213,7 +312,7 @@ namespace SQL_Document_Builder
         private void OpenToolStripButton_Click(object sender, EventArgs e)
         {
             FileToOpen = GetSelectedFile();
-            if(!string.IsNullOrEmpty(FileToOpen))
+            if (!string.IsNullOrEmpty(FileToOpen))
             {
                 // close the form
                 this.DialogResult = DialogResult.OK;
@@ -258,38 +357,7 @@ namespace SQL_Document_Builder
             DataView view = table.DefaultView;
             filesDataGridView.DataSource = view.ToTable();
 
-            // resize the columns to fit the content
-            filesDataGridView.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.AllCells);
-
-            // Calculate usable width for the second column
-            int formClientWidth = this.ClientSize.Width;
-            int dgvLeft = filesDataGridView.Left;
-            int dgvRightMargin = this.ClientSize.Width - (filesDataGridView.Left + filesDataGridView.Width);
-            int availableWidth = formClientWidth - dgvLeft - dgvRightMargin;
-
-            int firstColWidth = filesDataGridView.Columns[0].Width;
-            int lastColWidth = filesDataGridView.Columns[2].Width;
-            int lastUpdateTimeColWidth = filesDataGridView.Columns[3].Width;
-            int rowHeaderWidth = filesDataGridView.RowHeadersWidth;
-
-            // Check for visible vertical scrollbar and get its width
-            int vScrollBarWidth = 0;
-            foreach (Control ctrl in filesDataGridView.Controls)
-            {
-                if (ctrl is VScrollBar vScrollBar && vScrollBar.Visible)
-                {
-                    vScrollBarWidth = vScrollBar.Width;
-                    break;
-                }
-            }
-
-            // Subtract the width of the "Last Update Time" column as well
-            int usableWidth = availableWidth - firstColWidth - lastColWidth - lastUpdateTimeColWidth - rowHeaderWidth - vScrollBarWidth - 6;
-
-            // Set a minimum width for usability
-            usableWidth = Math.Max(50, usableWidth);
-
-            filesDataGridView.Columns[1].Width = usableWidth;
+            AdjustColumnWidths();
         }
 
         /// <summary>
@@ -307,6 +375,41 @@ namespace SQL_Document_Builder
 
             // Populate the listbox with the recent files
             PopulateFiles();
+
+            // populate the file operation logs
+            PopulateLogs();
+        }
+
+        /// <summary>
+        /// Populates the logs.
+        /// </summary>
+        private void PopulateLogs()
+        {
+            // Get all logs and sort by LogTime descending (most recent first)
+            var logs = MyFileOperationLogs.GetAllLogs()
+                .OrderByDescending(log => log.LogTime)
+                .ToList();
+
+            // Create a DataTable for the logs
+            var table = new DataTable();
+            table.Columns.Add("Log Time");
+            table.Columns.Add("Operation");
+            table.Columns.Add("File Name");
+
+            foreach (var log in logs)
+            {
+                table.Rows.Add(
+                    log.LogTime.ToString("g"),
+                    log.LogType.ToString(),
+                    log.FileName
+                );
+            }
+
+            // Bind the DataTable to the DataGridView
+            logsDataGridView.DataSource = table;
+
+            // Auto resize columns to fit content
+            logsDataGridView.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.AllCells);
         }
 
         /// <summary>
@@ -343,6 +446,72 @@ namespace SQL_Document_Builder
             /// Gets or sets the last update time of the file.
             /// </summary>
             public DateTime LastUpdateTime { get; set; }
+        }
+
+        /// <summary>
+        /// Handles the SelectedIndexChanged event of the tabControl1 control.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void TabControl1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            // If the selected tab is the second tab (index 1), disable move and remove buttons
+            bool isSecondTab = tabControl1.SelectedIndex == 1;
+            moveFileToolStripButton.Enabled = !isSecondTab;
+            //deleteFileToolStripButton.Enabled = !isSecondTab;
+        }
+
+        /// <summary>
+        /// Handles the Resize event of the FilesDataGridView control.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void FilesDataGridView_Resize(object sender, EventArgs e)
+        {
+            // Adjust the column widths based on the new size
+            AdjustColumnWidths();
+        }
+
+        /// <summary>
+        /// Adjusts the column widths.
+        /// </summary>
+        private void AdjustColumnWidths()
+        {
+            if (filesDataGridView.Columns.Count < 4)
+                return;
+
+            // resize the columns to fit the content
+            filesDataGridView.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.AllCells);
+
+            // Calculate usable width for the second column
+            int formClientWidth = this.ClientSize.Width;
+            int dgvLeft = filesDataGridView.Left;
+            int dgvRightMargin = this.ClientSize.Width - (filesDataGridView.Left + filesDataGridView.Width);
+            int availableWidth = formClientWidth - dgvLeft - dgvRightMargin;
+
+            int firstColWidth = filesDataGridView.Columns[0].Width;
+            int lastColWidth = filesDataGridView.Columns[2].Width;
+            int lastUpdateTimeColWidth = filesDataGridView.Columns[3].Width;
+            int rowHeaderWidth = filesDataGridView.RowHeadersWidth;
+
+            // Check for visible vertical scrollbar and get its width
+            int vScrollBarWidth = 0;
+            foreach (Control ctrl in filesDataGridView.Controls)
+            {
+                if (ctrl is VScrollBar vScrollBar && vScrollBar.Visible)
+                {
+                    vScrollBarWidth = vScrollBar.Width;
+                    break;
+                }
+            }
+
+            // Subtract the width of the "Last Update Time" column as well
+            int usableWidth = availableWidth - firstColWidth - lastColWidth - lastUpdateTimeColWidth - rowHeaderWidth - vScrollBarWidth - 6;
+
+            // Set a minimum width for usability
+            usableWidth = Math.Max(50, usableWidth);
+
+            filesDataGridView.Columns[1].Width = usableWidth;
         }
     }
 }

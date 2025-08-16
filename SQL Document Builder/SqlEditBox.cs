@@ -1,9 +1,10 @@
 ﻿using ScintillaNET;
 using System;
+using System.ComponentModel;
 using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
-using System.ComponentModel;
+using static SQL_Document_Builder.MyFileLogItem;
 
 namespace SQL_Document_Builder
 {
@@ -1034,6 +1035,14 @@ namespace SQL_Document_Builder
             {
                 if (FileName.Length > 0)
                 {
+                    FileOperationTypeEnums logType = GetLogType();
+
+                    // Log the file operation
+                    if(logType != FileOperationTypeEnums.None)
+                    {
+                        MyFileOperationLogs.AddLog(logType, FileName);
+                    }
+
                     System.IO.File.WriteAllTextAsync(FileName, this.Text);
                     this.SetSavePoint();
                 }
@@ -1048,6 +1057,27 @@ namespace SQL_Document_Builder
                 Common.MsgBox(ex.Message, MessageBoxIcon.Error);
             }
             return DialogResult.OK;
+        }
+
+        /// <summary>
+        /// Gets the log type.
+        /// </summary>
+        /// <returns>A FileOperationTypeEnums.</returns>
+        private FileOperationTypeEnums GetLogType()
+        {
+            // If the file does not exist, it's a create operation
+            if (!File.Exists(FileName))
+                return FileOperationTypeEnums.Create;
+
+            // Read the file content
+            string fileContent = File.ReadAllText(FileName);
+
+            // Compare with the current text in the editor
+            if (!string.Equals(fileContent, this.Text, StringComparison.Ordinal))
+                return FileOperationTypeEnums.Modify;
+
+            // No change detected
+            return FileOperationTypeEnums.None; // Or consider a different value if needed
         }
 
         /// <summary>
@@ -1085,12 +1115,23 @@ namespace SQL_Document_Builder
                     oFile.FileName = Path.GetFileName(FileName);
                 }
 
+                oFile.OverwritePrompt = true; // This is the default
+
                 result = oFile.ShowDialog();
 
                 if (result == DialogResult.OK && !string.IsNullOrEmpty(oFile.FileName))
                 {
                     FileName = oFile.FileName;
+                    FileOperationTypeEnums logType = GetLogType();
+
                     System.IO.File.WriteAllText(FileName, Text);
+
+                    // Log the file operation
+                    if (logType != FileOperationTypeEnums.None)
+                    {
+                        logType = FileOperationTypeEnums.Create;
+                    }
+                    MyFileOperationLogs.AddLog(logType, FileName);
 
                     FileNameChanged?.Invoke(this, EventArgs.Empty);
 

@@ -13,8 +13,8 @@
     <StartupObject>SQL_Document_Builder.Program</StartupObject>
     <ApplicationIcon>SQLDocBuilder.ico</ApplicationIcon>
     <PackageIcon>SQL_Doc.png</PackageIcon>
-    <AssemblyVersion>3.5.20</AssemblyVersion>
-    <FileVersion>3.5.20</FileVersion>
+    <AssemblyVersion>3.6.0</AssemblyVersion>
+    <FileVersion>3.6.0</FileVersion>
     <RepositoryUrl>https://github.com/SherlockSoftwareInc/SQL-Document-Builder</RepositoryUrl>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Title>SQL Server Script and Document Builder</Title>
