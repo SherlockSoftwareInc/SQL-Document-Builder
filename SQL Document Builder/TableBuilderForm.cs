@@ -74,18 +74,24 @@ namespace SQL_Document_Builder
         /// </summary>
         private static async Task<string> ExecuteScriptsAsync(DatabaseConnectionItem connection, string script)
         {
-            var sqlStatements = Regex.Split(script, @"\bGO\b", RegexOptions.IgnoreCase | RegexOptions.Multiline);
+            // First, remove multi-line comments that start with /* and end with */
+            // The RegexOptions.Singleline flag allows '.' to match newline characters
+            var scriptWithoutComments = Regex.Replace(script, @"/\*.*?\*/", "", RegexOptions.Singleline);
 
-            // execute each statement
+            // Then, split the script into individual SQL statements using 'GO' as a delimiter
+            var sqlStatements = Regex.Split(scriptWithoutComments, @"\bGO\b", RegexOptions.IgnoreCase | RegexOptions.Multiline);
+
+            // Execute each statement
             foreach (var sql in sqlStatements)
             {
-                var query = sql.Trim(' ', '\t', '\r', '\n'); // Trim whitespace from the start and end of the SQL statement
+                var query = sql.Trim(' ', '\t', '\r', '\n'); // Trim whitespace
 
                 if (!string.IsNullOrEmpty(query))
                 {
                     var result = await SQLDatabaseHelper.ExecuteSQLAsync(query, connection.ConnectionString);
                     if (result != string.Empty)
                     {
+                        // Return immediately if an error occurs
                         return result;
                     }
                 }
