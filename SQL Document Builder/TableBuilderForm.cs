@@ -74,9 +74,10 @@ namespace SQL_Document_Builder
         /// </summary>
         private static async Task<string> ExecuteScriptsAsync(DatabaseConnectionItem connection, string script)
         {
-            // First, remove multi-line comments that start with /* and end with */
-            // The RegexOptions.Singleline flag allows '.' to match newline characters
-            var scriptWithoutComments = Regex.Replace(script, @"/\*.*?\*/", "", RegexOptions.Singleline);
+            // First, remove multi-line comments that start with /* and end with */.
+            // The pattern ensures that even if the closing */ is missing, the content from /* to the
+            // end of the script is removed.
+            var scriptWithoutComments = Regex.Replace(script, @"/\*.*?(?:\*/|$)", "", RegexOptions.Singleline);
 
             // Then, split the script into individual SQL statements using 'GO' as a delimiter
             var sqlStatements = Regex.Split(scriptWithoutComments, @"\bGO\b", RegexOptions.IgnoreCase | RegexOptions.Multiline);
