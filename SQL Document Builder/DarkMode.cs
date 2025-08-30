@@ -1551,11 +1551,23 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         protected override void OnRenderItemImage(ToolStripItemImageRenderEventArgs e)
         {
+            // Handle ToolStripButton image recoloring
             if (e.Item is ToolStripButton button && ColorizeIcons && MyColors != null && button.Image != null)
             {
                 Color imageColor = e.Item.Enabled ? MyColors.TextActive : MyColors.TextInactive;
                 using Image adjustedImage = DarkMode.ChangeToColor(new Bitmap(button.Image), imageColor);
-                // Draw the image in the correct rectangle (left-aligned if image+text)
+                e.Graphics.InterpolationMode = InterpolationMode.HighQualityBilinear;
+                e.Graphics.CompositingQuality = CompositingQuality.HighQuality;
+                e.Graphics.SmoothingMode = SmoothingMode.HighQuality;
+                e.Graphics.DrawImage(adjustedImage, e.ImageRectangle);
+                return; // Suppress base drawing
+            }
+
+            // Handle ToolStripStatusLabel image recoloring
+            if (e.Item is ToolStripStatusLabel statusLabel && ColorizeIcons && MyColors != null && statusLabel.Image != null)
+            {
+                Color imageColor = e.Item.Enabled ? MyColors.TextActive : MyColors.TextInactive;
+                using Image adjustedImage = DarkMode.ChangeToColor(new Bitmap(statusLabel.Image), imageColor);
                 e.Graphics.InterpolationMode = InterpolationMode.HighQualityBilinear;
                 e.Graphics.CompositingQuality = CompositingQuality.HighQuality;
                 e.Graphics.SmoothingMode = SmoothingMode.HighQuality;
