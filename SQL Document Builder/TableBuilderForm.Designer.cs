@@ -403,7 +403,7 @@ namespace SQL_Document_Builder
             objectsTabControl.Location = new System.Drawing.Point(0, 0);
             objectsTabControl.Name = "objectsTabControl";
             objectsTabControl.SelectedIndex = 0;
-            objectsTabControl.Size = new System.Drawing.Size(213, 676);
+            objectsTabControl.Size = new System.Drawing.Size(213, 673);
             objectsTabControl.TabIndex = 0;
             // 
             // tabPage1
@@ -413,7 +413,7 @@ namespace SQL_Document_Builder
             tabPage1.Location = new System.Drawing.Point(4, 24);
             tabPage1.Name = "tabPage1";
             tabPage1.Padding = new Padding(3);
-            tabPage1.Size = new System.Drawing.Size(205, 648);
+            tabPage1.Size = new System.Drawing.Size(205, 645);
             tabPage1.TabIndex = 0;
             tabPage1.Text = "Objects";
             tabPage1.UseVisualStyleBackColor = true;
@@ -426,7 +426,7 @@ namespace SQL_Document_Builder
             objectsListBox.ItemHeight = 15;
             objectsListBox.Location = new System.Drawing.Point(3, 138);
             objectsListBox.Name = "objectsListBox";
-            objectsListBox.Size = new System.Drawing.Size(199, 507);
+            objectsListBox.Size = new System.Drawing.Size(199, 504);
             objectsListBox.TabIndex = 1;
             objectsListBox.SelectedIndexChanged += ObjectsListBox_SelectedIndexChanged;
             // 
@@ -1418,9 +1418,9 @@ namespace SQL_Document_Builder
             // statusStrip1
             // 
             statusStrip1.Items.AddRange(new ToolStripItem[] { progressBar, statusToolStripStatusLabe, serverToolStripStatusLabel, databaseToolStripStatusLabel });
-            statusStrip1.Location = new System.Drawing.Point(0, 725);
+            statusStrip1.Location = new System.Drawing.Point(0, 722);
             statusStrip1.Name = "statusStrip1";
-            statusStrip1.Size = new System.Drawing.Size(1267, 22);
+            statusStrip1.Size = new System.Drawing.Size(1267, 25);
             statusStrip1.TabIndex = 2;
             statusStrip1.Text = "statusStrip1";
             // 
@@ -1435,7 +1435,7 @@ namespace SQL_Document_Builder
             // statusToolStripStatusLabe
             // 
             statusToolStripStatusLabe.Name = "statusToolStripStatusLabe";
-            statusToolStripStatusLabe.Size = new System.Drawing.Size(1128, 17);
+            statusToolStripStatusLabe.Size = new System.Drawing.Size(975, 20);
             statusToolStripStatusLabe.Spring = true;
             statusToolStripStatusLabe.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
@@ -1443,7 +1443,7 @@ namespace SQL_Document_Builder
             // 
             serverToolStripStatusLabel.Image = Properties.Resources.server;
             serverToolStripStatusLabel.Name = "serverToolStripStatusLabel";
-            serverToolStripStatusLabel.Size = new System.Drawing.Size(54, 17);
+            serverToolStripStatusLabel.Size = new System.Drawing.Size(54, 20);
             serverToolStripStatusLabel.Text = "server";
             serverToolStripStatusLabel.ToolTipText = "Server name";
             // 
@@ -1451,7 +1451,7 @@ namespace SQL_Document_Builder
             // 
             databaseToolStripStatusLabel.Image = Properties.Resources.database;
             databaseToolStripStatusLabel.Name = "databaseToolStripStatusLabel";
-            databaseToolStripStatusLabel.Size = new System.Drawing.Size(70, 17);
+            databaseToolStripStatusLabel.Size = new System.Drawing.Size(70, 20);
             databaseToolStripStatusLabel.Text = "database";
             databaseToolStripStatusLabel.ToolTipText = "Database name";
             // 
@@ -1524,7 +1524,7 @@ namespace SQL_Document_Builder
             definitionPanel.Location = new System.Drawing.Point(907, 49);
             definitionPanel.Margin = new Padding(6);
             definitionPanel.Name = "definitionPanel";
-            definitionPanel.Size = new System.Drawing.Size(360, 676);
+            definitionPanel.Size = new System.Drawing.Size(360, 673);
             definitionPanel.TabIndex = 4;
             toolTip1.SetToolTip(definitionPanel, "Object description edit box");
             definitionPanel.AddIndexRequested += CreateIndexToolStripMenuItem_Click;
@@ -1541,7 +1541,7 @@ namespace SQL_Document_Builder
             defiCollapsibleSplitter.ExpandParentForm = false;
             defiCollapsibleSplitter.Location = new System.Drawing.Point(899, 49);
             defiCollapsibleSplitter.Name = "defiCollapsibleSplitter";
-            defiCollapsibleSplitter.Size = new System.Drawing.Size(8, 676);
+            defiCollapsibleSplitter.Size = new System.Drawing.Size(8, 673);
             defiCollapsibleSplitter.TabIndex = 3;
             defiCollapsibleSplitter.TabStop = false;
             defiCollapsibleSplitter.UseAnimations = true;
@@ -1567,7 +1567,7 @@ namespace SQL_Document_Builder
             splitContainer1.Panel2.Controls.Add(replacePanel);
             splitContainer1.Panel2.Controls.Add(searchPanel);
             splitContainer1.Panel2.Controls.Add(tabControl1);
-            splitContainer1.Size = new System.Drawing.Size(899, 676);
+            splitContainer1.Size = new System.Drawing.Size(899, 673);
             splitContainer1.SplitterDistance = 213;
             splitContainer1.TabIndex = 18;
             // 
@@ -1671,7 +1671,7 @@ namespace SQL_Document_Builder
             tabControl1.Name = "tabControl1";
             tabControl1.Padding = new System.Drawing.Point(12, 3);
             tabControl1.SelectedIndex = 0;
-            tabControl1.Size = new System.Drawing.Size(682, 676);
+            tabControl1.Size = new System.Drawing.Size(682, 673);
             tabControl1.TabIndex = 0;
             tabControl1.TabCloseRequested += TabControl1_TabCloseRequested;
             tabControl1.DrawItem += TabControl1_DrawItem;

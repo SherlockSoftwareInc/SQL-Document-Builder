@@ -1,4 +1,5 @@
-﻿using NPOI.SS.UserModel;
+﻿using NPOI.SS.Formula.Functions;
+using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
 using System;
 using System.Collections.Generic;
@@ -304,11 +305,6 @@ namespace SQL_Document_Builder
                             else
                                 sb.Append("NULL");
                         }
-                        else if (type == typeof(string))
-                        {
-                            var value = valueStr?.Replace("'", "''");
-                            sb.Append($"N'{value}'");
-                        }
                         else if (type == typeof(decimal) || type == typeof(double) || type == typeof(float))
                         {
                             if (decimal.TryParse(valueStr, NumberStyles.Any, CultureInfo.InvariantCulture, out var dec))
@@ -339,8 +335,16 @@ namespace SQL_Document_Builder
                         }
                         else
                         {
-                            var value = valueStr?.Replace("'", "''");
-                            sb.Append($"N'{value}'");
+                            // if valueStr is 'null', treat it as NULL
+                            if (valueStr!.Trim().Equals("null", StringComparison.OrdinalIgnoreCase))
+                            {
+                                sb.Append("NULL");
+                            }
+                            else
+                            {
+                                var value = valueStr?.Replace("'", "''");
+                                sb.Append($"N'{value}'");
+                            }
                         }
 
                         if (i < Data.Columns.Count - 1)
