@@ -292,15 +292,19 @@ namespace SQL_Document_Builder
             }
         }
 
-        /// Handles the text changed event of the SQL text box:
+        /// <summary>
+        /// Handles the text changed event for the editor.
         /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        internal void OnTextChanged(object? sender, EventArgs e)
+        /// <param name="sender">The control that raised the event.</param>
+        /// <param name="e">The event arguments.</param>
+        override protected void OnTextChanged(EventArgs e)
         {
-            //Changed = true;
-            //statusToolStripStatusLabe.Text = string.Empty;
+            base.OnTextChanged(e);
 
+            // Notify subscribers that the query text has changed
+            QueryTextChanged?.Invoke(this, EventArgs.Empty);
+
+            // Update the line number margin width
             SetColumnMargins();
         }
 

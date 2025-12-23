@@ -3119,8 +3119,8 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void OnTextChanged(object? sender, EventArgs e)
         {
-            if (CurrentEditBox == null || sender == null) return;
-            CurrentEditBox.OnTextChanged(sender, e);
+            //if (CurrentEditBox == null || sender == null) return;
+            //CurrentEditBox.OnTextChanged(sender, e);
             statusToolStripStatusLabe.Text = string.Empty;
         }
 
