@@ -1,5 +1,4 @@
-﻿
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Threading;
@@ -8,7 +7,8 @@ using System.Windows.Forms;
 namespace SQL_Document_Builder
 {
     /// <summary>
-    /// The new sql server connection dialog.
+    /// Represents a dialog window for creating a new SQL Server connection.
+    /// Allows the user to specify server, authentication, database, and connection options.
     /// </summary>
     public partial class NewSQLServerConnectionDialog : Form
     {
@@ -16,6 +16,7 @@ namespace SQL_Document_Builder
 
         /// <summary>
         /// Initializes a new instance of the <see cref="NewSQLServerConnectionDialog"/> class.
+        /// Sets up the UI and applies dark mode if enabled in settings.
         /// </summary>
         public NewSQLServerConnectionDialog()
         {
@@ -24,67 +25,71 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Authentication type
+        /// Gets or sets the authentication method for the SQL Server connection.
         /// </summary>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public AuthenticationMethod Authentication { get; set; }
 
         /// <summary>
-        /// Connection name
+        /// Gets or sets the display name for the connection.
         /// </summary>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string? ConnectionName { get; set; }
 
         /// <summary>
-        /// Database connection string
+        /// Gets or sets the constructed database connection string.
         /// </summary>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string? ConnectionString { get; set; }
 
         /// <summary>
-        /// Database name
+        /// Gets or sets the name of the database to connect to.
         /// </summary>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string? DatabaseName { get; set; }
 
         /// <summary>
-        ///
+        /// Gets or sets the password for authentication, if required.
         /// </summary>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string? Password { get; set; }
 
         /// <summary>
-        ///
+        /// Gets or sets a value indicating whether the password should be remembered.
         /// </summary>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool RememberPassword { get; set; }
 
         /// <summary>
-        ///
+        /// Gets or sets the description of the database.
+        /// </summary>
+        public string DatabaseDescription { get; set; }
+
+        /// <summary>
+        /// Gets or sets the SQL Server instance name or address.
         /// </summary>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string? ServerName { get; set; }
 
         /// <summary>
-        ///
+        /// Gets or sets the user name for authentication, if required.
         /// </summary>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string? UserName { get; set; }
 
         /// <summary>
-        /// Handle authentication type selected index change event:
+        /// Handles the event when the authentication type selection changes.
+        /// Enables or disables user/password fields based on the selected authentication method.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
         private void AuthenticationComboBox_SelectedIndexChanged(object sender, EventArgs e)
         {
             var selectedItem = authenticationComboBox.SelectedItem as KeyValuePair<string, AuthenticationMethod>?;
 
-            if (selectedItem.HasValue) // Fix for CS8629: Ensure the nullable value type is not null
+            if (selectedItem.HasValue)
             {
-                var authenticationMethod = selectedItem.Value.Value; // Fix for CS0029: Access the 'Value' property of the KeyValuePair to get the AuthenticationMethod
+                var authenticationMethod = selectedItem.Value.Value;
 
-                switch (authenticationMethod) // Fix for CS0077: Directly use the value without 'as' since it's a non-nullable value type
+                switch (authenticationMethod)
                 {
                     case AuthenticationMethod.NotSpecified:
                         break;
@@ -120,9 +125,9 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Gets the authentication.
+        /// Gets the currently selected authentication method from the combo box.
         /// </summary>
-        /// <returns>A AuthenticationMethod.</returns>
+        /// <returns>The selected <see cref="AuthenticationMethod"/>.</returns>
         private AuthenticationMethod GetAuthentication()
         {
             var selectedItem = authenticationComboBox.SelectedItem as KeyValuePair<string, AuthenticationMethod>?;
@@ -130,9 +135,9 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Build connection string:
+        /// Builds the SQL Server connection string based on the current form values.
         /// </summary>
-        /// <returns></returns>
+        /// <returns><c>true</c> if the connection string was built successfully; otherwise, <c>false</c>.</returns>
         private bool BuildConnectionString()
         {
             var result = false;
@@ -146,7 +151,7 @@ namespace SQL_Document_Builder
                     InitialCatalog = dbName,
                     Encrypt = encrptyCheckBox.Checked,
                     TrustServerCertificate = trustCertificateCheckBox.Checked,
-                    Authentication =(Microsoft.Data.SqlClient.SqlAuthenticationMethod) GetAuthentication()
+                    Authentication = (Microsoft.Data.SqlClient.SqlAuthenticationMethod)GetAuthentication()
                 };
 
                 if (!string.IsNullOrEmpty(userNameTextBox.Text.Trim()))
@@ -161,10 +166,9 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Handle cancel button click event:
+        /// Handles the Cancel button click event.
+        /// Closes the dialog and clears the connection string.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
         private void CancelButton_Click(object sender, EventArgs e)
         {
             ConnectionString = string.Empty;
@@ -173,10 +177,9 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Handle database name selected index change event
+        /// Handles the event when the selected database changes.
+        /// Rebuilds the connection string and updates the OK button state.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
         private void DatabaseComboBox_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (databaseComboBox.SelectedIndex >= 0)
@@ -187,9 +190,8 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Enable OK button:
-        /// connection name, server name, database name is required.
-        /// If use sql server login, user name is required
+        /// Enables or disables the OK button based on required field validation.
+        /// Requires server name and database name; for SQL authentication, also requires user name and password.
         /// </summary>
         private void EnableOKButton()
         {
@@ -204,10 +206,9 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Handle form load event:
+        /// Handles the form load event.
+        /// Initializes authentication options, positions labels, and populates fields with existing values.
         /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
         private void NewSQLServerConnectionDialog_Load(object sender, EventArgs e)
         {
             // Creating a dictionary mapping authentication method names to AuthenticationMethod values
@@ -223,9 +224,8 @@ namespace SQL_Document_Builder
 
             // Adding authentication methods to the combo box using data binding
             authenticationComboBox.DataSource = new BindingSource(authMethods, null);
-            authenticationComboBox.DisplayMember = "Key"; // Display the name of the authentication method
-            authenticationComboBox.ValueMember = "Value"; // Use the AuthenticationMethod as the value
-            //authenticationComboBox.SelectedIndex = 0;
+            authenticationComboBox.DisplayMember = "Key";
+            authenticationComboBox.ValueMember = "Value";
 
             int x = serverNameTextBox.Left - 4;
             serverNameLabel.Left = x - serverNameLabel.Width;
@@ -240,6 +240,7 @@ namespace SQL_Document_Builder
             databaseComboBox.Text = DatabaseName;
             userNameTextBox.Text = UserName;
             authenticationComboBox.SelectedValue = Authentication;
+            dbDescTextBox.Text = DatabaseDescription;
             EnableOKButton();
             if (Authentication == AuthenticationMethod.SqlPassword || Authentication == AuthenticationMethod.ActiveDirectoryPassword)
             {
@@ -248,10 +249,9 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Handle OK button click event:
+        /// Handles the OK button click event.
+        /// Validates and saves the connection details, then closes the dialog.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
         private void OkButton_Click(object sender, EventArgs e)
         {
             if (BuildConnectionString())
@@ -263,6 +263,7 @@ namespace SQL_Document_Builder
                 Authentication = GetAuthentication();
                 Password = passwordTextBox.Text;
                 RememberPassword = rememberPasswordCheckBox.Checked;
+                DatabaseDescription = dbDescTextBox.Text.Trim();
                 DialogResult = DialogResult.OK;
                 Close();
             }
@@ -273,10 +274,9 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Handle password text box text changed event:
+        /// Handles changes to settings-related fields (e.g., user name, password, checkboxes).
+        /// Rebuilds the connection string and updates the OK button state.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
         private void OnSettingsChanged(object sender, EventArgs e)
         {
             BuildConnectionString();
@@ -284,10 +284,9 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Handle server name text box text changed event:
+        /// Handles changes to the server name text box.
+        /// Resets the database selection if the server name changes.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
         private void ServerNameTextBox_TextChanged(object sender, EventArgs e)
         {
             string server = serverNameTextBox.Text;
@@ -303,12 +302,9 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Handle server name validated event:
-        ///     When server name changed, get the databases in the server
-        ///     and list them in the database name combo box
+        /// Handles the server name validated event.
+        /// When the server name changes, retrieves the list of databases from the server and populates the database combo box.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
         private async void ServerNameTextBox_Validated(object sender, EventArgs e)
         {
             string server = serverNameTextBox.Text.Trim();

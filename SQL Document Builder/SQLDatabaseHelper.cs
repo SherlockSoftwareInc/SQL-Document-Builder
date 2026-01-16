@@ -1330,6 +1330,36 @@ ORDER BY [Schema], ObjectName";
             return await GetDataTableAsync(sql, connectionString);
         }
 
+        /// <summary>
+        /// Gets the referenced objects async.
+        /// </summary>
+        /// <param name="objectName">The object name.</param>
+        /// <param name="connectionString">The connection string.</param>
+        /// <returns>A Task.</returns>
+        internal static async Task<DataTable?> GetForeignTablesAsync(ObjectName objectName, string connectionString)
+        {
+            if (objectName == null || string.IsNullOrEmpty(objectName.Schema) || string.IsNullOrEmpty(objectName.Name) || string.IsNullOrEmpty(connectionString))
+                return null;
+
+            string sql = $@"
+SELECT 
+    c1.name AS FromColumn,
+    OBJECT_SCHEMA_NAME(fk.referenced_object_id) AS ToSchema,
+    OBJECT_NAME(fk.referenced_object_id) AS ToTable,
+    c2.name AS ToColumn
+FROM sys.foreign_keys fk
+INNER JOIN sys.foreign_key_columns fkc 
+    ON fk.object_id = fkc.constraint_object_id
+INNER JOIN sys.columns c1 
+    ON fkc.parent_object_id = c1.object_id AND fkc.parent_column_id = c1.column_id
+INNER JOIN sys.columns c2 
+    ON fkc.referenced_object_id = c2.object_id AND fkc.referenced_column_id = c2.column_id
+WHERE OBJECT_SCHEMA_NAME(fk.parent_object_id) = '{objectName.Schema}'
+AND OBJECT_NAME(fk.parent_object_id) = '{objectName.Name}'";
+
+            return await GetDataTableAsync(sql, connectionString);
+        }
+
         #endregion Miscellaneous Methods
 
         /*

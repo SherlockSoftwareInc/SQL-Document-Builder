@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using TextBox = System.Windows.Forms.TextBox;
@@ -8,7 +9,10 @@ using TextBox = System.Windows.Forms.TextBox;
 namespace SQL_Document_Builder
 {
     /// <summary>
-    /// The column def view.
+    /// Provides a user control for viewing and editing SQL database object definitions,
+    /// including tables, views, stored procedures, functions, triggers, and synonyms.
+    /// Supports editing descriptions, generating scripts, and integrating with AI-based
+    /// description assistants.
     /// </summary>
     public partial class ColumnDefView : UserControl
     {
@@ -18,6 +22,8 @@ namespace SQL_Document_Builder
         private DBObject _dbObject = new();
 
         private bool _init = false;
+        private bool _isChanged = false;
+        private TableContext _tableContext = new();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ColumnDefView"/> class.
@@ -56,16 +62,43 @@ namespace SQL_Document_Builder
             definitionTextBox.DocumentType = SqlEditBox.DocumentTypeEnums.Sql;
         }
 
+        /// <summary>
+        /// Occurs when the user requests to add an index.
+        /// </summary>
         public event EventHandler? AddIndexRequested;
 
+        /// <summary>
+        /// Occurs when the user requests to add a primary key.
+        /// </summary>
         public event EventHandler? AddPrimaryKeyRequested;
 
+        /// <summary>
+        /// Occurs when AI processing is completed.
+        /// </summary>
+        public event EventHandler? AIProcessingCompleted;
+
+        /// <summary>
+        /// Occurs when AI processing begins.
+        /// </summary>
+        /// <remarks>
+        /// Subscribe to this event to be notified when an AI operation starts. This event is
+        /// typically raised before any processing or computation is performed. Event handlers can use this notification
+        /// to update UI elements, log activity, or perform other preparatory actions.
+        /// </remarks>
+        public event EventHandler? AIProcessingStarted;
+
+        /// <summary>
+        /// Occurs when the selected column changes.
+        /// </summary>
         public event EventHandler? SelectedColumnChanged;
 
+        /// <summary>
+        /// Occurs when the table description is selected.
+        /// </summary>
         public event EventHandler? TableDescSelected;
 
         /// <summary>
-        /// Gets or sets database connection
+        /// Gets or sets the database connection.
         /// </summary>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public DatabaseConnectionItem? Connection { get; set; }
@@ -73,27 +106,29 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Gets or sets the object name.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public ObjectName? ObjectName { get; private set; }
 
         /// <summary>
-        /// Gets object schema
+        /// Gets the schema of the current database object.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string? Schema => _dbObject?.Schema;
 
         /// <summary>
-        /// Get selected column name
+        /// Gets the selected column name.
         /// </summary>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string? SelectedColumn { get; private set; }
 
         /// <summary>
-        /// Gets or sets the selected parameter.
+        /// Gets or sets the selected parameter name.
         /// </summary>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string? SelectedParameter { get; set; }
 
         /// <summary>
-        /// Gets or sets table description
+        /// Gets or sets the table description.
         /// </summary>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string TableDescription
@@ -103,22 +138,22 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Gets table name
+        /// Gets the full table name, including schema.
         /// </summary>
         public string? TableFullName => _dbObject?.FullName;
 
         /// <summary>
-        /// Gets table name
+        /// Gets the table name.
         /// </summary>
         public string? TableName => _dbObject?.Name;
 
         /// <summary>
-        /// Gets object type
+        /// Gets the object type of the current database object.
         /// </summary>
         public ObjectName.ObjectTypeEnums? TableType => _dbObject?.ObjectType;
 
         /// <summary>
-        /// Clears this instance.
+        /// Clears the current view, resetting all UI elements and internal state.
         /// </summary>
         public void Clear()
         {
@@ -159,13 +194,14 @@ namespace SQL_Document_Builder
                 objectPropertyGrid.SelectedObject = null;
             }
             _init = false;
+            _isChanged = false;
         }
 
         /// <summary>
-        /// Columns the description.
+        /// Gets the description for a specified column.
         /// </summary>
         /// <param name="columnName">The column name.</param>
-        /// <returns>A string.</returns>
+        /// <returns>The column description, or an empty string if not found.</returns>
         public string ColumnDescription(string columnName)
         {
             for (int i = 0; i < _dbObject.Columns.Count; i++)
@@ -177,7 +213,7 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Copy the selected text to the clipboard.
+        /// Copies the selected text or value from the currently focused control to the clipboard.
         /// </summary>
         public void Copy()
         {
@@ -241,9 +277,9 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Generate the script to create an index for the selected column.
+        /// Generates a SQL script to create an index for the selected column.
         /// </summary>
-        /// <returns>A string.</returns>
+        /// <returns>The SQL script as a string, or an empty string if no column is selected.</returns>
         public string CreateIndexScript()
         {
             // get the selected column name from the data grid view
@@ -270,7 +306,7 @@ GO
         }
 
         /// <summary>
-        /// Cuts the selected text to the clipboard.
+        /// Cuts the selected text or value from the currently focused control to the clipboard.
         /// </summary>
         public void Cut()
         {
@@ -295,15 +331,25 @@ GO
         }
 
         /// <summary>
-        /// Open the database object schema
+        /// Opens the specified database object asynchronously and populates the view.
         /// </summary>
-        /// <param name="objectName">The object name.</param>
+        /// <param name="objectName">The object name to open.</param>
+        /// <param name="connection">The database connection to use.</param>
         public async Task OpenAsync(ObjectName? objectName, DatabaseConnectionItem? connection)
         {
             // save the description of the current object if modified
-            if (tableDescTextBox.Modified && _dbObject.ObjectType != ObjectName.ObjectTypeEnums.None)
+            if (_isChanged && _dbObject.ObjectType != ObjectName.ObjectTypeEnums.None)
             {
-                await _dbObject.UpdateObjectDescAsync(tableDescTextBox.Text);
+                var result = MessageBox.Show(
+                    "You have unsaved changes. Do you want to save them before opening a new object?",
+                    "Confirm Save",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Question);
+
+                if (result == DialogResult.Yes)
+                {
+                    await Save();
+                }
             }
 
             Clear();
@@ -336,6 +382,7 @@ GO
             parameterGridView.Visible = false;
 
             openButton.Visible = false;
+            aiButton.Visible = false;
 
             if (objectName == null)
             {
@@ -348,9 +395,16 @@ GO
                 {
                     return;
                 }
+
+                // Populate _tableContext with the schema (columns) after loading the DBObject
+                _tableContext = new TableContext(_dbObject.Columns.ToList());
             }
 
+            _tableContext.TableSchema = _dbObject.Schema ?? "";
+            _tableContext.TableName = _dbObject.Name ?? "";
+
             TableDescription = _dbObject.Description;
+            _tableContext.TableDescription = _dbObject.Description;
 
             definitionTextBox.ReadOnly = false;
             definitionTextBox.Text = _dbObject.Definition;
@@ -359,7 +413,7 @@ GO
             // show column definition is object type is table or view
             if (_dbObject.ObjectType == ObjectName.ObjectTypeEnums.Table || _dbObject.ObjectType == ObjectName.ObjectTypeEnums.View)
             {
-                columnDefDataGridView.DataSource = _dbObject.Columns;
+                columnDefDataGridView.DataSource = _tableContext.Columns;
                 columnDefDataGridView.Visible = true;
 
                 columnDefDataGridView.AutoResizeColumns();
@@ -369,6 +423,7 @@ GO
                     ChangeColumnRowSelection();
                 }
                 openButton.Visible = true;
+                aiButton.Visible = true;
 
                 // change the tab page text to "Columns"
                 tabControl1.TabPages[0].Text = "Columns";
@@ -408,9 +463,6 @@ GO
                 // change the tab page text to "Synonym"
                 tabControl1.TabPages[0].Text = "Synonym";
             }
-
-            //tableDescTextBox.Visible = true;
-            tableDescTextBox.Modified = false;
 
             descriptionLabel.Text = _dbObject.ObjectType switch
             {
@@ -470,10 +522,12 @@ GO
                 }
                 referencingDataGridView.Visible = true;
             }
+
+            _isChanged = false;
         }
 
         /// <summary>
-        /// Pastes the text from the clipboard into the active control.
+        /// Pastes the clipboard text into the currently focused control.
         /// </summary>
         public void Paste()
         {
@@ -499,9 +553,9 @@ GO
         }
 
         /// <summary>
-        /// generate the script for create the primary key
+        /// Generates a SQL script to create a primary key on the first column.
         /// </summary>
-        /// <returns>A string.</returns>
+        /// <returns>The SQL script as a string, or an empty string if no columns exist.</returns>
         public string PrimaryKeyScript()
         {
             string sql = "";
@@ -531,7 +585,34 @@ GO
         }
 
         /// <summary>
-        /// Selects all text in the active control.
+        /// Saves the table and column descriptions to the database if there are changes.
+        /// </summary>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        public async Task Save()
+        {
+            if (_isChanged || _dbObject.ObjectType != ObjectName.ObjectTypeEnums.None)
+            {
+                // save the table description
+                await _dbObject.UpdateObjectDescAsync(tableDescTextBox.Text);
+
+                // save description for each column
+                if (_dbObject.ObjectType == ObjectName.ObjectTypeEnums.Table || _dbObject.ObjectType == ObjectName.ObjectTypeEnums.View)
+                {
+                    foreach (var column in _tableContext.Columns)
+                    {
+                        // Only update if the description is not null (avoid unnecessary DB calls)
+                        if (!string.IsNullOrEmpty(column.ColumnName))
+                        {
+                            await _dbObject.UpdateLevel2DescriptionAsync(column.ColumnName, column.Description!, _dbObject.ObjectType);
+                        }
+                    }
+                }
+            }
+            _isChanged = false;
+        }
+
+        /// <summary>
+        /// Selects all text or cells in the currently focused control.
         /// </summary>
         public void SelectAll()
         {
@@ -551,23 +632,35 @@ GO
         }
 
         /// <summary>
-        /// Updates the column desc.
+        /// Updates the description for a specified column asynchronously.
         /// </summary>
         /// <param name="columnName">The column name.</param>
-        /// <param name="description">The description.</param>
+        /// <param name="description">The new description.</param>
         public async Task UpdateColumnDescAsync(string columnName, string description)
         {
             await _dbObject.UpdateLevel2DescriptionAsync(columnName, description, _dbObject.ObjectType);
         }
 
         /// <summary>
-        /// Updates the table description.
+        /// Updates the table description asynchronously.
         /// </summary>
-        /// <param name="description">The description.</param>
+        /// <param name="description">The new table description.</param>
         public async Task UpdateTableDescriptionAsync(string description)
         {
             await _dbObject.UpdateObjectDescAsync(description);
             TableDescription = description;
+        }
+
+        /// <summary>
+        /// Checks if the AI settings are ready.
+        /// </summary>
+        /// <returns><c>true</c> if AI settings are ready; otherwise, <c>false</c>.</returns>
+        private static bool AISettingsReady()
+        {
+            // check if the AI settings are ready
+            return !string.IsNullOrEmpty(Properties.Settings.Default.AIApiKey) &&
+                !string.IsNullOrEmpty(Properties.Settings.Default.AIEndpoint)
+                && !string.IsNullOrEmpty(Properties.Settings.Default.AIModel);
         }
 
         /// <summary>
@@ -595,9 +688,10 @@ GO
 
         /// <summary>
         /// Handles the add description tool strip menu item click event.
+        /// Appends a table dependency script to the table description if not already present.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private async void AddDescriptionToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (tableDescTextBox.Text.Contains("This table,"))
@@ -619,9 +713,10 @@ GO
 
         /// <summary>
         /// Handles the add index tool strip menu item click event.
+        /// Raises the <see cref="AddIndexRequested"/> event.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void AddIndexToolStripMenuItem_Click(object sender, EventArgs e)
         {
             AddIndexRequested?.Invoke(this, EventArgs.Empty);
@@ -629,16 +724,81 @@ GO
 
         /// <summary>
         /// Handles the add primary key tool strip menu item click event.
+        /// Raises the <see cref="AddPrimaryKeyRequested"/> event.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void AddPrimaryKeyToolStripMenuItem_Click(object sender, EventArgs e)
         {
             AddPrimaryKeyRequested?.Invoke(this, EventArgs.Empty);
         }
 
         /// <summary>
-        /// Change row selection.
+        /// Handles the AI button click event.
+        /// Uses the AI description assistant to generate table and column descriptions.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The event arguments.</param>
+        private async void AiButton_Click(object sender, EventArgs e)
+        {
+            // open AI settings dialog if not ready
+            if (!AISettingsReady())
+            {
+                using var dlg = new SettingsForm();
+                dlg.ShowDialog();
+            }
+
+            if (AISettingsReady())
+            {
+                // raise an event to indicate AI processing has started
+                AIProcessingStarted?.Invoke(this, EventArgs.Empty);
+
+                var referenceContext = await GetReferenceContext();
+
+                // call AIHelper to generate table and column descriptions
+                var helper = new AIHelper();
+                await helper.GenerateTableAndColumnDescriptionsAsync(_tableContext, referenceContext, Connection?.DatabaseDescription);
+
+                // checks if the table object is still the same
+                if (_dbObject.ObjectName == null ||
+                    _dbObject.ObjectName.Name != _tableContext.TableName ||
+                    _dbObject.ObjectName.Schema != _tableContext.TableSchema)
+                {
+                    // the object has changed, do not update the UI
+                    return;
+                }
+
+                // update the table description text box
+                tableDescTextBox.Text = _tableContext.TableDescription;
+
+                // update the column descriptions in the data grid view
+                foreach (DataGridViewRow row in columnDefDataGridView.Rows)
+                {
+                    string columnName = (string)row.Cells["ColumnName"].Value;
+                    var column = _tableContext.Columns.FirstOrDefault(c => c.ColumnName == columnName);
+                    if (column != null)
+                    {
+                        row.Cells["Description"].Value = column.Description;
+                    }
+                }
+
+                // refresh the data grid view
+                columnDefDataGridView.Refresh();
+
+                // resize the columns
+                columnDefDataGridView.AutoResizeColumns();
+
+                _isChanged = true;
+            }
+
+            // raise an event to indicate AI processing has ended
+            AIProcessingCompleted?.Invoke(this, EventArgs.Empty);
+
+            Cursor = Cursors.Default;
+        }
+
+        /// <summary>
+        /// Changes the selected column row and raises the <see cref="SelectedColumnChanged"/> event if changed.
         /// </summary>
         private void ChangeColumnRowSelection()
         {
@@ -655,7 +815,7 @@ GO
         }
 
         /// <summary>
-        /// Changes the parameter row selection.
+        /// Changes the selected parameter row and updates the <see cref="SelectedParameter"/>.
         /// </summary>
         private void ChangeParameterRowSelection()
         {
@@ -672,21 +832,23 @@ GO
         }
 
         /// <summary>
-        /// Columns the def data grid view cell click.
+        /// Handles the column definition DataGridView cell click event.
+        /// Updates the selected column.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The E.</param>
+        /// <param name="e">The event arguments.</param>
         private void ColumnDefDataGridView_CellClick(object sender, DataGridViewCellEventArgs e)
         {
             ChangeColumnRowSelection();
         }
 
         /// <summary>
-        /// Columns the def data grid view cell validated.
+        /// Handles the column definition DataGridView cell validated event.
+        /// Updates the column description in the context.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The E.</param>
-        private async void ColumnDefDataGridView_CellValidated(object sender, DataGridViewCellEventArgs e)
+        /// <param name="e">The event arguments.</param>
+        private void ColumnDefDataGridView_CellValidated(object sender, DataGridViewCellEventArgs e)
         {
             if (_init) return; // prevent recursive calls during initialization
 
@@ -695,15 +857,24 @@ GO
             {
                 string columnName = (string)columnDefDataGridView.Rows[rowIndex].Cells["ColumnName"].Value;
                 string columnDesc = (string)columnDefDataGridView.Rows[rowIndex].Cells["Description"].Value;
-                await UpdateColumnDescAsync(columnName, columnDesc);
+
+                // find the column in the _tableContext and update its description
+                var column = _tableContext.Columns.FirstOrDefault(c => c.ColumnName == columnName);
+                if (column != null)
+                {
+                    column.Description = columnDesc;
+                }
+
+                _isChanged = true;
             }
         }
 
         /// <summary>
         /// Handles the column value frequency tool strip menu item click event.
+        /// Opens a dialog showing value frequency for the selected column.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void ColumnValueFrequencyToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (Connection == null)
@@ -733,7 +904,7 @@ GO
                     TableName = $"[{Schema}].[{TableName}]",
                     EnableValueFrequency = true,
                     DatabaseIndex = 0,
-                    ConnectionString = Connection.ConnectionString
+                    ConnectionString = Connection.ConnectionString!
                 };
                 dlg.ShowDialog();
             }
@@ -741,18 +912,49 @@ GO
 
         /// <summary>
         /// Handles the copy tool strip menu item click event.
+        /// Copies the selected text from the table description textbox.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void CopyToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Clipboard.SetDataObject(tableDescTextBox.SelectedText);
         }
 
         /// <summary>
-        /// Gets the table dependency script.
+        /// Gets the reference context as a JSON string for AI processing.
         /// </summary>
-        /// <returns>A string.</returns>
+        /// <returns>A task that returns the reference context as a JSON string.</returns>
+        private async Task<string> GetReferenceContext()
+        {
+            var dt = await _dbObject.GetForeignTablesAsync(Connection!);
+
+            if (dt == null)
+            {
+                return "";
+            }
+
+            // conver the datatable to a json string
+            try
+            {
+                var options = new JsonSerializerOptions
+                {
+                    WriteIndented = true
+                };
+                string jsonString = JsonSerializer.Serialize(dt, options);
+                return jsonString;
+            }
+            catch (Exception)
+            {
+            }
+
+            return "";
+        }
+
+        /// <summary>
+        /// Gets the table dependency script asynchronously.
+        /// </summary>
+        /// <returns>A string describing table dependencies, or an empty string if none.</returns>
         private async Task<string> GetTableDependencyScriptAsync()
         {
             var viewList = await DBObject.GetObjectsUsingTableAsync(_dbObject.ObjectName, Connection);
@@ -769,109 +971,11 @@ GO
         }
 
         /// <summary>
-        /// Handles the open tool strip menu item click event.
+        /// Handles the open object tool strip menu item click event.
+        /// Opens the selected referenced or referencing object.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void OpenToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (Connection == null || string.IsNullOrEmpty(Connection.ConnectionString) || string.IsNullOrEmpty(Schema) || string.IsNullOrEmpty(TableName))
-            {
-                return;
-            }
-
-            var sql = $@"SELECT * FROM [{Schema}].[{TableName}]";
-            using var dlg = new DataViewForm()
-            {
-                SQL = sql,
-                MultipleValue = false,
-                Text = $"{TableName}",
-                TableName = $"[{Schema}].[{TableName}]",
-                EnableValueFrequency = true,
-                DatabaseIndex = 0,
-                ConnectionString = Connection.ConnectionString
-            };
-            dlg.ShowDialog();
-        }
-
-        /// <summary>
-        /// Parameters the grid view_ cell click.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void ParameterGridView_CellClick(object sender, DataGridViewCellEventArgs e)
-        {
-            ChangeParameterRowSelection();
-        }
-
-        /// <summary>
-        /// Handles the parameter grid view cell click event.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private async void ParameterGridView_CellValidated(object sender, DataGridViewCellEventArgs e)
-        {
-            int rowIndex = e.RowIndex;
-            if (rowIndex >= 0)
-            {
-                string name = (string)parameterGridView.Rows[rowIndex].Cells["Name"].Value;
-                string parameterDesc = (string)parameterGridView.Rows[rowIndex].Cells["Description"].Value;
-                await UpdateParameterDescAsync(name, parameterDesc);
-            }
-        }
-
-        /// <summary>
-        /// Handles the paste tool strip menu item click event.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private async void PasteToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            tableDescTextBox.Paste();
-            await _dbObject.UpdateObjectDescAsync(tableDescTextBox.Text);
-        }
-
-        /// <summary>
-        /// Handles the save table description button click event.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private async void SaveTableDescButton_Click(object sender, EventArgs e)
-        {
-            if (tableDescTextBox.Modified || _dbObject.ObjectType != ObjectName.ObjectTypeEnums.None)
-            {
-                await _dbObject.UpdateObjectDescAsync(tableDescTextBox.Text);
-                tableDescTextBox.Modified = false;
-            }
-        }
-
-        /// <summary>
-        /// Table the label click.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The E.</param>
-        private void TableLabel_Click(object sender, EventArgs e)
-        {
-            TableDescSelected?.Invoke(this, EventArgs.Empty);
-        }
-
-        /// <summary>
-        /// Updates the parameter desc async.
-        /// </summary>
-        /// <param name="name">The name.</param>
-        /// <param name="parameterDesc">The parameter desc.</param>
-        /// <param name="objectType">The object type.</param>
-        /// <returns>A Task.</returns>
-        private async Task UpdateParameterDescAsync(string name, string parameterDesc)
-        {
-            await _dbObject.UpdateLevel2DescriptionAsync(name, parameterDesc, _dbObject.ObjectType);
-        }
-
-        /// <summary>
-        /// opens the object tool strip menu item_ click.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private async void OpenObjectToolStripMenuItem_Click(object sender, EventArgs e)
         {
             string schema = string.Empty;
@@ -899,7 +1003,7 @@ GO
                 objectTypeStr = (string)selectedRow.Cells["ObjectType"].Value;
             }
 
-            if(rowIndex == -1 || string.IsNullOrEmpty(schema) || string.IsNullOrEmpty(objectName) || string.IsNullOrEmpty(objectTypeStr))
+            if (rowIndex == -1 || string.IsNullOrEmpty(schema) || string.IsNullOrEmpty(objectName) || string.IsNullOrEmpty(objectTypeStr))
             {
                 return;
             }
@@ -908,6 +1012,115 @@ GO
             ObjectName.ObjectTypeEnums objectType = ObjectName.ConvertObjectType(objectTypeStr);
 
             await OpenAsync(new ObjectName(objectType, schema, objectName), Connection);
+        }
+
+        /// <summary>
+        /// Handles the open tool strip menu item click event.
+        /// Opens a data view dialog for the current table.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The event arguments.</param>
+        private void OpenToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (Connection == null || string.IsNullOrEmpty(Connection.ConnectionString) || string.IsNullOrEmpty(Schema) || string.IsNullOrEmpty(TableName))
+            {
+                return;
+            }
+
+            var sql = $@"SELECT * FROM [{Schema}].[{TableName}]";
+            using var dlg = new DataViewForm()
+            {
+                SQL = sql,
+                MultipleValue = false,
+                Text = $"{TableName}",
+                TableName = $"[{Schema}].[{TableName}]",
+                EnableValueFrequency = true,
+                DatabaseIndex = 0,
+                ConnectionString = Connection.ConnectionString
+            };
+            dlg.ShowDialog();
+        }
+
+        /// <summary>
+        /// Handles the parameter grid view cell click event.
+        /// Updates the selected parameter.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The event arguments.</param>
+        private void ParameterGridView_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            ChangeParameterRowSelection();
+        }
+
+        /// <summary>
+        /// Handles the parameter grid view cell validated event.
+        /// Updates the parameter description asynchronously.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The event arguments.</param>
+        private async void ParameterGridView_CellValidated(object sender, DataGridViewCellEventArgs e)
+        {
+            int rowIndex = e.RowIndex;
+            if (rowIndex >= 0)
+            {
+                string name = (string)parameterGridView.Rows[rowIndex].Cells["Name"].Value;
+                string parameterDesc = (string)parameterGridView.Rows[rowIndex].Cells["Description"].Value;
+                await UpdateParameterDescAsync(name, parameterDesc);
+            }
+        }
+
+        /// <summary>
+        /// Handles the paste tool strip menu item click event.
+        /// Pastes text into the table description textbox and updates the database.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The event arguments.</param>
+        private async void PasteToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            tableDescTextBox.Paste();
+            await _dbObject.UpdateObjectDescAsync(tableDescTextBox.Text);
+        }
+
+        /// <summary>
+        /// Handles the save button click event.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The event arguments.</param>
+        private async void SaveButton_Click(object sender, EventArgs e)
+        {
+            await Save();
+        }
+
+        /// <summary>
+        /// Handles the table description text box text changed event.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The event arguments.</param>
+        private void TableDescTextBox_TextChanged(object sender, EventArgs e)
+        {
+            _isChanged = true;
+        }
+
+        /// <summary>
+        /// Handles the table label click event.
+        /// Raises the <see cref="TableDescSelected"/> event.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The event arguments.</param>
+        private void TableLabel_Click(object sender, EventArgs e)
+        {
+            TableDescSelected?.Invoke(this, EventArgs.Empty);
+        }
+
+        /// <summary>
+        /// Updates the parameter description asynchronously.
+        /// </summary>
+        /// <param name="name">The parameter name.</param>
+        /// <param name="parameterDesc">The new parameter description.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        private async Task UpdateParameterDescAsync(string name, string parameterDesc)
+        {
+            await _dbObject.UpdateLevel2DescriptionAsync(name, parameterDesc, _dbObject.ObjectType);
         }
     }
 }

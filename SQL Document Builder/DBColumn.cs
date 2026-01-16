@@ -6,7 +6,7 @@ namespace SQL_Document_Builder
     /// <summary>
     /// The d b column.
     /// </summary>
-    internal class DBColumn
+    public class DBColumn
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="DBColumn"/> class.

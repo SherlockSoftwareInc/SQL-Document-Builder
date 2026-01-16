@@ -44,13 +44,21 @@
             cancelButton = new System.Windows.Forms.Button();
             okButton = new System.Windows.Forms.Button();
             databaseComboBox = new System.Windows.Forms.ComboBox();
+            tabControl1 = new System.Windows.Forms.TabControl();
+            tabPage1 = new System.Windows.Forms.TabPage();
+            tabPage2 = new System.Windows.Forms.TabPage();
+            labelDbDesc = new System.Windows.Forms.Label();
+            dbDescTextBox = new System.Windows.Forms.TextBox();
             logonGroupBox.SuspendLayout();
+            tabControl1.SuspendLayout();
+            tabPage1.SuspendLayout();
+            tabPage2.SuspendLayout();
             SuspendLayout();
             // 
             // serverNameLabel
             // 
             serverNameLabel.AutoSize = true;
-            serverNameLabel.Location = new System.Drawing.Point(35, 9);
+            serverNameLabel.Location = new System.Drawing.Point(31, 9);
             serverNameLabel.Name = "serverNameLabel";
             serverNameLabel.Size = new System.Drawing.Size(75, 15);
             serverNameLabel.TabIndex = 0;
@@ -58,7 +66,7 @@
             // 
             // serverNameTextBox
             // 
-            serverNameTextBox.Location = new System.Drawing.Point(116, 6);
+            serverNameTextBox.Location = new System.Drawing.Point(112, 6);
             serverNameTextBox.Name = "serverNameTextBox";
             serverNameTextBox.Size = new System.Drawing.Size(201, 23);
             serverNameTextBox.TabIndex = 1;
@@ -68,7 +76,7 @@
             // databaseNameLabel
             // 
             databaseNameLabel.AutoSize = true;
-            databaseNameLabel.Location = new System.Drawing.Point(19, 38);
+            databaseNameLabel.Location = new System.Drawing.Point(15, 38);
             databaseNameLabel.Name = "databaseNameLabel";
             databaseNameLabel.Size = new System.Drawing.Size(91, 15);
             databaseNameLabel.TabIndex = 2;
@@ -85,7 +93,7 @@
             logonGroupBox.Controls.Add(userNameTextBox);
             logonGroupBox.Controls.Add(userNameLabel);
             logonGroupBox.Controls.Add(authenticationLabel);
-            logonGroupBox.Location = new System.Drawing.Point(10, 64);
+            logonGroupBox.Location = new System.Drawing.Point(6, 64);
             logonGroupBox.Name = "logonGroupBox";
             logonGroupBox.Size = new System.Drawing.Size(309, 186);
             logonGroupBox.TabIndex = 4;
@@ -184,7 +192,7 @@
             // cancelButton
             // 
             cancelButton.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
-            cancelButton.Location = new System.Drawing.Point(240, 258);
+            cancelButton.Location = new System.Drawing.Point(242, 290);
             cancelButton.Name = "cancelButton";
             cancelButton.Size = new System.Drawing.Size(75, 23);
             cancelButton.TabIndex = 6;
@@ -195,7 +203,7 @@
             // okButton
             // 
             okButton.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
-            okButton.Location = new System.Drawing.Point(159, 258);
+            okButton.Location = new System.Drawing.Point(161, 290);
             okButton.Name = "okButton";
             okButton.Size = new System.Drawing.Size(75, 23);
             okButton.TabIndex = 5;
@@ -206,25 +214,76 @@
             // databaseComboBox
             // 
             databaseComboBox.FormattingEnabled = true;
-            databaseComboBox.Location = new System.Drawing.Point(116, 35);
+            databaseComboBox.Location = new System.Drawing.Point(112, 35);
             databaseComboBox.Name = "databaseComboBox";
             databaseComboBox.Size = new System.Drawing.Size(201, 23);
             databaseComboBox.TabIndex = 3;
             databaseComboBox.SelectedIndexChanged += DatabaseComboBox_SelectedIndexChanged;
             databaseComboBox.TextChanged += OnSettingsChanged;
             // 
+            // tabControl1
+            // 
+            tabControl1.Controls.Add(tabPage1);
+            tabControl1.Controls.Add(tabPage2);
+            tabControl1.Location = new System.Drawing.Point(3, 3);
+            tabControl1.Name = "tabControl1";
+            tabControl1.SelectedIndex = 0;
+            tabControl1.Size = new System.Drawing.Size(329, 283);
+            tabControl1.TabIndex = 7;
+            // 
+            // tabPage1
+            // 
+            tabPage1.Controls.Add(serverNameTextBox);
+            tabPage1.Controls.Add(serverNameLabel);
+            tabPage1.Controls.Add(databaseComboBox);
+            tabPage1.Controls.Add(databaseNameLabel);
+            tabPage1.Controls.Add(logonGroupBox);
+            tabPage1.Location = new System.Drawing.Point(4, 24);
+            tabPage1.Name = "tabPage1";
+            tabPage1.Padding = new System.Windows.Forms.Padding(3);
+            tabPage1.Size = new System.Drawing.Size(321, 255);
+            tabPage1.TabIndex = 0;
+            tabPage1.Text = "Connection";
+            tabPage1.UseVisualStyleBackColor = true;
+            // 
+            // tabPage2
+            // 
+            tabPage2.Controls.Add(labelDbDesc);
+            tabPage2.Controls.Add(dbDescTextBox);
+            tabPage2.Location = new System.Drawing.Point(4, 24);
+            tabPage2.Name = "tabPage2";
+            tabPage2.Padding = new System.Windows.Forms.Padding(3);
+            tabPage2.Size = new System.Drawing.Size(321, 255);
+            tabPage2.TabIndex = 1;
+            tabPage2.Text = "Description";
+            tabPage2.UseVisualStyleBackColor = true;
+            // 
+            // labelDbDesc
+            // 
+            labelDbDesc.AutoSize = true;
+            labelDbDesc.Location = new System.Drawing.Point(6, 3);
+            labelDbDesc.Name = "labelDbDesc";
+            labelDbDesc.Size = new System.Drawing.Size(209, 15);
+            labelDbDesc.TabIndex = 10;
+            labelDbDesc.Text = "Database Description (for AI assistant):";
+            // 
+            // dbDescTextBox
+            // 
+            dbDescTextBox.Location = new System.Drawing.Point(6, 21);
+            dbDescTextBox.Multiline = true;
+            dbDescTextBox.Name = "dbDescTextBox";
+            dbDescTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+            dbDescTextBox.Size = new System.Drawing.Size(309, 228);
+            dbDescTextBox.TabIndex = 11;
+            // 
             // NewSQLServerConnectionDialog
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            ClientSize = new System.Drawing.Size(333, 293);
+            ClientSize = new System.Drawing.Size(335, 325);
+            Controls.Add(tabControl1);
             Controls.Add(okButton);
-            Controls.Add(databaseComboBox);
             Controls.Add(cancelButton);
-            Controls.Add(logonGroupBox);
-            Controls.Add(databaseNameLabel);
-            Controls.Add(serverNameTextBox);
-            Controls.Add(serverNameLabel);
             FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             MaximizeBox = false;
             MinimizeBox = false;
@@ -234,8 +293,12 @@
             Load += NewSQLServerConnectionDialog_Load;
             logonGroupBox.ResumeLayout(false);
             logonGroupBox.PerformLayout();
+            tabControl1.ResumeLayout(false);
+            tabPage1.ResumeLayout(false);
+            tabPage1.PerformLayout();
+            tabPage2.ResumeLayout(false);
+            tabPage2.PerformLayout();
             ResumeLayout(false);
-            PerformLayout();
 
         }
 
@@ -257,5 +320,10 @@
         private System.Windows.Forms.ComboBox databaseComboBox;
         private System.Windows.Forms.CheckBox trustCertificateCheckBox;
         private System.Windows.Forms.CheckBox encrptyCheckBox;
+        private System.Windows.Forms.TabControl tabControl1;
+        private System.Windows.Forms.TabPage tabPage1;
+        private System.Windows.Forms.TabPage tabPage2;
+        private System.Windows.Forms.Label labelDbDesc;
+        private System.Windows.Forms.TextBox dbDescTextBox;
     }
 }

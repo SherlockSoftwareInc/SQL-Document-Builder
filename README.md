@@ -9,6 +9,14 @@ Because it is a **template-based document builder**, it can easily support any o
 
 ## 🚀 Key Features
 
+### 🧠 AI-Powered Documentation
+- **Auto-Generated Descriptions** – Leverage a built-in LLM to instantly generate or refine table and column metadata. By analyzing your schema, the AI produces professional, context-aware documentation that helps both the system and your team understand data intent.
+
+> [!TIP]
+> **Why this matters:** High-quality descriptions are the foundation of accurate AI insights. The more complete your metadata, the more precise and context-aware the AI's suggestions become.
+
+---
+
 ### 🔌 Database Connection Management
 - **Full Connection Control** – Easily add, edit, and remove SQL Server connections.
 - **Session Persistence** – Connections are saved, and the last used connection is automatically restored on startup.

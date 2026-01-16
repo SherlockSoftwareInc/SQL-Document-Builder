@@ -75,5 +75,17 @@ Back to [[DW: Database tables|Data warehouse tables]]
     <Setting Name="CopyToClipboard" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>
     </Setting>
+    <Setting Name="AIEndpoint" Type="System.String" Scope="User">
+      <Value Profile="(Default)">https://api.openai.com/v1/chat/completions</Value>
+    </Setting>
+    <Setting Name="AIModel" Type="System.String" Scope="User">
+      <Value Profile="(Default)">gpt-4.1</Value>
+    </Setting>
+    <Setting Name="AIApiKey" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="AILanguage" Type="System.String" Scope="User">
+      <Value Profile="(Default)">English</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

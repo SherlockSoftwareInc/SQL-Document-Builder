@@ -151,6 +151,11 @@ namespace SQL_Document_Builder
         public bool IsCustom { get; set; }
 
         /// <summary>
+        /// Gets or sets the description for the database connection.
+        /// </summary>
+        public string? DatabaseDescription { get; set; }
+
+        /// <summary>
         /// Gets or sets the connection string.
         /// </summary>
         [JsonIgnore]

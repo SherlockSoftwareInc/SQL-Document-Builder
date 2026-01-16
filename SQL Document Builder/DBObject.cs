@@ -920,5 +920,24 @@ WHERE sch.name = N'{ObjectName.Schema}' AND s.name = N'{ObjectName.Name}'";
             }
             return null;
         }
+
+        /// <summary>
+        /// Gets the foreign tables async.
+        /// </summary>
+        /// <param name="connection">The connection.</param>
+        /// <returns>A Task.</returns>
+        internal async Task<DataTable?> GetForeignTablesAsync(DatabaseConnectionItem connection)
+        {
+            if (connection == null || string.IsNullOrEmpty(connection.ConnectionString) || ObjectName.IsEmpty())
+            {
+                return null;
+            }
+            if (connection?.DBMSType == DBMSTypeEnums.SQLServer)
+            {
+                return await SQLDatabaseHelper.GetForeignTablesAsync(ObjectName, connection.ConnectionString);
+            }
+            return null;
+        }
+
     }
 }

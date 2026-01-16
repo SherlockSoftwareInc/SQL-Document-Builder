@@ -219,7 +219,6 @@ namespace SQL_Document_Builder
         private async void DescTextBox_Validated(object sender, EventArgs e)
         {
             await SaveChangeAsync();
-            //columnView.Open(TableName);
         }
 
         /// <summary>
@@ -239,6 +238,15 @@ namespace SQL_Document_Builder
                 }
                 _descChanged = false;
             }
+        }
+
+        /// <summary>
+        /// Handles user control validated event
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void DBObjectDefPanel_Validated(object sender, EventArgs e)
+        {
         }
     }
 }

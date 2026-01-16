@@ -51,8 +51,8 @@ namespace SQL_Document_Builder
         private void AddToolStripButton_Click(object sender, EventArgs e)
         {
             Clear();
-            connectionGroupBox.Text = "New";
-            connectionGroupBox.Enabled = true;
+            //tabPage1.Text = "New";
+            tabPage1.Enabled = true;
             connectionsListBox.SelectedIndex = -1;
             connectionNameTextBox.Text = "";
             saveButton.Visible = true;
@@ -101,10 +101,10 @@ namespace SQL_Document_Builder
         {
             _populating = true;
             _selectedIndex = -1;
-            connectionGroupBox.Text = "";
+            //tabPage1.Text = "";
             connectionNameTextBox.Text = "";
 
-            connectionGroupBox.Enabled = false;
+            tabPage1.Enabled = false;
             _changed = false;
         }
 
@@ -294,10 +294,11 @@ namespace SQL_Document_Builder
                 passwordTextBox.Text = item.Password;
                 encrptyCheckBox.Checked = item.EncryptConnection;
                 trustCertificateCheckBox.Checked = item.TrustServerCertificate;
+                dbDescTextBox.Text = item.DatabaseDescription;
 
                 _populating = true;
 
-                connectionGroupBox.Enabled = true;
+                tabPage1.Enabled = true;
             }
             _populating = false;
             SetEditEnableState(true);
@@ -323,6 +324,7 @@ namespace SQL_Document_Builder
                 _currentConnectionItem.TrustServerCertificate = trustCertificateCheckBox.Checked;
                 _currentConnectionItem.BuildConnectionString();
                 _currentConnectionItem.IsCustom = false;
+                _currentConnectionItem.DatabaseDescription = dbDescTextBox.Text;
 
                 _connections.SaveTemp();
                 _changed = false;
@@ -349,7 +351,8 @@ namespace SQL_Document_Builder
                 Password = passwordTextBox.Text,
                 RememberPassword = rememberPasswordCheckBox.Checked,
                 EncryptConnection = encrptyCheckBox.Checked,
-                TrustServerCertificate = trustCertificateCheckBox.Checked
+                TrustServerCertificate = trustCertificateCheckBox.Checked,
+                DatabaseDescription = dbDescTextBox.Text
             };
 
             if (connection != null)
@@ -374,7 +377,7 @@ namespace SQL_Document_Builder
             deleteToolStripButton.Enabled = state;
             testToolStripButton.Enabled = state;
             closeToolStripButton.Enabled = state;
-            connectionGroupBox.Enabled = state;
+            tabPage1.Enabled = state;
         }
 
         /// <summary>
@@ -420,6 +423,7 @@ namespace SQL_Document_Builder
                     item.RememberPassword = rememberPasswordCheckBox.Checked;
                     item.EncryptConnection = encrptyCheckBox.Checked;
                     item.TrustServerCertificate = trustCertificateCheckBox.Checked;
+                    item.DatabaseDescription = dbDescTextBox.Text;
                     item.BuildConnectionString();
                     result = await Task.Run(() => (TestConnection(item)));
                 }

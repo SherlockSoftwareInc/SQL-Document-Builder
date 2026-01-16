@@ -274,5 +274,53 @@ namespace SQL_Document_Builder.Properties {
                 this["CopyToClipboard"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("https://api.openai.com/v1/chat/completions")]
+        public string AIEndpoint {
+            get {
+                return ((string)(this["AIEndpoint"]));
+            }
+            set {
+                this["AIEndpoint"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("gpt-4.1")]
+        public string AIModel {
+            get {
+                return ((string)(this["AIModel"]));
+            }
+            set {
+                this["AIModel"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string AIApiKey {
+            get {
+                return ((string)(this["AIApiKey"]));
+            }
+            set {
+                this["AIApiKey"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("English")]
+        public string AILanguage {
+            get {
+                return ((string)(this["AILanguage"]));
+            }
+            set {
+                this["AILanguage"] = value;
+            }
+        }
     }
 }

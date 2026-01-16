@@ -259,7 +259,8 @@ namespace SQL_Document_Builder
                     AuthenticationType = dlg.Authentication,
                     UserName = dlg.UserName,
                     Password = dlg.Password,
-                    RememberPassword = dlg.RememberPassword
+                    RememberPassword = dlg.RememberPassword,
+                    DatabaseDescription = dlg.DatabaseDescription
                 };
 
                 connection.BuildConnectionString();
@@ -4464,6 +4465,66 @@ namespace SQL_Document_Builder
 
             // Refresh the MRU files in the menu
             PopulateMRUFiles();
+        }
+
+        /// <summary>
+        /// Handles the click event of the settings tool strip menu item.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void SettingsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using var dlg = new SettingsForm();
+            dlg.ShowDialog();
+        }
+
+        /// <summary>
+        /// Handles the AI processing started event of the definition panel.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void DefinitionPanel_AIProcessingStarted(object sender, EventArgs e)
+        {
+            // Disable the UI components during AI processing
+            EnableDisableUI(false);
+
+            statusToolStripStatusLabe.Text = "The AI ​​description assistant is working...";
+
+            // change to wait cursor
+            Cursor = Cursors.WaitCursor;
+
+        }
+
+        /// <summary>
+        /// Enables or disables the UI components.
+        /// </summary>
+        /// <param name="v">If true, enables the UI; otherwise, disables it.</param>
+        private void EnableDisableUI(bool v)
+        {
+            // Enable or disable UI components based on the parameter
+            toolStrip1.Enabled = v;
+            menuStrip1.Enabled = v;
+            statusToolStripStatusLabe.Enabled = v;
+
+        }
+
+        /// <summary>
+        /// Definitions the panel_ a i processing completed.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void DefinitionPanel_AIProcessingCompleted(object sender, EventArgs e)
+        {
+            // restore the default cursor
+            Cursor = Cursors.Default;
+            // restore default cursor for all controls
+            foreach (Control control in Controls)
+            {
+                control.Cursor = Cursors.Default;
+            }
+
+            EnableDisableUI(true);
+            statusToolStripStatusLabe.Text = "The AI ​​description assistant has completed its work.";
         }
     }
 }

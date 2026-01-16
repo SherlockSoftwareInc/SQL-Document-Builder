@@ -33,6 +33,8 @@ namespace SQL_Document_Builder
             components = new System.ComponentModel.Container();
             namePanel = new ObjectNamePanel();
             openButton = new System.Windows.Forms.Button();
+            aiButton = new System.Windows.Forms.Button();
+            saveButton = new System.Windows.Forms.Button();
             openTableContextMenuStrip = new System.Windows.Forms.ContextMenuStrip(components);
             openToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             tableDescTextBox = new System.Windows.Forms.TextBox();
@@ -63,8 +65,8 @@ namespace SQL_Document_Builder
             tabPage4 = new System.Windows.Forms.TabPage();
             referencingDataGridView = new System.Windows.Forms.DataGridView();
             panel1 = new System.Windows.Forms.Panel();
-            saveTableDescButton = new System.Windows.Forms.Button();
             descriptionLabel = new System.Windows.Forms.Label();
+            toolTip1 = new System.Windows.Forms.ToolTip(components);
             namePanel.SuspendLayout();
             openTableContextMenuStrip.SuspendLayout();
             tableContextMenuStrip.SuspendLayout();
@@ -92,6 +94,8 @@ namespace SQL_Document_Builder
             // 
             namePanel.BackColor = System.Drawing.SystemColors.ControlLight;
             namePanel.Controls.Add(openButton);
+            namePanel.Controls.Add(aiButton);
+            namePanel.Controls.Add(saveButton);
             namePanel.Dock = System.Windows.Forms.DockStyle.Top;
             namePanel.Font = new System.Drawing.Font("Segoe UI", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, 0);
             namePanel.Location = new System.Drawing.Point(0, 0);
@@ -104,13 +108,40 @@ namespace SQL_Document_Builder
             openButton.Dock = System.Windows.Forms.DockStyle.Right;
             openButton.Font = new System.Drawing.Font("Segoe UI", 9F);
             openButton.Image = Resources.openfile16;
-            openButton.Location = new System.Drawing.Point(331, 0);
+            openButton.Location = new System.Drawing.Point(275, 0);
             openButton.Name = "openButton";
             openButton.Padding = new System.Windows.Forms.Padding(3);
             openButton.Size = new System.Drawing.Size(28, 28);
             openButton.TabIndex = 1;
+            toolTip1.SetToolTip(openButton, "Data Preview");
             openButton.UseVisualStyleBackColor = true;
             openButton.Click += OpenToolStripMenuItem_Click;
+            // 
+            // aiButton
+            // 
+            aiButton.Dock = System.Windows.Forms.DockStyle.Right;
+            aiButton.Font = new System.Drawing.Font("Segoe UI", 9F);
+            aiButton.Location = new System.Drawing.Point(303, 0);
+            aiButton.Name = "aiButton";
+            aiButton.Padding = new System.Windows.Forms.Padding(3);
+            aiButton.Size = new System.Drawing.Size(28, 28);
+            aiButton.TabIndex = 2;
+            aiButton.Text = "✨";
+            toolTip1.SetToolTip(aiButton, "AI description assistant");
+            aiButton.UseVisualStyleBackColor = true;
+            aiButton.Click += AiButton_Click;
+            // 
+            // saveButton
+            // 
+            saveButton.Dock = System.Windows.Forms.DockStyle.Right;
+            saveButton.Image = Resources.save;
+            saveButton.Location = new System.Drawing.Point(331, 0);
+            saveButton.Name = "saveButton";
+            saveButton.Size = new System.Drawing.Size(28, 28);
+            saveButton.TabIndex = 3;
+            toolTip1.SetToolTip(saveButton, "Save");
+            saveButton.UseVisualStyleBackColor = true;
+            saveButton.Click += SaveButton_Click;
             // 
             // openTableContextMenuStrip
             // 
@@ -136,6 +167,7 @@ namespace SQL_Document_Builder
             tableDescTextBox.Size = new System.Drawing.Size(359, 100);
             tableDescTextBox.TabIndex = 1;
             tableDescTextBox.Click += TableLabel_Click;
+            tableDescTextBox.TextChanged += TableDescTextBox_TextChanged;
             // 
             // tableContextMenuStrip
             // 
@@ -413,24 +445,12 @@ namespace SQL_Document_Builder
             // 
             // panel1
             // 
-            panel1.Controls.Add(saveTableDescButton);
             panel1.Controls.Add(descriptionLabel);
             panel1.Dock = System.Windows.Forms.DockStyle.Top;
             panel1.Location = new System.Drawing.Point(0, 0);
             panel1.Name = "panel1";
             panel1.Size = new System.Drawing.Size(359, 28);
             panel1.TabIndex = 0;
-            // 
-            // saveTableDescButton
-            // 
-            saveTableDescButton.Dock = System.Windows.Forms.DockStyle.Right;
-            saveTableDescButton.Image = Resources.save;
-            saveTableDescButton.Location = new System.Drawing.Point(331, 0);
-            saveTableDescButton.Name = "saveTableDescButton";
-            saveTableDescButton.Size = new System.Drawing.Size(28, 28);
-            saveTableDescButton.TabIndex = 1;
-            saveTableDescButton.UseVisualStyleBackColor = true;
-            saveTableDescButton.Click += SaveTableDescButton_Click;
             // 
             // descriptionLabel
             // 
@@ -493,7 +513,6 @@ namespace SQL_Document_Builder
         private System.Windows.Forms.SplitContainer splitContainer1;
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.Label descriptionLabel;
-        private System.Windows.Forms.Button saveTableDescButton;
         private System.Windows.Forms.TabControl tabControl1;
         private System.Windows.Forms.TabPage tabPage1;
         private System.Windows.Forms.TabPage tabPage2;
@@ -511,5 +530,8 @@ namespace SQL_Document_Builder
         private System.Windows.Forms.DataGridView referencedDataGridView;
         private System.Windows.Forms.ContextMenuStrip openObjectContextMenuStrip;
         private System.Windows.Forms.ToolStripMenuItem openObjectToolStripMenuItem;
+        private System.Windows.Forms.Button saveButton;
+        private System.Windows.Forms.Button aiButton;
+        private System.Windows.Forms.ToolTip toolTip1;
     }
 }

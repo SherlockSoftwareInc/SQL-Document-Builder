@@ -41,7 +41,6 @@
             cancelToolStripButton = new System.Windows.Forms.ToolStripButton();
             connectionsLabel = new System.Windows.Forms.Label();
             connectionsListBox = new System.Windows.Forms.ListBox();
-            connectionGroupBox = new System.Windows.Forms.GroupBox();
             saveButton = new System.Windows.Forms.Button();
             logonGroupBox = new System.Windows.Forms.GroupBox();
             trustCertificateCheckBox = new System.Windows.Forms.CheckBox();
@@ -59,9 +58,16 @@
             databaseComboBox = new System.Windows.Forms.ComboBox();
             databaseNameLabel = new System.Windows.Forms.Label();
             connectionNameLabel = new System.Windows.Forms.Label();
+            tabControl1 = new System.Windows.Forms.TabControl();
+            tabPage1 = new System.Windows.Forms.TabPage();
+            tabPage2 = new System.Windows.Forms.TabPage();
+            labelDbDesc = new System.Windows.Forms.Label();
+            dbDescTextBox = new System.Windows.Forms.TextBox();
             toolStrip1.SuspendLayout();
-            connectionGroupBox.SuspendLayout();
             logonGroupBox.SuspendLayout();
+            tabControl1.SuspendLayout();
+            tabPage1.SuspendLayout();
+            tabPage2.SuspendLayout();
             SuspendLayout();
             // 
             // toolStrip1
@@ -69,7 +75,7 @@
             toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { addToolStripButton, deleteToolStripButton, toolStripSeparator1, moveUpToolStripButton, moveDownToolStripButton, toolStripSeparator2, testToolStripButton, toolStripSeparator3, closeToolStripButton, cancelToolStripButton });
             toolStrip1.Location = new System.Drawing.Point(0, 0);
             toolStrip1.Name = "toolStrip1";
-            toolStrip1.Size = new System.Drawing.Size(577, 25);
+            toolStrip1.Size = new System.Drawing.Size(592, 25);
             toolStrip1.TabIndex = 0;
             toolStrip1.Text = "toolStrip1";
             // 
@@ -172,25 +178,9 @@
             connectionsListBox.TabIndex = 2;
             connectionsListBox.SelectedIndexChanged += ConnectionsListBox_SelectedIndexChanged;
             // 
-            // connectionGroupBox
-            // 
-            connectionGroupBox.Controls.Add(saveButton);
-            connectionGroupBox.Controls.Add(logonGroupBox);
-            connectionGroupBox.Controls.Add(serverNameTextBox);
-            connectionGroupBox.Controls.Add(connectionNameTextBox);
-            connectionGroupBox.Controls.Add(serverNameLabel);
-            connectionGroupBox.Controls.Add(databaseComboBox);
-            connectionGroupBox.Controls.Add(databaseNameLabel);
-            connectionGroupBox.Controls.Add(connectionNameLabel);
-            connectionGroupBox.Location = new System.Drawing.Point(214, 35);
-            connectionGroupBox.Name = "connectionGroupBox";
-            connectionGroupBox.Size = new System.Drawing.Size(358, 348);
-            connectionGroupBox.TabIndex = 3;
-            connectionGroupBox.TabStop = false;
-            // 
             // saveButton
             // 
-            saveButton.Location = new System.Drawing.Point(276, 303);
+            saveButton.Location = new System.Drawing.Point(283, 285);
             saveButton.Name = "saveButton";
             saveButton.Size = new System.Drawing.Size(75, 23);
             saveButton.TabIndex = 7;
@@ -209,7 +199,7 @@
             logonGroupBox.Controls.Add(passwordLabel);
             logonGroupBox.Controls.Add(authenticationLabel);
             logonGroupBox.Controls.Add(userNameLabel);
-            logonGroupBox.Location = new System.Drawing.Point(6, 103);
+            logonGroupBox.Location = new System.Drawing.Point(6, 93);
             logonGroupBox.Name = "logonGroupBox";
             logonGroupBox.Size = new System.Drawing.Size(352, 188);
             logonGroupBox.TabIndex = 6;
@@ -309,7 +299,7 @@
             // 
             // serverNameTextBox
             // 
-            serverNameTextBox.Location = new System.Drawing.Point(106, 45);
+            serverNameTextBox.Location = new System.Drawing.Point(106, 35);
             serverNameTextBox.Name = "serverNameTextBox";
             serverNameTextBox.Size = new System.Drawing.Size(247, 23);
             serverNameTextBox.TabIndex = 3;
@@ -317,7 +307,7 @@
             // 
             // connectionNameTextBox
             // 
-            connectionNameTextBox.Location = new System.Drawing.Point(106, 16);
+            connectionNameTextBox.Location = new System.Drawing.Point(106, 6);
             connectionNameTextBox.Name = "connectionNameTextBox";
             connectionNameTextBox.Size = new System.Drawing.Size(247, 23);
             connectionNameTextBox.TabIndex = 1;
@@ -327,7 +317,7 @@
             // serverNameLabel
             // 
             serverNameLabel.AutoSize = true;
-            serverNameLabel.Location = new System.Drawing.Point(25, 48);
+            serverNameLabel.Location = new System.Drawing.Point(25, 38);
             serverNameLabel.Name = "serverNameLabel";
             serverNameLabel.Size = new System.Drawing.Size(75, 15);
             serverNameLabel.TabIndex = 2;
@@ -336,7 +326,7 @@
             // databaseComboBox
             // 
             databaseComboBox.FormattingEnabled = true;
-            databaseComboBox.Location = new System.Drawing.Point(106, 74);
+            databaseComboBox.Location = new System.Drawing.Point(106, 64);
             databaseComboBox.Name = "databaseComboBox";
             databaseComboBox.Size = new System.Drawing.Size(247, 23);
             databaseComboBox.TabIndex = 5;
@@ -346,7 +336,7 @@
             // databaseNameLabel
             // 
             databaseNameLabel.AutoSize = true;
-            databaseNameLabel.Location = new System.Drawing.Point(42, 77);
+            databaseNameLabel.Location = new System.Drawing.Point(42, 67);
             databaseNameLabel.Name = "databaseNameLabel";
             databaseNameLabel.Size = new System.Drawing.Size(58, 15);
             databaseNameLabel.TabIndex = 4;
@@ -355,18 +345,77 @@
             // connectionNameLabel
             // 
             connectionNameLabel.AutoSize = true;
-            connectionNameLabel.Location = new System.Drawing.Point(58, 19);
+            connectionNameLabel.Location = new System.Drawing.Point(58, 9);
             connectionNameLabel.Name = "connectionNameLabel";
             connectionNameLabel.Size = new System.Drawing.Size(42, 15);
             connectionNameLabel.TabIndex = 0;
             connectionNameLabel.Text = "Name:";
             // 
+            // tabControl1
+            // 
+            tabControl1.Controls.Add(tabPage1);
+            tabControl1.Controls.Add(tabPage2);
+            tabControl1.Location = new System.Drawing.Point(214, 35);
+            tabControl1.Name = "tabControl1";
+            tabControl1.SelectedIndex = 0;
+            tabControl1.Size = new System.Drawing.Size(374, 342);
+            tabControl1.TabIndex = 4;
+            // 
+            // tabPage1
+            // 
+            tabPage1.Controls.Add(saveButton);
+            tabPage1.Controls.Add(connectionNameTextBox);
+            tabPage1.Controls.Add(logonGroupBox);
+            tabPage1.Controls.Add(connectionNameLabel);
+            tabPage1.Controls.Add(serverNameTextBox);
+            tabPage1.Controls.Add(databaseNameLabel);
+            tabPage1.Controls.Add(databaseComboBox);
+            tabPage1.Controls.Add(serverNameLabel);
+            tabPage1.Location = new System.Drawing.Point(4, 24);
+            tabPage1.Name = "tabPage1";
+            tabPage1.Padding = new System.Windows.Forms.Padding(3);
+            tabPage1.Size = new System.Drawing.Size(366, 314);
+            tabPage1.TabIndex = 0;
+            tabPage1.Text = "Connection";
+            tabPage1.UseVisualStyleBackColor = true;
+            // 
+            // tabPage2
+            // 
+            tabPage2.Controls.Add(labelDbDesc);
+            tabPage2.Controls.Add(dbDescTextBox);
+            tabPage2.Location = new System.Drawing.Point(4, 24);
+            tabPage2.Name = "tabPage2";
+            tabPage2.Padding = new System.Windows.Forms.Padding(3);
+            tabPage2.Size = new System.Drawing.Size(366, 314);
+            tabPage2.TabIndex = 1;
+            tabPage2.Text = "Database Description";
+            tabPage2.UseVisualStyleBackColor = true;
+            // 
+            // labelDbDesc
+            // 
+            labelDbDesc.AutoSize = true;
+            labelDbDesc.Location = new System.Drawing.Point(6, 3);
+            labelDbDesc.Name = "labelDbDesc";
+            labelDbDesc.Size = new System.Drawing.Size(209, 15);
+            labelDbDesc.TabIndex = 12;
+            labelDbDesc.Text = "Database Description (for AI assistant):";
+            // 
+            // dbDescTextBox
+            // 
+            dbDescTextBox.Location = new System.Drawing.Point(6, 21);
+            dbDescTextBox.Multiline = true;
+            dbDescTextBox.Name = "dbDescTextBox";
+            dbDescTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+            dbDescTextBox.Size = new System.Drawing.Size(354, 287);
+            dbDescTextBox.TabIndex = 13;
+            dbDescTextBox.TextChanged += SettingsChanged;
+            // 
             // ConnectionManageForm
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            ClientSize = new System.Drawing.Size(577, 385);
-            Controls.Add(connectionGroupBox);
+            ClientSize = new System.Drawing.Size(592, 383);
+            Controls.Add(tabControl1);
             Controls.Add(connectionsListBox);
             Controls.Add(connectionsLabel);
             Controls.Add(toolStrip1);
@@ -379,10 +428,13 @@
             Load += ConnectionManageForm_Load;
             toolStrip1.ResumeLayout(false);
             toolStrip1.PerformLayout();
-            connectionGroupBox.ResumeLayout(false);
-            connectionGroupBox.PerformLayout();
             logonGroupBox.ResumeLayout(false);
             logonGroupBox.PerformLayout();
+            tabControl1.ResumeLayout(false);
+            tabPage1.ResumeLayout(false);
+            tabPage1.PerformLayout();
+            tabPage2.ResumeLayout(false);
+            tabPage2.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -402,7 +454,6 @@
         private System.Windows.Forms.ToolStripButton cancelToolStripButton;
         private System.Windows.Forms.Label connectionsLabel;
         private System.Windows.Forms.ListBox connectionsListBox;
-        private System.Windows.Forms.GroupBox connectionGroupBox;
         private System.Windows.Forms.TextBox serverNameTextBox;
         private System.Windows.Forms.TextBox connectionNameTextBox;
         private System.Windows.Forms.Label serverNameLabel;
@@ -420,5 +471,10 @@
         private System.Windows.Forms.CheckBox trustCertificateCheckBox;
         private System.Windows.Forms.CheckBox encrptyCheckBox;
         private System.Windows.Forms.Button saveButton;
+        private System.Windows.Forms.TabControl tabControl1;
+        private System.Windows.Forms.TabPage tabPage1;
+        private System.Windows.Forms.TabPage tabPage2;
+        private System.Windows.Forms.Label labelDbDesc;
+        private System.Windows.Forms.TextBox dbDescTextBox;
     }
 }

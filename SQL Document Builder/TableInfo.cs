@@ -7,7 +7,7 @@ namespace SQL_Document_Builder
     /// <summary>
     /// Represents summary information about a SQL Server table.
     /// </summary>
-    internal class TableInfo
+    public class TableInfo
     {
         /// <summary>
         /// Gets or sets the table creation date.

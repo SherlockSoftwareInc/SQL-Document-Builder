@@ -44,7 +44,6 @@
             columnView.Name = "columnView";
             columnView.Size = new System.Drawing.Size(608, 574);
             columnView.TabIndex = 6;
-            columnView.TableDescription = "";
             columnView.SelectedColumnChanged += ColumnDefView1_SelectedColumnChanged;
             // 
             // titleLabel
@@ -106,6 +105,7 @@
             Name = "DBObjectDefPanel";
             Size = new System.Drawing.Size(608, 658);
             SizeChanged += DBObjectDefPanel_SizeChanged;
+            Validated += DBObjectDefPanel_Validated;
             panel1.ResumeLayout(false);
             panel1.PerformLayout();
             ResumeLayout(false);
