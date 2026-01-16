@@ -1,8 +1,8 @@
 # SQL Server Script and Document Builder
 
-**SQL Server Script and Document Builder** is a comprehensive SQL document and script builder featuring advanced database object browsing, script generation, documentation export (Markdown, WIKI, SharePoint), and multi-tab SQL editing — all integrated with robust connection and template management.  
+**SQL Server Script and Document Builder** is a comprehensive SQL document and script builder featuring advanced database object browsing, powerful script generation, and multi-tab SQL editing—all integrated with robust connection and template management.
 
-Because it is a **template-based document builder**, it can easily support any output format or language by simply adding a new template or language definition.
+**Our latest update introduces AI-Powered Documentation"", leveraging a built-in LLM to instantly generate or refine table and column metadata. By analyzing your schema, the AI produces professional, context-aware descriptions that help both the system and your team understand data intent. Because it is a template-based document builder, it can easily support any output format (Markdown, WIKI, SharePoint) or language by simply adding a new template or language definition. These high-quality, AI-generated descriptions serve as the foundation for accurate data insights, ensuring your documentation is both complete and context-aware.
 
 ---
 
