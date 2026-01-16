@@ -1,4 +1,3 @@
-
 # SQL Server Script and Document Builder
 
 **SQL Server Script and Document Builder** is a comprehensive SQL document and script builder featuring advanced database object browsing, script generation, documentation export (Markdown, WIKI, SharePoint), and multi-tab SQL editing — all integrated with robust connection and template management.  
