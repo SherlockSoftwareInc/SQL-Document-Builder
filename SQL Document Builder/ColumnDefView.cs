@@ -658,9 +658,10 @@ GO
         private static bool AISettingsReady()
         {
             // check if the AI settings are ready
-            return !string.IsNullOrEmpty(Properties.Settings.Default.AIApiKey) &&
-                !string.IsNullOrEmpty(Properties.Settings.Default.AIEndpoint)
-                && !string.IsNullOrEmpty(Properties.Settings.Default.AIModel);
+            var aiSettings = AISettingsManager.Current;
+            return !string.IsNullOrEmpty(aiSettings.AIApiKey) &&
+                !string.IsNullOrEmpty(aiSettings.AIEndpoint)
+                && !string.IsNullOrEmpty(aiSettings.AIModel);
         }
 
         /// <summary>

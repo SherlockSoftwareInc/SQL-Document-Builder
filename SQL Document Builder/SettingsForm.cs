@@ -83,14 +83,15 @@ namespace SQL_Document_Builder
         {
             InitializeComponent();
 
-            // Load settings from application properties
-            textBoxEndpoint.Text = Properties.Settings.Default.AIEndpoint;
-            textBoxModel.Text = Properties.Settings.Default.AIModel;
-            textBoxApiKey.Text = Properties.Settings.Default.AIApiKey;
+            // Load settings from AISettingsManager
+            var aiSettings = AISettingsManager.Current;
+            textBoxEndpoint.Text = aiSettings.AIEndpoint;
+            textBoxModel.Text = aiSettings.AIModel;
+            textBoxApiKey.Text = aiSettings.AIApiKey;
 
             // Populate language combo box with supported languages
             comboBoxLanguage.Items.AddRange(MajorLanguages);
-            var savedLanguage = Properties.Settings.Default.AILanguage;
+            var savedLanguage = aiSettings.AILanguage;
             if (!string.IsNullOrEmpty(savedLanguage) && comboBoxLanguage.Items.Contains(savedLanguage))
             {
                 comboBoxLanguage.SelectedItem = savedLanguage;
@@ -109,12 +110,13 @@ namespace SQL_Document_Builder
         /// <param name="e">Event arguments.</param>
         private void ButtonSave_Click(object sender, EventArgs e)
         {
-            // Save settings to application properties
-            Properties.Settings.Default.AIEndpoint = textBoxEndpoint.Text;
-            Properties.Settings.Default.AIModel = textBoxModel.Text;
-            Properties.Settings.Default.AIApiKey = textBoxApiKey.Text;
-            Properties.Settings.Default.AILanguage = comboBoxLanguage.SelectedItem?.ToString() ?? "";
-            Properties.Settings.Default.Save();
+            // Save settings to AISettingsManager
+            var aiSettings = AISettingsManager.Current;
+            aiSettings.AIEndpoint = textBoxEndpoint.Text;
+            aiSettings.AIModel = textBoxModel.Text;
+            aiSettings.AIApiKey = textBoxApiKey.Text;
+            aiSettings.AILanguage = comboBoxLanguage.SelectedItem?.ToString() ?? "";
+            AISettingsManager.Save();
             Close();
         }
 

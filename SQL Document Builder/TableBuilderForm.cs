@@ -28,6 +28,10 @@ namespace SQL_Document_Builder
         private ObjectName? _selectedObject;
         private bool _init = false;
 
+        private bool _aiDescriptionBusy = false;
+        private ObjectName? _previousSelectedObject = null;
+        private bool _ignoreObjectListSelect = false;
+
         /// <summary>
         /// The tables.
         /// </summary>
@@ -1768,10 +1772,50 @@ namespace SQL_Document_Builder
         /// <param name="e">The E.</param>
         private async void ObjectsListBox_SelectedIndexChanged(object sender, EventArgs e)
         {
+            if (_ignoreObjectListSelect) return;
+
             statusToolStripStatusLabe.Text = string.Empty;
-            if (objectsListBox.SelectedItem != null)
+
+            if (_aiDescriptionBusy)
             {
-                _selectedObject = (ObjectName)objectsListBox.SelectedItem;
+                var result = Common.MsgBox(
+                    "AI description building is in progress. Do you want to cancel and switch to the new object?",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Question);
+
+                if (result == DialogResult.No)
+                {
+                    // Revert selection to previous object
+                    if (_previousSelectedObject != null)
+                    {
+                        for (int i = 0; i < objectsListBox.Items.Count; i++)
+                        {
+                            if (objectsListBox.Items[i] is ObjectName obj && obj.Equals(_previousSelectedObject))
+                            {
+                                _ignoreObjectListSelect = true;
+                                objectsListBox.SelectedIndex = i;
+                                _ignoreObjectListSelect = false;
+                                // Do NOT set _aiDescriptionBusy here; AI may have completed.
+                                return;
+                            }
+                        }
+                    }
+                    return;
+                }
+                else
+                {
+                    // Cancel AI processing (implement cancellation logic if needed)
+                    // For now, just set busy to false
+                    _aiDescriptionBusy = false;
+                    EnableDisableUI(true);
+                }
+            }
+
+            // Track previous selection
+            if (objectsListBox.SelectedItem is ObjectName selectedObj)
+            {
+                _previousSelectedObject = selectedObj;
+                _selectedObject = selectedObj;
                 await definitionPanel.OpenAsync(_selectedObject, _currentConnection);
             }
             else
@@ -4485,12 +4529,9 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void DefinitionPanel_AIProcessingStarted(object sender, EventArgs e)
         {
-            // Disable the UI components during AI processing
+            _aiDescriptionBusy = true;
             EnableDisableUI(false);
-
             statusToolStripStatusLabe.Text = "The AI ​​description assistant is working...";
-
-            // change to wait cursor
             Cursor = Cursors.WaitCursor;
 
         }
@@ -4506,6 +4547,22 @@ namespace SQL_Document_Builder
             menuStrip1.Enabled = v;
             statusToolStripStatusLabe.Enabled = v;
 
+            // Set the cursor for the form and all its controls
+            var cur = v ? Cursors.Default : Cursors.WaitCursor;
+
+            Cursor = cur;
+            foreach (Control control in Controls)
+            {
+                control.Cursor = cur;
+                // for panel, tabcontrol, splitcontainer, set cursor for their child controls
+                if (control is Panel || control is TabControl || control is SplitContainer)
+                {
+                    foreach (Control child in control.Controls)
+                    {
+                        child.Cursor = cur;
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -4515,14 +4572,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void DefinitionPanel_AIProcessingCompleted(object sender, EventArgs e)
         {
-            // restore the default cursor
-            Cursor = Cursors.Default;
-            // restore default cursor for all controls
-            foreach (Control control in Controls)
-            {
-                control.Cursor = Cursors.Default;
-            }
-
+            _aiDescriptionBusy = false;
             EnableDisableUI(true);
             statusToolStripStatusLabe.Text = "The AI ​​description assistant has completed its work.";
         }

@@ -113,7 +113,7 @@ namespace SQL_Document_Builder
             }
 
             // Get language from settings
-            string aiLanguage = Properties.Settings.Default.AILanguage ?? "English";
+            string aiLanguage = AISettingsManager.Current.AILanguage ?? "English";
             string languageInstruction = string.Empty;
             if (!aiLanguage.Equals("English", StringComparison.OrdinalIgnoreCase))
             {
@@ -155,13 +155,11 @@ Output only valid JSON.{languageInstruction}";
         /// </exception>
         private async Task<string> CallLLMAsync(string prompt)
         {
-            // Retrieve settings (replace with your actual settings retrieval logic)
-            string endpoint = Properties.Settings.Default.AIEndpoint
-                              ?? throw new InvalidOperationException("OpenAI__Endpoint not set.");
-            string model = Properties.Settings.Default.AIModel
-                           ?? throw new InvalidOperationException("OpenAI__Model not set.");
-            string apiKey = Properties.Settings.Default.AIApiKey
-                            ?? throw new InvalidOperationException("OpenAI__ApiKey not set.");
+            // Retrieve settings from AISettingsManager
+            var aiSettings = AISettingsManager.Current;
+            string endpoint = aiSettings.AIEndpoint ?? throw new InvalidOperationException("OpenAI__Endpoint not set.");
+            string model = aiSettings.AIModel ?? throw new InvalidOperationException("OpenAI__Model not set.");
+            string apiKey = aiSettings.AIApiKey ?? throw new InvalidOperationException("OpenAI__ApiKey not set.");
 
             using var httpClient = new HttpClient();
             httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
