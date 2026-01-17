@@ -119,6 +119,8 @@ namespace SQL_Document_Builder
             goToLineToolStripMenuItem = new ToolStripMenuItem();
             uppercaseToolStripMenuItem = new ToolStripMenuItem();
             lowercaseToolStripMenuItem = new ToolStripMenuItem();
+            toolStripSeparator23 = new ToolStripSeparator();
+            aIDescriptionAssistantToolStripMenuItem = new ToolStripMenuItem();
             builderToolStripMenuItem = new ToolStripMenuItem();
             mdObjectListToolStripMenuItem = new ToolStripMenuItem();
             toolStripSeparator7 = new ToolStripSeparator();
@@ -210,6 +212,7 @@ namespace SQL_Document_Builder
             openFolderInFileExplorerToolStripMenuItem = new ToolStripMenuItem();
             toolTip1 = new ToolTip(components);
             startTimer = new Timer(components);
+            addColumnReferenceToolStripMenuItem = new ToolStripMenuItem();
             toolStrip1.SuspendLayout();
             objectsTabControl.SuspendLayout();
             tabPage1.SuspendLayout();
@@ -892,7 +895,7 @@ namespace SQL_Document_Builder
             // 
             // editToolStripMenuItem
             // 
-            editToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { cutToolStripMenuItem, copyToolStripMenuItem, pasteToolStripMenuItem, toolStripSeparator27, undoToolStripMenuItem, redoToolStripMenuItem, toolStripSeparator6, selectAllToolStripMenuItem, toolStripSeparator8, quickFindToolStripMenuItem, findToolStripMenuItem, findAndReplaceToolStripMenuItem, toolStripSeparator16, goToLineToolStripMenuItem, uppercaseToolStripMenuItem, lowercaseToolStripMenuItem });
+            editToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { cutToolStripMenuItem, copyToolStripMenuItem, pasteToolStripMenuItem, toolStripSeparator27, undoToolStripMenuItem, redoToolStripMenuItem, toolStripSeparator6, selectAllToolStripMenuItem, toolStripSeparator8, quickFindToolStripMenuItem, findToolStripMenuItem, findAndReplaceToolStripMenuItem, toolStripSeparator16, goToLineToolStripMenuItem, uppercaseToolStripMenuItem, lowercaseToolStripMenuItem, toolStripSeparator23, aIDescriptionAssistantToolStripMenuItem, addColumnReferenceToolStripMenuItem });
             editToolStripMenuItem.Name = "editToolStripMenuItem";
             editToolStripMenuItem.ShortcutKeys = Keys.Control | Keys.F;
             editToolStripMenuItem.Size = new System.Drawing.Size(39, 20);
@@ -1026,6 +1029,19 @@ namespace SQL_Document_Builder
             lowercaseToolStripMenuItem.Text = "Lowercase";
             lowercaseToolStripMenuItem.Visible = false;
             lowercaseToolStripMenuItem.Click += LowercaseSelectionToolStripMenuItem_Click;
+            // 
+            // toolStripSeparator23
+            // 
+            toolStripSeparator23.Name = "toolStripSeparator23";
+            toolStripSeparator23.Size = new System.Drawing.Size(213, 6);
+            // 
+            // aIDescriptionAssistantToolStripMenuItem
+            // 
+            aIDescriptionAssistantToolStripMenuItem.Image = Properties.Resources.ai_24;
+            aIDescriptionAssistantToolStripMenuItem.Name = "aIDescriptionAssistantToolStripMenuItem";
+            aIDescriptionAssistantToolStripMenuItem.Size = new System.Drawing.Size(216, 22);
+            aIDescriptionAssistantToolStripMenuItem.Text = "AI Description Assistant";
+            aIDescriptionAssistantToolStripMenuItem.Click += AIDescriptionAssistantToolStripMenuItem_Click;
             // 
             // builderToolStripMenuItem
             // 
@@ -1541,10 +1557,10 @@ namespace SQL_Document_Builder
             definitionPanel.Size = new System.Drawing.Size(360, 676);
             definitionPanel.TabIndex = 4;
             toolTip1.SetToolTip(definitionPanel, "Object description edit box");
-            definitionPanel.AIProcessingStarted += DefinitionPanel_AIProcessingStarted;
-            definitionPanel.AIProcessingCompleted += DefinitionPanel_AIProcessingCompleted;
             definitionPanel.AddIndexRequested += CreateIndexToolStripMenuItem_Click;
             definitionPanel.AddPrimaryKeyRequested += CreatePrimaryKeyToolStripMenuItem_Click;
+            definitionPanel.AIProcessingCompleted += DefinitionPanel_AIProcessingCompleted;
+            definitionPanel.AIProcessingStarted += DefinitionPanel_AIProcessingStarted;
             // 
             // defiCollapsibleSplitter
             // 
@@ -1739,6 +1755,13 @@ namespace SQL_Document_Builder
             // startTimer
             // 
             startTimer.Tick += StartTimer_Tick;
+            // 
+            // addColumnReferenceToolStripMenuItem
+            // 
+            addColumnReferenceToolStripMenuItem.Name = "addColumnReferenceToolStripMenuItem";
+            addColumnReferenceToolStripMenuItem.Size = new System.Drawing.Size(216, 22);
+            addColumnReferenceToolStripMenuItem.Text = "Add Column Reference";
+            addColumnReferenceToolStripMenuItem.Click += AddColumnReferenceToolStripMenuItem_Click;
             // 
             // TableBuilderForm
             // 
@@ -1968,5 +1991,8 @@ namespace SQL_Document_Builder
         private ToolStripMenuItem manageRecentFilesToolStripMenuItem;
         private ToolStripMenuItem settingsToolStripMenuItem;
         private ToolStripSeparator toolStripSeparator22;
+        private ToolStripSeparator toolStripSeparator23;
+        private ToolStripMenuItem aIDescriptionAssistantToolStripMenuItem;
+        private ToolStripMenuItem addColumnReferenceToolStripMenuItem;
     }
 }

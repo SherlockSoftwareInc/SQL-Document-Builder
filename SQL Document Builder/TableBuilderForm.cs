@@ -238,7 +238,7 @@ namespace SQL_Document_Builder
         /// Handles the "About" tool strip menu item click event:
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void AboutToolStripMenuItem_Click(object sender, EventArgs e)
         {
             // show about box
@@ -423,7 +423,7 @@ namespace SQL_Document_Builder
         /// Handles the "Batch column description" tool strip button click event:
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The E.</param>
+        /// <param name="e">The event arguments.</param>
         private void BatchToolStripButton_Click(object sender, EventArgs e)
         {
             if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
@@ -581,7 +581,7 @@ namespace SQL_Document_Builder
         /// Handles the "Clear search" button click event.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void ClearSerachButton_Click(object sender, EventArgs e)
         {
             searchTextBox.Text = string.Empty;
@@ -606,7 +606,7 @@ namespace SQL_Document_Builder
         /// handles the click event of the close all tool strip menu item:
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void CloseAllToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (CloseAllTabs() == DialogResult.Cancel)
@@ -711,7 +711,7 @@ namespace SQL_Document_Builder
         /// Handles the "Close" tool strip button click event:
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The E.</param>
+        /// <param name="e">The event arguments.</param>
         private void CloseToolStripButton_Click(object sender, EventArgs e)
         {
             Close();
@@ -722,7 +722,7 @@ namespace SQL_Document_Builder
         /// Close the mouse on tab
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void CloseToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (_mouseOnTabIndex < 0 || _mouseOnTabIndex >= tabControl1.TabCount) return;
@@ -741,7 +741,7 @@ namespace SQL_Document_Builder
         /// Close the current tab
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void CloseToolStripMenuItem1_Click(object sender, EventArgs e)
         {
             var selectedTabIndex = tabControl1.SelectedIndex;
@@ -757,7 +757,7 @@ namespace SQL_Document_Builder
         /// Handles the "Copy" tool strip menu item click:
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The E.</param>
+        /// <param name="e">The event arguments.</param>
         private void CopyToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Control? focusedControl = GetFocusedControl(this);
@@ -826,7 +826,7 @@ namespace SQL_Document_Builder
         /// Handles the "create index" tool strip menu item click:
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void CreateIndexToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
@@ -845,7 +845,7 @@ namespace SQL_Document_Builder
         /// create insert statement for the selected objects and selected column
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private async void CreateInsertToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
@@ -933,7 +933,7 @@ namespace SQL_Document_Builder
         /// handles the "create primary key" tool strip menu item click:
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void CreatePrimaryKeyToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
@@ -952,7 +952,7 @@ namespace SQL_Document_Builder
         /// Generate the CREATE script for the selected object
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private async void CreateTableToolStripButton_Click(object sender, EventArgs e)
         {
             if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
@@ -981,7 +981,7 @@ namespace SQL_Document_Builder
         /// Batch generate the CREATE scripts for the selected objects
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private async void CreateToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
@@ -1024,7 +1024,7 @@ namespace SQL_Document_Builder
         /// Handles the "Cut" tool strip menu item click:
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The E.</param>
+        /// <param name="e">The event arguments.</param>
         private void CutToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Control? focusedControl = GetFocusedControl(this);
@@ -1069,8 +1069,8 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Handles data source combo box selected index change event: Change the data source
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The event arguments.</param>
         private void DataSourcesToolStripComboBox_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (dataSourcesToolStripComboBox.SelectedItem != null && !_ignoreConnectionComboBoxIndexChange)
@@ -1106,7 +1106,7 @@ namespace SQL_Document_Builder
         /// Docs the type tool strip combo box_ selected index changed.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void DocTypeToolStripComboBox_SelectedIndexChanged(object sender, EventArgs e)
         {
             // if selected item is not null, save the settings
@@ -1121,7 +1121,7 @@ namespace SQL_Document_Builder
         /// Edits the box_ file name changed.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void EditBox_FileNameChanged(object? sender, EventArgs e)
         {
             if (sender is SqlEditBox editBox)
@@ -1211,7 +1211,7 @@ namespace SQL_Document_Builder
         ///     Load Excel file and generate INSERT statements for the data in the file.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void ExcelToINSERTToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Sql) == DialogResult.Yes)
@@ -1251,7 +1251,7 @@ namespace SQL_Document_Builder
         /// Handles the click event of the find next button.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void FindNextButton_Click(object sender, EventArgs e)
         {
             ReplaceManager.Find(true, false);
@@ -1467,7 +1467,7 @@ namespace SQL_Document_Builder
         /// Handles the click event of the quick find tool strip menu item.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void GoToLineToolStripMenuItem_Click(object sender, EventArgs e)
         {
             // go to line in scintilla
@@ -1489,7 +1489,7 @@ namespace SQL_Document_Builder
         /// Handles the validated event of the insert batch text box.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void InsertBatchTextBox_Validated(object sender, EventArgs e)
         {
             if (int.TryParse(insertBatchTextBox.Text, out int value))
@@ -1511,7 +1511,7 @@ namespace SQL_Document_Builder
         /// Handles the validating event of the insert batch text box.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void InsertBatchTextBox_Validating(object sender, System.ComponentModel.CancelEventArgs e)
         {
             // checks the input value of the insert batch text box. it should be a number and between 1 and 100
@@ -1540,7 +1540,7 @@ namespace SQL_Document_Builder
         /// Handles the validated event of the insert max text box.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void InsertMaxTextBox_Validated(object sender, EventArgs e)
         {
             if (int.TryParse(insertMaxTextBox.Text, out int value))
@@ -1562,7 +1562,7 @@ namespace SQL_Document_Builder
         /// Handles the validating event of the insert max text box.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void InsertMaxTextBox_Validating(object sender, System.ComponentModel.CancelEventArgs e)
         {            // checks the input value of the insert batch text box. it should be a number and between 1 and 100
             if (int.TryParse(insertMaxTextBox.Text, out int value))
@@ -1591,7 +1591,7 @@ namespace SQL_Document_Builder
         ///     Build the INSERT statement for the selected object.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private async void InsertToolStripButton_Click(object sender, EventArgs e)
         {
             if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
@@ -1662,7 +1662,7 @@ namespace SQL_Document_Builder
         /// Handles the "Manage connections" tool strip menu item click event.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private async void ManageConnectionsToolStripMenuItem_Click(object sender, EventArgs e)
         {
             try
@@ -1684,7 +1684,7 @@ namespace SQL_Document_Builder
         /// Handles the click event of the manage template tool strip menu item.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void ManageTemplateToolStripMenuItem_Click(object sender, EventArgs e)
         {
             using var templateEditor = new TemplateEditor() { CurrentDocType = docTypeToolStripComboBox.Text };
@@ -1696,7 +1696,7 @@ namespace SQL_Document_Builder
         /// Handles the "New connection" tool strip menu item click event.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private async void NewConnectionToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (await AddConnection())
@@ -1712,7 +1712,7 @@ namespace SQL_Document_Builder
         /// Handles the Click event of the NewToolStripButton control.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void NewToolStripMenuItem_Click(object sender, EventArgs e)
         {
             AddTab("");
@@ -1722,7 +1722,7 @@ namespace SQL_Document_Builder
         /// Handles the "Objects description" tool strip menu item click:
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private async void ObjectsDescriptionToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
@@ -1769,7 +1769,7 @@ namespace SQL_Document_Builder
         /// Handles the "Objects list" list box selected index changed event:
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The E.</param>
+        /// <param name="e">The event arguments.</param>
         private async void ObjectsListBox_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (_ignoreObjectListSelect) return;
@@ -1828,7 +1828,7 @@ namespace SQL_Document_Builder
         /// Handles the "ObjectType" combo box selected index changed event.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private async void ObjectTypeComboBox_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (_init || !GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
@@ -1909,7 +1909,7 @@ namespace SQL_Document_Builder
         /// On connection tool strip menu item click.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The E.</param>
+        /// <param name="e">The event arguments.</param>
         private async void OnConnectionToolStripMenuItem_Click(object? sender, EventArgs e)
         {
             if (sender?.GetType() == typeof(ConnectionMenuItem))
@@ -1970,7 +1970,7 @@ namespace SQL_Document_Builder
         /// Handles the "Execute " tool strip menu item click:
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private async void OnExecuteToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
@@ -2105,7 +2105,7 @@ namespace SQL_Document_Builder
         /// Handles the Click event of the OpenToolStripButton control.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void OpenToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var oFile = new OpenFileDialog()
@@ -2123,7 +2123,7 @@ namespace SQL_Document_Builder
         /// Handles the control changs of the output options:
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void Options_Changed(object sender, EventArgs e)
         {
             Properties.Settings.Default.AddDataSource = addDataSourceCheckBox.Checked;
@@ -2165,7 +2165,7 @@ namespace SQL_Document_Builder
         /// Handles the paste tool strip menu item click event.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void PasteToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Control? focusedControl = GetFocusedControl(this);
@@ -2438,7 +2438,7 @@ namespace SQL_Document_Builder
         /// Handles "Query to INSERT" strip menu item_ click.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private async void QueryInsertToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
@@ -2473,7 +2473,7 @@ namespace SQL_Document_Builder
         /// Handles the click event of the replace all button.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void ReplaceAllButton_Click(object sender, EventArgs e)
         {
             ReplaceManager.ReplaceAll();
@@ -2483,7 +2483,7 @@ namespace SQL_Document_Builder
         /// Handles the click event of the find previous button.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void ReplaceButton_Click(object sender, EventArgs e)
         {
             ReplaceManager.Replace();
@@ -2493,7 +2493,7 @@ namespace SQL_Document_Builder
         /// Handles the key down event of the replace text box.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void ReplaceReplaceTextBox_KeyDown(object sender, KeyEventArgs e)
         {
             if (HotKeyManager.IsHotkey(e, Keys.Enter))
@@ -2558,7 +2558,7 @@ namespace SQL_Document_Builder
         /// Handles the "Save as" tool strip menu item click:
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void SaveAsToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (CurrentEditBox == null) return; // If there is no current edit box, exit early
@@ -2571,7 +2571,7 @@ namespace SQL_Document_Builder
         /// Handles the "Save" tool strip menu item click:
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The E.</param>
+        /// <param name="e">The event arguments.</param>
         private void SaveToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (CurrentEditBox == null) return; // If there is no current edit box, exit early
@@ -2582,7 +2582,7 @@ namespace SQL_Document_Builder
         /// Handles the click event of the save tool strip menu item:
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void SaveToolStripMenuItem1_Click(object sender, EventArgs e)
         {
             if (_mouseOnTabIndex < 0 || _mouseOnTabIndex >= tabControl1.TabCount) return;
@@ -2600,7 +2600,7 @@ namespace SQL_Document_Builder
         /// Handles the "Schema" combo box selected index changed event:
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The E.</param>
+        /// <param name="e">The event arguments.</param>
         private async void SchemaComboBox_SelectedIndexChanged(object sender, EventArgs e)
         {
             Cursor = Cursors.WaitCursor;
@@ -2633,7 +2633,7 @@ namespace SQL_Document_Builder
         /// Handles the "Search" text box text changed event:
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The E.</param>
+        /// <param name="e">The event arguments.</param>
         private void SearchTextBox_TextChanged(object sender, EventArgs e)
         {
             // reset the timer and start it
@@ -2649,7 +2649,7 @@ namespace SQL_Document_Builder
         /// Handles the "Select all" tool strip menu item click:
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The E.</param>
+        /// <param name="e">The event arguments.</param>
         private void SelectAllToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Control? focusedControl = GetFocusedControl(this);
@@ -2738,7 +2738,7 @@ namespace SQL_Document_Builder
         /// Navigates to the Sherlock Software website.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void SherlockSoftwareToolStripMenuItem_Click(object sender, EventArgs e)
         {
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo()
@@ -2765,7 +2765,7 @@ namespace SQL_Document_Builder
         /// Handles the click event of the tab alias tool strip menu item:
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void TabAliasToolStripMenuItem_Click(object sender, EventArgs e)
         {
             using var inputBox = new InputBox()
@@ -2919,7 +2919,7 @@ namespace SQL_Document_Builder
         /// Handles the resize event of the tab control:
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void TabControl1_Resize(object sender, EventArgs e)
         {
             searchPanel.Top = tabControl1.Top + 36;
@@ -2933,7 +2933,7 @@ namespace SQL_Document_Builder
         /// Handles the selected index changed event of the tab control:
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void TabControl1_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (tabControl1.SelectedTab == null) return;
@@ -2967,7 +2967,7 @@ namespace SQL_Document_Builder
         /// Handles the "Table builder form" form closing event:
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The E.</param>
+        /// <param name="e">The event arguments.</param>
         private void TableBuilderForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             if (CloseAllTabs() == DialogResult.Cancel)
@@ -2986,7 +2986,7 @@ namespace SQL_Document_Builder
         /// Handles the "Table builder form" load event:
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The E.</param>
+        /// <param name="e">The event arguments.</param>
         private void TableBuilderForm_Load(object sender, EventArgs e)
         {
             if (Properties.Settings.Default.DarkMode)
@@ -3022,7 +3022,7 @@ namespace SQL_Document_Builder
         /// generate the table description and column descriptions.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private async void TableDescriptionToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (SelectedObject == null || !GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
@@ -3063,7 +3063,7 @@ namespace SQL_Document_Builder
         /// Handles timer tick.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private async void Timer1_Tick(object sender, EventArgs e)
         {
             Cursor = Cursors.WaitCursor;
@@ -3077,7 +3077,7 @@ namespace SQL_Document_Builder
         /// Handles the "Create stored procedure" tool strip menu item click:
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void UspToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
@@ -3161,7 +3161,7 @@ namespace SQL_Document_Builder
         /// Handles the text changed event of the SQL text box:
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void OnTextChanged(object? sender, EventArgs e)
         {
             //if (CurrentEditBox == null || sender == null) return;
@@ -3175,7 +3175,7 @@ namespace SQL_Document_Builder
         /// Handles the click event of the collapse all tool strip menu item.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void CollapseAllToolStripMenuItem_Click(object sender, EventArgs e)
         {
             CurrentEditBox?.FoldAll(FoldAction.Contract);
@@ -3185,7 +3185,7 @@ namespace SQL_Document_Builder
         /// Handles the click event of the collapse all tool strip menu item:
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void ExpandAllToolStripMenuItem_Click(object sender, EventArgs e)
         {
             CurrentEditBox?.FoldAll(FoldAction.Expand);
@@ -3195,7 +3195,7 @@ namespace SQL_Document_Builder
         /// Handles the click event of the find and replace tool strip menu item.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void FindAndReplaceToolStripMenuItem_Click(object sender, EventArgs e)
         {
             OpenFindReplace();
@@ -3209,7 +3209,7 @@ namespace SQL_Document_Builder
         /// Hiddens the characters tool strip menu item_ click.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void HiddenCharactersToolStripMenuItem_Click(object sender, EventArgs e)
         {
             // toggle view whitespace
@@ -3226,7 +3226,7 @@ namespace SQL_Document_Builder
         /// Handles the click event of the indent guides tool strip menu item.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void IndentGuidesToolStripMenuItem_Click(object sender, EventArgs e)
         {
             // toggle indent guides
@@ -3243,7 +3243,7 @@ namespace SQL_Document_Builder
         /// Handles the click event of the lowercase selection tool strip menu item.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void LowercaseSelectionToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Lowercase();
@@ -3253,7 +3253,7 @@ namespace SQL_Document_Builder
         /// Handles the click event of the quick find tool strip menu item.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void QuickFindToolStripMenuItem_Click(object sender, EventArgs e)
         {
             OpenSearch();
@@ -3263,7 +3263,7 @@ namespace SQL_Document_Builder
         /// Handles the click event of the redo tool strip menu item.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void RedoToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (CurrentEditBox == null) return; // If there is no current edit box, exit early
@@ -3277,7 +3277,7 @@ namespace SQL_Document_Builder
         /// Handles the click event of the undo tool strip menu item.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void UndoToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (CurrentEditBox == null) return; // If there is no current edit box, exit early
@@ -3291,7 +3291,7 @@ namespace SQL_Document_Builder
         /// Handles the click event of the upper case selection tool strip menu item.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void UppercaseSelectionToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Uppercase();
@@ -3301,7 +3301,7 @@ namespace SQL_Document_Builder
         /// Handles the click event of the zoom default tool strip menu item.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void Zoom100ToolStripMenuItem_Click(object sender, EventArgs e)
         {
             ZoomDefault();
@@ -3311,7 +3311,7 @@ namespace SQL_Document_Builder
         /// Handles the click event of the zoom in tool strip menu item.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void ZoomInToolStripMenuItem_Click(object sender, EventArgs e)
         {
             ZoomIn();
@@ -3321,7 +3321,7 @@ namespace SQL_Document_Builder
         /// Handles the click event of the zoom out tool strip menu item.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void ZoomOutToolStripMenuItem_Click(object sender, EventArgs e)
         {
             ZoomOut();
@@ -3451,7 +3451,7 @@ namespace SQL_Document_Builder
         /// Handles the click event of the close quick search button.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void CloseQuickSearch_Click(object sender, EventArgs e)
         {
             CloseSearch();
@@ -3537,7 +3537,7 @@ namespace SQL_Document_Builder
         /// Handles the click event of the search next button.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void SearchNext_Click(object sender, EventArgs e)
         {
             SearchManager.Find(true, false);
@@ -3547,7 +3547,7 @@ namespace SQL_Document_Builder
         /// Handles the click event of the search previous button.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void SearchPrevious_Click(object sender, EventArgs e)
         {
             SearchManager.Find(false, false);
@@ -3557,7 +3557,7 @@ namespace SQL_Document_Builder
         /// Handles the key down event of the search text box.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void SearchTextBox_KeyDown(object sender, KeyEventArgs e)
         {
             if (HotKeyManager.IsHotkey(e, Keys.Enter))
@@ -3580,7 +3580,7 @@ namespace SQL_Document_Builder
         /// Handles the text changed event of the search text box.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void TxtSearch_TextChanged(object sender, EventArgs e)
         {
             if (SearchIsOpen)
@@ -3684,7 +3684,7 @@ namespace SQL_Document_Builder
         /// Handles the click event of the clipboard to table tool strip menu item.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void ClipboardToTableToolStripMenuItem1_Click(object sender, EventArgs e)
         {
             if (Clipboard.ContainsText())
@@ -3723,7 +3723,7 @@ namespace SQL_Document_Builder
         /// Handles the click event of the query data to table tool strip menu item.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private async void QueryDataToTableToolStripMenuItem1_Click(object sender, EventArgs e)
         {
             if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
@@ -3771,7 +3771,7 @@ namespace SQL_Document_Builder
         /// Handles the click event of the table definition tool strip menu item.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private async void TableDefinitionToolStripMenuItem_Click_1(object sender, EventArgs e)
         {
             if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
@@ -3835,7 +3835,7 @@ namespace SQL_Document_Builder
         /// Handles the click event of the table list tool strip menu item.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private async void TableListToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
@@ -3888,7 +3888,7 @@ namespace SQL_Document_Builder
         /// Handles the click event of the table values (MarkDown) tool strip menu item.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private async void TableValuesMDToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
@@ -3997,7 +3997,7 @@ namespace SQL_Document_Builder
         /// Handles the click event of the Json clipboard to table tool strip menu item.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void JsonClipboardToTableToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (Clipboard.ContainsText())
@@ -4023,7 +4023,7 @@ namespace SQL_Document_Builder
         /// Handles the click event of the Json object definition tool strip menu item.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private async void JsonObjectDefinitionToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
@@ -4060,7 +4060,7 @@ namespace SQL_Document_Builder
         /// Handles the click event of the Json table view values tool strip menu item.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private async void JsonObjectListToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
@@ -4099,7 +4099,7 @@ namespace SQL_Document_Builder
         /// Handles the click event of the Json query data to table tool strip menu item.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private async void JsonQueryDataToTableToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
@@ -4127,7 +4127,7 @@ namespace SQL_Document_Builder
         /// Handles the click event of the table or view data to json tool strip menu item.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private async void JsonTableViewValuesToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
@@ -4170,7 +4170,7 @@ namespace SQL_Document_Builder
         /// Export descriptions of the selected objects to an Excel file.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private async void ExportDescriptionsToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
@@ -4213,7 +4213,7 @@ namespace SQL_Document_Builder
         /// Handles the click event of the import descriptions tool strip menu item.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void ImportDescriptionsToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
@@ -4284,7 +4284,7 @@ namespace SQL_Document_Builder
         /// Starts the timer_ tick.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private async void StartTimer_Tick(object sender, EventArgs e)
         {
             startTimer.Stop(); // Stop the timer to prevent multiple invocations
@@ -4324,7 +4324,7 @@ namespace SQL_Document_Builder
         /// Handles the tab close requested event of the tab control.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void TabControl1_TabCloseRequested(object sender, TabCloseRequestedEventArgs e)
         {
             if (e.TabPage.Controls[0] is SqlEditBox queryTextBox)
@@ -4361,7 +4361,7 @@ namespace SQL_Document_Builder
         /// Handles the click event of the dark mode tool strip menu item.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void DarkModeToolStripMenuItem_Click(object sender, EventArgs e)
         {
             darkModeToolStripMenuItem.Checked = !darkModeToolStripMenuItem.Checked;
@@ -4391,7 +4391,7 @@ namespace SQL_Document_Builder
         /// Opens the folder in file explorer tool strip menu item_ click.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void OpenFolderInFileExplorerToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (CurrentEditBox != null && !string.IsNullOrEmpty(CurrentEditBox.FileName))
@@ -4429,7 +4429,7 @@ namespace SQL_Document_Builder
         /// Handles the key up event of the search text box.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private async void SearchTextBox_KeyUp(object sender, KeyEventArgs e)
         {
             // If the user presses Enter, perform the search
@@ -4454,7 +4454,7 @@ namespace SQL_Document_Builder
         /// Handles the click event of the search button.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void SearchButton_Click(object sender, EventArgs e)
         {
             if (!string.IsNullOrEmpty(searchTextBox.Text))
@@ -4493,7 +4493,7 @@ namespace SQL_Document_Builder
         /// Handles the click event of the manage recent files tool strip menu item.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void ManageRecentFilesToolStripMenuItem_Click(object sender, EventArgs e)
         {
             // Open the RecentFilesManageForm to manage recent files
@@ -4515,7 +4515,7 @@ namespace SQL_Document_Builder
         /// Handles the click event of the settings tool strip menu item.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void SettingsToolStripMenuItem_Click(object sender, EventArgs e)
         {
             using var dlg = new SettingsForm();
@@ -4526,14 +4526,13 @@ namespace SQL_Document_Builder
         /// Handles the AI processing started event of the definition panel.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void DefinitionPanel_AIProcessingStarted(object sender, EventArgs e)
         {
             _aiDescriptionBusy = true;
             EnableDisableUI(false);
             statusToolStripStatusLabe.Text = "The AI ​​description assistant is working...";
             Cursor = Cursors.WaitCursor;
-
         }
 
         /// <summary>
@@ -4553,28 +4552,59 @@ namespace SQL_Document_Builder
             Cursor = cur;
             foreach (Control control in Controls)
             {
-                control.Cursor = cur;
-                // for panel, tabcontrol, splitcontainer, set cursor for their child controls
-                if (control is Panel || control is TabControl || control is SplitContainer)
-                {
-                    foreach (Control child in control.Controls)
-                    {
-                        child.Cursor = cur;
-                    }
-                }
+                SetControlCursor(control, cur);
             }
         }
 
         /// <summary>
-        /// Definitions the panel_ a i processing completed.
+        /// Sets the control cursor.
+        /// </summary>
+        /// <param name="control">The control.</param>
+        /// <param name="c">The c.</param>
+        private static void SetControlCursor(Control control, Cursor c)
+        {
+            control.Cursor = c;
+            foreach (Control child in control.Controls)
+            {
+                if (child is SqlEditBox editBox)
+                {
+                    editBox.UseWaitCursor = (c == Cursors.WaitCursor);
+                }
+                else
+                    SetControlCursor(child, c);
+            }
+        }
+
+        /// <summary>
+        /// Handles the AI processing completed event of the definition panel.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
+        /// <param name="e">The event arguments.</param>
         private void DefinitionPanel_AIProcessingCompleted(object sender, EventArgs e)
         {
             _aiDescriptionBusy = false;
             EnableDisableUI(true);
             statusToolStripStatusLabe.Text = "The AI ​​description assistant has completed its work.";
+        }
+
+        /// <summary>
+        /// Handles the click event of the AI Description Assistant tool strip menu item.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The event arguments.</param>
+        private async void AIDescriptionAssistantToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            await definitionPanel.AIAssistant();
+        }
+
+        /// <summary>
+        /// Handles the click event of the add column reference tool strip menu item.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void AddColumnReferenceToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            definitionPanel.AddColumnReference();
         }
     }
 }

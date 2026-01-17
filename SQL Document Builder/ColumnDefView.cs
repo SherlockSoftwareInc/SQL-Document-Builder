@@ -400,6 +400,7 @@ GO
                 _tableContext = new TableContext(_dbObject.Columns.ToList());
             }
 
+            _tableContext.ObjectType = _dbObject.ObjectType.ToString();
             _tableContext.TableSchema = _dbObject.Schema ?? "";
             _tableContext.TableName = _dbObject.Name ?? "";
 
@@ -742,60 +743,7 @@ GO
         /// <param name="e">The event arguments.</param>
         private async void AiButton_Click(object sender, EventArgs e)
         {
-            // open AI settings dialog if not ready
-            if (!AISettingsReady())
-            {
-                using var dlg = new SettingsForm();
-                dlg.ShowDialog();
-            }
-
-            if (AISettingsReady())
-            {
-                // raise an event to indicate AI processing has started
-                AIProcessingStarted?.Invoke(this, EventArgs.Empty);
-
-                var referenceContext = await GetReferenceContext();
-
-                // call AIHelper to generate table and column descriptions
-                var helper = new AIHelper();
-                await helper.GenerateTableAndColumnDescriptionsAsync(_tableContext, referenceContext, Connection?.DatabaseDescription);
-
-                // checks if the table object is still the same
-                if (_dbObject.ObjectName == null ||
-                    _dbObject.ObjectName.Name != _tableContext.TableName ||
-                    _dbObject.ObjectName.Schema != _tableContext.TableSchema)
-                {
-                    // the object has changed, do not update the UI
-                    return;
-                }
-
-                // update the table description text box
-                tableDescTextBox.Text = _tableContext.TableDescription;
-
-                // update the column descriptions in the data grid view
-                foreach (DataGridViewRow row in columnDefDataGridView.Rows)
-                {
-                    string columnName = (string)row.Cells["ColumnName"].Value;
-                    var column = _tableContext.Columns.FirstOrDefault(c => c.ColumnName == columnName);
-                    if (column != null)
-                    {
-                        row.Cells["Description"].Value = column.Description;
-                    }
-                }
-
-                // refresh the data grid view
-                columnDefDataGridView.Refresh();
-
-                // resize the columns
-                columnDefDataGridView.AutoResizeColumns();
-
-                _isChanged = true;
-            }
-
-            // raise an event to indicate AI processing has ended
-            AIProcessingCompleted?.Invoke(this, EventArgs.Empty);
-
-            Cursor = Cursors.Default;
+            await AIAssistant();
         }
 
         /// <summary>
@@ -1122,6 +1070,163 @@ GO
         private async Task UpdateParameterDescAsync(string name, string parameterDesc)
         {
             await _dbObject.UpdateLevel2DescriptionAsync(name, parameterDesc, _dbObject.ObjectType);
+        }
+
+        /// <summary>
+        /// Perform AI assistant to generagte description for the object
+        /// </summary>
+        /// <returns>A Task.</returns>
+        internal async Task AIAssistant()
+        {
+            // open AI settings dialog if not ready
+            if (!AISettingsReady())
+            {
+                using var dlg = new SettingsForm();
+                dlg.ShowDialog();
+            }
+
+            if (AISettingsReady())
+            {
+                // raise an event to indicate AI processing has started
+                AIProcessingStarted?.Invoke(this, EventArgs.Empty);
+
+                var referenceContext = await GetReferenceContext();
+
+                // call AIHelper to generate table and column descriptions
+                var helper = new AIHelper();
+                await helper.GenerateTableAndColumnDescriptionsAsync(_tableContext, referenceContext, Connection?.DatabaseDescription);
+
+                // checks if the table object is still the same
+                if (_dbObject.ObjectName == null ||
+                    _dbObject.ObjectName.Name != _tableContext.TableName ||
+                    _dbObject.ObjectName.Schema != _tableContext.TableSchema)
+                {
+                    // the object has changed, do not update the UI
+                    return;
+                }
+
+                // update the table description text box
+                tableDescTextBox.Text = _tableContext.TableDescription;
+
+                // update the column descriptions in the data grid view
+                foreach (DataGridViewRow row in columnDefDataGridView.Rows)
+                {
+                    string columnName = (string)row.Cells["ColumnName"].Value;
+                    var column = _tableContext.Columns.FirstOrDefault(c => c.ColumnName == columnName);
+                    if (column != null)
+                    {
+                        row.Cells["Description"].Value = column.Description;
+                    }
+                }
+
+                // refresh the data grid view
+                columnDefDataGridView.Refresh();
+
+                // resize the columns
+                columnDefDataGridView.AutoResizeColumns();
+
+                _isChanged = true;
+            }
+
+            // raise an event to indicate AI processing has ended
+            AIProcessingCompleted?.Invoke(this, EventArgs.Empty);
+
+            Cursor = Cursors.Default;
+        }
+
+        /// <summary>
+        /// Handles the column reference tool strip menu item click event.
+        /// Open the column reference dialog and get the reference selected by user.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void ColumnReferenceToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // Ensure Connection is available
+            if (Connection == null)
+            {
+                MessageBox.Show("No database connection is available.");
+                return;
+            }
+
+            // Ensure a cell is selected in the DataGridView
+            if (columnDefDataGridView.CurrentCell == null)
+            {
+                MessageBox.Show("Please select a column to reference.");
+                return;
+            }
+
+            // Open the column reference dialog
+            using var dlg = new ColumnReferenceDialog()
+            {
+                Connection = Connection
+            };
+
+            if (dlg.ShowDialog() == DialogResult.OK)
+            {
+                var selectedObject = dlg.SelectedObject;
+                if (selectedObject != null)
+                {
+                    // Insert the column reference into the definition text box at the current cursor position
+                    string referenceText = $"[{selectedObject.Schema}].[{selectedObject.Name}]";
+
+                    // Get the current row index of the data grid view
+                    int rowIndex = columnDefDataGridView.CurrentCell.RowIndex;
+
+                    // Get column description cell
+                    var columnNameCell = columnDefDataGridView.Rows[rowIndex].Cells["ColumnName"];
+                    var columnDescCell = columnDefDataGridView.Rows[rowIndex].Cells["Description"];
+                    if (columnNameCell == null || columnDescCell == null)
+                    {
+                        MessageBox.Show("Column or description cell not found.");
+                        return;
+                    }
+
+                    string columnName = columnNameCell.Value?.ToString() ?? string.Empty;
+                    string columnDesc = columnDescCell.Value?.ToString() ?? string.Empty;
+
+                    // Replace reference text in the column description if found, otherwise append at the end
+                    int refIndex = columnDesc.IndexOf("Reference:");
+                    if (refIndex >= 0)
+                    {
+                        string beforeRef = columnDesc.Substring(0, refIndex).TrimEnd();
+                        if (!string.IsNullOrEmpty(beforeRef))
+                        {
+                            beforeRef += " ";
+                        }
+                        columnDesc = beforeRef + $"Reference: {referenceText}";
+                    }
+                    else
+                    {
+                        if (columnDesc.Length > 0 && !columnDesc.EndsWith(" "))
+                        {
+                            columnDesc += " ";
+                        }
+                        columnDesc += "Reference: " + referenceText;
+                    }
+
+                    // Update the column description cell with the new value
+                    columnDescCell.Value = columnDesc;
+
+                    // Update the _tableContext
+                    var column = _tableContext.Columns.FirstOrDefault(c => c.ColumnName == columnName);
+                    if (column != null)
+                    {
+                        column.Description = columnDesc;
+
+                        // resize the description column to fit new content
+                        columnDefDataGridView.AutoResizeColumn(columnDefDataGridView.Columns["Description"].Index, DataGridViewAutoSizeColumnMode.AllCells);
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Performs the action of adding a column reference by invoking the corresponding menu item click handler.
+        /// </summary>
+        internal void AddColumnReference()
+        {
+            ColumnReferenceToolStripMenuItem_Click(columnReferenceToolStripMenuItem, EventArgs.Empty);
         }
     }
 }

@@ -35,6 +35,11 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// The object type.
+        /// </summary>
+        public string ObjectType { get; set; } = string.Empty;
+
+        /// <summary>
         /// The schema of the table.
         /// </summary>
         public string TableSchema { get; set; } = string.Empty;

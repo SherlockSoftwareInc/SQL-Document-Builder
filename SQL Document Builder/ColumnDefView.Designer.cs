@@ -67,6 +67,8 @@ namespace SQL_Document_Builder
             panel1 = new System.Windows.Forms.Panel();
             descriptionLabel = new System.Windows.Forms.Label();
             toolTip1 = new System.Windows.Forms.ToolTip(components);
+            toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
+            columnReferenceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             namePanel.SuspendLayout();
             openTableContextMenuStrip.SuspendLayout();
             tableContextMenuStrip.SuspendLayout();
@@ -121,12 +123,12 @@ namespace SQL_Document_Builder
             // 
             aiButton.Dock = System.Windows.Forms.DockStyle.Right;
             aiButton.Font = new System.Drawing.Font("Segoe UI", 9F);
+            aiButton.Image = Resources.ai_24;
             aiButton.Location = new System.Drawing.Point(303, 0);
             aiButton.Name = "aiButton";
             aiButton.Padding = new System.Windows.Forms.Padding(3);
             aiButton.Size = new System.Drawing.Size(28, 28);
             aiButton.TabIndex = 2;
-            aiButton.Text = "✨";
             toolTip1.SetToolTip(aiButton, "AI description assistant");
             aiButton.UseVisualStyleBackColor = true;
             aiButton.Click += AiButton_Click;
@@ -221,9 +223,9 @@ namespace SQL_Document_Builder
             // 
             // columnContextMenuStrip
             // 
-            columnContextMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { columnValueFrequencyToolStripMenuItem, toolStripSeparator2, addIndexToolStripMenuItem, addPrimaryKeyToolStripMenuItem });
+            columnContextMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { columnValueFrequencyToolStripMenuItem, toolStripSeparator2, addIndexToolStripMenuItem, addPrimaryKeyToolStripMenuItem, toolStripSeparator3, columnReferenceToolStripMenuItem });
             columnContextMenuStrip.Name = "columnContextMenuStrip";
-            columnContextMenuStrip.Size = new System.Drawing.Size(207, 76);
+            columnContextMenuStrip.Size = new System.Drawing.Size(207, 126);
             // 
             // columnValueFrequencyToolStripMenuItem
             // 
@@ -461,6 +463,18 @@ namespace SQL_Document_Builder
             descriptionLabel.TabIndex = 0;
             descriptionLabel.Text = "Object description:";
             // 
+            // toolStripSeparator3
+            // 
+            toolStripSeparator3.Name = "toolStripSeparator3";
+            toolStripSeparator3.Size = new System.Drawing.Size(203, 6);
+            // 
+            // columnReferenceToolStripMenuItem
+            // 
+            columnReferenceToolStripMenuItem.Name = "columnReferenceToolStripMenuItem";
+            columnReferenceToolStripMenuItem.Size = new System.Drawing.Size(206, 22);
+            columnReferenceToolStripMenuItem.Text = "Column Reference";
+            columnReferenceToolStripMenuItem.Click += ColumnReferenceToolStripMenuItem_Click;
+            // 
             // ColumnDefView
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -533,5 +547,7 @@ namespace SQL_Document_Builder
         private System.Windows.Forms.Button saveButton;
         private System.Windows.Forms.Button aiButton;
         private System.Windows.Forms.ToolTip toolTip1;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator3;
+        private System.Windows.Forms.ToolStripMenuItem columnReferenceToolStripMenuItem;
     }
 }

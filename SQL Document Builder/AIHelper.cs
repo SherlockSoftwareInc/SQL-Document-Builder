@@ -126,8 +126,8 @@ I’ll provide you with a JSON object describing a table and its columns.
 Your task is to complete the missing or empty Description fields for both the table and each column, using professional and concise technical language.
 You should also review and improve any existing descriptions to ensure clarity and accuracy.
 When writing descriptions, you should infer meaning from the table name, column names, and data types.
-When a column appears to reference another table or entity, include that in the description as Reference:#reference table and column#; otherwise, no Reference part. In addition, do not reference itself.
-Keep the descriptions clear and factual (avoid marketing tone).
+When a column appears to reference another table or entity, include that in the description as Reference:#reference table and column#; otherwise, do not add Reference. Do not add Reference to the columns in the view. Do not reference the table or view itself.
+Keep descriptions clear, factual, and concise; avoid any fluff.
 Return the completed JSON in the same structure I provide, without altering existing text or field names.
 
 Here is the input JSON:
