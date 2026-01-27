@@ -29,58 +29,98 @@ namespace SQL_Document_Builder
         /// </exception>
         public async Task<bool> GenerateTableAndColumnDescriptionsAsync(TableContext context, string referenceContext, string? databaseDescription)
         {
-            // Compose the prompt for the LLM
-            string tableDescriptionPrompt = BuildPrompt(context, referenceContext, databaseDescription);
+            const int batchSize = 10;
+            int totalColumns = context.Columns.Count;
+            bool isFirstColumnSet = true;
+            bool anySuccess = false;
 
-            // Call the LLM
-            string llmResponse = await CallLLMAsync(tableDescriptionPrompt);
+            // Store original table description
+            string originalTableDescription = context.TableDescription;
 
-            // Extract JSON part (find first '{' and last '}')
-            int start = llmResponse.IndexOf('{');
-            int end = llmResponse.LastIndexOf('}');
-            if (start == -1 || end == -1 || end < start)
-                throw new InvalidOperationException("No valid JSON object found in LLM response.");
-
-            string json = llmResponse.Substring(start, end - start + 1);
-
-            System.Diagnostics.Debug.Print(json);
-
-            // Parse JSON into TableContext with error handling
-            TableContext? updatedContext = null;
-            try
+            for (int batchStart = 0; batchStart < totalColumns; batchStart += batchSize)
             {
-                updatedContext = JsonSerializer.Deserialize<TableContext>(json, new JsonSerializerOptions
+                var batchColumns = context.Columns.GetRange(batchStart, Math.Min(batchSize, totalColumns - batchStart));
+                var batchContext = new TableContext
                 {
-                    PropertyNameCaseInsensitive = true
-                });
-            }
-            catch (JsonException ex)
-            {
-                // Optionally log the error, e.g.:
-                // Console.Error.WriteLine($"Deserialization failed: {ex.Message}");
-                return false;
-            }
-            catch (Exception)
-            {
-                // Optionally handle other unexpected exceptions
-                return false;
-            }
+                    TableSchema = context.TableSchema,
+                    TableName = context.TableName,
+                    TableDescription = context.TableDescription,
+                    Columns = batchColumns
+                };
 
-            if (updatedContext == null)
-                return false;
+                // Compose the prompt for the LLM
+                string tableDescriptionPrompt = BuildPrompt(batchContext, referenceContext, databaseDescription, isFirstColumnSet);
 
-            // Update the original context with new descriptions
-            context.TableDescription = updatedContext.TableDescription;
-            for (int i = 0; i < context.Columns.Count; i++)
-            {
-                var updatedColumn = updatedContext.Columns.Find(c => c.ColumnName == context.Columns[i].ColumnName);
-                if (updatedColumn != null)
+                // Call the LLM
+                string llmResponse = await CallLLMAsync(tableDescriptionPrompt);
+
+                // Extract JSON part (find first '{' and last '}')
+                int start = llmResponse.IndexOf('{');
+                int end = llmResponse.LastIndexOf('}');
+                if (start == -1 || end == -1 || end < start)
                 {
-                    context.Columns[i].Description = updatedColumn.Description;
+                    if (isFirstColumnSet) throw new InvalidOperationException("No valid JSON object found in LLM response.");
+                    continue;
                 }
+
+                string json = llmResponse.Substring(start, end - start + 1);
+                System.Diagnostics.Debug.Print(json);
+
+                // Parse JSON into TableContext with error handling
+                TableContext? updatedContext = null;
+                try
+                {
+                    updatedContext = JsonSerializer.Deserialize<TableContext>(json, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+                }
+                catch (JsonException)
+                {
+                    if (isFirstColumnSet) return false;
+                    continue;
+                }
+                catch (Exception)
+                {
+                    if (isFirstColumnSet) return false;
+                    continue;
+                }
+
+                if (updatedContext == null)
+                {
+                    if (isFirstColumnSet) return false;
+                    continue;
+                }
+
+                // Only update table description from first batch
+                if (isFirstColumnSet && !string.IsNullOrWhiteSpace(updatedContext.TableDescription))
+                {
+                    context.TableDescription = updatedContext.TableDescription;
+                }
+
+                // Update column descriptions for this batch
+                foreach (var col in batchColumns)
+                {
+                    var updatedColumn = updatedContext.Columns.Find(c => c.ColumnName == col.ColumnName);
+                    if (updatedColumn != null)
+                    {
+                        var origCol = context.Columns.Find(c => c.ColumnName == col.ColumnName);
+                        if (origCol != null)
+                        {
+                            origCol.Description = updatedColumn.Description;
+                        }
+                    }
+                }
+
+                anySuccess = true;
+                isFirstColumnSet = false;
             }
 
-            return true;
+            // Restore original table description if none was updated
+            if (string.IsNullOrWhiteSpace(context.TableDescription))
+                context.TableDescription = originalTableDescription;
+
+            return anySuccess;
         }
 
         /// <summary>
@@ -88,7 +128,7 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="context">The table context to serialize and include in the prompt.</param>
         /// <returns>A string containing the prompt for the LLM.</returns>
-        private string BuildPrompt(TableContext context, string referenceContext, string? databaseDescription)
+        private string BuildPrompt(TableContext context, string referenceContext, string? databaseDescription, bool isFirstColumnSet = true)
         {
             // Convert context to JSON
             string contextJson = JsonSerializer.Serialize(context, new JsonSerializerOptions
@@ -120,6 +160,10 @@ namespace SQL_Document_Builder
                 languageInstruction = $"\nWrite all descriptions in {aiLanguage}.";
             }
 
+            string tableInstruction = isFirstColumnSet
+                ? "The table description should summarize what the table stores or represents."
+                : "Do not generate or modify the table description; only update column descriptions.";
+
             string prompt = $@"You are a technical database documentation assistant.
 {dbDescription}
 I’ll provide you with a JSON object describing a table and its columns.
@@ -137,7 +181,7 @@ Here is the input JSON:
 {referenceInfo}
 Additional guidelines:
 
-The table description should summarize what the table stores or represents.
+{tableInstruction}
 Each column description should explain what the field contains and its purpose.
 Do not change schema names, object names, or property names.
 Output only valid JSON.{languageInstruction}";
