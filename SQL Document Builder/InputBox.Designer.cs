@@ -1,5 +1,4 @@
-﻿
-namespace SQL_Document_Builder
+﻿namespace SQL_Document_Builder
 {
     partial class InputBox
     {
@@ -29,70 +28,73 @@ namespace SQL_Document_Builder
         /// </summary>
         private void InitializeComponent()
         {
-            this.captionLabel = new System.Windows.Forms.Label();
-            this.okButton = new System.Windows.Forms.Button();
-            this.cancelButton = new System.Windows.Forms.Button();
-            this.textBox1 = new System.Windows.Forms.TextBox();
-            this.SuspendLayout();
+            captionLabel = new System.Windows.Forms.Label();
+            okButton = new System.Windows.Forms.Button();
+            cancelButton = new System.Windows.Forms.Button();
+            inputTextBox = new System.Windows.Forms.TextBox();
+            SuspendLayout();
             // 
             // captionLabel
             // 
-            this.captionLabel.AutoSize = true;
-            this.captionLabel.Location = new System.Drawing.Point(12, 16);
-            this.captionLabel.Name = "captionLabel";
-            this.captionLabel.Size = new System.Drawing.Size(46, 17);
-            this.captionLabel.TabIndex = 0;
-            this.captionLabel.Text = "label1";
+            captionLabel.AutoSize = true;
+            captionLabel.Location = new System.Drawing.Point(10, 15);
+            captionLabel.Name = "captionLabel";
+            captionLabel.Size = new System.Drawing.Size(38, 15);
+            captionLabel.TabIndex = 0;
+            captionLabel.Text = "label1";
             // 
             // okButton
             // 
-            this.okButton.AutoSize = true;
-            this.okButton.Location = new System.Drawing.Point(353, 12);
-            this.okButton.Name = "okButton";
-            this.okButton.Size = new System.Drawing.Size(75, 27);
-            this.okButton.TabIndex = 2;
-            this.okButton.Text = "&OK";
-            this.okButton.UseVisualStyleBackColor = true;
-            this.okButton.Click += new System.EventHandler(this.OKButton_Click);
+            okButton.AutoSize = true;
+            okButton.Location = new System.Drawing.Point(309, 11);
+            okButton.Name = "okButton";
+            okButton.Size = new System.Drawing.Size(66, 25);
+            okButton.TabIndex = 2;
+            okButton.Text = "&OK";
+            okButton.UseVisualStyleBackColor = true;
+            okButton.Click += OKButton_Click;
             // 
             // cancelButton
             // 
-            this.cancelButton.AutoSize = true;
-            this.cancelButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.cancelButton.Location = new System.Drawing.Point(353, 45);
-            this.cancelButton.Name = "cancelButton";
-            this.cancelButton.Size = new System.Drawing.Size(75, 27);
-            this.cancelButton.TabIndex = 3;
-            this.cancelButton.Text = "&Cancel";
-            this.cancelButton.UseVisualStyleBackColor = true;
-            this.cancelButton.Click += new System.EventHandler(this.CancelButton_Click);
+            cancelButton.AutoSize = true;
+            cancelButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
+            cancelButton.Location = new System.Drawing.Point(309, 42);
+            cancelButton.Name = "cancelButton";
+            cancelButton.Size = new System.Drawing.Size(66, 25);
+            cancelButton.TabIndex = 3;
+            cancelButton.Text = "&Cancel";
+            cancelButton.UseVisualStyleBackColor = true;
+            cancelButton.Click += CancelButton_Click;
             // 
-            // textBox1
+            // inputTextBox
             // 
-            this.textBox1.Location = new System.Drawing.Point(12, 88);
-            this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(416, 22);
-            this.textBox1.TabIndex = 1;
+            inputTextBox.Location = new System.Drawing.Point(10, 82);
+            inputTextBox.Name = "inputTextBox";
+            inputTextBox.Size = new System.Drawing.Size(364, 23);
+            inputTextBox.TabIndex = 1;
+            inputTextBox.AcceptsReturn = false;
+            inputTextBox.AcceptsTab = false;
+            inputTextBox.Multiline = false;
             // 
             // InputBox
             // 
-            this.AcceptButton = this.okButton;
-            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(442, 133);
-            this.Controls.Add(this.textBox1);
-            this.Controls.Add(this.cancelButton);
-            this.Controls.Add(this.okButton);
-            this.Controls.Add(this.captionLabel);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
-            this.MaximizeBox = false;
-            this.MinimizeBox = false;
-            this.Name = "InputBox";
-            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Text = "InputBox";
-            this.Load += new System.EventHandler(this.InputBox_Load);
-            this.ResumeLayout(false);
-            this.PerformLayout();
+            AcceptButton = okButton;
+            AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
+            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            ClientSize = new System.Drawing.Size(387, 125);
+            Controls.Add(inputTextBox);
+            Controls.Add(cancelButton);
+            Controls.Add(okButton);
+            Controls.Add(captionLabel);
+            FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
+            MaximizeBox = false;
+            MinimizeBox = false;
+            Name = "InputBox";
+            StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
+            Text = "InputBox";
+            Load += InputBox_Load;
+            ResumeLayout(false);
+            PerformLayout();
 
         }
 
@@ -101,6 +103,6 @@ namespace SQL_Document_Builder
         private System.Windows.Forms.Label captionLabel;
         private System.Windows.Forms.Button okButton;
         private System.Windows.Forms.Button cancelButton;
-        private System.Windows.Forms.TextBox textBox1;
+        private System.Windows.Forms.TextBox inputTextBox;
     }
 }

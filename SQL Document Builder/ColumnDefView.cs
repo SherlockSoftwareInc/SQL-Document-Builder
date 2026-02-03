@@ -153,6 +153,11 @@ namespace SQL_Document_Builder
         public ObjectName.ObjectTypeEnums? TableType => _dbObject?.ObjectType;
 
         /// <summary>
+        /// Gets the definition text.
+        /// </summary>
+        public object DefinitionText { get => definitionTextBox.Text; }
+
+        /// <summary>
         /// Clears the current view, resetting all UI elements and internal state.
         /// </summary>
         public void Clear()

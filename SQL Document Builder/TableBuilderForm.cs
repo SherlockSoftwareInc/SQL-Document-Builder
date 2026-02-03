@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Security.AccessControl;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -4605,6 +4606,128 @@ namespace SQL_Document_Builder
         private void AddColumnReferenceToolStripMenuItem_Click(object sender, EventArgs e)
         {
             definitionPanel.AddColumnReference();
+        }
+
+        /// <summary>
+        /// Handles the click event of the optimize code tool strip menu item.
+        /// Uses AI to optimize the code of the selected database object.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private async void OptimizeCodeToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
+
+            // available only for object type is view, stored procedure, or function
+            // set the selected object
+            if (SelectedObject == null ||
+                (SelectedObject.ObjectType != ObjectTypeEnums.View &&
+                SelectedObject.ObjectType != ObjectTypeEnums.StoredProcedure &&
+                SelectedObject.ObjectType != ObjectTypeEnums.Function))
+            {
+                Common.MsgBox("The feature is for View, Stored Procedure, or Function only.", MessageBoxIcon.Warning);
+                return;
+            }
+
+            _aiDescriptionBusy = true;
+            EnableDisableUI(false);
+            statusToolStripStatusLabe.Text = "The AI ​code advisor is working...";
+            Cursor = Cursors.WaitCursor;
+
+            // get the object definition from the definitionPanel
+            var definition = definitionPanel.DefinitionText;
+
+            var content = await AIHelper.OptimizeCodeAsync(definition);
+
+            if (!string.IsNullOrEmpty(content))
+            {
+                if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
+
+                if (!BeginAddDDLScript()) return;
+
+                AddDataSourceText();
+
+                AppendText(editBox, content);
+
+                statusToolStripStatusLabe.Text = "The AI ​​code advisor has completed its work.";
+            }
+
+            _aiDescriptionBusy = false;
+            EnableDisableUI(true);
+
+            Cursor = Cursors.Default;
+        }
+
+        /// <summary>
+        /// Handles the click event of the modify code tool strip menu item.
+        /// Gets the modification request from the user and uses AI to modify the code accordingly.
+        /// </summary>
+        private async void ModifyCodeToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
+
+            // available only for object type is view, stored procedure, or function
+            // set the selected object
+            if (SelectedObject == null || (SelectedObject.ObjectType == ObjectTypeEnums.None))
+            {
+                Common.MsgBox("There is no object selected.", MessageBoxIcon.Warning);
+                return;
+            }
+
+            // get the CREATE script of the selected object
+            var createScript = await DatabaseDocBuilder.GetCreateObjectScriptAsync(SelectedObject, _currentConnection!);
+
+            // remove the space and new line at the end of the script
+            createScript = createScript?.TrimEnd(' ', '\r', '\n', '\t');
+
+            // get description of the selected object
+            var description = await ObjectDescription.BuildObjectDescription(SelectedObject, _currentConnection, Properties.Settings.Default.UseExtendedProperties);
+
+            // combine the create script and description
+            createScript = $"{description}\n\n{createScript}";
+
+            // user inputbox to get the modification request
+            using (var inputBox = new InputBox())
+            {
+                inputBox.Title = "Modify Code Request";
+                inputBox.Prompt = "Please enter your modification request:";
+                inputBox.Default = "";
+                inputBox.Multiline = true;
+                inputBox.MaxLength = 1000;
+
+                if (inputBox.ShowDialog() == DialogResult.OK)
+                {
+                    var userRequest = inputBox.InputText;
+
+                    if (!string.IsNullOrEmpty(userRequest))
+                    {
+                        _aiDescriptionBusy = true;
+                        EnableDisableUI(false);
+                        statusToolStripStatusLabe.Text = "The AI ​code advisor is working...";
+                        Cursor = Cursors.WaitCursor;
+
+                        var content = await AIHelper.ModifyCodeAsync(createScript!, userRequest);
+
+                        if (!string.IsNullOrEmpty(content))
+                        {
+                            if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
+
+                            if (!BeginAddDDLScript()) return;
+
+                            AddDataSourceText();
+
+                            AppendText(editBox, content);
+
+                            statusToolStripStatusLabe.Text = "The AI ​​code advisor has completed its work.";
+                        }
+
+                        _aiDescriptionBusy = false;
+                        EnableDisableUI(true);
+
+                        Cursor = Cursors.Default;
+                    }
+                }
+            }
         }
     }
 }

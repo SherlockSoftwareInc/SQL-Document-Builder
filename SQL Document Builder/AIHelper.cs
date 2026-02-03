@@ -124,11 +124,143 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Modifies the provided SQL code according to the user's request using a Large Language Model (LLM).
+        /// The method composes a prompt including the SQL code and user request, sends it to the LLM,
+        /// and returns the modified SQL code.
+        /// </summary>
+        /// <param name="currentConnection">The current connection.</param>
+        /// <param name="selectedObject">The selected object.</param>
+        /// <param name="definition">The definition.</param>
+        /// <param name="tableBuilderForm">The table builder form.</param>
+        /// <returns>A Task.</returns>
+        internal static async Task<string?> ModifyCodeAsync(object definition, string userRequest)
+        {
+            // Extract SQL code from the definition (string or object)
+            string sqlCode = definition switch
+            {
+                string s => s,
+                _ => definition?.ToString() ?? string.Empty
+            };
+
+            if (string.IsNullOrWhiteSpace(sqlCode))
+                return string.Empty;
+
+            // Compose the prompt for code modification
+            string prompt = $@"Act as a Senior Database Engineer and SQL Expert. Your task is to modify the following SQL code according to the user's request.
+
+User Request:
+{userRequest}
+
+Constraints & Formatting:
+- No Markdown Rule: Do not use markdown code blocks (```sql) or backticks (`) anywhere in your response. Return the result as plain text.
+- Line Wrap Rule: Within the comment block, you must manually wrap the text so that no single line exceeds 100 characters.
+- Script Sequencing:
+Start with the DROP statement: IF OBJECT_ID(N'[schema].[name]', 'V') IS NOT NULL DROP VIEW [schema].[name];
+Follow with the GO command.
+Insert the Documentation Header.
+Follow with the CREATE VIEW statement.
+{DocumentHeaderInstructions()}
+- Response Structure: You must return your modifications notes first, then modified SQL statement. The EXEC usp_addupdateextendedproperty scripts go last.
+- The Comment Rule: All explanations, bug reports, and modification notes must be contained within a single SQL multi-line comment block /* ... */.
+{LanguageInstruction()}
+
+Here is the SQL code to modify:
+" + sqlCode;
+
+            var aiHelper = new AIHelper();
+            string result = await aiHelper.CallLLMAsync(prompt);
+            return result;
+        }
+
+        /// <summary>
+        /// Optimizes the provided SQL code using a Large Language Model (LLM) by analyzing,
+        /// </summary>
+        /// <param name="currentConnection">The current connection.</param>
+        /// <param name="selectedObject">The selected object.</param>
+        /// <param name="definition">The definition.</param>
+        /// <param name="tableBuilderForm">The table builder form.</param>
+        /// <returns>A Task.</returns>
+        internal static async Task<string> OptimizeCodeAsync(object definition)
+        {
+            // Extract SQL code from the definition (string or object)
+            string sqlCode = definition switch
+            {
+                string s => s,
+                _ => definition?.ToString() ?? string.Empty
+            };
+
+            if (string.IsNullOrWhiteSpace(sqlCode))
+                return string.Empty;
+
+            // Compose the prompt
+            string prompt = $@"Act as a Senior Database Engineer and Performance Tuning Expert for SQL Server. Your goal is to analyze, debug, and optimize SQL queries provided by the user.
+
+Your Analysis Workflow:
+1. Bug Audit: Check for common pitfalls like missing join conditions (Cartesian products), incorrect NULL handling, or syntax errors.
+2. Performance Bottleneck Identification: Locate ""SARGability"" issues, unnecessary subqueries, redundant joins, or logic that forces full table scans.
+3. Refactor & Validate: Rewrite the query to improve execution speed and resource efficiency while strictly maintaining the original result set.
+
+Constraints & Formatting:
+- No Markdown Rule: Do not use markdown code blocks (```sql) or backticks (`) anywhere in your response. Return the result as plain text.
+- Line Wrap Rule: Within the comment block, you must manually wrap the text so that no single line exceeds 100 characters.
+- Script Sequencing:
+Start with the DROP statement: IF OBJECT_ID(N'[schema].[name]', 'V') IS NOT NULL DROP VIEW [schema].[name];
+Follow with the GO command.
+Insert the Documentation Header.
+Follow with the CREATE VIEW statement.
+{DocumentHeaderInstructions()}
+- The Comment Rule: All explanations, bug reports, and optimization notes must be contained within a single SQL multi-line comment block /* ... */.
+- Response Structure: You must return your analysis first, then optimized SQL statement. The EXEC usp_addupdateextendedproperty scripts go last.
+{LanguageInstruction()}
+
+Here is the SQL code to optimize:
+" + sqlCode;
+
+            // Use the same LLM call as other AI features
+            var aiHelper = new AIHelper();
+            string result = await aiHelper.CallLLMAsync(prompt);
+            return result;
+        }
+
+        /// <summary>
+        /// Returns the documentation header instructions for SQL code modification and optimization prompts.
+        /// </summary>
+        /// <returns>A string containing the documentation header instructions.</returns>
+        private static string DocumentHeaderInstructions()
+        {
+            return @"- Documentation Header: Add a header before the CREATE statement using the following format:
+-- =============================================
+-- Author:      (author name)
+-- Create date: (original date)
+-- Description: [Briefly summarize what the view/query does here]
+-- Modify by:   AI advisor
+-- Modify date: {{Current Date}}
+-- =============================================";
+        }
+
+        /// <summary>
+        /// Languages the instruction.
+        /// </summary>
+        /// <returns>A string.</returns>
+        private static string LanguageInstruction()
+        {
+            // Get language from settings
+            string aiLanguage = AISettingsManager.Current.AILanguage ?? "English";
+            string languageInstruction = string.Empty;
+            if (!aiLanguage.Equals("English", StringComparison.OrdinalIgnoreCase))
+            {
+                languageInstruction = $"\nWrite all descriptions in {aiLanguage}.";
+            }
+
+            return languageInstruction;
+        }
+
+        /// <summary>
         /// Builds the prompt for the LLM using the provided table context.
         /// </summary>
         /// <param name="context">The table context to serialize and include in the prompt.</param>
         /// <returns>A string containing the prompt for the LLM.</returns>
-        private string BuildPrompt(TableContext context, string referenceContext, string? databaseDescription, bool isFirstColumnSet = true)
+        private static string BuildPrompt(TableContext context, string referenceContext, string? databaseDescription, bool isFirstColumnSet = true)
         {
             // Convert context to JSON
             string contextJson = JsonSerializer.Serialize(context, new JsonSerializerOptions
@@ -146,18 +278,10 @@ namespace SQL_Document_Builder
             if (!string.IsNullOrWhiteSpace(referenceContext))
             {
                 referenceInfo = $@"Reference context:
-~~~json
+```json
 {referenceContext}
-~~~
+```
 ";
-            }
-
-            // Get language from settings
-            string aiLanguage = AISettingsManager.Current.AILanguage ?? "English";
-            string languageInstruction = string.Empty;
-            if (!aiLanguage.Equals("English", StringComparison.OrdinalIgnoreCase))
-            {
-                languageInstruction = $"\nWrite all descriptions in {aiLanguage}.";
             }
 
             string tableInstruction = isFirstColumnSet
@@ -175,16 +299,16 @@ Keep descriptions clear, factual, and concise; avoid any fluff.
 Return the completed JSON in the same structure I provide, without altering existing text or field names.
 
 Here is the input JSON:
-~~~json
+```json
 {contextJson}
-~~~
+```
 {referenceInfo}
 Additional guidelines:
 
 {tableInstruction}
 Each column description should explain what the field contains and its purpose.
 Do not change schema names, object names, or property names.
-Output only valid JSON.{languageInstruction}";
+Output only valid JSON.{LanguageInstruction()}";
 
             return prompt;
         }
