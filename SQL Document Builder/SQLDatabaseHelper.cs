@@ -1360,6 +1360,54 @@ AND OBJECT_NAME(fk.parent_object_id) = '{objectName.Name}'";
             return await GetDataTableAsync(sql, connectionString);
         }
 
+        /// <summary>
+        /// Verifies the SQL code syntax.
+        /// </summary>
+        /// <param name="sqlCode">The sql code.</param>
+        /// <param name="connectionString">The connection string.</param>
+        /// <returns>A Task&lt;string&gt;? .</returns>
+        internal static async Task<string>? VerifySQL(string sqlCode, string? connectionString)
+        {
+            if (string.IsNullOrWhiteSpace(connectionString))
+                return "No database connection specified.";
+
+            await using var connection = new SqlConnection(connectionString);
+            await using var command = new SqlCommand(sqlCode, connection);
+            var resultBuilder = new StringBuilder();
+
+            try
+            {
+                await connection.OpenAsync();
+                // Turn NOEXEC ON to check syntax only
+                await using (var setNoExecOn = new SqlCommand("SET NOEXEC ON", connection))
+                {
+                    await setNoExecOn.ExecuteNonQueryAsync();
+                }
+                try
+                {
+                    await command.ExecuteNonQueryAsync();
+                }
+                catch (SqlException ex)
+                {
+                    for (int i = 0; i < ex.Errors.Count; i++)
+                    {
+                        resultBuilder.AppendLine(ex.Errors[i].Message);
+                    }
+                }
+                finally
+                {
+                    // Turn NOEXEC OFF
+                    await using var setNoExecOff = new SqlCommand("SET NOEXEC OFF", connection);
+                    await setNoExecOff.ExecuteNonQueryAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                resultBuilder.AppendLine("Unhandled error: " + ex.Message);
+            }
+            return resultBuilder.ToString().Trim();
+        }
+
         #endregion Miscellaneous Methods
 
         /*

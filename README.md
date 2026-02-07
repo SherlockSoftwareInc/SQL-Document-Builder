@@ -2,17 +2,19 @@
 
 **SQL Server Script and Document Builder** is a comprehensive SQL document and script builder featuring advanced database object browsing, powerful script generation, and multi-tab SQL editing—all integrated with robust connection and template management.
 
-**Our latest update introduces AI-Powered Documentation**, leveraging a built-in LLM to instantly generate or refine table and column metadata. By analyzing your schema, the AI produces professional, context-aware descriptions that help both the system and your team understand data intent. Because it is a template-based document builder, it can easily support any output format (Markdown, WIKI, SharePoint) or language by simply adding a new template or language definition. These high-quality, AI-generated descriptions serve as the foundation for accurate data insights, ensuring your documentation is both complete and context-aware.
+**Our latest update introduces AI-Powered Documentation and Development**, leveraging a built-in LLM to instantly generate metadata or refine your SQL code. By analyzing your schema and logic, the AI produces professional descriptions and optimized scripts. Because it is a template-based builder, it supports any output format (Markdown, WIKI, SharePoint) or language. These AI-driven capabilities ensure your database logic is efficient and your documentation is context-aware.
 
 ---
 
 ## 🚀 Key Features
 
-### 🧠 AI-Powered Documentation
-- **Auto-Generated Descriptions** – Leverage a built-in LLM to instantly generate or refine table and column metadata. By analyzing your schema, the AI produces professional, context-aware documentation that helps both the system and your team understand data intent.
+### 🧠 AI-Powered Development & Documentation
+- **Auto-Generated Descriptions** – Leverage a built-in LLM to instantly generate or refine table and column metadata for professional, context-aware documentation.
+- **AI Code Optimization** – Automatically review and optimize SQL code for **Views, Stored Procedures, and Functions** to improve performance and readability.
+- **Natural Language Refactoring** – Select a database object and enter a request (e.g., "Add a new parameter" or "Change the join logic") to have the AI modify the script for you.
 
 > [!TIP]
-> **Why this matters:** High-quality descriptions are the foundation of accurate AI insights. The more complete your metadata, the more precise and context-aware the AI's suggestions become.
+> **Why this matters:** High-quality metadata and optimized code are the foundation of accurate AI insights. The more precise your scripts and descriptions, the more effective your entire data ecosystem becomes.
 
 ---
 
@@ -107,5 +109,3 @@ When you visit the above link, the ClickOnce installer will guide you through th
 `SQL Server Script and Document Builder`  
 
 📌 The app is installed per-user (not in `C:\Program Files`) and automatically keeps itself up-to-date.
-
-

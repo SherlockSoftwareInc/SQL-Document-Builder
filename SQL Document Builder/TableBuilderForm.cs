@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
 using System.Linq;
-using System.Security.AccessControl;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -2139,7 +2138,7 @@ namespace SQL_Document_Builder
         /// Handles the "Panel2" resize event.
         /// </summary>
         /// <param name="sender">The sender.</param>
-        /// <param {e">The e.</param>
+        /// <param name="e">The e.</param>
         private void Panel2_Resize(object sender, EventArgs e)
         {
             int margin = 2;
@@ -4530,10 +4529,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The event arguments.</param>
         private void DefinitionPanel_AIProcessingStarted(object sender, EventArgs e)
         {
-            _aiDescriptionBusy = true;
-            EnableDisableUI(false);
-            statusToolStripStatusLabe.Text = "The AI ​​description assistant is working...";
-            Cursor = Cursors.WaitCursor;
+            WorkingMode(true, "🌑 The AI ​​description assistant is working...");
         }
 
         /// <summary>
@@ -4583,9 +4579,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The event arguments.</param>
         private void DefinitionPanel_AIProcessingCompleted(object sender, EventArgs e)
         {
-            _aiDescriptionBusy = false;
-            EnableDisableUI(true);
-            statusToolStripStatusLabe.Text = "The AI ​​description assistant has completed its work.";
+            WorkingMode(false, "The AI ​​description assistant has completed its work.");
         }
 
         /// <summary>
@@ -4629,10 +4623,7 @@ namespace SQL_Document_Builder
                 return;
             }
 
-            _aiDescriptionBusy = true;
-            EnableDisableUI(false);
-            statusToolStripStatusLabe.Text = "The AI ​code advisor is working...";
-            Cursor = Cursors.WaitCursor;
+            WorkingMode(true, "🌑 The AI ​code advisor is working...");
 
             // get the object definition from the definitionPanel
             var definition = definitionPanel.DefinitionText;
@@ -4648,14 +4639,9 @@ namespace SQL_Document_Builder
                 AddDataSourceText();
 
                 AppendText(editBox, content);
-
-                statusToolStripStatusLabe.Text = "The AI ​​code advisor has completed its work.";
             }
 
-            _aiDescriptionBusy = false;
-            EnableDisableUI(true);
-
-            Cursor = Cursors.Default;
+            WorkingMode(false, "The AI ​​code advisor has completed its work.");
         }
 
         /// <summary>
@@ -4674,8 +4660,31 @@ namespace SQL_Document_Builder
                 return;
             }
 
-            // get the CREATE script of the selected object
-            var createScript = await DatabaseDocBuilder.GetCreateObjectScriptAsync(SelectedObject, _currentConnection!);
+            int tryCount = 3;
+            string createScript = await DatabaseDocBuilder.GetCreateObjectScriptAsync(SelectedObject, _currentConnection!);
+            // user AI to midify the code based on user request, retry up to 3 times if the SQL verification fails
+            while (tryCount > 0)
+            {
+                // verify the SQL code syntax
+                var verifyResult = await VerifySQL(createScript!);
+
+                if (string.IsNullOrEmpty(verifyResult))
+                {
+                    break; // exit the loop if verification is successful
+                }
+                else
+                {
+                    tryCount--;
+                    if (tryCount == 0)
+                    {
+                        Common.MsgBox("The SQL code verification failed after multiple attempts. Please check the object definition manually.", MessageBoxIcon.Error);
+                        return;
+                    }
+
+                    // use AI to fix the SQL code
+                    createScript = await AIHelper.FixSQLCodeAsync(createScript!, verifyResult);
+                }
+            }
 
             // remove the space and new line at the end of the script
             createScript = createScript?.TrimEnd(' ', '\r', '\n', '\t');
@@ -4701,10 +4710,7 @@ namespace SQL_Document_Builder
 
                     if (!string.IsNullOrEmpty(userRequest))
                     {
-                        _aiDescriptionBusy = true;
-                        EnableDisableUI(false);
-                        statusToolStripStatusLabe.Text = "The AI ​code advisor is working...";
-                        Cursor = Cursors.WaitCursor;
+                        WorkingMode(true, "🌑 The AI ​code advisor is working...");
 
                         var content = await AIHelper.ModifyCodeAsync(createScript!, userRequest);
 
@@ -4717,15 +4723,128 @@ namespace SQL_Document_Builder
                             AddDataSourceText();
 
                             AppendText(editBox, content);
-
-                            statusToolStripStatusLabe.Text = "The AI ​​code advisor has completed its work.";
                         }
 
-                        _aiDescriptionBusy = false;
-                        EnableDisableUI(true);
-
-                        Cursor = Cursors.Default;
+                        WorkingMode(false, "The AI ​​code advisor has completed its work.");
                     }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Verifies the SQL code syntax.
+        /// </summary>
+        /// <param name="context">The context.</param>
+        /// <returns>A Task.</returns>
+        private async Task<string> VerifySQL(string context)
+        {
+            // extract the SQL code from the context that is between the ```sql and ``` markers
+            string pattern = @"```sql(.*?)```";
+            Match match = Regex.Match(context, pattern, RegexOptions.Singleline | RegexOptions.IgnoreCase);
+            string sqlCode = match.Success ? match.Groups[1].Value.Trim() : context.Trim();
+
+            // verify the sql code using SQL Server Management Objects (SMO)
+            string verifyResult = await Task.Run(() => SQLDatabaseHelper.VerifySQL(sqlCode, _currentConnection?.ConnectionString));
+
+            return verifyResult;
+        }
+
+        private int _dotCount = 0; // Class-level variable to track dots
+
+        /// <summary>
+        /// Handles the tick event of the wait timer.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void WaitTimer_Tick(object sender, EventArgs e)
+        {
+            var moonPhases = new[] { "🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘" };
+            string currentText = statusToolStripStatusLabe.Text ?? "Processing";
+
+            // --- 1. Handle the Rolling Moon (Start of string) ---
+            int moonIndex = -1;
+            string currentMoon = "";
+
+            foreach (var moon in moonPhases)
+            {
+                if (currentText.StartsWith(moon))
+                {
+                    moonIndex = Array.IndexOf(moonPhases, moon);
+                    currentMoon = moon;
+                    break;
+                }
+            }
+
+            int nextMoonIndex = (moonIndex + 1) % moonPhases.Length;
+            string nextMoon = moonPhases[nextMoonIndex];
+
+            // --- 2. Extract the Core Message ---
+            // Remove the moon and any leading/trailing whitespace/dots to get the clean text
+            string cleanMessage = currentText;
+            if (!string.IsNullOrEmpty(currentMoon))
+            {
+                cleanMessage = cleanMessage.Substring(currentMoon.Length).Trim();
+            }
+            // Strip existing trailing dots
+            cleanMessage = cleanMessage.TrimEnd('.');
+
+            // --- 3. Handle Growing Dots (End of string) ---
+            _dotCount++;
+            if (_dotCount > 6) _dotCount = 1;
+            string dots = new string('.', _dotCount);
+
+            // --- 4. Reconstruct the String ---
+            statusToolStripStatusLabe.Text = $"{nextMoon} {cleanMessage}{dots}";
+        }
+
+        /// <summary>
+        /// sets the working mode.
+        /// </summary>
+        /// <param name="isBusy">If true, is busy.</param>
+        /// <param name="statusMessage">The status message.</param>
+        private void WorkingMode(bool isBusy, string statusMessage)
+        {
+            if (isBusy)
+            {
+                _aiDescriptionBusy = true;
+                EnableDisableUI(false);
+                Cursor = Cursors.WaitCursor;
+
+                statusToolStripStatusLabe.Text = statusMessage;
+                statusToolStripStatusLabe.Enabled = true;
+                waitTimer.Start();
+            }
+            else
+            {
+                waitTimer.Stop();
+                _aiDescriptionBusy = false;
+                EnableDisableUI(true);
+                Cursor = Cursors.Default;
+                statusToolStripStatusLabe.Text = statusMessage;
+            }
+        }
+
+        /// <summary>
+        /// Handles the click event of the Description Assistant Plus tool strip menu item.
+        /// Generates a detailed description of the selected database object with additional
+        /// information such as column descriptions, index information, and more, using AI.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private async void DescriptionAssistantPlusToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // get user input for additional information
+            using (var inputBox = new InputBox())
+            {
+                inputBox.Title = "Description Assistant Plus - Additional Information";
+                inputBox.Prompt = "Please enter any additional information or specific requirements for the description (optional):";
+                inputBox.Default = "";
+                inputBox.Multiline = true;
+                inputBox.MaxLength = 2000;
+                if (inputBox.ShowDialog() == DialogResult.OK)
+                {
+                    var additionalInfo = inputBox.InputText;
+                    await definitionPanel.AIAssistant(additionalInfo);
                 }
             }
         }

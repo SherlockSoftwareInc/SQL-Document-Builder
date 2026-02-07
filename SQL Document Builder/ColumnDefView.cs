@@ -814,12 +814,12 @@ GO
 
                 // find the column in the _tableContext and update its description
                 var column = _tableContext.Columns.FirstOrDefault(c => c.ColumnName == columnName);
-                if (column != null)
+                // update the description if the column is found and the description has changed
+                if (column != null && column.Description != columnDesc)
                 {
                     column.Description = columnDesc;
+                    _isChanged = true;
                 }
-
-                _isChanged = true;
             }
         }
 
@@ -1081,7 +1081,7 @@ GO
         /// Perform AI assistant to generagte description for the object
         /// </summary>
         /// <returns>A Task.</returns>
-        internal async Task AIAssistant()
+        internal async Task AIAssistant(string additionalInfo = "")
         {
             // open AI settings dialog if not ready
             if (!AISettingsReady())
@@ -1099,7 +1099,7 @@ GO
 
                 // call AIHelper to generate table and column descriptions
                 var helper = new AIHelper();
-                await helper.GenerateTableAndColumnDescriptionsAsync(_tableContext, referenceContext, Connection?.DatabaseDescription);
+                await helper.GenerateTableAndColumnDescriptionsAsync(_tableContext, referenceContext, Connection?.DatabaseDescription, additionalInfo);
 
                 // checks if the table object is still the same
                 if (_dbObject.ObjectName == null ||

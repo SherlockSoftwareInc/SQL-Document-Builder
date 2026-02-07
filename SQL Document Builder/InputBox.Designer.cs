@@ -36,10 +36,9 @@
             // 
             // captionLabel
             // 
-            captionLabel.AutoSize = true;
-            captionLabel.Location = new System.Drawing.Point(10, 15);
+            captionLabel.Location = new System.Drawing.Point(10, 12);
             captionLabel.Name = "captionLabel";
-            captionLabel.Size = new System.Drawing.Size(38, 15);
+            captionLabel.Size = new System.Drawing.Size(293, 64);
             captionLabel.TabIndex = 0;
             captionLabel.Text = "label1";
             // 
@@ -72,9 +71,6 @@
             inputTextBox.Name = "inputTextBox";
             inputTextBox.Size = new System.Drawing.Size(364, 23);
             inputTextBox.TabIndex = 1;
-            inputTextBox.AcceptsReturn = false;
-            inputTextBox.AcceptsTab = false;
-            inputTextBox.Multiline = false;
             // 
             // InputBox
             // 

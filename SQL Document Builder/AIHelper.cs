@@ -27,7 +27,7 @@ namespace SQL_Document_Builder
         /// <exception cref="InvalidOperationException">
         /// Thrown if the LLM response does not contain a valid JSON object or required settings are missing.
         /// </exception>
-        public async Task<bool> GenerateTableAndColumnDescriptionsAsync(TableContext context, string referenceContext, string? databaseDescription)
+        public async Task<bool> GenerateTableAndColumnDescriptionsAsync(TableContext context, string referenceContext, string? databaseDescription, string additionalInfo)
         {
             const int batchSize = 10;
             int totalColumns = context.Columns.Count;
@@ -49,7 +49,7 @@ namespace SQL_Document_Builder
                 };
 
                 // Compose the prompt for the LLM
-                string tableDescriptionPrompt = BuildPrompt(batchContext, referenceContext, databaseDescription, isFirstColumnSet);
+                string tableDescriptionPrompt = BuildPrompt(batchContext, referenceContext, databaseDescription, additionalInfo, isFirstColumnSet);
 
                 // Call the LLM
                 string llmResponse = await CallLLMAsync(tableDescriptionPrompt);
@@ -152,7 +152,7 @@ User Request:
 {userRequest}
 
 Constraints & Formatting:
-- No Markdown Rule: Do not use markdown code blocks (```sql) or backticks (`) anywhere in your response. Return the result as plain text.
+Formatting Rule: Use standard plain text for all explanations—do not use backticks or markdown formatting for your conversational text. However, you must use markdown code blocks (```sql) to wrap all SQL statements to ensure they are readable and properly highlighted.
 - Line Wrap Rule: Within the comment block, you must manually wrap the text so that no single line exceeds 100 characters.
 - Script Sequencing:
 Start with the DROP statement: IF OBJECT_ID(N'[schema].[name]', 'V') IS NOT NULL DROP VIEW [schema].[name];
@@ -201,7 +201,7 @@ Your Analysis Workflow:
 3. Refactor & Validate: Rewrite the query to improve execution speed and resource efficiency while strictly maintaining the original result set.
 
 Constraints & Formatting:
-- No Markdown Rule: Do not use markdown code blocks (```sql) or backticks (`) anywhere in your response. Return the result as plain text.
+- Formatting Rule: Use standard plain text for all explanations—do not use backticks or markdown formatting for your conversational text. However, you must use markdown code blocks (```sql) to wrap all SQL statements to ensure they are readable and properly highlighted.
 - Line Wrap Rule: Within the comment block, you must manually wrap the text so that no single line exceeds 100 characters.
 - Script Sequencing:
 Start with the DROP statement: IF OBJECT_ID(N'[schema].[name]', 'V') IS NOT NULL DROP VIEW [schema].[name];
@@ -260,7 +260,7 @@ Here is the SQL code to optimize:
         /// </summary>
         /// <param name="context">The table context to serialize and include in the prompt.</param>
         /// <returns>A string containing the prompt for the LLM.</returns>
-        private static string BuildPrompt(TableContext context, string referenceContext, string? databaseDescription, bool isFirstColumnSet = true)
+        private static string BuildPrompt(TableContext context, string referenceContext, string? databaseDescription, string additionalInfo, bool isFirstColumnSet = true)
         {
             // Convert context to JSON
             string contextJson = JsonSerializer.Serialize(context, new JsonSerializerOptions
@@ -284,6 +284,14 @@ Here is the SQL code to optimize:
 ";
             }
 
+            string additionalInfoBlock = string.Empty;
+            if (!string.IsNullOrWhiteSpace(additionalInfo))
+            {
+                additionalInfoBlock = $@"Additional information:
+{additionalInfo}
+";
+            }
+
             string tableInstruction = isFirstColumnSet
                 ? "The table description should summarize what the table stores or represents."
                 : "Do not generate or modify the table description; only update column descriptions.";
@@ -302,12 +310,12 @@ Here is the input JSON:
 ```json
 {contextJson}
 ```
-{referenceInfo}
-Additional guidelines:
+{referenceInfo}{additionalInfoBlock}Additional guidelines:
 
 {tableInstruction}
 Each column description should explain what the field contains and its purpose.
 Do not change schema names, object names, or property names.
+If additional information is provided above, use it as extra context for your descriptions.
 Output only valid JSON.{LanguageInstruction()}";
 
             return prompt;
@@ -361,6 +369,34 @@ Output only valid JSON.{LanguageInstruction()}";
             var result = message.GetProperty("content").GetString();
 
             return result ?? string.Empty;
+        }
+
+        /// <summary>
+        /// Fixes the SQL code based on the verify result using a Large Language Model (LLM).
+        /// </summary>
+        /// <param name="sqlCode">The sql code.</param>
+        /// <param name="verifyResult">The verify result.</param>
+        /// <returns>A Task.</returns>
+        internal static async Task<string?> FixSQLCodeAsync(string sqlCode, string? verifyResult)
+        {
+            if (string.IsNullOrWhiteSpace(sqlCode))
+                return string.Empty;
+
+            // If verifyResult is empty or null, nothing to fix
+            if (string.IsNullOrWhiteSpace(verifyResult?.ToString()))
+                return sqlCode;
+
+            string prompt = $@"Act as a Senior Database Engineer and SQL Expert. The following SQL code has errors as reported by SQL Server. Your task is to fix the SQL code so that it passes SQL Server's parser and does not produce the following errors.
+
+Error(s) from SQL Server:
+{verifyResult}
+
+Here is the SQL code to fix:
+" + sqlCode + "\n\nReturn only the corrected SQL code, with a brief explanation of the changes in a SQL multi-line comment block (/* ... */) at the top. Do not include any other text outside the code block.";
+
+            var aiHelper = new AIHelper();
+            string result = await aiHelper.CallLLMAsync(prompt);
+            return result;
         }
     }
 }
