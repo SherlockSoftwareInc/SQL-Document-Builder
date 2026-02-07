@@ -109,3 +109,6 @@ When you visit the above link, the ClickOnce installer will guide you through th
 `SQL Server Script and Document Builder`  
 
 📌 The app is installed per-user (not in `C:\Program Files`) and automatically keeps itself up-to-date.
+
+
+
