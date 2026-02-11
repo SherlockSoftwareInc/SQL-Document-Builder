@@ -155,7 +155,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Gets the definition text.
         /// </summary>
-        public object DefinitionText { get => definitionTextBox.Text; }
+        public string DefinitionText { get => definitionTextBox.Text; }
 
         /// <summary>
         /// Clears the current view, resetting all UI elements and internal state.
@@ -1232,6 +1232,17 @@ GO
         internal void AddColumnReference()
         {
             ColumnReferenceToolStripMenuItem_Click(columnReferenceToolStripMenuItem, EventArgs.Empty);
+        }
+
+        /// <summary>
+        /// Handles the cell end edit event for the trigger grid view.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void TriggerGridView_CellEndEdit(object sender, DataGridViewCellEventArgs e)
+        {
+            // set changed flag when trigger definition is edited
+            _isChanged = true;
         }
     }
 }

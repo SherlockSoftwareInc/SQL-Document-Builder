@@ -818,7 +818,7 @@ namespace SQL_Document_Builder
             }
             else
             {
-                statusToolStripStatusLabe.Text = "No valid control is focused for copying.";
+                messageLabel.Text = "No valid control is focused for copying.";
             }
         }
 
@@ -868,7 +868,7 @@ namespace SQL_Document_Builder
                     {
                         progressBar.Value = percentComplete;
                     }
-                    statusToolStripStatusLabe.Text = $"Processing {percentComplete}%...";
+                    messageLabel.Text = $"Processing {percentComplete}%...";
 
                     var obj = selectedObjects[i];
 
@@ -1007,7 +1007,7 @@ namespace SQL_Document_Builder
                     {
                         progressBar.Value = percentComplete;
                     }
-                    statusToolStripStatusLabe.Text = $"Processing {percentComplete}%...";
+                    messageLabel.Text = $"Processing {percentComplete}%...";
 
                     var script = await GetObjectCreateScriptAsync(selectedObjects[i], _currentConnection);
 
@@ -1062,7 +1062,7 @@ namespace SQL_Document_Builder
             }
             else
             {
-                statusToolStripStatusLabe.Text = "No valid control is focused for cutting.";
+                messageLabel.Text = "No valid control is focused for cutting.";
             }
         }
 
@@ -1098,7 +1098,7 @@ namespace SQL_Document_Builder
                     }
                 }
 
-                statusToolStripStatusLabe.Text = "";
+                messageLabel.Text = "";
             }
         }
 
@@ -1189,7 +1189,7 @@ namespace SQL_Document_Builder
         private void EndBuild(SqlEditBox editBox)
         {
             progressBar.Visible = false;
-            statusToolStripStatusLabe.Text = "Complete!";
+            messageLabel.Text = "Complete!";
             this.Cursor = Cursors.Default;
             if (editBox != null)
             {
@@ -1745,7 +1745,7 @@ namespace SQL_Document_Builder
                     {
                         progressBar.Value = percentComplete;
                     }
-                    statusToolStripStatusLabe.Text = $"Processing {percentComplete}%...";
+                    messageLabel.Text = $"Processing {percentComplete}%...";
 
                     var obj = selectedObjects[i];
                     var script = await ObjectDescription.BuildObjectDescription(obj, _currentConnection, Properties.Settings.Default.UseExtendedProperties);
@@ -1774,7 +1774,7 @@ namespace SQL_Document_Builder
         {
             if (_ignoreObjectListSelect) return;
 
-            statusToolStripStatusLabe.Text = string.Empty;
+            messageLabel.Text = string.Empty;
 
             if (_aiDescriptionBusy)
             {
@@ -1916,7 +1916,7 @@ namespace SQL_Document_Builder
             {
                 ConnectionMenuItem menuItem = (ConnectionMenuItem)sender;
 
-                statusToolStripStatusLabe.Text = string.Format("Connect to {0}...", menuItem.ToString());
+                messageLabel.Text = string.Format("Connect to {0}...", menuItem.ToString());
                 Cursor = Cursors.WaitCursor;
 
                 _populating = true;
@@ -1962,7 +1962,7 @@ namespace SQL_Document_Builder
 
                 _populating = false;
                 Cursor = Cursors.Default;
-                statusToolStripStatusLabe.Text = "";
+                messageLabel.Text = "";
             }
         }
 
@@ -2048,7 +2048,7 @@ namespace SQL_Document_Builder
                     }
                 }
 
-                statusToolStripStatusLabe.Text = string.Format("Execute on {0}...", connection.ToString());
+                messageLabel.Text = string.Format("Execute on {0}...", connection.ToString());
                 Cursor = Cursors.WaitCursor;
 
                 var executeResults = await ExecuteScriptsAsync(connection, script);
@@ -2066,7 +2066,7 @@ namespace SQL_Document_Builder
                 }
 
                 Cursor = Cursors.Default;
-                statusToolStripStatusLabe.Text = "";
+                messageLabel.Text = "";
             }
         }
 
@@ -2200,7 +2200,7 @@ namespace SQL_Document_Builder
             }
             else
             {
-                statusToolStripStatusLabe.Text = "No valid control is focused for pasting.";
+                messageLabel.Text = "No valid control is focused for pasting.";
             }
         }
 
@@ -2564,7 +2564,7 @@ namespace SQL_Document_Builder
             if (CurrentEditBox == null) return; // If there is no current edit box, exit early
 
             CurrentEditBox.SaveAs();
-            statusToolStripStatusLabe.Text = "Complete";
+            messageLabel.Text = "Complete";
         }
 
         /// <summary>
@@ -2681,7 +2681,7 @@ namespace SQL_Document_Builder
             }
             else
             {
-                statusToolStripStatusLabe.Text = "No valid control is focused for select.";
+                messageLabel.Text = "No valid control is focused for select.";
             }
         }
 
@@ -2754,7 +2754,7 @@ namespace SQL_Document_Builder
         private void StartBuild(SqlEditBox editBox)
         {
             editBox.Enabled = false;
-            statusToolStripStatusLabe.Text = "Please wait while generate the scripts";
+            messageLabel.Text = "Please wait while generate the scripts";
             progressBar.Maximum = 100;
             progressBar.Value = 0;
             progressBar.Visible = true;
@@ -3166,7 +3166,7 @@ namespace SQL_Document_Builder
         {
             //if (CurrentEditBox == null || sender == null) return;
             //CurrentEditBox.OnTextChanged(sender, e);
-            statusToolStripStatusLabe.Text = string.Empty;
+            messageLabel.Text = string.Empty;
         }
 
         #region Main Menu Commands
@@ -3716,7 +3716,7 @@ namespace SQL_Document_Builder
                 }
             }
 
-            statusToolStripStatusLabe.Text = "Complete!";
+            messageLabel.Text = "Complete!";
         }
 
         /// <summary>
@@ -4193,7 +4193,7 @@ namespace SQL_Document_Builder
                 }
 
                 Cursor = Cursors.WaitCursor;
-                statusToolStripStatusLabe.Text = "Exporting descriptions to Excel...";
+                messageLabel.Text = "Exporting descriptions to Excel...";
                 // export the descriptions to Excel
                 try
                 {
@@ -4529,7 +4529,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The event arguments.</param>
         private void DefinitionPanel_AIProcessingStarted(object sender, EventArgs e)
         {
-            WorkingMode(true, "🌑 The AI ​​description assistant is working...");
+            WorkingMode(true, "⠋ The AI ​​description assistant is working...");
         }
 
         /// <summary>
@@ -4541,7 +4541,7 @@ namespace SQL_Document_Builder
             // Enable or disable UI components based on the parameter
             toolStrip1.Enabled = v;
             menuStrip1.Enabled = v;
-            statusToolStripStatusLabe.Enabled = v;
+            messageLabel.Enabled = v;
 
             // Set the cursor for the form and all its controls
             var cur = v ? Cursors.Default : Cursors.WaitCursor;
@@ -4623,50 +4623,21 @@ namespace SQL_Document_Builder
                 return;
             }
 
-            WorkingMode(true, "🌑 The AI ​code advisor is working...");
+            WorkingMode(true, "⠋ The AI ​code advisor is working...");
 
             // get the object definition from the definitionPanel
             var definition = definitionPanel.DefinitionText;
 
             var content = await AIHelper.OptimizeCodeAsync(definition);
 
-            if (!string.IsNullOrEmpty(content))
-            {
-                if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
-
-                if (!BeginAddDDLScript()) return;
-
-                AddDataSourceText();
-
-                AppendText(editBox, content);
-            }
-
-            WorkingMode(false, "The AI ​​code advisor has completed its work.");
-        }
-
-        /// <summary>
-        /// Handles the click event of the modify code tool strip menu item.
-        /// Gets the modification request from the user and uses AI to modify the code accordingly.
-        /// </summary>
-        private async void ModifyCodeToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
-
-            // available only for object type is view, stored procedure, or function
-            // set the selected object
-            if (SelectedObject == null || (SelectedObject.ObjectType == ObjectTypeEnums.None))
-            {
-                Common.MsgBox("There is no object selected.", MessageBoxIcon.Warning);
-                return;
-            }
-
             int tryCount = 3;
-            string createScript = await DatabaseDocBuilder.GetCreateObjectScriptAsync(SelectedObject, _currentConnection!);
+            string verifyResult = string.Empty;
+
             // user AI to midify the code based on user request, retry up to 3 times if the SQL verification fails
             while (tryCount > 0)
             {
                 // verify the SQL code syntax
-                var verifyResult = await VerifySQL(createScript!);
+                verifyResult = await VerifySQL(content!);
 
                 if (string.IsNullOrEmpty(verifyResult))
                 {
@@ -4677,32 +4648,82 @@ namespace SQL_Document_Builder
                     tryCount--;
                     if (tryCount == 0)
                     {
-                        Common.MsgBox("The SQL code verification failed after multiple attempts. Please check the object definition manually.", MessageBoxIcon.Error);
-                        return;
+                        messageLabel.Text = "The SQL code verification failed after multiple attempts.";
+                        break;
                     }
 
                     // use AI to fix the SQL code
-                    createScript = await AIHelper.FixSQLCodeAsync(createScript!, verifyResult);
+                    content = await AIHelper.FixSQLCodeAsync(definition!, content!, verifyResult);
                 }
             }
 
-            // remove the space and new line at the end of the script
+            if (!string.IsNullOrEmpty(content))
+            {
+                if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
+
+                if (!BeginAddDDLScript()) return;
+
+                AddDataSourceText();
+
+                AppendText(editBox, RemoveSqlMarkers(content));
+
+                // when verification fails, append the verification result as comment
+                if (!string.IsNullOrEmpty(verifyResult))
+                {
+                    AppendText(editBox, $"\n/* Verification Result:\n{verifyResult}\n*/");
+                }
+            }
+
+            if (string.IsNullOrEmpty(verifyResult))
+            {
+                WorkingMode(false, "The AI code advisor has completed its work.");
+            }
+            else
+            {
+                WorkingMode(false, "The AI code advisor failed to complete its work.");
+            }
+        }
+
+        /// <summary>
+        /// Removes the sql markers.
+        /// </summary>
+        /// <param name="content">The content.</param>
+        /// <returns>A string.</returns>
+        private string RemoveSqlMarkers(string content)
+        {
+            // remove the ```sql` and ``` markers if exist
+            string pattern = @"```sql(.*?)```";
+            Match match = Regex.Match(content, pattern, RegexOptions.Singleline | RegexOptions.IgnoreCase);
+            return match.Success ? match.Groups[1].Value.Trim() : content.Trim();
+        }
+
+        /// <summary>
+        /// Handles the click event of the modify code tool strip menu item.
+        /// Gets the modification request from the user and uses AI to modify the code accordingly.
+        /// </summary>
+        private async void ModifyCodeToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (!GetConnectionString(out string connectionString)) return;
+
+            if (SelectedObject == null || (SelectedObject.ObjectType == ObjectTypeEnums.None))
+            {
+                Common.MsgBox("There is no object selected.", MessageBoxIcon.Warning);
+                return;
+            }
+
+            string createScript = await DatabaseDocBuilder.GetCreateObjectScriptAsync(SelectedObject, _currentConnection!);
             createScript = createScript?.TrimEnd(' ', '\r', '\n', '\t');
 
-            // get description of the selected object
             var description = await ObjectDescription.BuildObjectDescription(SelectedObject, _currentConnection, Properties.Settings.Default.UseExtendedProperties);
-
-            // combine the create script and description
             createScript = $"{description}\n\n{createScript}";
 
-            // user inputbox to get the modification request
             using (var inputBox = new InputBox())
             {
                 inputBox.Title = "Modify Code Request";
                 inputBox.Prompt = "Please enter your modification request:";
                 inputBox.Default = "";
                 inputBox.Multiline = true;
-                inputBox.MaxLength = 1000;
+                inputBox.MaxLength = 4000;
 
                 if (inputBox.ShowDialog() == DialogResult.OK)
                 {
@@ -4710,22 +4731,65 @@ namespace SQL_Document_Builder
 
                     if (!string.IsNullOrEmpty(userRequest))
                     {
-                        WorkingMode(true, "🌑 The AI ​code advisor is working...");
+                        WorkingMode(true, "⠋ The AI code advisor is working...");
 
+                        // Initial AI request
                         var content = await AIHelper.ModifyCodeAsync(createScript!, userRequest);
+
+                        // --- Start Verification Logic ---
+                        int tryCount = 3;
+                        string verifyResult = string.Empty;
+
+                        while (tryCount > 0)
+                        {
+                            // Verify the SQL code syntax
+                            verifyResult = await VerifySQL(content!);
+
+                            if (string.IsNullOrEmpty(verifyResult))
+                            {
+                                break; // Success
+                            }
+                            else
+                            {
+                                tryCount--;
+                                if (tryCount == 0)
+                                {
+                                    messageLabel.Text = "The SQL code verification failed after multiple attempts.";
+                                    break;
+                                }
+
+                                // Use AI to fix the modified code using the original script and the error result
+                                content = await AIHelper.FixSQLCodeAsync(createScript!, content!, verifyResult);
+                            }
+                        }
+                        // --- End Verification Logic ---
 
                         if (!string.IsNullOrEmpty(content))
                         {
-                            if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
+                            if (!GetCurrentEditBox(out SqlEditBox editBox)) return;
 
                             if (!BeginAddDDLScript()) return;
 
                             AddDataSourceText();
 
-                            AppendText(editBox, content);
+                            // Apply the content and clean up markers
+                            AppendText(editBox, RemoveSqlMarkers(content));
+
+                            // Append verification errors as comments if any remain
+                            if (!string.IsNullOrEmpty(verifyResult))
+                            {
+                                AppendText(editBox, $"\n/* Verification Result:\n{verifyResult}\n*/");
+                            }
                         }
 
-                        WorkingMode(false, "The AI ​​code advisor has completed its work.");
+                        if (string.IsNullOrEmpty(verifyResult))
+                        {
+                            WorkingMode(false, "The AI code advisor has completed its work.");
+                        }
+                        else
+                        {
+                            WorkingMode(false, "The AI code advisor failed to complete its work.");
+                        }
                     }
                 }
             }
@@ -4743,10 +4807,22 @@ namespace SQL_Document_Builder
             Match match = Regex.Match(context, pattern, RegexOptions.Singleline | RegexOptions.IgnoreCase);
             string sqlCode = match.Success ? match.Groups[1].Value.Trim() : context.Trim();
 
-            // verify the sql code using SQL Server Management Objects (SMO)
-            string verifyResult = await Task.Run(() => SQLDatabaseHelper.VerifySQL(sqlCode, _currentConnection?.ConnectionString));
+            // Split the SQL code into batches using 'GO' as a delimiter
+            var sqlBatches = Regex.Split(sqlCode, @"\bGO\b", RegexOptions.IgnoreCase | RegexOptions.Multiline);
+            foreach (string batch in sqlBatches)
+            {
+                var trimmedBatch = batch.Trim();
+                if (!string.IsNullOrEmpty(trimmedBatch))
+                {
+                    string verifyResult = await Task.Run(() => SQLDatabaseHelper.VerifySQL(trimmedBatch, _currentConnection?.ConnectionString));
+                    if (!string.IsNullOrEmpty(verifyResult))
+                    {
+                        return verifyResult;
+                    }
+                }
+            }
 
-            return verifyResult;
+            return string.Empty;
         }
 
         private int _dotCount = 0; // Class-level variable to track dots
@@ -4758,8 +4834,8 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void WaitTimer_Tick(object sender, EventArgs e)
         {
-            var moonPhases = new[] { "🌑", "🌒", "🌓", "🌔", "🌕", "🌖", "🌗", "🌘" };
-            string currentText = statusToolStripStatusLabe.Text ?? "Processing";
+            var moonPhases = new[] { "⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏" };
+            string currentText = messageLabel.Text ?? "Processing";
 
             // --- 1. Handle the Rolling Moon (Start of string) ---
             int moonIndex = -1;
@@ -4794,7 +4870,7 @@ namespace SQL_Document_Builder
             string dots = new string('.', _dotCount);
 
             // --- 4. Reconstruct the String ---
-            statusToolStripStatusLabe.Text = $"{nextMoon} {cleanMessage}{dots}";
+            messageLabel.Text = $"{nextMoon} {cleanMessage}{dots}";
         }
 
         /// <summary>
@@ -4810,8 +4886,8 @@ namespace SQL_Document_Builder
                 EnableDisableUI(false);
                 Cursor = Cursors.WaitCursor;
 
-                statusToolStripStatusLabe.Text = statusMessage;
-                statusToolStripStatusLabe.Enabled = true;
+                messageLabel.Text = statusMessage;
+                messageLabel.Enabled = true;
                 waitTimer.Start();
             }
             else
@@ -4820,7 +4896,7 @@ namespace SQL_Document_Builder
                 _aiDescriptionBusy = false;
                 EnableDisableUI(true);
                 Cursor = Cursors.Default;
-                statusToolStripStatusLabe.Text = statusMessage;
+                messageLabel.Text = statusMessage;
             }
         }
 
@@ -4840,7 +4916,7 @@ namespace SQL_Document_Builder
                 inputBox.Prompt = "Please enter any additional information or specific requirements for the description (optional):";
                 inputBox.Default = "";
                 inputBox.Multiline = true;
-                inputBox.MaxLength = 2000;
+                inputBox.MaxLength = 4000;
                 if (inputBox.ShowDialog() == DialogResult.OK)
                 {
                     var additionalInfo = inputBox.InputText;

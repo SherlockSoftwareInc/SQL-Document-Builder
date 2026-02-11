@@ -145,26 +145,36 @@ namespace SQL_Document_Builder
             if (string.IsNullOrWhiteSpace(sqlCode))
                 return string.Empty;
 
-            // Compose the prompt for code modification
-            string prompt = $@"Act as a Senior Database Engineer and SQL Expert. Your task is to modify the following SQL code according to the user's request.
+            // Compose the optimized prompt for code modification
+            string prompt = $@"Role: Senior Database Engineer and SQL Expert.
+Task: Modify the provided SQL code based on the User Request while adhering to strict structural and formatting constraints.
 
 User Request:
 {userRequest}
 
-Constraints & Formatting:
-Formatting Rule: Use standard plain text for all explanations—do not use backticks or markdown formatting for your conversational text. However, you must use markdown code blocks (```sql) to wrap all SQL statements to ensure they are readable and properly highlighted.
-- Line Wrap Rule: Within the comment block, you must manually wrap the text so that no single line exceeds 100 characters.
-- Script Sequencing:
-Start with the DROP statement: IF OBJECT_ID(N'[schema].[name]', 'V') IS NOT NULL DROP VIEW [schema].[name];
-Follow with the GO command.
-Insert the Documentation Header.
-Follow with the CREATE VIEW statement.
-{DocumentHeaderInstructions()}
-- Response Structure: You must return your modifications notes first, then modified SQL statement. The EXEC usp_addupdateextendedproperty scripts go last.
-- The Comment Rule: All explanations, bug reports, and modification notes must be contained within a single SQL multi-line comment block /* ... */.
-{LanguageInstruction()}
+Output Constraints:
+1. Pure Plain Text: Use only standard plain text for all prose. Absolutely no markdown (bolding, italics, or backticks) in your conversational explanations.
+2. The Comment Rule: All modification notes, logic changes, and explanations must be placed inside a single SQL multi-line comment block /* ... */ at the very beginning of the response.
+3. Line Wrap Rule: Within that comment block, manually wrap text so no line exceeds 100 characters.
+4. Markdown for Code: Unlike the explanation prose, the SQL script itself MUST be wrapped in a markdown code block (```sql ... ```).
 
-Here is the SQL code to modify:
+Script Sequencing (Inside the SQL block):
+1. IF OBJECT_ID Statement: Drop the object if it exists.
+2. GO
+3. Documentation Header: {DocumentHeaderInstructions()}
+4. CREATE Statement: The modified SQL logic.
+5. GO
+6. Extended Properties: EXEC usp_addupdateextendedproperty scripts at the end.
+
+Language: {LanguageInstruction()}
+
+Response Structure:
+[/* Comment Block with Notes */]
+[```sql 
+Modified SQL Script
+```]
+
+Input Code to Modify:
 " + sqlCode;
 
             var aiHelper = new AIHelper();
@@ -193,27 +203,25 @@ Here is the SQL code to modify:
                 return string.Empty;
 
             // Compose the prompt
-            string prompt = $@"Act as a Senior Database Engineer and Performance Tuning Expert for SQL Server. Your goal is to analyze, debug, and optimize SQL queries provided by the user.
+            string prompt = $@"Your Role: Act as a Senior Database Engineer and SQL Server Performance Tuning Expert. Your goal is to analyze, debug, and optimize T-SQL queries for maximum efficiency.
+Analysis Workflow:
+Bug Audit: Identify logical errors, such as Cartesian products (missing join conditions), incorrect NULL handling, or data type mismatches.
+Performance Bottlenecks: Identify non-SARGable predicates (e.g., functions on columns in WHERE clauses), implicit conversions, unnecessary subqueries, or redundant joins that trigger full table scans.
+Refactoring: Rewrite the query to minimize I/O and CPU usage while strictly preserving the original result set.
 
-Your Analysis Workflow:
-1. Bug Audit: Check for common pitfalls like missing join conditions (Cartesian products), incorrect NULL handling, or syntax errors.
-2. Performance Bottleneck Identification: Locate ""SARGability"" issues, unnecessary subqueries, redundant joins, or logic that forces full table scans.
-3. Refactor & Validate: Rewrite the query to improve execution speed and resource efficiency while strictly maintaining the original result set.
+Strict Output Constraints:
+Plain Text Only: Use standard plain text for all conversational explanations. Do not use backticks or markdown bolding/italics in your prose.
+The Comment Rule: All explanations, bug reports, and optimization notes must be contained within a single SQL multi-line comment block /* ... */.
+Line Wrap Rule: Within that comment block, manually wrap text so no line exceeds 100 characters.
+Script Sequencing: 1. IF OBJECT_ID... DROP statement. 2. GO 3. Documentation Header (after the comment block). 4. CREATE statement. 5. GO 6. EXEC usp_addupdateextendedproperty scripts at the very end.
 
-Constraints & Formatting:
-- Formatting Rule: Use standard plain text for all explanations—do not use backticks or markdown formatting for your conversational text. However, you must use markdown code blocks (```sql) to wrap all SQL statements to ensure they are readable and properly highlighted.
-- Line Wrap Rule: Within the comment block, you must manually wrap the text so that no single line exceeds 100 characters.
-- Script Sequencing:
-Start with the DROP statement: IF OBJECT_ID(N'[schema].[name]', 'V') IS NOT NULL DROP VIEW [schema].[name];
-Follow with the GO command.
-Insert the Documentation Header.
-Follow with the CREATE VIEW statement.
 {DocumentHeaderInstructions()}
-- The Comment Rule: All explanations, bug reports, and optimization notes must be contained within a single SQL multi-line comment block /* ... */.
-- Response Structure: You must return your analysis first, then optimized SQL statement. The EXEC usp_addupdateextendedproperty scripts go last.
+
 {LanguageInstruction()}
 
-Here is the SQL code to optimize:
+SQL Formatting: No markdown code blocks (```sql) for all SQL statements.
+
+Input Code for Optimization::
 " + sqlCode;
 
             // Use the same LLM call as other AI features
@@ -230,11 +238,11 @@ Here is the SQL code to optimize:
         {
             return @"- Documentation Header: Add a header before the CREATE statement using the following format:
 -- =============================================
--- Author:      (author name)
--- Create date: (original date)
+-- Author:      [author name]
+-- Create date: [original date]
 -- Description: [Briefly summarize what the view/query does here]
 -- Modify by:   AI advisor
--- Modify date: {{Current Date}}
+-- Modify date: [Current Date]
 -- =============================================";
         }
 
@@ -268,45 +276,33 @@ Here is the SQL code to optimize:
                 WriteIndented = true
             });
 
-            string dbDescription = databaseDescription ?? string.Empty;
-            if (!string.IsNullOrWhiteSpace(dbDescription))
-            {
-                dbDescription = $"Database description: {dbDescription}\n\n";
-            }
+            string dbDescription = !string.IsNullOrWhiteSpace(databaseDescription)
+                ? $"Database context: {databaseDescription}\n\n"
+                : string.Empty;
 
-            string referenceInfo = string.Empty;
-            if (!string.IsNullOrWhiteSpace(referenceContext))
-            {
-                referenceInfo = $@"Reference context:
-```json
-{referenceContext}
-```
-";
-            }
+            string referenceInfo = !string.IsNullOrWhiteSpace(referenceContext)
+                ? $"Reference data:\n```json\n{referenceContext}\n```\n"
+                : string.Empty;
 
-            string additionalInfoBlock = string.Empty;
-            if (!string.IsNullOrWhiteSpace(additionalInfo))
-            {
-                additionalInfoBlock = $@"Additional information:
-{additionalInfo}
-";
-            }
+            string additionalInfoBlock = !string.IsNullOrWhiteSpace(additionalInfo)
+                ? $"Extra context: {additionalInfo}\n"
+                : string.Empty;
 
             string tableInstruction = isFirstColumnSet
-                ? "The table description should summarize what the table stores or represents."
-                : "Do not generate or modify the table description; only update column descriptions.";
+                ? "Table Description: Provide a 1-sentence summary of stored data."
+                : "Table Description: DO NOT MODIFY.";
 
             string prompt = $@"You are a technical database documentation assistant.
 {dbDescription}
-I’ll provide you with a JSON object describing a table and its columns.
-Your task is to complete the missing or empty Description fields for both the table and each column, using professional and concise technical language.
-You should also review and improve any existing descriptions to ensure clarity and accuracy.
-When writing descriptions, you should infer meaning from the table name, column names, and data types.
-When a column appears to reference another table or entity, include that in the description as Reference:#reference table and column#; otherwise, do not add Reference. Do not add Reference to the columns in the view. Do not reference the table or view itself.
-Keep descriptions clear, factual, and concise; avoid any fluff.
-Return the completed JSON in the same structure I provide, without altering existing text or field names.
+### Task
+Complete the 'Description' fields in the JSON provided below.
 
-Here is the input JSON:
+### Style Guidelines
+* **Ultra-Concise:** Use short, functional phrases (e.g., 'Primary key' or 'Event timestamp'). Avoid 'This column represents...' or 'A unique identifier for...'.
+* **Format:** If a column references another table, append 'Reference: [schema].[table].[column]'. Omit if no reference exists or if the object is a View.
+* **Integrity:** Do not change table names, column names, or data types. Return only valid JSON.
+
+### Input JSON
 ```json
 {contextJson}
 ```
@@ -377,22 +373,44 @@ Output only valid JSON.{LanguageInstruction()}";
         /// <param name="sqlCode">The sql code.</param>
         /// <param name="verifyResult">The verify result.</param>
         /// <returns>A Task.</returns>
-        internal static async Task<string?> FixSQLCodeAsync(string sqlCode, string? verifyResult)
+        internal static async Task<string?> FixSQLCodeAsync(string originalCode, string? generatedCode, string errorMessage)
         {
-            if (string.IsNullOrWhiteSpace(sqlCode))
+            if (string.IsNullOrWhiteSpace(originalCode) || string.IsNullOrWhiteSpace(generatedCode) || string.IsNullOrWhiteSpace(errorMessage))
                 return string.Empty;
 
-            // If verifyResult is empty or null, nothing to fix
-            if (string.IsNullOrWhiteSpace(verifyResult?.ToString()))
-                return sqlCode;
+            // If errorMessage is empty or null, nothing to fix
+            if (string.IsNullOrWhiteSpace(errorMessage))
+                return originalCode;
 
-            string prompt = $@"Act as a Senior Database Engineer and SQL Expert. The following SQL code has errors as reported by SQL Server. Your task is to fix the SQL code so that it passes SQL Server's parser and does not produce the following errors.
+            string prompt = $@"Act as a Senior Database Engineer and SQL Server Troubleshooting Expert. You previously generated a SQL script that returned an execution error. Your goal is to perform a root cause analysis and provide the corrected script.
 
-Error(s) from SQL Server:
-{verifyResult}
+### Input Context
+* **Original Intent:** {originalCode}
 
-Here is the SQL code to fix:
-" + sqlCode + "\n\nReturn only the corrected SQL code, with a brief explanation of the changes in a SQL multi-line comment block (/* ... */) at the top. Do not include any other text outside the code block.";
+* **Faulty Generation:** {generatedCode}
+
+* **SQL Server Error Message:** {errorMessage}
+
+### Your Debugging Task
+1. **Root Cause Analysis:** Compare the generated code against the error message. Identify if the issue is a syntax error, a binding error (invalid object names), or a logic violation.
+2. **Resolution:** Fix the error while ensuring the logic strictly fulfills the original intent.
+3. **Refactor & Validate:** Ensure the fix maintains performance best practices (SARGability) and preserves the original result set.
+
+### Constraints & Formatting
+* **Plain Text Rule:** Use standard plain text for all explanations—do not use backticks or markdown formatting for conversational text.
+* **SQL Formatting:** Use markdown code blocks (```sql) to wrap all SQL statements.
+* **The Comment Rule:** All explanations, bug reports, and the Documentation Header must be contained within a single SQL multi-line comment block /* ... */.
+* **Line Wrap Rule:** Within the comment block, you must manually wrap the text so that no single line exceeds 100 characters.
+* **Script Sequencing:**
+    1. Start with the DROP statement: IF OBJECT_ID(N'[schema].[name]', 'V') IS NOT NULL DROP VIEW [schema].[name];
+    2. Follow with the GO command.
+    3. Insert the multi-line comment block (containing the analysis and the Documentation Header).
+    4. Follow with the CREATE statement.
+    5. Follow with the GO command.
+    6. End with the EXEC usp_addupdateextendedproperty scripts.
+
+Please provide the analysis first, followed by the corrected SQL script.
+";
 
             var aiHelper = new AIHelper();
             string result = await aiHelper.CallLLMAsync(prompt);

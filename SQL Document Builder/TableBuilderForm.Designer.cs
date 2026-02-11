@@ -176,6 +176,7 @@ namespace SQL_Document_Builder
             darkModeToolStripMenuItem = new ToolStripMenuItem();
             aIAssistantToolStripMenuItem = new ToolStripMenuItem();
             aIDescriptionAssistantToolStripMenuItem = new ToolStripMenuItem();
+            descriptionAssistantPlusToolStripMenuItem = new ToolStripMenuItem();
             optimizeCodeToolStripMenuItem = new ToolStripMenuItem();
             modifyCodeToolStripMenuItem = new ToolStripMenuItem();
             toolStripSeparator24 = new ToolStripSeparator();
@@ -188,7 +189,7 @@ namespace SQL_Document_Builder
             sherlockSoftwareToolStripMenuItem = new ToolStripMenuItem();
             statusStrip1 = new StatusStrip();
             progressBar = new ToolStripProgressBar();
-            statusToolStripStatusLabe = new ToolStripStatusLabel();
+            messageLabel = new ToolStripStatusLabel();
             serverToolStripStatusLabel = new ToolStripStatusLabel();
             databaseToolStripStatusLabel = new ToolStripStatusLabel();
             searchPanel = new Panel();
@@ -217,7 +218,6 @@ namespace SQL_Document_Builder
             toolTip1 = new ToolTip(components);
             startTimer = new Timer(components);
             waitTimer = new Timer(components);
-            descriptionAssistantPlusToolStripMenuItem = new ToolStripMenuItem();
             toolStrip1.SuspendLayout();
             objectsTabControl.SuspendLayout();
             tabPage1.SuspendLayout();
@@ -554,7 +554,7 @@ namespace SQL_Document_Builder
             tabPage2.Location = new System.Drawing.Point(4, 24);
             tabPage2.Name = "tabPage2";
             tabPage2.Padding = new Padding(3);
-            tabPage2.Size = new System.Drawing.Size(205, 648);
+            tabPage2.Size = new System.Drawing.Size(205, 645);
             tabPage2.TabIndex = 1;
             tabPage2.Text = "Output options";
             tabPage2.UseVisualStyleBackColor = true;
@@ -1413,29 +1413,36 @@ namespace SQL_Document_Builder
             aIDescriptionAssistantToolStripMenuItem.Text = "Describe";
             aIDescriptionAssistantToolStripMenuItem.Click += AIDescriptionAssistantToolStripMenuItem_Click;
             // 
+            // descriptionAssistantPlusToolStripMenuItem
+            // 
+            descriptionAssistantPlusToolStripMenuItem.Name = "descriptionAssistantPlusToolStripMenuItem";
+            descriptionAssistantPlusToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            descriptionAssistantPlusToolStripMenuItem.Text = "Describe with...";
+            descriptionAssistantPlusToolStripMenuItem.Click += DescriptionAssistantPlusToolStripMenuItem_Click;
+            // 
             // optimizeCodeToolStripMenuItem
             // 
             optimizeCodeToolStripMenuItem.Name = "optimizeCodeToolStripMenuItem";
-            optimizeCodeToolStripMenuItem.Size = new System.Drawing.Size(209, 22);
+            optimizeCodeToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             optimizeCodeToolStripMenuItem.Text = "Optimize code";
             optimizeCodeToolStripMenuItem.Click += OptimizeCodeToolStripMenuItem_Click;
             // 
             // modifyCodeToolStripMenuItem
             // 
             modifyCodeToolStripMenuItem.Name = "modifyCodeToolStripMenuItem";
-            modifyCodeToolStripMenuItem.Size = new System.Drawing.Size(209, 22);
+            modifyCodeToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             modifyCodeToolStripMenuItem.Text = "Modify code";
             modifyCodeToolStripMenuItem.Click += ModifyCodeToolStripMenuItem_Click;
             // 
             // toolStripSeparator24
             // 
             toolStripSeparator24.Name = "toolStripSeparator24";
-            toolStripSeparator24.Size = new System.Drawing.Size(206, 6);
+            toolStripSeparator24.Size = new System.Drawing.Size(177, 6);
             // 
             // settingsToolStripMenuItem
             // 
             settingsToolStripMenuItem.Name = "settingsToolStripMenuItem";
-            settingsToolStripMenuItem.Size = new System.Drawing.Size(209, 22);
+            settingsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             settingsToolStripMenuItem.Text = "Settings";
             settingsToolStripMenuItem.Click += SettingsToolStripMenuItem_Click;
             // 
@@ -1480,7 +1487,7 @@ namespace SQL_Document_Builder
             // 
             // statusStrip1
             // 
-            statusStrip1.Items.AddRange(new ToolStripItem[] { progressBar, statusToolStripStatusLabe, serverToolStripStatusLabel, databaseToolStripStatusLabel });
+            statusStrip1.Items.AddRange(new ToolStripItem[] { progressBar, messageLabel, serverToolStripStatusLabel, databaseToolStripStatusLabel });
             statusStrip1.Location = new System.Drawing.Point(0, 725);
             statusStrip1.Name = "statusStrip1";
             statusStrip1.Size = new System.Drawing.Size(1267, 22);
@@ -1495,12 +1502,12 @@ namespace SQL_Document_Builder
             progressBar.ToolTipText = "Process progres";
             progressBar.Visible = false;
             // 
-            // statusToolStripStatusLabe
+            // messageLabel
             // 
-            statusToolStripStatusLabe.Name = "statusToolStripStatusLabe";
-            statusToolStripStatusLabe.Size = new System.Drawing.Size(1128, 17);
-            statusToolStripStatusLabe.Spring = true;
-            statusToolStripStatusLabe.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            messageLabel.Name = "messageLabel";
+            messageLabel.Size = new System.Drawing.Size(1128, 17);
+            messageLabel.Spring = true;
+            messageLabel.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // serverToolStripStatusLabel
             // 
@@ -1794,13 +1801,6 @@ namespace SQL_Document_Builder
             waitTimer.Interval = 200;
             waitTimer.Tick += WaitTimer_Tick;
             // 
-            // descriptionAssistantPlusToolStripMenuItem
-            // 
-            descriptionAssistantPlusToolStripMenuItem.Name = "descriptionAssistantPlusToolStripMenuItem";
-            descriptionAssistantPlusToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            descriptionAssistantPlusToolStripMenuItem.Text = "Describe with...";
-            descriptionAssistantPlusToolStripMenuItem.Click += DescriptionAssistantPlusToolStripMenuItem_Click;
-            // 
             // TableBuilderForm
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -1873,7 +1873,7 @@ namespace SQL_Document_Builder
         private System.Windows.Forms.ToolStripMenuItem azureToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem exitToolStripMenuItem;
         private System.Windows.Forms.StatusStrip statusStrip1;
-        private System.Windows.Forms.ToolStripStatusLabel statusToolStripStatusLabe;
+        private System.Windows.Forms.ToolStripStatusLabel messageLabel;
         private System.Windows.Forms.ToolStripStatusLabel serverToolStripStatusLabel;
         private System.Windows.Forms.ToolStripStatusLabel databaseToolStripStatusLabel;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator4;

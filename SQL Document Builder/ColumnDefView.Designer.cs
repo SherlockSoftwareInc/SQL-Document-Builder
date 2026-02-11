@@ -49,6 +49,8 @@ namespace SQL_Document_Builder
             toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             addIndexToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             addPrimaryKeyToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
+            columnReferenceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             splitContainer1 = new System.Windows.Forms.SplitContainer();
             tabControl1 = new System.Windows.Forms.TabControl();
             tabPage1 = new System.Windows.Forms.TabPage();
@@ -67,8 +69,6 @@ namespace SQL_Document_Builder
             panel1 = new System.Windows.Forms.Panel();
             descriptionLabel = new System.Windows.Forms.Label();
             toolTip1 = new System.Windows.Forms.ToolTip(components);
-            toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
-            columnReferenceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             namePanel.SuspendLayout();
             openTableContextMenuStrip.SuspendLayout();
             tableContextMenuStrip.SuspendLayout();
@@ -219,13 +219,14 @@ namespace SQL_Document_Builder
             columnDefDataGridView.TabIndex = 1;
             columnDefDataGridView.Visible = false;
             columnDefDataGridView.CellClick += ColumnDefDataGridView_CellClick;
+            columnDefDataGridView.CellEndEdit += TriggerGridView_CellEndEdit;
             columnDefDataGridView.CellValidated += ColumnDefDataGridView_CellValidated;
             // 
             // columnContextMenuStrip
             // 
             columnContextMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { columnValueFrequencyToolStripMenuItem, toolStripSeparator2, addIndexToolStripMenuItem, addPrimaryKeyToolStripMenuItem, toolStripSeparator3, columnReferenceToolStripMenuItem });
             columnContextMenuStrip.Name = "columnContextMenuStrip";
-            columnContextMenuStrip.Size = new System.Drawing.Size(207, 126);
+            columnContextMenuStrip.Size = new System.Drawing.Size(207, 104);
             // 
             // columnValueFrequencyToolStripMenuItem
             // 
@@ -252,6 +253,18 @@ namespace SQL_Document_Builder
             addPrimaryKeyToolStripMenuItem.Size = new System.Drawing.Size(206, 22);
             addPrimaryKeyToolStripMenuItem.Text = "Create Primary Key";
             addPrimaryKeyToolStripMenuItem.Click += AddPrimaryKeyToolStripMenuItem_Click;
+            // 
+            // toolStripSeparator3
+            // 
+            toolStripSeparator3.Name = "toolStripSeparator3";
+            toolStripSeparator3.Size = new System.Drawing.Size(203, 6);
+            // 
+            // columnReferenceToolStripMenuItem
+            // 
+            columnReferenceToolStripMenuItem.Name = "columnReferenceToolStripMenuItem";
+            columnReferenceToolStripMenuItem.Size = new System.Drawing.Size(206, 22);
+            columnReferenceToolStripMenuItem.Text = "Column Reference";
+            columnReferenceToolStripMenuItem.Click += ColumnReferenceToolStripMenuItem_Click;
             // 
             // splitContainer1
             // 
@@ -315,6 +328,7 @@ namespace SQL_Document_Builder
             triggerGridView.Size = new System.Drawing.Size(345, 432);
             triggerGridView.TabIndex = 2;
             triggerGridView.Visible = false;
+            triggerGridView.CellEndEdit += TriggerGridView_CellEndEdit;
             // 
             // parameterGridView
             // 
@@ -332,6 +346,7 @@ namespace SQL_Document_Builder
             parameterGridView.TabIndex = 2;
             parameterGridView.Visible = false;
             parameterGridView.CellClick += ParameterGridView_CellClick;
+            parameterGridView.CellEndEdit += TriggerGridView_CellEndEdit;
             parameterGridView.CellValidated += ParameterGridView_CellValidated;
             // 
             // tabPage2
@@ -462,18 +477,6 @@ namespace SQL_Document_Builder
             descriptionLabel.Size = new System.Drawing.Size(107, 15);
             descriptionLabel.TabIndex = 0;
             descriptionLabel.Text = "Object description:";
-            // 
-            // toolStripSeparator3
-            // 
-            toolStripSeparator3.Name = "toolStripSeparator3";
-            toolStripSeparator3.Size = new System.Drawing.Size(203, 6);
-            // 
-            // columnReferenceToolStripMenuItem
-            // 
-            columnReferenceToolStripMenuItem.Name = "columnReferenceToolStripMenuItem";
-            columnReferenceToolStripMenuItem.Size = new System.Drawing.Size(206, 22);
-            columnReferenceToolStripMenuItem.Text = "Column Reference";
-            columnReferenceToolStripMenuItem.Click += ColumnReferenceToolStripMenuItem_Click;
             // 
             // ColumnDefView
             // 
