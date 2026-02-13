@@ -14,6 +14,21 @@ namespace SQL_Document_Builder
     public class AIHelper
     {
         /// <summary>
+        /// Generates the table and column descriptions async.
+        /// </summary>
+        /// <param name="dBObject">The d b object.</param>
+        /// <param name="additionalInfo">The additional info.</param>
+        /// <param name="connectionString">The connection string.</param>
+        /// <returns>A Task.</returns>
+        public static async Task<bool> GenerateTableAndColumnDescriptionsAsync(ObjectName dBObject, string additionalInfo, string connectionString)
+        { 
+
+            return false;
+        }
+
+
+
+        /// <summary>
         /// Generates professional and concise descriptions for a SQL table and its columns using a Large Language Model (LLM).
         /// The method sends the provided table context, reference context, and optional database description to the LLM,
         /// receives the completed descriptions, and updates the original context with the results.

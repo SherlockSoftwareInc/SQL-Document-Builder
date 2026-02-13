@@ -4924,5 +4924,73 @@ namespace SQL_Document_Builder
                 }
             }
         }
+
+        /// <summary>
+        /// Handles the click event of the save object descriptions tool strip menu item.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private async void SaveObjectDescriptionsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            await definitionPanel.Save();
+        }
+
+        /// <summary>
+        /// Handles the click event of the batch describe tool strip menu item.
+        /// Batch generates descriptions for multiple database objects at once using AI, 
+        /// and allows the user to review and edit the generated descriptions before saving them to the database.
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private async void BatchDescribeToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
+
+            List<ObjectName>? selectedObjects = SelectObjects();
+
+            if (selectedObjects == null || selectedObjects.Count == 0)
+            {
+                return;
+            }
+
+            string additionalInfo = string.Empty;
+
+            // get user input for additional information
+            using (var inputBox = new InputBox())
+            {
+                inputBox.Title = "Description Assistant Plus - Additional Information";
+                inputBox.Prompt = "Please enter any additional information or specific requirements for the description (optional):";
+                inputBox.Default = "";
+                inputBox.Multiline = true;
+                inputBox.MaxLength = 4000;
+                if (inputBox.ShowDialog() == DialogResult.OK)
+                {
+                    additionalInfo = inputBox.InputText;
+                }
+            }
+
+            WorkingMode(true, "⠋ The AI code advisor is working...");
+            progressBar.Visible = true;
+
+            if (BeginAddDDLScript())
+            {
+
+                for (int i = 0; i < selectedObjects.Count; i++)
+                {
+                    int percentComplete = (i * 100) / selectedObjects.Count;
+                    if (percentComplete > 0 && percentComplete % 2 == 0)
+                    {
+                        progressBar.Value = percentComplete;
+                    }
+                    messageLabel.Text = $"Processing {percentComplete}%...";
+
+                    await AIHelper.GenerateTableAndColumnDescriptionsAsync(selectedObjects[i], string.Empty, _currentConnection!.ConnectionString!);
+                }
+            }
+
+            WorkingMode(false, "The AI code advisor has completed its work.");
+            progressBar.Visible = false;
+
+        }
     }
 }
