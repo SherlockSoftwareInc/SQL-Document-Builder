@@ -1,4 +1,5 @@
-﻿using ScintillaNET;
+﻿using ReverseMarkdown;
+using ScintillaNET;
 using SQL_Document_Builder.ScintillaNetUtils;
 using SQL_Document_Builder.Template;
 using System;
@@ -2181,7 +2182,19 @@ namespace SQL_Document_Builder
             }
             else if (focusedControl is SqlEditBox editBox)
             {
-                editBox.Paste();
+                if (editBox.DocumentType == SqlEditBox.DocumentTypeEnums.empty || editBox.DocumentType == SqlEditBox.DocumentTypeEnums.Markdown)
+                {
+                    if (editBox.DocumentType == SqlEditBox.DocumentTypeEnums.empty)
+                    {
+                        editBox.DocumentType = SqlEditBox.DocumentTypeEnums.Markdown;
+                    }
+
+                    editBox.ReplaceSelection(GetMarkdownFromClipboard());
+                }
+                else
+                {
+                    editBox.Paste();
+                }
             }
             else if (focusedControl is ColumnDefView columnDefView)
             {
@@ -2202,6 +2215,31 @@ namespace SQL_Document_Builder
             {
                 messageLabel.Text = "No valid control is focused for pasting.";
             }
+        }
+
+        private string GetMarkdownFromClipboard()
+        {
+            // 1. Check if the clipboard contains HTML
+            if (Clipboard.ContainsData(DataFormats.Html))
+            {
+                // 2. Extract the HTML string
+                string html = Clipboard.GetText(TextDataFormat.Html);
+
+                // 3. Configure the converter
+                var config = new Config
+                {
+                    UnknownTags = Config.UnknownTagsOption.PassThrough, // Keep tags it doesn't recognize
+                    GithubFlavored = true // Use GFM (tables, task lists, etc.)
+                };
+
+                var converter = new Converter(config);
+
+                // 4. Convert and return
+                return converter.Convert(html);
+            }
+
+            // Fallback to plain text if no formatting exists
+            return Clipboard.GetText();
         }
 
         /// <summary>
