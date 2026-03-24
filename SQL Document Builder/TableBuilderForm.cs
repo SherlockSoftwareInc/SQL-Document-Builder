@@ -5009,25 +5009,40 @@ namespace SQL_Document_Builder
 
             WorkingMode(true, "⠋ The AI code advisor is working...");
             progressBar.Visible = true;
+            objectsTabControl.Enabled = false;
+            definitionPanel.Enabled = false;
 
-            if (BeginAddDDLScript())
+            try
             {
+                if (_currentConnection == null)
+                {
+                    return;
+                }
+
+                // Save any pending edits for the currently opened object before batch processing.
+                await definitionPanel.Save();
 
                 for (int i = 0; i < selectedObjects.Count; i++)
                 {
                     int percentComplete = (i * 100) / selectedObjects.Count;
-                    if (percentComplete > 0 && percentComplete % 2 == 0)
-                    {
-                        progressBar.Value = percentComplete;
-                    }
+                    progressBar.Value = Math.Clamp(percentComplete, 0, 100);
                     messageLabel.Text = $"Processing {percentComplete}%...";
 
-                    await AIHelper.GenerateTableAndColumnDescriptionsAsync(selectedObjects[i], string.Empty, _currentConnection!.ConnectionString!);
+                    var obj = selectedObjects[i];
+                    await definitionPanel.OpenAsync(obj, _currentConnection);
+                    await definitionPanel.AIAssistant(additionalInfo);
+                    await definitionPanel.Save();
                 }
-            }
 
-            WorkingMode(false, "The AI code advisor has completed its work.");
-            progressBar.Visible = false;
+                progressBar.Value = 100;
+            }
+            finally
+            {
+                WorkingMode(false, "The AI code advisor has completed its work.");
+                progressBar.Visible = false;
+                objectsTabControl.Enabled = true;
+                definitionPanel.Enabled = true;
+            }
 
         }
     }

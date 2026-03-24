@@ -1420,52 +1420,52 @@ namespace SQL_Document_Builder
             // 
             aIDescriptionAssistantToolStripMenuItem.Image = Properties.Resources.ai_24;
             aIDescriptionAssistantToolStripMenuItem.Name = "aIDescriptionAssistantToolStripMenuItem";
-            aIDescriptionAssistantToolStripMenuItem.Size = new System.Drawing.Size(156, 22);
+            aIDescriptionAssistantToolStripMenuItem.Size = new System.Drawing.Size(154, 22);
             aIDescriptionAssistantToolStripMenuItem.Text = "Describe";
             aIDescriptionAssistantToolStripMenuItem.Click += AIDescriptionAssistantToolStripMenuItem_Click;
             // 
             // descriptionAssistantPlusToolStripMenuItem
             // 
             descriptionAssistantPlusToolStripMenuItem.Name = "descriptionAssistantPlusToolStripMenuItem";
-            descriptionAssistantPlusToolStripMenuItem.Size = new System.Drawing.Size(156, 22);
+            descriptionAssistantPlusToolStripMenuItem.Size = new System.Drawing.Size(154, 22);
             descriptionAssistantPlusToolStripMenuItem.Text = "Describe with...";
             descriptionAssistantPlusToolStripMenuItem.Click += DescriptionAssistantPlusToolStripMenuItem_Click;
             // 
             // matchDescribeToolStripMenuItem
             // 
             matchDescribeToolStripMenuItem.Name = "matchDescribeToolStripMenuItem";
-            matchDescribeToolStripMenuItem.Size = new System.Drawing.Size(156, 22);
-            matchDescribeToolStripMenuItem.Text = "Match Describe";
+            matchDescribeToolStripMenuItem.Size = new System.Drawing.Size(154, 22);
+            matchDescribeToolStripMenuItem.Text = "Batch Describe";
             matchDescribeToolStripMenuItem.Click += BatchDescribeToolStripMenuItem_Click;
             // 
             // toolStripSeparator22
             // 
             toolStripSeparator22.Name = "toolStripSeparator22";
-            toolStripSeparator22.Size = new System.Drawing.Size(153, 6);
+            toolStripSeparator22.Size = new System.Drawing.Size(151, 6);
             // 
             // optimizeCodeToolStripMenuItem
             // 
             optimizeCodeToolStripMenuItem.Name = "optimizeCodeToolStripMenuItem";
-            optimizeCodeToolStripMenuItem.Size = new System.Drawing.Size(156, 22);
+            optimizeCodeToolStripMenuItem.Size = new System.Drawing.Size(154, 22);
             optimizeCodeToolStripMenuItem.Text = "Optimize code";
             optimizeCodeToolStripMenuItem.Click += OptimizeCodeToolStripMenuItem_Click;
             // 
             // modifyCodeToolStripMenuItem
             // 
             modifyCodeToolStripMenuItem.Name = "modifyCodeToolStripMenuItem";
-            modifyCodeToolStripMenuItem.Size = new System.Drawing.Size(156, 22);
+            modifyCodeToolStripMenuItem.Size = new System.Drawing.Size(154, 22);
             modifyCodeToolStripMenuItem.Text = "Modify code";
             modifyCodeToolStripMenuItem.Click += ModifyCodeToolStripMenuItem_Click;
             // 
             // toolStripSeparator24
             // 
             toolStripSeparator24.Name = "toolStripSeparator24";
-            toolStripSeparator24.Size = new System.Drawing.Size(153, 6);
+            toolStripSeparator24.Size = new System.Drawing.Size(151, 6);
             // 
             // settingsToolStripMenuItem
             // 
             settingsToolStripMenuItem.Name = "settingsToolStripMenuItem";
-            settingsToolStripMenuItem.Size = new System.Drawing.Size(156, 22);
+            settingsToolStripMenuItem.Size = new System.Drawing.Size(154, 22);
             settingsToolStripMenuItem.Text = "Settings";
             settingsToolStripMenuItem.Click += SettingsToolStripMenuItem_Click;
             // 

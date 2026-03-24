@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Text.Json;
@@ -24,6 +25,8 @@ namespace SQL_Document_Builder
         private bool _init = false;
         private bool _isChanged = false;
         private TableContext _tableContext = new();
+        private string _originalTableDescription = string.Empty;
+        private Dictionary<string, string> _originalColumnDescriptions = new(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ColumnDefView"/> class.
@@ -198,8 +201,66 @@ namespace SQL_Document_Builder
             {
                 objectPropertyGrid.SelectedObject = null;
             }
+
+            _originalTableDescription = string.Empty;
+            _originalColumnDescriptions.Clear();
             _init = false;
             _isChanged = false;
+        }
+
+        private static string NormalizeDescription(string? value)
+        {
+            return value ?? string.Empty;
+        }
+
+        private void CaptureOriginalDescriptions()
+        {
+            _originalTableDescription = NormalizeDescription(tableDescTextBox.Text);
+            _originalColumnDescriptions.Clear();
+
+            foreach (var column in _tableContext.Columns)
+            {
+                if (string.IsNullOrEmpty(column.ColumnName))
+                {
+                    continue;
+                }
+
+                _originalColumnDescriptions[column.ColumnName] = NormalizeDescription(column.Description);
+            }
+
+            _isChanged = false;
+        }
+
+        private bool HasDescriptionChanges()
+        {
+            if (_dbObject.ObjectType == ObjectName.ObjectTypeEnums.None)
+            {
+                return false;
+            }
+
+            if (NormalizeDescription(tableDescTextBox.Text) != _originalTableDescription)
+            {
+                return true;
+            }
+
+            if (_dbObject.ObjectType == ObjectName.ObjectTypeEnums.Table || _dbObject.ObjectType == ObjectName.ObjectTypeEnums.View)
+            {
+                foreach (var column in _tableContext.Columns)
+                {
+                    if (string.IsNullOrEmpty(column.ColumnName))
+                    {
+                        continue;
+                    }
+
+                    _originalColumnDescriptions.TryGetValue(column.ColumnName, out var originalDescription);
+                    if (NormalizeDescription(column.Description) != NormalizeDescription(originalDescription))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -529,7 +590,7 @@ GO
                 referencingDataGridView.Visible = true;
             }
 
-            _isChanged = false;
+            CaptureOriginalDescriptions();
         }
 
         /// <summary>
@@ -596,7 +657,7 @@ GO
         /// <returns>A task representing the asynchronous operation.</returns>
         public async Task Save()
         {
-            if (_isChanged || _dbObject.ObjectType != ObjectName.ObjectTypeEnums.None)
+            if (_isChanged && _dbObject.ObjectType != ObjectName.ObjectTypeEnums.None)
             {
                 // save the table description
                 await _dbObject.UpdateObjectDescAsync(tableDescTextBox.Text);
@@ -613,8 +674,9 @@ GO
                         }
                     }
                 }
+
+                CaptureOriginalDescriptions();
             }
-            _isChanged = false;
         }
 
         /// <summary>
@@ -809,17 +871,18 @@ GO
             int rowIndex = e.RowIndex;
             if (rowIndex >= 0)
             {
-                string columnName = (string)columnDefDataGridView.Rows[rowIndex].Cells["ColumnName"].Value;
-                string columnDesc = (string)columnDefDataGridView.Rows[rowIndex].Cells["Description"].Value;
+                string columnName = Convert.ToString(columnDefDataGridView.Rows[rowIndex].Cells["ColumnName"].Value) ?? string.Empty;
+                string columnDesc = Convert.ToString(columnDefDataGridView.Rows[rowIndex].Cells["Description"].Value) ?? string.Empty;
 
                 // find the column in the _tableContext and update its description
                 var column = _tableContext.Columns.FirstOrDefault(c => c.ColumnName == columnName);
                 // update the description if the column is found and the description has changed
-                if (column != null && column.Description != columnDesc)
+                if (column != null && NormalizeDescription(column.Description) != NormalizeDescription(columnDesc))
                 {
                     column.Description = columnDesc;
-                    _isChanged = true;
                 }
+
+                _isChanged = HasDescriptionChanges();
             }
         }
 
@@ -1052,7 +1115,12 @@ GO
         /// <param name="e">The event arguments.</param>
         private void TableDescTextBox_TextChanged(object sender, EventArgs e)
         {
-            _isChanged = true;
+            if (_init)
+            {
+                return;
+            }
+
+            _isChanged = HasDescriptionChanges();
         }
 
         /// <summary>
@@ -1130,7 +1198,7 @@ GO
                 // resize the columns
                 columnDefDataGridView.AutoResizeColumns();
 
-                _isChanged = true;
+                _isChanged = HasDescriptionChanges();
             }
 
             // raise an event to indicate AI processing has ended
@@ -1222,6 +1290,8 @@ GO
                         // resize the description column to fit new content
                         columnDefDataGridView.AutoResizeColumn(columnDefDataGridView.Columns["Description"].Index, DataGridViewAutoSizeColumnMode.AllCells);
                     }
+
+                    _isChanged = HasDescriptionChanges();
                 }
             }
         }
