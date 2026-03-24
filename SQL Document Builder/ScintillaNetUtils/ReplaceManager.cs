@@ -1,5 +1,4 @@
 using System;
-using System;
 using ScintillaNET;
 using System.Windows.Forms;
 

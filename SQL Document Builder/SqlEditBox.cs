@@ -293,6 +293,19 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Prevents the Escape key from inserting the ESC character into the text.
+        /// </summary>
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            if (keyData == Keys.Escape)
+            {
+                return true;
+            }
+
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        /// <summary>
         /// Handles the text changed event for the editor.
         /// </summary>
         /// <param name="sender">The control that raised the event.</param>
