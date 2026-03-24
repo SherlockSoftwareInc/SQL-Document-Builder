@@ -3610,7 +3610,7 @@ namespace SQL_Document_Builder
                 if (SearchIsOpen)
                     SearchManager.Find(false, false);
                 else if (ReplaceIsOpen)
-                    SearchManager.Find(false, false);
+                    ReplaceManager.Find(false, false);
             }
         }
 
