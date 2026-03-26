@@ -1145,23 +1145,33 @@ GO
             await _dbObject.UpdateLevel2DescriptionAsync(name, parameterDesc, _dbObject.ObjectType);
         }
 
+        private int GetMissingColumnDescriptionCount()
+        {
+            return _tableContext.Columns.Count(c => string.IsNullOrWhiteSpace(c.Description));
+        }
+
         /// <summary>
         /// Perform AI assistant to generagte description for the object
         /// </summary>
         /// <returns>A Task.</returns>
         internal async Task AIAssistant(string additionalInfo = "")
         {
-            // open AI settings dialog if not ready
-            if (!AISettingsReady())
-            {
-                using var dlg = new SettingsForm();
-                dlg.ShowDialog();
-            }
-
             if (AISettingsReady())
             {
                 // raise an event to indicate AI processing has started
                 AIProcessingStarted?.Invoke(this, EventArgs.Empty);
+
+                if (_dbObject.ObjectType == ObjectName.ObjectTypeEnums.View && GetMissingColumnDescriptionCount() >= 20)
+                {
+                    await PrepareViewDescriptionsAsync(additionalInfo);
+
+                    if (_tableContext.Columns.Any(c => string.IsNullOrWhiteSpace(c.Description)))
+                    {
+                        await DescribeMissingCoreAsync(additionalInfo, true);
+                    }
+
+                    return;
+                }
 
                 var referenceContext = await GetReferenceContext();
 
@@ -1205,6 +1215,93 @@ GO
             AIProcessingCompleted?.Invoke(this, EventArgs.Empty);
 
             Cursor = Cursors.Default;
+        }
+
+        private void UpdateColumnDescriptionsInGrid()
+        {
+            foreach (DataGridViewRow row in columnDefDataGridView.Rows)
+            {
+                string columnName = Convert.ToString(row.Cells["ColumnName"].Value) ?? string.Empty;
+                var column = _tableContext.Columns.FirstOrDefault(c => c.ColumnName == columnName);
+                if (column != null && !string.IsNullOrWhiteSpace(column.Description))
+                {
+                    row.Cells["Description"].Value = column.Description;
+                }
+            }
+
+            columnDefDataGridView.Refresh();
+            columnDefDataGridView.AutoResizeColumns();
+        }
+
+        private async Task PrepareViewDescriptionsAsync(string additionalInfo)
+        {
+            if (_dbObject.ObjectType != ObjectName.ObjectTypeEnums.View || Connection == null || !AISettingsReady())
+            {
+                return;
+            }
+
+            var helper = new AIHelper();
+            var extraction = await helper.ExtractViewSourceColumnsAsync(_dbObject.Definition);
+
+            foreach (var source in extraction.Sources)
+            {
+                if (string.IsNullOrWhiteSpace(source.Schema) || string.IsNullOrWhiteSpace(source.Table))
+                {
+                    continue;
+                }
+
+                var sourceDbObject = new DBObject();
+                var sourceObjectName = new ObjectName(ObjectName.ObjectTypeEnums.Table, source.Schema, source.Table);
+                if (!await sourceDbObject.OpenAsync(sourceObjectName, Connection))
+                {
+                    continue;
+                }
+
+                var sourceColumns = new HashSet<string>(source.Columns ?? new List<string>(), StringComparer.OrdinalIgnoreCase);
+                if (sourceColumns.Count == 0)
+                {
+                    continue;
+                }
+
+                foreach (var viewColumn in _tableContext.Columns)
+                {
+                    if (!string.IsNullOrWhiteSpace(viewColumn.Description))
+                    {
+                        continue;
+                    }
+
+                    if (!sourceColumns.Contains(viewColumn.ColumnName))
+                    {
+                        continue;
+                    }
+
+                    var sourceColumn = sourceDbObject.Columns.FirstOrDefault(c => c.ColumnName.Equals(viewColumn.ColumnName, StringComparison.OrdinalIgnoreCase));
+                    if (sourceColumn != null && !string.IsNullOrWhiteSpace(sourceColumn.Description))
+                    {
+                        viewColumn.Description = sourceColumn.Description;
+                    }
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(_tableContext.TableDescription))
+            {
+                var description = await helper.GenerateObjectDescriptionFromDefinitionAsync(
+                    "view",
+                    _tableContext.TableSchema,
+                    _tableContext.TableName,
+                    _dbObject.Definition,
+                    Connection.DatabaseDescription,
+                    additionalInfo);
+
+                if (!string.IsNullOrWhiteSpace(description))
+                {
+                    _tableContext.TableDescription = description;
+                    tableDescTextBox.Text = description;
+                }
+            }
+
+            UpdateColumnDescriptionsInGrid();
+            _isChanged = HasDescriptionChanges();
         }
 
         /// <summary>
@@ -1313,6 +1410,86 @@ GO
         {
             // set changed flag when trigger definition is edited
             _isChanged = true;
+        }
+
+        /// <summary>
+        /// Generates descriptions for columns that are missing descriptions using AI, and updates the UI accordingly.
+        /// </summary>
+        /// <returns>A Task.</returns>
+        internal async Task DescribeMissing(string additionalInfo)
+        {
+            await DescribeMissingCoreAsync(additionalInfo, false);
+        }
+
+        private async Task DescribeMissingCoreAsync(string additionalInfo, bool skipViewPreparation)
+        {
+            if (!AISettingsReady()) return;
+
+            AIProcessingStarted?.Invoke(this, EventArgs.Empty);
+
+            if (!skipViewPreparation && _dbObject.ObjectType == ObjectName.ObjectTypeEnums.View && GetMissingColumnDescriptionCount() >= 20)
+            {
+                await PrepareViewDescriptionsAsync(additionalInfo);
+            }
+
+            if (_dbObject.ObjectType != ObjectName.ObjectTypeEnums.Table && _dbObject.ObjectType != ObjectName.ObjectTypeEnums.View)
+            {
+                return;
+            }
+
+            var missingColumns = _tableContext.Columns
+                .Where(c => string.IsNullOrWhiteSpace(c.Description))
+                .Select(c => new ColumnContext
+                {
+                    Ord = c.Ord,
+                    ColumnName = c.ColumnName,
+                    DataType = c.DataType,
+                    Description = c.Description
+                })
+                .ToList();
+
+            if (missingColumns.Count == 0)
+            {
+                return;
+            }
+
+            var referenceContext = await GetReferenceContext();
+
+            var missingContext = new TableContext
+            {
+                ObjectType = _tableContext.ObjectType,
+                TableSchema = _tableContext.TableSchema,
+                TableName = _tableContext.TableName,
+                TableDescription = _tableContext.TableDescription,
+                Columns = missingColumns
+            };
+
+            var helper = new AIHelper();
+            await helper.GenerateTableAndColumnDescriptionsAsync(missingContext, referenceContext, Connection?.DatabaseDescription, additionalInfo);
+
+            // checks if the table object is still the same
+            if (_dbObject.ObjectName == null ||
+                _dbObject.ObjectName.Name != _tableContext.TableName ||
+                _dbObject.ObjectName.Schema != _tableContext.TableSchema)
+            {
+                return;
+            }
+
+            foreach (var generatedColumn in missingContext.Columns)
+            {
+                var originalColumn = _tableContext.Columns.FirstOrDefault(c => c.ColumnName == generatedColumn.ColumnName);
+                if (originalColumn != null && !string.IsNullOrWhiteSpace(generatedColumn.Description))
+                {
+                    originalColumn.Description = generatedColumn.Description;
+                }
+            }
+
+            UpdateColumnDescriptionsInGrid();
+
+            _isChanged = HasDescriptionChanges();
+
+            AIProcessingCompleted?.Invoke(this, EventArgs.Empty);
+            Cursor = Cursors.Default;
         }
     }
 }

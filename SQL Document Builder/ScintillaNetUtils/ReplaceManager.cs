@@ -88,18 +88,18 @@ namespace SQL_Document_Builder.ScintillaNetUtils
 
                     if (lastFound == -1)
                     {
-                        // Wrap around: search from caret to end, then up to caret
-                        searchStart = 0;
-                        caretPos = TextArea.TextLength;
+                        // Wrap around: search from the current position to the end of the document
+                        // to find the last occurrence after the caret
                         int wrapFound = -1;
-                        while (searchStart < TextArea.SelectionStart)
+                        searchStart = TextArea.SelectionStart;
+                        while (searchStart < TextArea.TextLength)
                         {
                             TextArea.TargetStart = searchStart;
-                            TextArea.TargetEnd = TextArea.SelectionStart;
+                            TextArea.TargetEnd = TextArea.TextLength;
                             TextArea.SearchFlags = SearchFlags.None;
 
                             int found = TextArea.SearchInTarget(LastSearch);
-                            if (found == -1 || TextArea.TargetEnd > TextArea.SelectionStart)
+                            if (found == -1)
                             {
                                 break;
                             }

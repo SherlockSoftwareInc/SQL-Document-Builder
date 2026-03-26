@@ -221,6 +221,7 @@ namespace SQL_Document_Builder
             toolTip1 = new ToolTip(components);
             startTimer = new Timer(components);
             waitTimer = new Timer(components);
+            describeMissingToolStripMenuItem = new ToolStripMenuItem();
             toolStrip1.SuspendLayout();
             objectsTabControl.SuspendLayout();
             tabPage1.SuspendLayout();
@@ -1411,7 +1412,7 @@ namespace SQL_Document_Builder
             // 
             // aIAssistantToolStripMenuItem
             // 
-            aIAssistantToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { aIDescriptionAssistantToolStripMenuItem, descriptionAssistantPlusToolStripMenuItem, matchDescribeToolStripMenuItem, toolStripSeparator22, optimizeCodeToolStripMenuItem, modifyCodeToolStripMenuItem, toolStripSeparator24, settingsToolStripMenuItem });
+            aIAssistantToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { aIDescriptionAssistantToolStripMenuItem, descriptionAssistantPlusToolStripMenuItem, describeMissingToolStripMenuItem, matchDescribeToolStripMenuItem, toolStripSeparator22, optimizeCodeToolStripMenuItem, modifyCodeToolStripMenuItem, toolStripSeparator24, settingsToolStripMenuItem });
             aIAssistantToolStripMenuItem.Name = "aIAssistantToolStripMenuItem";
             aIAssistantToolStripMenuItem.Size = new System.Drawing.Size(80, 20);
             aIAssistantToolStripMenuItem.Text = "AI Assistant";
@@ -1420,52 +1421,52 @@ namespace SQL_Document_Builder
             // 
             aIDescriptionAssistantToolStripMenuItem.Image = Properties.Resources.ai_24;
             aIDescriptionAssistantToolStripMenuItem.Name = "aIDescriptionAssistantToolStripMenuItem";
-            aIDescriptionAssistantToolStripMenuItem.Size = new System.Drawing.Size(154, 22);
+            aIDescriptionAssistantToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             aIDescriptionAssistantToolStripMenuItem.Text = "Describe";
             aIDescriptionAssistantToolStripMenuItem.Click += AIDescriptionAssistantToolStripMenuItem_Click;
             // 
             // descriptionAssistantPlusToolStripMenuItem
             // 
             descriptionAssistantPlusToolStripMenuItem.Name = "descriptionAssistantPlusToolStripMenuItem";
-            descriptionAssistantPlusToolStripMenuItem.Size = new System.Drawing.Size(154, 22);
+            descriptionAssistantPlusToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             descriptionAssistantPlusToolStripMenuItem.Text = "Describe with...";
             descriptionAssistantPlusToolStripMenuItem.Click += DescriptionAssistantPlusToolStripMenuItem_Click;
             // 
             // matchDescribeToolStripMenuItem
             // 
             matchDescribeToolStripMenuItem.Name = "matchDescribeToolStripMenuItem";
-            matchDescribeToolStripMenuItem.Size = new System.Drawing.Size(154, 22);
+            matchDescribeToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             matchDescribeToolStripMenuItem.Text = "Batch Describe";
             matchDescribeToolStripMenuItem.Click += BatchDescribeToolStripMenuItem_Click;
             // 
             // toolStripSeparator22
             // 
             toolStripSeparator22.Name = "toolStripSeparator22";
-            toolStripSeparator22.Size = new System.Drawing.Size(151, 6);
+            toolStripSeparator22.Size = new System.Drawing.Size(177, 6);
             // 
             // optimizeCodeToolStripMenuItem
             // 
             optimizeCodeToolStripMenuItem.Name = "optimizeCodeToolStripMenuItem";
-            optimizeCodeToolStripMenuItem.Size = new System.Drawing.Size(154, 22);
+            optimizeCodeToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             optimizeCodeToolStripMenuItem.Text = "Optimize code";
             optimizeCodeToolStripMenuItem.Click += OptimizeCodeToolStripMenuItem_Click;
             // 
             // modifyCodeToolStripMenuItem
             // 
             modifyCodeToolStripMenuItem.Name = "modifyCodeToolStripMenuItem";
-            modifyCodeToolStripMenuItem.Size = new System.Drawing.Size(154, 22);
+            modifyCodeToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             modifyCodeToolStripMenuItem.Text = "Modify code";
             modifyCodeToolStripMenuItem.Click += ModifyCodeToolStripMenuItem_Click;
             // 
             // toolStripSeparator24
             // 
             toolStripSeparator24.Name = "toolStripSeparator24";
-            toolStripSeparator24.Size = new System.Drawing.Size(151, 6);
+            toolStripSeparator24.Size = new System.Drawing.Size(177, 6);
             // 
             // settingsToolStripMenuItem
             // 
             settingsToolStripMenuItem.Name = "settingsToolStripMenuItem";
-            settingsToolStripMenuItem.Size = new System.Drawing.Size(154, 22);
+            settingsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             settingsToolStripMenuItem.Text = "Settings";
             settingsToolStripMenuItem.Click += SettingsToolStripMenuItem_Click;
             // 
@@ -1824,6 +1825,13 @@ namespace SQL_Document_Builder
             waitTimer.Interval = 200;
             waitTimer.Tick += WaitTimer_Tick;
             // 
+            // describeMissingToolStripMenuItem
+            // 
+            describeMissingToolStripMenuItem.Name = "describeMissingToolStripMenuItem";
+            describeMissingToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            describeMissingToolStripMenuItem.Text = "Describe missing";
+            describeMissingToolStripMenuItem.Click += DescribeMissingToolStripMenuItem_Click;
+            // 
             // TableBuilderForm
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -2063,5 +2071,6 @@ namespace SQL_Document_Builder
         private ToolStripMenuItem saveObjectDescriptionsToolStripMenuItem;
         private ToolStripMenuItem matchDescribeToolStripMenuItem;
         private ToolStripSeparator toolStripSeparator22;
+        private ToolStripMenuItem describeMissingToolStripMenuItem;
     }
 }

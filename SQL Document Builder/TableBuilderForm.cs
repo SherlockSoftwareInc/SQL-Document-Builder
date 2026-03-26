@@ -1923,7 +1923,7 @@ namespace SQL_Document_Builder
                 _populating = true;
 
                 // keep the current selection in the combo boxes
-                var selectedObjectType = objectTypeComboBox.Text;
+                int selectedObjectTypeIndex = objectTypeComboBox.SelectedIndex;
                 //var selectedSchema = schemaComboBox.Text;
 
                 // clean up the schema and object list boxes
@@ -1936,17 +1936,14 @@ namespace SQL_Document_Builder
                     SetConnectionComboBox(menuItem.Connection);
 
                 // restore the object type
-                if (!string.IsNullOrEmpty(selectedObjectType))
+                int objectTypeIndex = selectedObjectTypeIndex;
+                if (objectTypeIndex < 0 && objectTypeComboBox.Items.Count > 0)
                 {
-                    int objectTypeIndex = objectTypeComboBox.Items.Count > 0 ? 0 : -1;
-                    for (int i = 0; i < objectTypeComboBox.Items.Count; i++)
-                    {
-                        if (objectTypeComboBox.Items[i].ToString().Equals(selectedObjectType, StringComparison.CurrentCultureIgnoreCase))
-                        {
-                            objectTypeIndex = i;
-                            break;
-                        }
-                    }
+                    objectTypeIndex = 0; // default to the first item
+                }
+
+                if (objectTypeIndex >= 0)
+                {
                     if (objectTypeComboBox.SelectedIndex == objectTypeIndex)
                     {
                         ObjectTypeComboBox_SelectedIndexChanged(sender, e); // re-populate the object list box
@@ -1955,10 +1952,6 @@ namespace SQL_Document_Builder
                     {
                         objectTypeComboBox.SelectedIndex = objectTypeIndex;
                     }
-                }
-                else
-                {
-                    objectTypeComboBox.SelectedIndex = 0; // default to the first item
                 }
 
                 _populating = false;
@@ -2539,11 +2532,10 @@ namespace SQL_Document_Builder
                 if (ReplaceIsOpen)
                 {
                     ReplaceManager.Replace();
-                    //replaceButton.PerformClick();
-                    //e.Handled = true;
-                    //e.SuppressKeyPress = true;
                     replaceReplaceTextBox.Focus();
                 }
+                e.Handled = true;
+                e.SuppressKeyPress = true;
             }
         }
 
@@ -3604,13 +3596,17 @@ namespace SQL_Document_Builder
                     SearchManager.Find(true, false);
                 else if (ReplaceIsOpen)
                     ReplaceManager.Find(true, false);
+                e.Handled = true;
+                e.SuppressKeyPress = true;
             }
-            if (HotKeyManager.IsHotkey(e, Keys.Enter, true) || HotKeyManager.IsHotkey(e, Keys.Enter, false, true))
+            else if (HotKeyManager.IsHotkey(e, Keys.Enter, true) || HotKeyManager.IsHotkey(e, Keys.Enter, false, true))
             {
                 if (SearchIsOpen)
                     SearchManager.Find(false, false);
                 else if (ReplaceIsOpen)
                     ReplaceManager.Find(false, false);
+                e.Handled = true;
+                e.SuppressKeyPress = true;
             }
         }
 
@@ -4627,6 +4623,15 @@ namespace SQL_Document_Builder
         /// <param name="e">The event arguments.</param>
         private async void AIDescriptionAssistantToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            // open AI settings dialog if not ready
+            if (!AISettingsReady())
+            {
+                using var dlg = new SettingsForm();
+                dlg.ShowDialog();
+            }
+
+            if (!AISettingsReady()) return;
+
             await definitionPanel.AIAssistant();
         }
 
@@ -4947,6 +4952,15 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void DescriptionAssistantPlusToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            // open AI settings dialog if not ready
+            if (!AISettingsReady())
+            {
+                using var dlg = new SettingsForm();
+                dlg.ShowDialog();
+            }
+
+            if (!AISettingsReady()) return;
+
             // get user input for additional information
             using (var inputBox = new InputBox())
             {
@@ -4983,6 +4997,15 @@ namespace SQL_Document_Builder
         private async void BatchDescribeToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
+
+            // open AI settings dialog if not ready
+            if (!AISettingsReady())
+            {
+                using var dlg = new SettingsForm();
+                dlg.ShowDialog();
+            }
+
+            if (!AISettingsReady()) return;
 
             List<ObjectName>? selectedObjects = SelectObjects();
 
@@ -5030,7 +5053,7 @@ namespace SQL_Document_Builder
 
                     var obj = selectedObjects[i];
                     await definitionPanel.OpenAsync(obj, _currentConnection);
-                    await definitionPanel.AIAssistant(additionalInfo);
+                    await definitionPanel.DescribeMissing(additionalInfo);
                     await definitionPanel.Save();
                 }
 
@@ -5044,6 +5067,33 @@ namespace SQL_Document_Builder
                 definitionPanel.Enabled = true;
             }
 
+        }
+
+        /// <summary>
+        /// Checks if the AI settings are ready.
+        /// </summary>
+        /// <returns><c>true</c> if AI settings are ready; otherwise, <c>false</c>.</returns>
+        private static bool AISettingsReady()
+        {
+            // check if the AI settings are ready
+            var aiSettings = AISettingsManager.Current;
+            return !string.IsNullOrEmpty(aiSettings.AIApiKey) &&
+                !string.IsNullOrEmpty(aiSettings.AIEndpoint)
+                && !string.IsNullOrEmpty(aiSettings.AIModel);
+        }
+
+        private async void DescribeMissingToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            // open AI settings dialog if not ready
+            if (!AISettingsReady())
+            {
+                using var dlg = new SettingsForm();
+                dlg.ShowDialog();
+            }
+
+            if (!AISettingsReady()) return;
+
+            await definitionPanel.DescribeMissing(string.Empty);
         }
     }
 }

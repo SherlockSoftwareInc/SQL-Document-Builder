@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
@@ -13,6 +14,20 @@ namespace SQL_Document_Builder
     /// </summary>
     public class AIHelper
     {
+        public class ViewSourceColumnsResult
+        {
+            public List<ViewSourceItem> Sources { get; set; } = new();
+        }
+
+        public class ViewSourceItem
+        {
+            public string Schema { get; set; } = string.Empty;
+
+            public string Table { get; set; } = string.Empty;
+
+            public List<string> Columns { get; set; } = new();
+        }
+
         /// <summary>
         /// Generates the table and column descriptions async.
         /// </summary>
@@ -136,6 +151,91 @@ namespace SQL_Document_Builder
                 context.TableDescription = originalTableDescription;
 
             return anySuccess;
+        }
+
+        public async Task<ViewSourceColumnsResult> ExtractViewSourceColumnsAsync(string viewDefinition)
+        {
+            if (string.IsNullOrWhiteSpace(viewDefinition))
+            {
+                return new ViewSourceColumnsResult();
+            }
+
+            string prompt = $@"You are a SQL parser assistant.
+Given the SQL view definition below, extract all source BASE TABLES used by the view and the source column names used from each table.
+
+Rules:
+1. Return ONLY valid JSON.
+2. Use this exact shape:
+{{
+  ""sources"": [
+    {{
+      ""schema"": ""dbo"",
+      ""table"": ""TableName"",
+      ""columns"": [""ColumnA"", ""ColumnB""]
+    }}
+  ]
+}}
+3. Exclude views, functions, CTE names, temp tables, and derived tables.
+4. If schema is missing in SQL, use ""dbo"".
+5. Keep column names exactly as used in source references where possible.
+
+View definition:
+```sql
+{viewDefinition}
+```";
+
+            string llmResponse = await CallLLMAsync(prompt);
+
+            int start = llmResponse.IndexOf('{');
+            int end = llmResponse.LastIndexOf('}');
+            if (start == -1 || end == -1 || end < start)
+            {
+                return new ViewSourceColumnsResult();
+            }
+
+            string json = llmResponse.Substring(start, end - start + 1);
+
+            try
+            {
+                return JsonSerializer.Deserialize<ViewSourceColumnsResult>(json, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                }) ?? new ViewSourceColumnsResult();
+            }
+            catch
+            {
+                return new ViewSourceColumnsResult();
+            }
+        }
+
+        public async Task<string> GenerateObjectDescriptionFromDefinitionAsync(string objectType, string schema, string name, string definition, string? databaseDescription, string additionalInfo)
+        {
+            if (string.IsNullOrWhiteSpace(definition))
+            {
+                return string.Empty;
+            }
+
+            string dbDescription = !string.IsNullOrWhiteSpace(databaseDescription)
+                ? $"Database context: {databaseDescription}\n"
+                : string.Empty;
+
+            string extra = !string.IsNullOrWhiteSpace(additionalInfo)
+                ? $"Additional information: {additionalInfo}\n"
+                : string.Empty;
+
+            string prompt = $@"You are a technical database documentation assistant.
+{dbDescription}{extra}
+Generate one concise sentence for the description of this {objectType}: [{schema}].[{name}].
+Use clear business/functional meaning.
+Return plain text only (no JSON, no markdown).
+{LanguageInstruction()}
+
+Definition:
+```sql
+{definition}
+```";
+
+            return (await CallLLMAsync(prompt)).Trim();
         }
 
         /// <summary>
