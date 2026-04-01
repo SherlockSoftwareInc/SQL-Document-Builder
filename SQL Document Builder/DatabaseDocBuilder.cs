@@ -228,38 +228,7 @@ namespace SQL_Document_Builder
 
             StringBuilder sb = new();
 
-            var sql = $@"SELECT
-    i.name AS IndexName,
-    i.type_desc AS IndexType,
-    i.is_unique AS IsUnique,
-    s.name AS SchemaName,
-    o.name AS ObjectName,
-    (
-        SELECT STUFF((
-            SELECT ',' + COL_NAME(ic2.object_id, ic2.column_id)
-            FROM sys.index_columns ic2
-            WHERE ic2.object_id = i.object_id AND ic2.index_id = i.index_id
-            ORDER BY ic2.key_ordinal
-            FOR XML PATH(''), TYPE).value('.', 'NVARCHAR(MAX)'), 1, 1, '')
-    ) AS IndexColumns,
-    i.filter_definition AS FilterDefinition,
-    i.is_disabled AS IsDisabled,
-    xi.using_xml_index_id,
-    xi.secondary_type
-FROM sys.indexes i
-INNER JOIN sys.objects o ON i.object_id = o.object_id
-INNER JOIN sys.schemas s ON o.schema_id = s.schema_id
-LEFT JOIN sys.xml_indexes xi ON i.object_id = xi.object_id AND i.index_id = xi.index_id
-WHERE s.name = N'{objectName.Schema}'
-  AND o.name = N'{objectName.Name}'
-  AND o.type IN ('U', 'V') -- U: Table, V: View
-  AND i.is_primary_key = 0
-  AND i.is_unique_constraint = 0
-  AND i.type_desc <> 'HEAP'
-  AND i.name IS NOT NULL
-ORDER BY i.name";
-
-            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, connection.ConnectionString);
+            var dt = await SQLDatabaseHelper.GetCreateIndexesMetadataAsync(objectName, connection.ConnectionString);
             if (dt == null || dt.Rows.Count == 0)
                 return string.Empty;
 

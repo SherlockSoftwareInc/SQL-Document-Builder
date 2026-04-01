@@ -438,6 +438,16 @@ namespace SQL_Document_Builder
             return await SchemaMetadataProviderContext.Current.GetObjectIndexesAsync(objectName, connectionString);
         }
 
+        internal static async Task<DataTable?> GetCreateIndexesMetadataAsync(ObjectName objectName, string? connectionString)
+        {
+            if (string.IsNullOrEmpty(connectionString) || objectName == null || objectName.IsEmpty())
+            {
+                return null;
+            }
+
+            return await SchemaMetadataProviderContext.Current.GetCreateIndexesMetadataAsync(objectName, connectionString);
+        }
+
         internal static async Task<DataTable?> GetObjectConstraintsAsync(ObjectName objectName, string? connectionString)
         {
             if (string.IsNullOrEmpty(connectionString) || objectName == null || objectName.IsEmpty())

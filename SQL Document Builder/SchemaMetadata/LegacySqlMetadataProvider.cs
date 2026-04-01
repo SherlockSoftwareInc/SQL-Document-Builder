@@ -78,6 +78,9 @@ namespace SQL_Document_Builder.SchemaMetadata
         public Task<DataTable?> GetObjectIndexesAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default)
             => _coreProvider.GetObjectIndexesAsync(objectName, connectionString, cancellationToken);
 
+        public Task<DataTable?> GetCreateIndexesMetadataAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default)
+            => _coreProvider.GetCreateIndexesMetadataAsync(objectName, connectionString, cancellationToken);
+
         public Task<DataTable?> GetObjectConstraintsAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default)
             => _coreProvider.GetObjectConstraintsAsync(objectName, connectionString, cancellationToken);
 
