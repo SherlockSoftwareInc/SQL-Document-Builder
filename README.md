@@ -1,8 +1,8 @@
 # SQL Server Script and Document Builder
 
-**SQL Server Script and Document Builder** is a comprehensive SQL document and script builder featuring advanced database object browsing, powerful script generation, and multi-tab SQL editing—all integrated with robust connection and template management.
+**SQL Server Script and Document Builder** is a core component of the **[Octofy Ecosystem](https://sherlocksoftwareinc.com/)**. While it functions as a robust desktop IDE for SQL Server, its primary mission is to bridge the gap between complex database schemas and AI intelligence. By transforming raw technical structures into rich, context-aware metadata, it ensures that AI agents—such as the **[Octofy AI Agent](https://sherlocksoftwareinc.com/products/octofy-ai-agent/)** and the **[Octofy Pro](https://sherlocksoftwareinc.com/products/octofy-professional/)** built-in agent—can navigate your data with human-like understanding rather than guesswork.
 
-**Our latest update introduces AI-Powered Documentation and Development**, leveraging a built-in LLM to instantly generate metadata or refine your SQL code. By analyzing your schema and logic, the AI produces professional descriptions and optimized scripts. Because it is a template-based builder, it supports any output format (Markdown, WIKI, SharePoint) or language. These AI-driven capabilities ensure your database logic is efficient and your documentation is context-aware.
+A trustworthy natural-language-to-SQL workflow begins with high-quality documentation. SQL Document Builder automates the creation of "plain language" descriptions for every table, view, column, and routine, providing the essential roadmap AI models require to generate accurate, reliable code and insights.
 
 ---
 
