@@ -1,4 +1,5 @@
 ﻿using Microsoft.Data.SqlClient;
+using SQL_Document_Builder.SchemaMetadata;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -289,17 +290,7 @@ namespace SQL_Document_Builder
         {
             try
             {
-                return tableType switch
-                {
-                    ObjectTypeEnums.Table => await GetTablesAsync(connectionString),
-                    ObjectTypeEnums.View => await GetViewsAsync(connectionString),
-                    ObjectTypeEnums.StoredProcedure => await GetStoredProceduresAsync(connectionString),
-                    ObjectTypeEnums.Function => await GetFunctionsAsync(connectionString),
-                    ObjectTypeEnums.Trigger => await GetTriggersAsync(connectionString),
-                    ObjectTypeEnums.Synonym => await GetSynonymsAsync(connectionString),
-                    ObjectTypeEnums.All => await GetAllObjectsAsync(connectionString),
-                    _ => throw new NotSupportedException($"Unsupported object type: {tableType}.")
-                };
+                return await SchemaMetadataProviderContext.Current.GetDatabaseObjectsAsync(tableType, connectionString);
             }
             catch (Exception ex)
             {
@@ -316,40 +307,12 @@ namespace SQL_Document_Builder
         /// <returns>A Task.</returns>
         internal static async Task<List<ObjectName>> GetAllObjectsAsync(string? connectionString)
         {
-            List < ObjectName > objects = [];
-
-            if (!string.IsNullOrEmpty(connectionString))
+            if (string.IsNullOrEmpty(connectionString))
             {
-                string sql = $@"SELECT 
-s.name AS SchemaName,
-o.name AS ObjectName,
-o.type AS ObjectType
-FROM sys.objects o
-INNER JOIN sys.schemas s ON o.schema_id = s.schema_id
-WHERE o.type NOT IN ('D','IT', 'PK', 'S', 'SQ', 'UQ')
-ORDER BY o.type, s.name, o.name";
-
-                try
-                {
-                    var dt = await GetDataTableAsync(sql, connectionString);
-                    if (dt?.Rows.Count > 0)
-                    {
-                        foreach (DataRow row in dt.Rows)
-                        {
-                            string schemaName = row["SchemaName"].ToString();
-                            string objectName = row["ObjectName"].ToString();
-                            ObjectTypeEnums objectType = ObjectName.ConvertObjectType(row["ObjectType"].ToString());
-
-                            objects.Add(new ObjectName(objectType, schemaName, objectName));
-                        }
-                    }
-                }
-                catch (Exception)
-                {
-                }
+                return [];
             }
 
-            return objects;
+            return await SchemaMetadataProviderContext.Current.GetAllObjectsAsync(connectionString);
         }
 
         /// <summary>
@@ -457,36 +420,7 @@ ORDER BY s.name, o.name;";
                 return [];
             }
 
-            var schemas = new List<string>();
-            var query = "SELECT name FROM sys.schemas ORDER BY name";
-            using var connection = new SqlConnection(connectionString);
-            using var command = new SqlCommand(query, connection)
-            {
-                CommandType = CommandType.Text,
-                CommandTimeout = 50000
-            };
-
-            try
-            {
-                await connection.OpenAsync();
-                using var reader = await command.ExecuteReaderAsync();
-
-                while (await reader.ReadAsync())
-                {
-                    var schemaName = reader["name"].ToString();
-                    if (!string.IsNullOrEmpty(schemaName))
-                        schemas.Add(schemaName);
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error loading schemas: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                await connection.CloseAsync();
-            }
-            return schemas;
+            return await SchemaMetadataProviderContext.Current.GetSchemasAsync(connectionString);
         }
 
         /// <summary>
@@ -698,43 +632,7 @@ JOIN sys.schemas s ON o.schema_id = s.schema_id";
         /// <returns>A string.</returns>
         internal static async Task<string> GetColumnDescriptionAsync(ObjectName objectName, string column, string connectionString)
         {
-            string result = string.Empty;
-            string sql;
-            if (objectName.ObjectType == ObjectName.ObjectTypeEnums.View)
-            {
-                sql = $"SELECT E.value Description FROM sys.schemas S INNER JOIN sys.views T ON S.schema_id = T.schema_id INNER JOIN sys.columns C ON T.object_id = C.object_id INNER JOIN sys.extended_properties E ON T.object_id = E.major_id AND C.column_id = E.minor_id AND E.name = 'MS_Description' AND S.name = N'{objectName.Schema}' AND T.name = N'{objectName.Name}' AND C.name = N'{column}'";
-            }
-            else
-            {
-                sql = $"SELECT E.value Description FROM sys.schemas S INNER JOIN sys.tables T ON S.schema_id = T.schema_id INNER JOIN sys.columns C ON T.object_id = C.object_id INNER JOIN sys.extended_properties E ON T.object_id = E.major_id AND C.column_id = E.minor_id AND E.name = 'MS_Description' AND S.name = N'{objectName.Schema}' AND T.name = N'{objectName.Name}' AND C.name = N'{column}'";
-            }
-            var conn = new SqlConnection(connectionString);
-            try
-            {
-                await conn.OpenAsync();
-                await using var cmd = new SqlCommand(sql, conn)
-                {
-                    CommandType = CommandType.Text,
-                    CommandTimeout = 50000
-                };
-                await using var dr = await cmd.ExecuteReaderAsync();
-                if (await dr.ReadAsync())
-                {
-                    result = dr.GetString(0);
-                }
-
-                dr.Close();
-            }
-            catch (Exception ex)
-            {
-                Common.MsgBox(ex.Message, MessageBoxIcon.Error);
-            }
-            finally
-            {
-                await conn.CloseAsync();
-            }
-
-            return result;
+            return await SchemaMetadataProviderContext.Current.GetColumnDescriptionAsync(objectName, column, connectionString);
         }
 
         /// <summary>
@@ -746,83 +644,7 @@ JOIN sys.schemas s ON o.schema_id = s.schema_id";
             if (objectName == null || objectName?.ObjectType == ObjectTypeEnums.None || string.IsNullOrEmpty(connectionString))
                 return string.Empty;
 
-            string result = string.Empty;
-
-            if (objectName != null)
-            {
-                try
-                {
-                    string sql = string.Empty;
-
-                    switch (objectName.ObjectType)
-                    {
-                        case ObjectTypeEnums.Table:
-                            sql = $@"
-SELECT value
-FROM fn_listextendedproperty (
-    NULL, 'schema', '{objectName.Schema}', 'table', '{objectName.Name}', default, default
-)
-WHERE name = N'MS_Description'";
-                            break;
-
-                        case ObjectTypeEnums.View:
-                            sql = $@"
-SELECT value
-FROM fn_listextendedproperty (
-    NULL, 'schema', '{objectName.Schema}', 'view', '{objectName.Name}', default, default
-)
-WHERE name = N'MS_Description'";
-                            break;
-
-                        case ObjectTypeEnums.StoredProcedure:
-                            sql = $@"
-SELECT value
-FROM fn_listextendedproperty (
-    NULL, 'schema', '{objectName.Schema}', 'procedure', '{objectName.Name}', default, default
-)
-WHERE name = N'MS_Description'";
-                            break;
-
-                        case ObjectTypeEnums.Function:
-                            sql = $@"
-SELECT value
-FROM fn_listextendedproperty (
-    NULL, 'schema', '{objectName.Schema}', 'function', '{objectName.Name}', default, default
-)
-WHERE name = N'MS_Description'";
-                            break;
-
-                        case ObjectTypeEnums.Trigger:
-                            // Get trigger parent info
-                            var (parentName, parentType) = await GetTriggerParentAsync(objectName.Name, connectionString);
-                            if (string.IsNullOrEmpty(parentName) || string.IsNullOrEmpty(parentType)) return string.Empty;
-
-                            sql = $@"
-SELECT value
-FROM fn_listextendedproperty (
-    NULL, 'schema', '{objectName.Schema}', '{parentType.ToLower()}', '{parentName}', 'trigger', '{objectName.Name}'
-)
-WHERE name = N'MS_Description'";
-                            break;
-
-                        default:
-                            return string.Empty;
-                    }
-
-                    var returnValue = await SQLDatabaseHelper.ExecuteScalarAsync(sql, connectionString);
-
-                    if (returnValue != null && returnValue != DBNull.Value)
-                    {
-                        result = returnValue.ToString() ?? string.Empty;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Common.MsgBox(ex.Message, MessageBoxIcon.Error);
-                }
-            }
-
-            return result;
+            return await SchemaMetadataProviderContext.Current.GetObjectDescriptionAsync(objectName, connectionString);
         }
 
         /// <summary>
@@ -834,102 +656,7 @@ WHERE name = N'MS_Description'";
         {
             if (string.IsNullOrEmpty(connectionString) || objectName.IsEmpty()) return;
 
-            string newDesc = (newDescription ?? string.Empty).Replace("'", "''");
-
-            string level1type;
-            string level1name;
-            string level2type = null;
-            string level2name = null;
-
-            switch (objectName.ObjectType)
-            {
-                case ObjectTypeEnums.Table:
-                    level1type = "TABLE";
-                    level1name = objectName.Name;
-                    break;
-
-                case ObjectTypeEnums.View:
-                    level1type = "VIEW";
-                    level1name = objectName.Name;
-                    break;
-
-                case ObjectTypeEnums.StoredProcedure:
-                    level1type = "PROCEDURE";
-                    level1name = objectName.Name;
-                    break;
-
-                case ObjectTypeEnums.Function:
-                    level1type = "FUNCTION";
-                    level1name = objectName.Name;
-                    break;
-
-                case ObjectTypeEnums.Trigger:
-                    var (triggerParent, parentType) = await GetTriggerParentAsync(objectName.Name, connectionString);
-                    level1type = parentType;
-                    level1name = triggerParent;
-                    level2type = "TRIGGER";
-                    level2name = objectName.Name;
-                    break;
-
-                case ObjectTypeEnums.Synonym:
-                    level1type = "SYNONYM";
-                    level1name = objectName.Name;
-                    break;
-
-                default:
-                    throw new InvalidOperationException("Unsupported object type for description update.");
-            }
-
-            string level2Clause = (level2type != null)
-                ? $", @level2type = N'{level2type}', @level2name = N'{level2name}'"
-                : string.Empty;
-
-            string query;
-            if (string.IsNullOrEmpty(newDescription))
-            {
-                query = $@"IF EXISTS (
-    SELECT 1
-      FROM sys.extended_properties
-     WHERE class = 1 AND major_id = OBJECT_ID(N'{objectName.FullName}')
-       AND minor_id = 0
-       AND name = 'MS_Description')
-    BEGIN
-        EXEC sys.sp_dropextendedproperty
-@name = N'MS_Description',
-@level0type = N'SCHEMA', @level0name = N'{objectName.Schema}',
-@level1type = N'{level1type}', @level1name = N'{level1name}'{level2Clause};
-    END;";
-            }
-            else
-            {
-                query = $@"IF EXISTS (
-    SELECT 1
-      FROM sys.extended_properties
-     WHERE class = 1 AND major_id = OBJECT_ID(N'{objectName.FullName}')
-       AND minor_id = 0
-       AND name = 'MS_Description')
-    BEGIN
-        EXEC sys.sp_updateextendedproperty
-            @name = N'MS_Description',
-            @value = N'{newDesc}',
-            @level0type = N'SCHEMA', @level0name = N'{objectName.Schema}',
-            @level1type = N'{level1type}', @level1name = N'{level1name}'{level2Clause};
-    END
-    ELSE
-    BEGIN
-        EXEC sys.sp_addextendedproperty
-            @name = N'MS_Description',
-            @value = N'{newDesc}',
-            @level0type = N'SCHEMA', @level0name = N'{objectName.Schema}',
-            @level1type = N'{level1type}', @level1name = N'{level1name}'{level2Clause};
-    END";
-            }
-
-            var result = await SQLDatabaseHelper.ExecuteSQLAsync(query, connectionString);
-            if (!string.IsNullOrEmpty(result))
-            {
-                Common.MsgBox("Failed to update object description." + Environment.NewLine + result, MessageBoxIcon.Error);
-            }
+            await SchemaMetadataProviderContext.Current.UpdateObjectDescriptionAsync(objectName, newDescription, connectionString);
         }
 
         /// <summary>
@@ -941,69 +668,7 @@ WHERE name = N'MS_Description'";
         {
             if (string.IsNullOrEmpty(connectionString) || objectName.IsEmpty()) return;
 
-            var objectType = objectName.ObjectType;
-            string newDesc = newDescription.Replace("'", "''");
-            string level1type = objectType switch
-            {
-                ObjectTypeEnums.Table => "TABLE",
-                ObjectTypeEnums.View => "VIEW",
-                ObjectTypeEnums.StoredProcedure => "PROCEDURE",
-                ObjectTypeEnums.Function => "FUNCTION",
-                ObjectTypeEnums.Trigger => "TRIGGER",
-                ObjectTypeEnums.Synonym => "Synonym",
-                _ => throw new InvalidOperationException("Unsupported object type for description update.")
-            };
-
-            string level2Type = objectType switch
-            {
-                ObjectTypeEnums.Table or ObjectTypeEnums.View => "COLUMN",
-                ObjectTypeEnums.StoredProcedure or ObjectTypeEnums.Function => "PARAMETER",
-                _ => throw new InvalidOperationException("Unsupported object type for description update.")
-            };
-
-            string query;
-            if (string.IsNullOrEmpty(newDescription))
-            {
-                query = $@"EXEC sys.sp_dropextendedproperty
-@name = N'MS_Description',
-@level0type = N'SCHEMA', @level0name = N'{objectName.Schema}',
-@level1type = N'{level1type}', @level1name = N'{objectName.Name}',
-@level2type = N'{level2Type}', @level2name = N'{columnOrParameter}'";
-            }
-            else
-            {
-                query = $@"
-IF EXISTS (
-    SELECT 1
-    FROM fn_listextendedproperty (
-		N'MS_Description',
-        N'SCHEMA',
-        N'{objectName.Schema}',
-        N'{level1type}',
-        N'{objectName.Name}',
-        N'{level2Type}',
-        N'{columnOrParameter}')
-)
-BEGIN
-    EXEC sys.sp_updateextendedproperty
-        @name = N'MS_Description',
-        @value = N'{newDesc}',
-        @level0type = N'SCHEMA', @level0name = N'{objectName.Schema}',
-        @level1type = N'{level1type}', @level1name = N'{objectName.Name}',
-        @level2type = N'{level2Type}', @level2name = N'{columnOrParameter}';
-END
-ELSE
-BEGIN
-    EXEC sys.sp_addextendedproperty
-        @name = N'MS_Description',
-        @value = N'{newDesc}',
-        @level0type = N'SCHEMA', @level0name = N'{objectName.Schema}',
-        @level1type = N'{level1type}', @level1name = N'{objectName.Name}',
-        @level2type = N'{level2Type}', @level2name = N'{columnOrParameter}';
-END;";
-            }
-
-            await SQLDatabaseHelper.ExecuteSQLAsync(query, connectionString);
+            await SchemaMetadataProviderContext.Current.UpdateLevel2DescriptionAsync(objectName, columnOrParameter, newDescription, connectionString);
         }
 
         /// <summary>
@@ -1068,9 +733,7 @@ WHERE t.name = @TriggerName;";
                 return string.Empty;
             }
 
-            string query = $@"SELECT sm.definition FROM sys.sql_modules sm WHERE sm.object_id = OBJECT_ID(N'{objectName.QuotedFullName}')";
-            var result = await ExecuteScalarAsync(query, connectionString);
-            return result != null && result != DBNull.Value ? result.ToString() ?? string.Empty : string.Empty;
+            return await SchemaMetadataProviderContext.Current.GetObjectDefinitionAsync(objectName, connectionString);
         }
 
         #endregion Object Definitions
@@ -1291,17 +954,7 @@ ORDER BY o.type, s.name, o.name";
             if (objectName == null || string.IsNullOrEmpty(objectName.Schema) || string.IsNullOrEmpty(objectName.Name) || string.IsNullOrEmpty(connectionString))
                 return null;
 
-            string sql = $@"
-SELECT 
-    OBJECT_SCHEMA_NAME(referencing_id) AS [Schema],
-    OBJECT_NAME(referencing_id) AS ObjectName,
-    o.type_desc AS ObjectType
-FROM sys.sql_expression_dependencies d
-JOIN sys.objects o ON d.referencing_id = o.object_id
-WHERE d.referenced_id = OBJECT_ID(N'{objectName.FullName}')
-ORDER BY [Schema], ObjectName";
-
-            return await GetDataTableAsync(sql, connectionString);
+            return await SchemaMetadataProviderContext.Current.GetReferencingObjectsAsync(objectName, connectionString);
         }
 
         /// <summary>
@@ -1315,19 +968,7 @@ ORDER BY [Schema], ObjectName";
             if (objectName == null || string.IsNullOrEmpty(objectName.Schema) || string.IsNullOrEmpty(objectName.Name) || string.IsNullOrEmpty(connectionString))
                 return null;
 
-            string sql = $@"
-SELECT 
-    d.referenced_schema_name AS [Schema],
-    d.referenced_entity_name AS ObjectName,
-    o.type_desc AS ObjectType
-FROM sys.sql_expression_dependencies d
-JOIN sys.objects o 
-    ON o.name = d.referenced_entity_name 
-    AND o.schema_id = SCHEMA_ID(d.referenced_schema_name)
-WHERE d.referencing_id = OBJECT_ID(N'{objectName.FullName}')
-ORDER BY [Schema], ObjectName";
-
-            return await GetDataTableAsync(sql, connectionString);
+            return await SchemaMetadataProviderContext.Current.GetReferencedObjectsAsync(objectName, connectionString);
         }
 
         /// <summary>
@@ -1341,23 +982,7 @@ ORDER BY [Schema], ObjectName";
             if (objectName == null || string.IsNullOrEmpty(objectName.Schema) || string.IsNullOrEmpty(objectName.Name) || string.IsNullOrEmpty(connectionString))
                 return null;
 
-            string sql = $@"
-SELECT 
-    c1.name AS FromColumn,
-    OBJECT_SCHEMA_NAME(fk.referenced_object_id) AS ToSchema,
-    OBJECT_NAME(fk.referenced_object_id) AS ToTable,
-    c2.name AS ToColumn
-FROM sys.foreign_keys fk
-INNER JOIN sys.foreign_key_columns fkc 
-    ON fk.object_id = fkc.constraint_object_id
-INNER JOIN sys.columns c1 
-    ON fkc.parent_object_id = c1.object_id AND fkc.parent_column_id = c1.column_id
-INNER JOIN sys.columns c2 
-    ON fkc.referenced_object_id = c2.object_id AND fkc.referenced_column_id = c2.column_id
-WHERE OBJECT_SCHEMA_NAME(fk.parent_object_id) = '{objectName.Schema}'
-AND OBJECT_NAME(fk.parent_object_id) = '{objectName.Name}'";
-
-            return await GetDataTableAsync(sql, connectionString);
+            return await SchemaMetadataProviderContext.Current.GetForeignTablesAsync(objectName, connectionString);
         }
 
         /// <summary>
