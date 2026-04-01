@@ -315,6 +315,12 @@ namespace SQL_Document_Builder.SchemaMetadata
             return table;
         }
 
+        public async Task<DataTable?> GetObjectRelationshipsAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default)
+        {
+            await using var provider = await ConnectAsync(connectionString, cancellationToken);
+            return await provider.GetObjectRelationshipsAsync(objectName.Schema, objectName.Name, cancellationToken);
+        }
+
         public async Task<DataTable?> GetForeignTablesAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default)
         {
             await using var provider = await ConnectAsync(connectionString, cancellationToken);

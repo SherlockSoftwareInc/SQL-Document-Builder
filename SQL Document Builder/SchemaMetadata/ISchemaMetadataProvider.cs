@@ -41,6 +41,8 @@ namespace SQL_Document_Builder.SchemaMetadata
 
         Task<DataTable?> GetReferencingObjectsAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default);
 
+        Task<DataTable?> GetObjectRelationshipsAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default);
+
         Task<DataTable?> GetForeignTablesAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default);
 
         Task<List<string>> GetPrimaryKeyColumnsAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default);

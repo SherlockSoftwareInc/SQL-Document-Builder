@@ -813,6 +813,14 @@ namespace SQL_Document_Builder
             return await SchemaMetadataProviderContext.Current.GetReferencingObjectsAsync(objectName, connectionString);
         }
 
+        internal static async Task<DataTable?> GetObjectRelationshipsAsync(ObjectName objectName, string connectionString)
+        {
+            if (objectName == null || string.IsNullOrEmpty(objectName.Schema) || string.IsNullOrEmpty(objectName.Name) || string.IsNullOrEmpty(connectionString))
+                return null;
+
+            return await SchemaMetadataProviderContext.Current.GetObjectRelationshipsAsync(objectName, connectionString);
+        }
+
         /// <summary>
         /// Gets the referenced objects async.
         /// </summary>

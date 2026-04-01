@@ -375,28 +375,7 @@ namespace SQL_Document_Builder
                 return string.Empty;
             }
 
-            string query = $@"SELECT 
-    fk.name AS ForeignKeyName,
-    OBJECT_SCHEMA_NAME(fk.parent_object_id) AS FromSchema,
-    OBJECT_NAME(fk.parent_object_id) AS FromTable,
-    c1.name AS FromColumn,
-    OBJECT_SCHEMA_NAME(fk.referenced_object_id) AS ToSchema,
-    OBJECT_NAME(fk.referenced_object_id) AS ToTable,
-    c2.name AS ToColumn,
-    fk.delete_referential_action_desc AS OnDelete,
-    fk.update_referential_action_desc AS OnUpdate
-FROM sys.foreign_keys fk
-INNER JOIN sys.foreign_key_columns fkc 
-    ON fk.object_id = fkc.constraint_object_id
-INNER JOIN sys.columns c1 
-    ON fkc.parent_object_id = c1.object_id AND fkc.parent_column_id = c1.column_id
-INNER JOIN sys.columns c2 
-    ON fkc.referenced_object_id = c2.object_id AND fkc.referenced_column_id = c2.column_id
-WHERE (OBJECT_SCHEMA_NAME(fk.parent_object_id) = N'{objectName.Schema}' AND OBJECT_NAME(fk.parent_object_id) = N'{objectName.Name}')
-   OR (OBJECT_SCHEMA_NAME(fk.referenced_object_id) = N'{objectName.Schema}' AND OBJECT_NAME(fk.referenced_object_id) = N'{objectName.Name}')
-ORDER BY ForeignKeyName, fkc.constraint_column_id";
-
-            var dt = await SQLDatabaseHelper.GetDataTableAsync(query, connection.ConnectionString);
+            var dt = await SQLDatabaseHelper.GetObjectRelationshipsAsync(objectName, connection.ConnectionString);
 
             if(dt?.Rows.Count > 0)
             {
@@ -501,34 +480,31 @@ ORDER BY ForeignKeyName, fkc.constraint_column_id";
             {
                 StringBuilder sb = new();
 
-                // Query to get all triggers for the specified table/view
-                string sql = $@"
-SELECT
-    tr.name AS TriggerName,
-    sm.definition AS TriggerDefinition,
-    tr.is_disabled,
-    CASE
-        WHEN tr.is_instead_of_trigger = 1 THEN 'INSTEAD OF'
-        ELSE 'AFTER'
-    END AS TriggerType
-FROM sys.triggers tr
-INNER JOIN sys.objects o ON tr.parent_id = o.object_id
-INNER JOIN sys.schemas s ON o.schema_id = s.schema_id
-INNER JOIN sys.sql_modules sm ON tr.object_id = sm.object_id
-WHERE s.name = N'{objectName.Schema}'
-  AND o.name = N'{objectName.Name}'
-ORDER BY tr.name";
-
-                var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, connection.ConnectionString);
-                if (dt == null || dt.Rows.Count == 0)
+                var allTriggers = await SQLDatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.Trigger, connection.ConnectionString);
+                if (allTriggers.Count == 0)
                     return "";
 
-                foreach (DataRow dr in dt.Rows)
+                foreach (var triggerObject in allTriggers)
                 {
-                    string triggerName = dr["TriggerName"].ToString() ?? "";
-                    string definition = dr["TriggerDefinition"].ToString() ?? "";
-                    //bool isDisabled = dr["is_disabled"] != DBNull.Value && (bool)dr["is_disabled"];
-                    string triggerType = dr["TriggerType"].ToString() ?? "UNKNOWN";
+                    var triggerInfo = await SQLDatabaseHelper.GetTriggerInfoAsync(triggerObject, connection.ConnectionString);
+                    if (triggerInfo == null || triggerInfo.Rows.Count == 0)
+                    {
+                        continue;
+                    }
+
+                    var infoRow = triggerInfo.Rows[0];
+                    var parentSchema = infoRow["ParentObjectSchema"]?.ToString() ?? string.Empty;
+                    var parentName = infoRow["ParentObjectName"]?.ToString() ?? string.Empty;
+
+                    if (!parentSchema.Equals(objectName.Schema, StringComparison.OrdinalIgnoreCase) ||
+                        !parentName.Equals(objectName.Name, StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+
+                    string triggerName = triggerObject.Name;
+                    string definition = await SQLDatabaseHelper.GetObjectDefinitionAsync(triggerObject, connection.ConnectionString);
+                    string triggerType = infoRow["TriggerType"]?.ToString() ?? "UNKNOWN";
 
                     string triggerDoc = templateBody;
                     triggerDoc = triggerDoc
@@ -540,7 +516,7 @@ ORDER BY tr.name";
                     if (triggerDoc.Contains("~Description~"))
                     {
                         // get trigger description
-                        string description = await SQLDatabaseHelper.GetObjectDescriptionAsync(new ObjectName(ObjectName.ObjectTypeEnums.Trigger, objectName.Schema, triggerName) , connection.ConnectionString);
+                        string description = await SQLDatabaseHelper.GetObjectDescriptionAsync(triggerObject, connection.ConnectionString);
 
                         triggerDoc = ProcessSection(triggerDoc, "Description", "~Description~", description.Length == 0 ? " " : description);
                     }
@@ -570,23 +546,19 @@ ORDER BY tr.name";
 
             if (connection.DBMSType == DBMSTypeEnums.SQLServer)
             {
-                // Query to get the trigger type for the specified trigger name
-                string sql = $@"
-SELECT 
-    CASE 
-        WHEN t.parent_class_desc = 'DATABASE' THEN 'DDL Trigger'
-        WHEN t.is_instead_of_trigger = 1 THEN 'INSTEAD OF Trigger'
-        ELSE 'AFTER Trigger'
-    END AS TriggerType
-FROM sys.triggers t
-JOIN sys.objects o ON t.object_id = o.object_id
-WHERE t.name = N'{objectName.Name}'";
-
-                var triggerType = await SQLDatabaseHelper.ExecuteScalarAsync(sql, connection.ConnectionString);
-                if (triggerType == null)
+                var triggerInfo = await SQLDatabaseHelper.GetTriggerInfoAsync(objectName, connection.ConnectionString);
+                if (triggerInfo == null || triggerInfo.Rows.Count == 0)
                     return string.Empty;
 
-                return triggerType.ToString(); 
+                var triggerType = triggerInfo.Rows[0]["TriggerType"]?.ToString();
+                if (string.IsNullOrEmpty(triggerType))
+                {
+                    return string.Empty;
+                }
+
+                return triggerType.Equals("INSTEAD OF", StringComparison.OrdinalIgnoreCase)
+                    ? "INSTEAD OF Trigger"
+                    : "AFTER Trigger";
             }
 
             // reserved for future use
