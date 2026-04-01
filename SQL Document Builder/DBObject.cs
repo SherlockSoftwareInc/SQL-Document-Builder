@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Microsoft.Data.SqlClient;
 using static SQL_Document_Builder.ObjectName;
 
 namespace SQL_Document_Builder
@@ -528,7 +529,7 @@ ORDER BY ORDINAL_POSITION";
             string schemaName = ObjectName.Schema;
             string tableName = ObjectName.Name;
 
-            string sql = $@"
+            const string sql = @"
 SELECT
     kc.name AS ConstraintName,
     kc.type_desc AS ConstraintType,
@@ -538,8 +539,8 @@ INNER JOIN sys.tables t ON kc.parent_object_id = t.object_id
 INNER JOIN sys.schemas s ON t.schema_id = s.schema_id
 LEFT JOIN sys.index_columns ic ON ic.object_id = kc.parent_object_id AND ic.index_id = kc.unique_index_id
 LEFT JOIN sys.columns c ON c.object_id = t.object_id AND c.column_id = ic.column_id
-WHERE s.name = N'{schemaName}'
-  AND t.name = N'{tableName}'
+WHERE s.name = @SchemaName
+  AND t.name = @ObjectName
 UNION
 SELECT
     fk.name AS ConstraintName,
@@ -550,8 +551,8 @@ INNER JOIN sys.foreign_key_columns fkc ON fk.object_id = fkc.constraint_object_i
 INNER JOIN sys.tables t ON fk.parent_object_id = t.object_id
 INNER JOIN sys.schemas s ON t.schema_id = s.schema_id
 INNER JOIN sys.columns c ON fkc.parent_object_id = c.object_id AND fkc.parent_column_id = c.column_id
-WHERE s.name = N'{schemaName}'
-  AND t.name = N'{tableName}'
+WHERE s.name = @SchemaName
+  AND t.name = @ObjectName
 UNION
 SELECT
     cc.name AS ConstraintName,
@@ -561,8 +562,8 @@ FROM sys.check_constraints cc
 INNER JOIN sys.tables t ON cc.parent_object_id = t.object_id
 INNER JOIN sys.schemas s ON t.schema_id = s.schema_id
 LEFT JOIN sys.columns c ON cc.parent_object_id = c.object_id AND cc.parent_column_id = c.column_id
-WHERE s.name = N'{schemaName}'
-  AND t.name = N'{tableName}'
+WHERE s.name = @SchemaName
+  AND t.name = @ObjectName
 UNION
 SELECT
     dc.name AS ConstraintName,
@@ -572,10 +573,12 @@ FROM sys.default_constraints dc
 INNER JOIN sys.tables t ON dc.parent_object_id = t.object_id
 INNER JOIN sys.schemas s ON t.schema_id = s.schema_id
 INNER JOIN sys.columns c ON dc.parent_object_id = c.object_id AND dc.parent_column_id = c.column_id
-WHERE s.name = N'{schemaName}'
-  AND t.name = N'{tableName}'";
+WHERE s.name = @SchemaName
+  AND t.name = @ObjectName";
 
-            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, ConnectionString);
+            var dt = await LoadDataTableAsync(sql, ConnectionString,
+                new SqlParameter("@SchemaName", schemaName),
+                new SqlParameter("@ObjectName", tableName));
             if (dt == null || dt.Rows.Count == 0)
                 return;
 
@@ -597,7 +600,7 @@ WHERE s.name = N'{schemaName}'
                 return;
 
             // Query to get all indexes and their columns for the table/view
-            var sql = $@"
+            const string sql = @"
 SELECT
     ind.name AS IndexName,
     ind.type_desc AS Type,
@@ -608,12 +611,14 @@ INNER JOIN sys.index_columns ic ON ind.object_id = ic.object_id AND ind.index_id
 INNER JOIN sys.columns col ON ic.object_id = col.object_id AND ic.column_id = col.column_id
 INNER JOIN sys.tables t ON ind.object_id = t.object_id
 INNER JOIN sys.schemas s ON t.schema_id = s.schema_id
-WHERE s.name = N'{objectName.Schema}'
-  AND t.name = N'{objectName.Name}'
+WHERE s.name = @SchemaName
+  AND t.name = @ObjectName
   AND ind.is_primary_key = 0 -- Exclude PK, unless you want to include it
 ORDER BY ind.name, ic.key_ordinal";
 
-            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, ConnectionString);
+            var dt = await LoadDataTableAsync(sql, ConnectionString,
+                new SqlParameter("@SchemaName", objectName.Schema),
+                new SqlParameter("@ObjectName", objectName.Name));
             if (dt == null || dt.Rows.Count == 0)
                 return;
 
@@ -674,14 +679,16 @@ ORDER BY ind.name, ic.key_ordinal";
         {
             PrimaryKeyColumns = string.Empty;
 
-            var sql = $@"
+            const string sql = @"
 SELECT COLUMN_NAME
 FROM Information_SCHEMA.KEY_COLUMN_USAGE
 WHERE OBJECTPROPERTY(OBJECT_ID(CONSTRAINT_SCHEMA + '.' + CONSTRAINT_NAME), 'IsPrimaryKey') = 1
-  AND TABLE_NAME = N'{objectName.Name}'
-  AND TABLE_SCHEMA = N'{objectName.Schema}'";
+  AND TABLE_NAME = @ObjectName
+  AND TABLE_SCHEMA = @SchemaName";
 
-            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, ConnectionString);
+            var dt = await LoadDataTableAsync(sql, ConnectionString,
+                new SqlParameter("@ObjectName", objectName.Name),
+                new SqlParameter("@SchemaName", objectName.Schema));
             if (dt == null || dt.Rows.Count == 0)
                 return;
 
@@ -791,13 +798,15 @@ WHERE OBJECTPROPERTY(OBJECT_ID(CONSTRAINT_SCHEMA + '.' + CONSTRAINT_NAME), 'IsPr
                 return false;
 
             // Query to get the base object name for the synonym
-            string sql = $@"
+            const string sql = @"
 SELECT s.base_object_name
 FROM sys.synonyms s
 INNER JOIN sys.schemas sch ON s.schema_id = sch.schema_id
-WHERE sch.name = N'{ObjectName.Schema}' AND s.name = N'{ObjectName.Name}'";
+WHERE sch.name = @SchemaName AND s.name = @ObjectName";
 
-            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, ConnectionString);
+            var dt = await LoadDataTableAsync(sql, ConnectionString,
+                new SqlParameter("@SchemaName", ObjectName.Schema),
+                new SqlParameter("@ObjectName", ObjectName.Name));
             if (dt == null || dt.Rows.Count == 0)
                 return false;
 
@@ -842,6 +851,32 @@ WHERE sch.name = N'{ObjectName.Schema}' AND s.name = N'{ObjectName.Name}'";
             }
 
             return result;
+        }
+
+        private static async Task<DataTable?> LoadDataTableAsync(string sql, string connectionString, params SqlParameter[] parameters)
+        {
+            if (string.IsNullOrEmpty(connectionString))
+                return null;
+
+            var table = new DataTable();
+
+            await using var connection = new SqlConnection(connectionString);
+            await using var command = new SqlCommand(sql, connection)
+            {
+                CommandType = CommandType.Text,
+                CommandTimeout = 50000
+            };
+
+            if (parameters.Length > 0)
+            {
+                command.Parameters.AddRange(parameters);
+            }
+
+            await connection.OpenAsync();
+            await using var reader = await command.ExecuteReaderAsync();
+            table.Load(reader);
+
+            return table;
         }
 
         /// <summary>
