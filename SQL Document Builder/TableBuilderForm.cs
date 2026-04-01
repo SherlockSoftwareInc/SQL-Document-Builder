@@ -195,22 +195,6 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Checks if the usp_addupdateextendedproperty stored procedure exists in the database.
-        /// </summary>
-        /// <returns>A Task.</returns>
-        private static async Task<bool> IsAddObjectDescriptionSPExists(string connectionString)
-        {
-            string sql = "select ROUTINE_NAME from INFORMATION_SCHEMA.ROUTINES where ROUTINE_SCHEMA = 'dbo' and ROUTINE_NAME = 'usp_addupdateextendedproperty'";
-            var returnValue = await SQLDatabaseHelper.ExecuteScalarAsync(sql, connectionString);
-            if (returnValue == null || returnValue == DBNull.Value)
-            {
-                return false;
-            }
-
-            return true;
-        }
-
-        /// <summary>
         /// Perform the syntax check for the given script.
         /// </summary>
         /// <param name="script">The script.</param>
@@ -2027,18 +2011,14 @@ namespace SQL_Document_Builder
                 // check if the script contains a 'usp_addupdateextendedproperty' statement
                 if (script.Contains("usp_addupdateextendedproperty", StringComparison.CurrentCultureIgnoreCase))
                 {
-                    bool spExists = await IsAddObjectDescriptionSPExists(connection.ConnectionString);
-                    if (!spExists)
+                    // ask for confirmation to execute the script
+                    if (Common.MsgBox("The script references usp_addupdateextendedproperty. Do you want to (re)create it in the target database now?", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
                     {
-                        // ask for confirmation to execute the script
-                        if (Common.MsgBox("The target database does not contains a usp_addupdateextendedproperty stored procedure. Do you want to create it?", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
-                        {
-                            await SQLDatabaseHelper.AddObjectDescriptionSPs(connection.ConnectionString);
-                        }
-                        else
-                        {
-                            return;
-                        }
+                        await SQLDatabaseHelper.AddObjectDescriptionSPs(connection.ConnectionString);
+                    }
+                    else
+                    {
+                        return;
                     }
                 }
 
