@@ -420,7 +420,9 @@ namespace SQL_Document_Builder.SchemaMetadata
             }
 
             if (connectionString.IndexOf("oracle", StringComparison.OrdinalIgnoreCase) >= 0
-                || connectionString.IndexOf("mysql", StringComparison.OrdinalIgnoreCase) >= 0)
+                || connectionString.IndexOf("mysql", StringComparison.OrdinalIgnoreCase) >= 0
+                || connectionString.IndexOf("postgres", StringComparison.OrdinalIgnoreCase) >= 0
+                || connectionString.IndexOf("pgsql", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 return DatabaseProviderKind.Odbc;
             }
