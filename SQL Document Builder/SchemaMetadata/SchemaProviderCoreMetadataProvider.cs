@@ -419,7 +419,8 @@ namespace SQL_Document_Builder.SchemaMetadata
                 // Fall through to string heuristics below.
             }
 
-            if (connectionString.IndexOf("oracle", StringComparison.OrdinalIgnoreCase) >= 0)
+            if (connectionString.IndexOf("oracle", StringComparison.OrdinalIgnoreCase) >= 0
+                || connectionString.IndexOf("mysql", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 return DatabaseProviderKind.Odbc;
             }
