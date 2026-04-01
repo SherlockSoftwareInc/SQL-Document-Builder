@@ -1,7 +1,6 @@
 using OctofyPro.SchemaProvider.Core.Abstractions;
 using OctofyPro.SchemaProvider.Core.Models;
 using OctofyPro.SchemaProvider.Core.Providers;
-using Microsoft.Data.SqlClient;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -84,25 +83,8 @@ namespace SQL_Document_Builder.SchemaMetadata
 
         public async Task<string> GetSynonymBaseObjectAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default)
         {
-            const string sql = @"
-SELECT s.base_object_name
-FROM sys.synonyms s
-INNER JOIN sys.schemas sch ON s.schema_id = sch.schema_id
-WHERE sch.name = @SchemaName AND s.name = @ObjectName";
-
-            await using var connection = new SqlConnection(connectionString);
-            await using var command = new SqlCommand(sql, connection)
-            {
-                CommandType = CommandType.Text,
-                CommandTimeout = 50000
-            };
-
-            command.Parameters.AddWithValue("@SchemaName", objectName.Schema);
-            command.Parameters.AddWithValue("@ObjectName", objectName.Name);
-
-            await connection.OpenAsync(cancellationToken);
-            var result = await command.ExecuteScalarAsync(cancellationToken);
-            return result == null || result == DBNull.Value ? string.Empty : result.ToString() ?? string.Empty;
+            await using var provider = await ConnectAsync(connectionString, cancellationToken);
+            return await provider.GetSynonymBaseObjectAsync(objectName.Schema, objectName.Name, cancellationToken);
         }
 
         public async Task<string> GetObjectDescriptionAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default)
@@ -157,185 +139,38 @@ WHERE sch.name = @SchemaName AND s.name = @ObjectName";
 
         public async Task<DataTable?> GetObjectIndexesAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default)
         {
-            const string sql = @"
-SELECT
-    ind.name AS IndexName,
-    ind.type_desc AS Type,
-    col.name AS ColumnName,
-    ind.is_unique AS IsUnique
-FROM sys.indexes ind
-INNER JOIN sys.index_columns ic ON ind.object_id = ic.object_id AND ind.index_id = ic.index_id
-INNER JOIN sys.columns col ON ic.object_id = col.object_id AND ic.column_id = col.column_id
-INNER JOIN sys.tables t ON ind.object_id = t.object_id
-INNER JOIN sys.schemas s ON t.schema_id = s.schema_id
-WHERE s.name = @SchemaName
-  AND t.name = @ObjectName
-  AND ind.is_primary_key = 0
-ORDER BY ind.name, ic.key_ordinal";
-
-            return await LoadDataTableAsync(sql, connectionString, cancellationToken,
-                new SqlParameter("@SchemaName", objectName.Schema),
-                new SqlParameter("@ObjectName", objectName.Name));
+            await using var provider = await ConnectAsync(connectionString, cancellationToken);
+            return await provider.GetObjectIndexesAsync(objectName.Schema, objectName.Name, cancellationToken);
         }
 
         public async Task<Dictionary<string, (int SeedValue, int IncrementValue)>> GetIdentityColumnsAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default)
         {
-            var identityColumns = new Dictionary<string, (int SeedValue, int IncrementValue)>();
-
-            if (objectName.ObjectType != ObjectTypeEnums.Table)
-            {
-                return identityColumns;
-            }
-
-            const string sql = @"
-SELECT
-    ic.name AS identity_column_name,
-    ic.seed_value,
-    ic.increment_value
-FROM sys.tables AS t
-INNER JOIN sys.schemas AS s ON t.schema_id = s.schema_id
-INNER JOIN sys.identity_columns AS ic ON t.object_id = ic.object_id
-WHERE t.name = @ObjectName
-  AND s.name = @SchemaName;";
-
-            var dt = await LoadDataTableAsync(sql, connectionString, cancellationToken,
-                new SqlParameter("@ObjectName", objectName.Name),
-                new SqlParameter("@SchemaName", objectName.Schema));
-
-            foreach (DataRow row in dt.Rows)
-            {
-                string columnName = row["identity_column_name"]?.ToString() ?? string.Empty;
-                int seedValue = row["seed_value"] != DBNull.Value ? Convert.ToInt32(row["seed_value"]) : 0;
-                int incrementValue = row["increment_value"] != DBNull.Value ? Convert.ToInt32(row["increment_value"]) : 0;
-
-                if (!string.IsNullOrEmpty(columnName))
-                {
-                    identityColumns[columnName] = (seedValue, incrementValue);
-                }
-            }
-
-            return identityColumns;
+            await using var provider = await ConnectAsync(connectionString, cancellationToken);
+            return await provider.GetIdentityColumnsAsync(objectName.Schema, objectName.Name, cancellationToken);
         }
 
         public async Task<DataTable?> GetCheckConstraintsAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default)
         {
-            const string sql = @"SELECT
-    cc.name AS ConstraintName,
-    s.name AS SchemaName,
-    t.name AS TableName,
-    cc.definition AS CheckDefinition
-FROM sys.check_constraints cc
-INNER JOIN sys.tables t ON cc.parent_object_id = t.object_id
-INNER JOIN sys.schemas s ON t.schema_id = s.schema_id
-WHERE s.name = @SchemaName AND t.name = @ObjectName
-ORDER BY cc.name;";
-
-            return await LoadDataTableAsync(sql, connectionString, cancellationToken,
-                new SqlParameter("@SchemaName", objectName.Schema),
-                new SqlParameter("@ObjectName", objectName.Name));
+            await using var provider = await ConnectAsync(connectionString, cancellationToken);
+            return await provider.GetCheckConstraintsAsync(objectName.Schema, objectName.Name, cancellationToken);
         }
 
         public async Task<DataTable?> GetDefaultConstraintsAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default)
         {
-            const string sql = @"SELECT
-    dc.name AS ConstraintName,
-    s.name AS SchemaName,
-    t.name AS TableName,
-    c.name AS ColumnName,
-    dc.definition AS DefaultDefinition
-FROM sys.default_constraints dc
-INNER JOIN sys.columns c ON dc.parent_object_id = c.object_id AND dc.parent_column_id = c.column_id
-INNER JOIN sys.tables t ON dc.parent_object_id = t.object_id
-INNER JOIN sys.schemas s ON t.schema_id = s.schema_id
-WHERE s.name = @SchemaName AND t.name = @ObjectName
-ORDER BY dc.name;";
-
-            return await LoadDataTableAsync(sql, connectionString, cancellationToken,
-                new SqlParameter("@SchemaName", objectName.Schema),
-                new SqlParameter("@ObjectName", objectName.Name));
+            await using var provider = await ConnectAsync(connectionString, cancellationToken);
+            return await provider.GetDefaultConstraintsAsync(objectName.Schema, objectName.Name, cancellationToken);
         }
 
         public async Task<DataTable?> GetForeignKeyConstraintsAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default)
         {
-            const string sql = @"SELECT
-    fk.name AS ForeignKeyName,
-    s.name AS SchemaName,
-    tp.name AS ParentTable,
-    fkc.constraint_column_id AS ColumnOrder,
-    cp.name AS ParentColumn,
-    tr.name AS ReferencedTable,
-    cr.name AS ReferencedColumn,
-    rs.name AS ReferencedSchema,
-    fk.delete_referential_action_desc AS OnDeleteAction,
-    fk.update_referential_action_desc AS OnUpdateAction
-FROM sys.foreign_keys fk
-INNER JOIN sys.tables tp ON fk.parent_object_id = tp.object_id
-INNER JOIN sys.schemas s ON tp.schema_id = s.schema_id
-INNER JOIN sys.foreign_key_columns fkc ON fk.object_id = fkc.constraint_object_id
-INNER JOIN sys.columns cp ON fkc.parent_column_id = cp.column_id AND cp.object_id = tp.object_id
-INNER JOIN sys.tables tr ON fk.referenced_object_id = tr.object_id
-INNER JOIN sys.schemas rs ON tr.schema_id = rs.schema_id
-INNER JOIN sys.columns cr ON fkc.referenced_column_id = cr.column_id AND cr.object_id = tr.object_id
-WHERE s.name = @SchemaName AND tp.name = @ObjectName
-ORDER BY fk.name, fkc.constraint_column_id;";
-
-            return await LoadDataTableAsync(sql, connectionString, cancellationToken,
-                new SqlParameter("@SchemaName", objectName.Schema),
-                new SqlParameter("@ObjectName", objectName.Name));
+            await using var provider = await ConnectAsync(connectionString, cancellationToken);
+            return await provider.GetForeignKeyConstraintsAsync(objectName.Schema, objectName.Name, cancellationToken);
         }
 
         public async Task<DataTable?> GetObjectConstraintsAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default)
         {
-            const string sql = @"
-SELECT
-    kc.name AS ConstraintName,
-    kc.type_desc AS ConstraintType,
-    c.name AS ColumnName
-FROM sys.key_constraints kc
-INNER JOIN sys.tables t ON kc.parent_object_id = t.object_id
-INNER JOIN sys.schemas s ON t.schema_id = s.schema_id
-LEFT JOIN sys.index_columns ic ON ic.object_id = kc.parent_object_id AND ic.index_id = kc.unique_index_id
-LEFT JOIN sys.columns c ON c.object_id = t.object_id AND c.column_id = ic.column_id
-WHERE s.name = @SchemaName
-  AND t.name = @ObjectName
-UNION
-SELECT
-    fk.name AS ConstraintName,
-    'FOREIGN_KEY_CONSTRAINT' AS ConstraintType,
-    c.name AS ColumnName
-FROM sys.foreign_keys fk
-INNER JOIN sys.foreign_key_columns fkc ON fk.object_id = fkc.constraint_object_id
-INNER JOIN sys.tables t ON fk.parent_object_id = t.object_id
-INNER JOIN sys.schemas s ON t.schema_id = s.schema_id
-INNER JOIN sys.columns c ON fkc.parent_object_id = c.object_id AND fkc.parent_column_id = c.column_id
-WHERE s.name = @SchemaName
-  AND t.name = @ObjectName
-UNION
-SELECT
-    cc.name AS ConstraintName,
-    'CHECK_CONSTRAINT' AS ConstraintType,
-    c.name AS ColumnName
-FROM sys.check_constraints cc
-INNER JOIN sys.tables t ON cc.parent_object_id = t.object_id
-INNER JOIN sys.schemas s ON t.schema_id = s.schema_id
-LEFT JOIN sys.columns c ON cc.parent_object_id = c.object_id AND cc.parent_column_id = c.column_id
-WHERE s.name = @SchemaName
-  AND t.name = @ObjectName
-UNION
-SELECT
-    dc.name AS ConstraintName,
-    'DEFAULT_CONSTRAINT' AS ConstraintType,
-    c.name AS ColumnName
-FROM sys.default_constraints dc
-INNER JOIN sys.tables t ON dc.parent_object_id = t.object_id
-INNER JOIN sys.schemas s ON t.schema_id = s.schema_id
-INNER JOIN sys.columns c ON dc.parent_object_id = c.object_id AND dc.parent_column_id = c.column_id
-WHERE s.name = @SchemaName
-  AND t.name = @ObjectName";
-
-            return await LoadDataTableAsync(sql, connectionString, cancellationToken,
-                new SqlParameter("@SchemaName", objectName.Schema),
-                new SqlParameter("@ObjectName", objectName.Name));
+            await using var provider = await ConnectAsync(connectionString, cancellationToken);
+            return await provider.GetObjectConstraintsAsync(objectName.Schema, objectName.Name, cancellationToken);
         }
 
         public async Task<DataTable?> GetObjectColumnsAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default)
@@ -409,34 +244,8 @@ WHERE s.name = @SchemaName
 
             if (objectName.ObjectType == ObjectTypeEnums.StoredProcedure)
             {
-                const string paramSql = @"
-SELECT
-    p.ORDINAL_POSITION,
-    p.PARAMETER_NAME,
-    p.DATA_TYPE,
-    p.CHARACTER_MAXIMUM_LENGTH,
-    p.PARAMETER_MODE
-FROM Information_SCHEMA.PARAMETERS p
-WHERE p.SPECIFIC_SCHEMA = @SchemaName
-  AND p.SPECIFIC_NAME = @ObjectName
-  AND p.ORDINAL_POSITION > 0
-ORDER BY p.ORDINAL_POSITION";
-
-                var table = new DataTable();
-                await using var connection = new SqlConnection(connectionString);
-                await using var command = new SqlCommand(paramSql, connection)
-                {
-                    CommandType = CommandType.Text,
-                    CommandTimeout = 50000
-                };
-
-                command.Parameters.AddWithValue("@SchemaName", objectName.Schema);
-                command.Parameters.AddWithValue("@ObjectName", objectName.Name);
-
-                await connection.OpenAsync(cancellationToken);
-                await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-                table.Load(reader);
-                return table;
+                await using var provider = await ConnectAsync(connectionString, cancellationToken);
+                return await provider.GetObjectParametersAsync(objectName.Schema, objectName.Name, cancellationToken);
             }
 
             return new DataTable();
@@ -525,29 +334,6 @@ ORDER BY p.ORDINAL_POSITION";
             var provider = DatabaseSchemaProviderFactory.Create(DatabaseProviderKind.SqlServer);
             await provider.ConnectAsync(connectionString, cancellationToken);
             return provider;
-        }
-
-        private static async Task<DataTable> LoadDataTableAsync(string sql, string connectionString, CancellationToken cancellationToken, params SqlParameter[] parameters)
-        {
-            var table = new DataTable();
-
-            await using var connection = new SqlConnection(connectionString);
-            await using var command = new SqlCommand(sql, connection)
-            {
-                CommandType = CommandType.Text,
-                CommandTimeout = 50000
-            };
-
-            if (parameters.Length > 0)
-            {
-                command.Parameters.AddRange(parameters);
-            }
-
-            await connection.OpenAsync(cancellationToken);
-            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-            table.Load(reader);
-
-            return table;
         }
 
         private static DatabaseObjectType ToDatabaseObjectType(ObjectTypeEnums objectType)
