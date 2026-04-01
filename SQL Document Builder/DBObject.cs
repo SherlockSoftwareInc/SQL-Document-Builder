@@ -656,37 +656,12 @@ ORDER BY ind.name, ic.key_ordinal";
         /// </summary>
         private async Task GetParameterDescAsync()
         {
-            string objectType = ObjectName.ObjectType == ObjectName.ObjectTypeEnums.StoredProcedure ? "PROCEDURE" : "FUNCTION";
-
-            string sql = $@"
-SELECT p.name AS ParameterName,
-    CAST(ep.value AS VARCHAR(MAX)) AS PropertyValue
-FROM sys.extended_properties AS ep
-INNER JOIN sys.objects AS o ON ep.major_id = o.object_id
-INNER JOIN sys.schemas AS s ON o.schema_id = s.schema_id
-LEFT JOIN sys.parameters AS p
-    ON ep.major_id = p.object_id AND ep.minor_id = p.parameter_id
-WHERE ep.name = 'MS_Description'
-  AND p.name IS NOT NULL
-  AND o.type IN ('FN', 'TF', 'IF', 'P', 'PC')
-  AND o.name = N'{ObjectName.Name}'
-  AND s.name = N'{ObjectName.Schema}'";
-
-            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, ConnectionString);
-            if (dt == null || dt.Rows.Count == 0)
+            if (string.IsNullOrEmpty(ConnectionString) || ObjectName.IsEmpty() || Parameters.Count == 0)
                 return;
 
-            foreach (DataRow row in dt.Rows)
+            foreach (var parameter in Parameters)
             {
-                string paramName = row["ParameterName"]?.ToString() ?? "";
-                string desc = row["PropertyValue"]?.ToString() ?? "";
-
-                // Parameter names in sys.parameters start with '@', match accordingly
-                var param = Parameters.Find(p => p.Name.Equals(paramName, StringComparison.OrdinalIgnoreCase));
-                if (param != null)
-                {
-                    param.Description = desc;
-                }
+                parameter.Description = await SQLDatabaseHelper.GetColumnDescriptionAsync(ObjectName, parameter.Name, ConnectionString);
             }
         }
 

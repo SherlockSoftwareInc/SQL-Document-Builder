@@ -90,8 +90,15 @@ namespace SQL_Document_Builder.SchemaMetadata
         public async Task<string> GetColumnDescriptionAsync(ObjectName objectName, string columnName, string connectionString, CancellationToken cancellationToken = default)
         {
             await using var provider = await ConnectAsync(connectionString, cancellationToken);
+
+            if (objectName.ObjectType == ObjectTypeEnums.StoredProcedure || objectName.ObjectType == ObjectTypeEnums.Function)
+            {
+                var parameterDescriptions = await provider.GetParameterDescriptionsAsync(objectName.Schema, objectName.Name, cancellationToken);
+                return parameterDescriptions.TryGetValue(columnName, out var parameterValue) ? parameterValue : string.Empty;
+            }
+
             var columnDescriptions = await provider.GetColumnDescriptionsAsync(objectName.Schema, objectName.Name, cancellationToken);
-            return columnDescriptions.TryGetValue(columnName, out var value) ? value : string.Empty;
+            return columnDescriptions.TryGetValue(columnName, out var columnValue) ? columnValue : string.Empty;
         }
 
         public async Task<DataTable?> GetReferencedObjectsAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default)
