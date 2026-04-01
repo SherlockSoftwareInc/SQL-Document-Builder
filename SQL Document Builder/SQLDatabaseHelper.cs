@@ -418,6 +418,36 @@ namespace SQL_Document_Builder
             return await SchemaMetadataProviderContext.Current.GetObjectParametersAsync(objectName, connectionString);
         }
 
+        internal static async Task<List<string>> GetPrimaryKeyColumnsAsync(ObjectName objectName, string? connectionString)
+        {
+            if (string.IsNullOrEmpty(connectionString) || objectName == null || objectName.IsEmpty())
+            {
+                return [];
+            }
+
+            return await SchemaMetadataProviderContext.Current.GetPrimaryKeyColumnsAsync(objectName, connectionString);
+        }
+
+        internal static async Task<DataTable?> GetObjectIndexesAsync(ObjectName objectName, string? connectionString)
+        {
+            if (string.IsNullOrEmpty(connectionString) || objectName == null || objectName.IsEmpty())
+            {
+                return null;
+            }
+
+            return await SchemaMetadataProviderContext.Current.GetObjectIndexesAsync(objectName, connectionString);
+        }
+
+        internal static async Task<DataTable?> GetObjectConstraintsAsync(ObjectName objectName, string? connectionString)
+        {
+            if (string.IsNullOrEmpty(connectionString) || objectName == null || objectName.IsEmpty())
+            {
+                return null;
+            }
+
+            return await SchemaMetadataProviderContext.Current.GetObjectConstraintsAsync(objectName, connectionString);
+        }
+
         /// <summary>
         /// Gets the stored procedures async.
         /// </summary>
