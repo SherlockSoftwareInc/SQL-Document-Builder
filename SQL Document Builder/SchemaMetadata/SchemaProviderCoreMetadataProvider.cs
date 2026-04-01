@@ -87,6 +87,52 @@ namespace SQL_Document_Builder.SchemaMetadata
             return await provider.GetSynonymBaseObjectAsync(objectName.Schema, objectName.Name, cancellationToken);
         }
 
+        public async Task<DataTable?> GetTableInfoAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default)
+        {
+            await using var provider = await ConnectAsync(connectionString, cancellationToken);
+            return await provider.GetTableInfoAsync(objectName.Schema, objectName.Name, cancellationToken);
+        }
+
+        public async Task<DataTable?> GetViewInfoAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default)
+        {
+            await using var provider = await ConnectAsync(connectionString, cancellationToken);
+            return await provider.GetViewInfoAsync(objectName.Schema, objectName.Name, cancellationToken);
+        }
+
+        public async Task<DataTable?> GetProcedureInfoAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default)
+        {
+            await using var provider = await ConnectAsync(connectionString, cancellationToken);
+            return await provider.GetProcedureInfoAsync(objectName.Schema, objectName.Name, cancellationToken);
+        }
+
+        public async Task<DataTable?> GetFunctionInfoAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default)
+        {
+            await using var provider = await ConnectAsync(connectionString, cancellationToken);
+            return await provider.GetFunctionInfoAsync(objectName.Schema, objectName.Name, cancellationToken);
+        }
+
+        public async Task<DataTable?> GetTriggerInfoAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default)
+        {
+            await using var provider = await ConnectAsync(connectionString, cancellationToken);
+            return await provider.GetTriggerInfoAsync(objectName.Schema, objectName.Name, cancellationToken);
+        }
+
+        public async Task<DataTable?> GetSynonymInfoAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default)
+        {
+            await using var provider = await ConnectAsync(connectionString, cancellationToken);
+            return await provider.GetSynonymInfoAsync(objectName.Schema, objectName.Name, cancellationToken);
+        }
+
+        public async Task<List<ObjectName>> GetRecentObjectsAsync(DateTime startDate, DateTime endDate, string connectionString, CancellationToken cancellationToken = default)
+        {
+            await using var provider = await ConnectAsync(connectionString, cancellationToken);
+            var recentObjects = await provider.GetRecentObjectsAsync(startDate, endDate, cancellationToken);
+            return recentObjects
+                .Select(o => new ObjectName(ConvertObjectType(o.ObjectType), o.SchemaName, o.ObjectName))
+                .Where(o => o.ObjectType != ObjectTypeEnums.None)
+                .ToList();
+        }
+
         public async Task<string> GetObjectDescriptionAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default)
         {
             await using var provider = await ConnectAsync(connectionString, cancellationToken);
@@ -347,6 +393,20 @@ namespace SQL_Document_Builder.SchemaMetadata
                 ObjectTypeEnums.Trigger => DatabaseObjectType.Trigger,
                 ObjectTypeEnums.Synonym => DatabaseObjectType.Synonym,
                 _ => DatabaseObjectType.Unknown
+            };
+        }
+
+        private static ObjectTypeEnums ConvertObjectType(DatabaseObjectType objectType)
+        {
+            return objectType switch
+            {
+                DatabaseObjectType.Table => ObjectTypeEnums.Table,
+                DatabaseObjectType.View => ObjectTypeEnums.View,
+                DatabaseObjectType.Procedure => ObjectTypeEnums.StoredProcedure,
+                DatabaseObjectType.Function => ObjectTypeEnums.Function,
+                DatabaseObjectType.Trigger => ObjectTypeEnums.Trigger,
+                DatabaseObjectType.Synonym => ObjectTypeEnums.Synonym,
+                _ => ObjectTypeEnums.None
             };
         }
     }

@@ -594,51 +594,6 @@ namespace SQL_Document_Builder
             await SchemaMetadataProviderContext.Current.UpdateLevel2DescriptionAsync(objectName, columnOrParameter, newDescription, connectionString);
         }
 
-        /// <summary>
-        /// Gets the trigger parent async.
-        /// </summary>
-        /// <param name="triggerName">The trigger name.</param>
-        /// <param name="connectionString">The connection string.</param>
-        /// <returns>A Task.</returns>
-        private static async Task<(string TriggerParent, string ParentType)> GetTriggerParentAsync(string triggerName, string connectionString)
-        {
-            string triggerParent = null;
-            string parentType = null;
-
-            string query = @"
-SELECT
-    o.name AS ParentName,
-    o.type_desc AS ParentType
-FROM sys.triggers t
-INNER JOIN sys.objects o ON t.parent_id = o.object_id
-WHERE t.name = @TriggerName;";
-
-            using (var conn = new SqlConnection(connectionString))
-            using (var cmd = new SqlCommand(query, conn))
-            {
-                cmd.Parameters.AddWithValue("@TriggerName", triggerName);
-
-                await conn.OpenAsync();
-                using (var reader = await cmd.ExecuteReaderAsync())
-                {
-                    if (await reader.ReadAsync())
-                    {
-                        triggerParent = reader["ParentName"]?.ToString();
-                        var typeDesc = reader["ParentType"]?.ToString();
-
-                        parentType = typeDesc switch
-                        {
-                            "USER_TABLE" => "TABLE",
-                            "VIEW" => "VIEW",
-                            _ => "UNKNOWN"
-                        };
-                    }
-                }
-            }
-
-            return (triggerParent, parentType);
-        }
-
         #endregion Object & Column Descriptions
 
         #region Object Definitions
@@ -667,6 +622,66 @@ WHERE t.name = @TriggerName;";
             }
 
             return await SchemaMetadataProviderContext.Current.GetSynonymBaseObjectAsync(objectName, connectionString);
+        }
+
+        internal static async Task<DataTable?> GetTableInfoAsync(ObjectName objectName, string? connectionString)
+        {
+            if (objectName == null || objectName.ObjectType != ObjectTypeEnums.Table || string.IsNullOrEmpty(connectionString))
+            {
+                return null;
+            }
+
+            return await SchemaMetadataProviderContext.Current.GetTableInfoAsync(objectName, connectionString);
+        }
+
+        internal static async Task<DataTable?> GetViewInfoAsync(ObjectName objectName, string? connectionString)
+        {
+            if (objectName == null || objectName.ObjectType != ObjectTypeEnums.View || string.IsNullOrEmpty(connectionString))
+            {
+                return null;
+            }
+
+            return await SchemaMetadataProviderContext.Current.GetViewInfoAsync(objectName, connectionString);
+        }
+
+        internal static async Task<DataTable?> GetProcedureInfoAsync(ObjectName objectName, string? connectionString)
+        {
+            if (objectName == null || objectName.ObjectType != ObjectTypeEnums.StoredProcedure || string.IsNullOrEmpty(connectionString))
+            {
+                return null;
+            }
+
+            return await SchemaMetadataProviderContext.Current.GetProcedureInfoAsync(objectName, connectionString);
+        }
+
+        internal static async Task<DataTable?> GetFunctionInfoAsync(ObjectName objectName, string? connectionString)
+        {
+            if (objectName == null || objectName.ObjectType != ObjectTypeEnums.Function || string.IsNullOrEmpty(connectionString))
+            {
+                return null;
+            }
+
+            return await SchemaMetadataProviderContext.Current.GetFunctionInfoAsync(objectName, connectionString);
+        }
+
+        internal static async Task<DataTable?> GetTriggerInfoAsync(ObjectName objectName, string? connectionString)
+        {
+            if (objectName == null || objectName.ObjectType != ObjectTypeEnums.Trigger || string.IsNullOrEmpty(connectionString))
+            {
+                return null;
+            }
+
+            return await SchemaMetadataProviderContext.Current.GetTriggerInfoAsync(objectName, connectionString);
+        }
+
+        internal static async Task<DataTable?> GetSynonymInfoAsync(ObjectName objectName, string? connectionString)
+        {
+            if (objectName == null || objectName.ObjectType != ObjectTypeEnums.Synonym || string.IsNullOrEmpty(connectionString))
+            {
+                return null;
+            }
+
+            return await SchemaMetadataProviderContext.Current.GetSynonymInfoAsync(objectName, connectionString);
         }
 
         #endregion Object Definitions
@@ -767,61 +782,21 @@ WHERE t.name = @TriggerName;";
         /// <returns>A list of ObjectNames.</returns>
         internal static List<ObjectName> GetRecentObjects(DateTime startDate, DateTime endDate, string connectionString)
         {
-            var objects = new List<ObjectName>();
-
             if (string.IsNullOrEmpty(connectionString))
-                return objects;
-
-            const string sql = @"
-SELECT 
-    s.name AS SchemaName,
-    o.name AS ObjectName,
-    o.type AS ObjectType
-FROM 
-    sys.objects o
-    INNER JOIN sys.schemas s ON o.schema_id = s.schema_id
-WHERE
-    o.type NOT IN ('D','IT', 'PK', 'S', 'SQ', 'UQ')
-    AND (
-        (o.create_date BETWEEN @StartDate AND @EndDate)
-        OR (o.modify_date BETWEEN @StartDate AND @EndDate)
-    )
-ORDER BY o.type, s.name, o.name";
-
-            using var connection = new SqlConnection(connectionString);
-            using var command = new SqlCommand(sql, connection)
-            {
-                CommandType = CommandType.Text,
-                CommandTimeout = 50000
-            };
-
-            command.Parameters.AddWithValue("@StartDate", startDate);
-            command.Parameters.AddWithValue("@EndDate", endDate);
+                return [];
 
             try
             {
-                connection.Open();
-                using var reader = command.ExecuteReader();
-                while (reader.Read())
-                {
-                    string schema = reader["SchemaName"]?.ToString() ?? "";
-                    string name = reader["ObjectName"]?.ToString() ?? "";
-                    string typeDesc = reader["ObjectType"]?.ToString() ?? "";
-
-                    var objectType = ObjectName.ConvertObjectType(typeDesc);
-                    objects.Add(new ObjectName(objectType, schema, name));
-                }
+                return SchemaMetadataProviderContext.Current
+                    .GetRecentObjectsAsync(startDate, endDate, connectionString)
+                    .GetAwaiter()
+                    .GetResult();
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return [];
             }
-            finally
-            {
-                connection.Close();
-            }
-
-            return objects;
         }
 
         /// <summary>
@@ -915,83 +890,5 @@ ORDER BY o.type, s.name, o.name";
         }
 
         #endregion Miscellaneous Methods
-
-        /*
-        /// <summary>
-        /// Gets all foreign keys in the database.
-        /// </summary>
-        /// <param name="connectionString">The connection string.</param>
-        /// <returns>A DataTable containing all foreign key relationships.</returns>
-        internal static DataTable? GetAllForeignKeys(string? connectionString)
-        {
-            if (string.IsNullOrEmpty(connectionString))
-            {
-                return null; // Return null if the connection string is null or empty
-            }
-
-            var dtForeignKeys = new DataTable();
-            using SqlConnection conn = new(connectionString);
-            try
-            {
-                using SqlCommand cmd = new() { Connection = conn };
-                cmd.CommandText = @"
-SELECT
-    SCHEMA_NAME(fk.schema_id) AS SchemaName,
-    OBJECT_NAME(fk.parent_object_id) AS TableName,
-    COL_NAME(fkc.parent_object_id, fkc.parent_column_id) AS ColumnName,
-    SCHEMA_NAME(referencedObj.schema_id) AS ReferencedSchemaName,
-    OBJECT_NAME(fk.referenced_object_id) AS ReferencedTableName,
-    COL_NAME(fkc.referenced_object_id, fkc.referenced_column_id) AS ReferencedColumnName
-FROM sys.foreign_keys AS fk
-INNER JOIN sys.foreign_key_columns AS fkc ON fk.object_id = fkc.constraint_object_id
-INNER JOIN sys.objects AS referencedObj ON fk.referenced_object_id = referencedObj.object_id";
-                conn.Open();
-                var dr = cmd.ExecuteReader();
-                dtForeignKeys.Load(dr);
-                dr.Close();
-            }
-            catch (SqlException)
-            {
-                throw;
-            }
-            finally
-            {
-                conn.Close();
-            }
-            return dtForeignKeys;
-        }
-
-        /// <summary>
-        /// Gets the referenced foreign key(s) for a specific column in a table.
-        /// </summary>
-        /// <param name="dtForeignKeys">The DataTable of foreign keys (from GetAllForeignKeys).</param>
-        /// <param name="schemaName">The schema name.</param>
-        /// <param name="tableName">The table name.</param>
-        /// <param name="columnName">The column name.</param>
-        /// <returns>A string listing referenced columns, or empty if none.</returns>
-        internal static string GetForeignKey(DataTable dtForeignKeys, string schemaName, string tableName, string columnName)
-        {
-            if (dtForeignKeys == null || dtForeignKeys.Rows.Count == 0)
-            {
-                return string.Empty;
-            }
-
-            var foreignKeys = from fk in dtForeignKeys.AsEnumerable()
-                              where fk.Field<string>("SchemaName") == schemaName
-                                 && fk.Field<string>("TableName") == tableName
-                                 && fk.Field<string>("ColumnName") == columnName
-                              select fk;
-
-            string foreignKey = string.Empty;
-            foreach (var fk in foreignKeys)
-            {
-                foreignKey += $"[{fk.Field<string>("ReferencedSchemaName")}].[{fk.Field<string>("ReferencedTableName")}].[{fk.Field<string>("ReferencedColumnName")}], ";
-            }
-            if (foreignKey.Length > 2)
-                foreignKey = foreignKey.Substring(0, foreignKey.Length - 2);
-
-            return foreignKey;
-        }
-        */
     }
 }

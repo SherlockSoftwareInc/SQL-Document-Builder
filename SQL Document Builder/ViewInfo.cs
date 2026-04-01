@@ -47,13 +47,7 @@ namespace SQL_Document_Builder
             SchemaName = objectName.Schema;
             ViewName = objectName.Name;
 
-            string sql = $@"
-SELECT
-    v.create_date AS CreateDate,
-    v.modify_date AS ModifyDate
-FROM sys.views v
-WHERE v.object_id = OBJECT_ID(N'{objectName.FullName}')";
-            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, connectionString);
+            var dt = await SQLDatabaseHelper.GetViewInfoAsync(objectName, connectionString);
 
             if (dt?.Rows.Count > 0)
             {

@@ -83,20 +83,7 @@ namespace SQL_Document_Builder
             SchemaName = objectName.Schema;
             TriggerName = objectName.Name;
 
-            string sql = $@"SELECT
-    CASE WHEN tr.is_instead_of_trigger = 1 THEN 'INSTEAD OF' ELSE 'AFTER' END AS TriggerType,
-    CASE WHEN tr.is_disabled = 1 THEN 'Yes' ELSE 'No' END AS IsDisabled,
-    sch.name AS ParentObjectSchema,
-    obj.name AS ParentObjectName,
-    obj.type_desc AS ParentObjectType,
-    tr.create_date AS CreateDate,
-    tr.modify_date AS ModifyDate
-FROM sys.triggers tr
-JOIN sys.objects obj ON tr.parent_id = obj.object_id
-JOIN sys.schemas sch ON obj.schema_id = sch.schema_id
-WHERE tr.name = N'{objectName.Name}'";
-
-            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, connectionString);
+            var dt = await SQLDatabaseHelper.GetTriggerInfoAsync(objectName, connectionString);
 
             if (dt?.Rows.Count > 0)
             {

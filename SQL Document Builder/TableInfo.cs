@@ -61,19 +61,7 @@ namespace SQL_Document_Builder
             TableName = objectName.Name;
             SchemaName = objectName.Schema;
 
-            string sql = $@"
-SELECT
-    t.create_date AS CreateDate,
-    t.modify_date AS ModifyDate,
-    p.rows AS [RowCount],
-    au.total_pages * 8 / 1024.0 AS DataSizeMB
-FROM sys.tables t
-JOIN sys.indexes i ON t.object_id = i.object_id AND i.index_id IN (0,1)
-JOIN sys.partitions p ON i.object_id = p.object_id AND i.index_id = p.index_id
-JOIN sys.allocation_units au ON p.partition_id = au.container_id
-WHERE t.object_id = OBJECT_ID(N'{objectName.FullName}')";
-
-            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, connectionString);
+            var dt = await SQLDatabaseHelper.GetTableInfoAsync(objectName, connectionString);
 
             if (dt?.Rows.Count > 0)
             {

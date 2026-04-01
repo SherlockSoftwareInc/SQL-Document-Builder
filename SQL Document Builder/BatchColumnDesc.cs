@@ -13,7 +13,7 @@ namespace SQL_Document_Builder
     /// </summary>
     public partial class BatchColumnDesc : Form
     {
-        private DataTable? _tables = new();
+        private List<string> _schemas = [];
 
         /// <summary>
         /// Initializes a new instance of the <see cref="BatchColumnDesc"/> class.
@@ -92,7 +92,7 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void BatchColumnDesc_Load(object sender, EventArgs e)
         {
-            _tables = await SQLDatabaseHelper.GetDataTableAsync($"SELECT * FROM INFORMATION_SCHEMA.TABLES ORDER BY TABLE_SCHEMA, TABLE_NAME", ConnectionString);
+            _schemas = await SQLDatabaseHelper.GetSchemasAsync(ConnectionString);
             PopulateSchema();
         }
 
@@ -109,42 +109,49 @@ namespace SQL_Document_Builder
                 return;
             }
 
-            // replace single quotes with double quotes
-            searchFor = searchFor.Replace("'", "''");
-            string sql = @$"SELECT DISTINCT c.TABLE_CATALOG,c.TABLE_SCHEMA,c.TABLE_NAME,t.TABLE_TYPE,c.COLUMN_NAME
-FROM INFORMATION_SCHEMA.columns AS c
-INNER JOIN INFORMATION_SCHEMA.Tables AS t ON c.TABLE_CATALOG = t.TABLE_CATALOG AND  c.TABLE_SCHEMA = t.TABLE_SCHEMA AND  c.TABLE_NAME = t.TABLE_NAME
-WHERE c.COLUMN_NAME = '{searchFor}' ORDER BY c.TABLE_CATALOG,c.TABLE_SCHEMA,c.TABLE_NAME";
-
-            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, ConnectionString);
-
-            if (dt?.Rows.Count > 0)
+            var objects = await SQLDatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.All, ConnectionString);
+            if (objects.Count > 0)
             {
                 // get the select schema name
                 string? schemaName = string.Empty;
                 if (schemaComboBox.SelectedIndex > 0)
                     schemaName = schemaComboBox.SelectedItem?.ToString();
 
-                foreach (DataRow dr in dt.Rows)
+                foreach (var dbObject in objects)
                 {
-                    //string tableCatalog = (string)dr["TABLE_CATALOG"];
-                    string tableSchema = (string)dr["TABLE_SCHEMA"];
-                    string tableName = (string)dr["TABLE_NAME"];
-                    string tableType = (string)dr["TABLE_TYPE"];
-                    var objectType = tableType.Equals("VIEW", StringComparison.CurrentCultureIgnoreCase) ? ObjectName.ObjectTypeEnums.View : ObjectName.ObjectTypeEnums.Table;
-
-                    if (schemaName?.Length > 0)
+                    if (dbObject.ObjectType != ObjectName.ObjectTypeEnums.Table && dbObject.ObjectType != ObjectName.ObjectTypeEnums.View)
                     {
-                        if (tableSchema.Equals(schemaName, StringComparison.CurrentCultureIgnoreCase))
+                        continue;
+                    }
+
+                    if (schemaName?.Length > 0 && !dbObject.Schema.Equals(schemaName, StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        continue;
+                    }
+
+                    var columns = await SQLDatabaseHelper.GetObjectColumnsAsync(dbObject, ConnectionString);
+                    if (columns == null || columns.Rows.Count == 0)
+                    {
+                        continue;
+                    }
+
+                    var hasMatch = false;
+                    foreach (DataRow column in columns.Rows)
+                    {
+                        var columnName = column["COLUMN_NAME"]?.ToString() ?? string.Empty;
+                        if (columnName.Equals(searchFor, StringComparison.OrdinalIgnoreCase))
                         {
-                            objectsListBox.Items.Add(new ObjectName(objectType, tableSchema, tableName));
+                            hasMatch = true;
+                            break;
                         }
                     }
-                    else
+
+                    if (!hasMatch)
                     {
-                        // add all tables
-                        objectsListBox.Items.Add(new ObjectName(objectType, tableSchema, tableName));
+                        continue;
                     }
+
+                    objectsListBox.Items.Add(new ObjectName(dbObject.ObjectType, dbObject.Schema, dbObject.Name));
                 }
             }
 
@@ -167,19 +174,13 @@ WHERE c.COLUMN_NAME = '{searchFor}' ORDER BY c.TABLE_CATALOG,c.TABLE_SCHEMA,c.TA
             schemaComboBox.Items.Clear();
             schemaComboBox.Items.Add("(All)");
 
-            if (_tables == null)
+            if (_schemas.Count == 0)
             {
                 return;
             }
 
-            var dtSchemas = _tables.DefaultView.ToTable(true, "TABLE_SCHEMA");
-            var schemas = new List<string>();
-            foreach (DataRow dr in dtSchemas.Rows)
-            {
-                schemas.Add((string)dr[0]);
-            }
-            schemas.Sort();
-            foreach (var item in schemas)
+            _schemas.Sort();
+            foreach (var item in _schemas)
             {
                 schemaComboBox.Items.Add(item);
             }

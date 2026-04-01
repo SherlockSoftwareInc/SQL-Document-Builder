@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System;
 using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,6 +18,20 @@ namespace SQL_Document_Builder.SchemaMetadata
         Task<string> GetObjectDefinitionAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default);
 
         Task<string> GetSynonymBaseObjectAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default);
+
+        Task<DataTable?> GetTableInfoAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default);
+
+        Task<DataTable?> GetViewInfoAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default);
+
+        Task<DataTable?> GetProcedureInfoAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default);
+
+        Task<DataTable?> GetFunctionInfoAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default);
+
+        Task<DataTable?> GetTriggerInfoAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default);
+
+        Task<DataTable?> GetSynonymInfoAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default);
+
+        Task<List<ObjectName>> GetRecentObjectsAsync(DateTime startDate, DateTime endDate, string connectionString, CancellationToken cancellationToken = default);
 
         Task<string> GetObjectDescriptionAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default);
 

@@ -62,22 +62,7 @@ namespace SQL_Document_Builder
             SchemaName = objectName.Schema;
             SynonymName = objectName.Name;
 
-            var sql = $@"
-SELECT
-    s.name AS SynonymName,
-    SCHEMA_NAME(s.schema_id) AS SynonymSchema,
-    s.base_object_name AS BaseObjectName,
-    o.type_desc AS BaseObjectType,
-    s.create_date AS CreateDate,
-    s.modify_date AS ModifyDate
-FROM
-    sys.synonyms AS s
-LEFT JOIN
-    sys.objects AS o ON OBJECT_ID(s.base_object_name) = o.object_id
-WHERE
-    s.object_id = OBJECT_ID(N'{objectName.FullName}')";
-
-            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, connectionString);
+            var dt = await SQLDatabaseHelper.GetSynonymInfoAsync(objectName, connectionString);
 
             if (dt?.Rows.Count > 0)
             {

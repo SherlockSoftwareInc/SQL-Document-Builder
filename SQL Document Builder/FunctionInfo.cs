@@ -66,21 +66,7 @@ namespace SQL_Document_Builder
             if (objectName == null || string.IsNullOrEmpty(objectName.Name) || string.IsNullOrEmpty(objectName.Schema))
                 return false;
 
-            string sql = $@"
-SELECT
-    o.create_date AS CreateDate,
-    o.modify_date AS ModifyDate,
-    o.is_ms_shipped AS IsSystemObject,
-    o.type_desc AS ObjectType
-FROM
-    sys.objects o
-JOIN
-    sys.schemas s ON o.schema_id = s.schema_id
-WHERE
-    o.object_id = OBJECT_ID(N'{objectName.Schema}.{objectName.Name}')
-    AND o.type IN ('FN', 'IF', 'TF');";
-
-            DataTable? dt = await SQLDatabaseHelper.GetDataTableAsync(sql, connectionString);
+            DataTable? dt = await SQLDatabaseHelper.GetFunctionInfoAsync(objectName, connectionString);
             if (dt != null && dt.Rows.Count > 0)
             {
                 DataRow row = dt.Rows[0];

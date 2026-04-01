@@ -57,17 +57,7 @@ namespace SQL_Document_Builder
             SchemaName = objectName.Schema;
             ProcedureName = objectName.Name;
 
-            string sql = $@"
-SELECT
-    o.create_date AS CreateDate,
-    o.modify_date AS ModifyDate,
-    o.is_ms_shipped AS IsSystemObject
-FROM sys.procedures p
-JOIN sys.objects o ON p.object_id = o.object_id
-JOIN sys.schemas s ON p.schema_id = s.schema_id
-WHERE p.object_id = OBJECT_ID(N'{objectName.FullName}')";
-
-            DataTable? dt = await SQLDatabaseHelper.GetDataTableAsync(sql, connectionString);
+            DataTable? dt = await SQLDatabaseHelper.GetProcedureInfoAsync(objectName, connectionString);
             if (dt != null && dt.Rows.Count > 0)
             {
                 DataRow row = dt.Rows[0];
