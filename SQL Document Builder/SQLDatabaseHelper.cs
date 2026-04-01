@@ -398,6 +398,26 @@ namespace SQL_Document_Builder
             return await SchemaMetadataProviderContext.Current.GetSchemasAsync(connectionString);
         }
 
+        internal static async Task<DataTable?> GetObjectColumnsAsync(ObjectName objectName, string? connectionString)
+        {
+            if (string.IsNullOrEmpty(connectionString) || objectName == null || objectName.IsEmpty())
+            {
+                return null;
+            }
+
+            return await SchemaMetadataProviderContext.Current.GetObjectColumnsAsync(objectName, connectionString);
+        }
+
+        internal static async Task<DataTable?> GetObjectParametersAsync(ObjectName objectName, string? connectionString)
+        {
+            if (string.IsNullOrEmpty(connectionString) || objectName == null || objectName.IsEmpty())
+            {
+                return null;
+            }
+
+            return await SchemaMetadataProviderContext.Current.GetObjectParametersAsync(objectName, connectionString);
+        }
+
         /// <summary>
         /// Gets the stored procedures async.
         /// </summary>

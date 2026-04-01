@@ -164,6 +164,39 @@ WHERE d.referencing_id = OBJECT_ID(QUOTENAME(@SchemaName) + '.' + QUOTENAME(@Obj
                 new SqlParameter("@ObjectName", objectName.Name));
         }
 
+        public async Task<DataTable?> GetObjectColumnsAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default)
+        {
+            const string sql = @"
+SELECT ORDINAL_POSITION, COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, NUMERIC_PRECISION, NUMERIC_SCALE, DATETIME_PRECISION, IS_NULLABLE, COLUMN_DEFAULT
+FROM Information_schema.columns
+WHERE TABLE_SCHEMA = @SchemaName AND TABLE_NAME = @ObjectName
+ORDER BY ORDINAL_POSITION";
+
+            return await LoadDataTableAsync(sql, connectionString, cancellationToken,
+                new SqlParameter("@SchemaName", objectName.Schema),
+                new SqlParameter("@ObjectName", objectName.Name));
+        }
+
+        public async Task<DataTable?> GetObjectParametersAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default)
+        {
+            const string sql = @"
+SELECT
+    p.ORDINAL_POSITION,
+    p.PARAMETER_NAME,
+    p.DATA_TYPE,
+    p.CHARACTER_MAXIMUM_LENGTH,
+    p.PARAMETER_MODE
+FROM Information_SCHEMA.PARAMETERS p
+WHERE p.SPECIFIC_SCHEMA = @SchemaName
+  AND p.SPECIFIC_NAME = @ObjectName
+  AND p.ORDINAL_POSITION > 0
+ORDER BY p.ORDINAL_POSITION";
+
+            return await LoadDataTableAsync(sql, connectionString, cancellationToken,
+                new SqlParameter("@SchemaName", objectName.Schema),
+                new SqlParameter("@ObjectName", objectName.Name));
+        }
+
         public async Task<DataTable?> GetReferencingObjectsAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default)
         {
             const string sql = @"

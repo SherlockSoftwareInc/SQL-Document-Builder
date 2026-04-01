@@ -1,6 +1,7 @@
 using OctofyPro.SchemaProvider.Core.Abstractions;
 using OctofyPro.SchemaProvider.Core.Models;
 using OctofyPro.SchemaProvider.Core.Providers;
+using Microsoft.Data.SqlClient;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -117,6 +118,110 @@ namespace SQL_Document_Builder.SchemaMetadata
             }
 
             return table;
+        }
+
+        public async Task<DataTable?> GetObjectColumnsAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default)
+        {
+            await using var provider = await ConnectAsync(connectionString, cancellationToken);
+            var columns = await provider.GetColumnsAsync(objectName.Schema, objectName.Name, cancellationToken);
+
+            var table = new DataTable();
+            table.Columns.Add("ORDINAL_POSITION", typeof(int));
+            table.Columns.Add("COLUMN_NAME", typeof(string));
+            table.Columns.Add("DATA_TYPE", typeof(string));
+            table.Columns.Add("CHARACTER_MAXIMUM_LENGTH", typeof(int));
+            table.Columns.Add("NUMERIC_PRECISION", typeof(int));
+            table.Columns.Add("NUMERIC_SCALE", typeof(int));
+            table.Columns.Add("DATETIME_PRECISION", typeof(int));
+            table.Columns.Add("IS_NULLABLE", typeof(string));
+            table.Columns.Add("COLUMN_DEFAULT", typeof(string));
+
+            var ordinal = 1;
+            foreach (var column in columns)
+            {
+                var row = table.NewRow();
+                row["ORDINAL_POSITION"] = ordinal++;
+                row["COLUMN_NAME"] = column.ColumnName;
+                row["DATA_TYPE"] = column.DataType;
+                row["CHARACTER_MAXIMUM_LENGTH"] = column.MaxLength.HasValue ? column.MaxLength.Value : DBNull.Value;
+                row["NUMERIC_PRECISION"] = DBNull.Value;
+                row["NUMERIC_SCALE"] = DBNull.Value;
+                row["DATETIME_PRECISION"] = DBNull.Value;
+                row["IS_NULLABLE"] = column.IsNullable ? "YES" : "NO";
+                row["COLUMN_DEFAULT"] = DBNull.Value;
+                table.Rows.Add(row);
+            }
+
+            return table;
+        }
+
+        public async Task<DataTable?> GetObjectParametersAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default)
+        {
+            if (objectName.ObjectType == ObjectTypeEnums.Function)
+            {
+                await using var provider = await ConnectAsync(connectionString, cancellationToken);
+                var functionMetadata = await provider.GetFunctionMetadataAsync(objectName.Schema, objectName.Name, cancellationToken);
+
+                var table = new DataTable();
+                table.Columns.Add("ORDINAL_POSITION", typeof(int));
+                table.Columns.Add("PARAMETER_NAME", typeof(string));
+                table.Columns.Add("DATA_TYPE", typeof(string));
+                table.Columns.Add("CHARACTER_MAXIMUM_LENGTH", typeof(int));
+                table.Columns.Add("PARAMETER_MODE", typeof(string));
+
+                if (functionMetadata == null)
+                {
+                    return table;
+                }
+
+                var ordinal = 1;
+                foreach (var parameter in functionMetadata.Parameters.Where(p => !p.IsReturn))
+                {
+                    var row = table.NewRow();
+                    row["ORDINAL_POSITION"] = ordinal++;
+                    row["PARAMETER_NAME"] = parameter.Name;
+                    row["DATA_TYPE"] = parameter.DataType;
+                    row["CHARACTER_MAXIMUM_LENGTH"] = DBNull.Value;
+                    row["PARAMETER_MODE"] = parameter.IsOutput ? "INOUT" : "IN";
+                    table.Rows.Add(row);
+                }
+
+                return table;
+            }
+
+            if (objectName.ObjectType == ObjectTypeEnums.StoredProcedure)
+            {
+                const string paramSql = @"
+SELECT
+    p.ORDINAL_POSITION,
+    p.PARAMETER_NAME,
+    p.DATA_TYPE,
+    p.CHARACTER_MAXIMUM_LENGTH,
+    p.PARAMETER_MODE
+FROM Information_SCHEMA.PARAMETERS p
+WHERE p.SPECIFIC_SCHEMA = @SchemaName
+  AND p.SPECIFIC_NAME = @ObjectName
+  AND p.ORDINAL_POSITION > 0
+ORDER BY p.ORDINAL_POSITION";
+
+                var table = new DataTable();
+                await using var connection = new SqlConnection(connectionString);
+                await using var command = new SqlCommand(paramSql, connection)
+                {
+                    CommandType = CommandType.Text,
+                    CommandTimeout = 50000
+                };
+
+                command.Parameters.AddWithValue("@SchemaName", objectName.Schema);
+                command.Parameters.AddWithValue("@ObjectName", objectName.Name);
+
+                await connection.OpenAsync(cancellationToken);
+                await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+                table.Load(reader);
+                return table;
+            }
+
+            return new DataTable();
         }
 
         public async Task<DataTable?> GetReferencingObjectsAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default)

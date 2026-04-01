@@ -433,20 +433,7 @@ AND s.name = N'{ObjectName.Schema}';";
         /// <returns>A Task.</returns>
         private static async Task<DataTable?> GetParametersAsync(ObjectName objectName, DatabaseConnectionItem connection)
         {
-            string paramSql = $@"
-SELECT
-    p.ORDINAL_POSITION,
-    p.PARAMETER_NAME,
-    p.DATA_TYPE,
-    p.CHARACTER_MAXIMUM_LENGTH,
-    p.PARAMETER_MODE
-FROM Information_SCHEMA.PARAMETERS p
-WHERE p.SPECIFIC_SCHEMA = N'{objectName.Schema}'
-  AND p.SPECIFIC_NAME = N'{objectName.Name}'
-  AND p.ORDINAL_POSITION > 0
-ORDER BY p.ORDINAL_POSITION";
-
-            return await SQLDatabaseHelper.GetDataTableAsync(paramSql, connection.ConnectionString);
+            return await SQLDatabaseHelper.GetObjectParametersAsync(objectName, connection.ConnectionString);
         }
 
         /// <summary>
@@ -454,32 +441,12 @@ ORDER BY p.ORDINAL_POSITION";
         /// </summary>
         private async Task GetColumnDescAsync()
         {
-            string sql = $@"
-SELECT C.Name, E.value AS Description
-FROM sys.schemas S
-INNER JOIN sys.{(ObjectName?.ObjectType == ObjectTypeEnums.Table ? "tables" : "views")} T ON S.schema_id = T.schema_id
-INNER JOIN sys.columns C ON T.object_id = C.object_id
-INNER JOIN sys.extended_properties E ON T.object_id = E.major_id AND C.column_id = E.minor_id
-WHERE E.name = N'MS_Description'
-  AND S.name = N'{ObjectName?.Schema}'
-  AND T.name = N'{ObjectName?.Name}'";
-
-            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, ConnectionString);
-            if (dt == null || dt.Rows.Count == 0)
+            if (string.IsNullOrEmpty(ConnectionString) || ObjectName.IsEmpty() || Columns.Count == 0)
                 return;
 
-            foreach (DataRow row in dt.Rows)
+            foreach (var column in Columns)
             {
-                var columnName = row["Name"]?.ToString();
-                var description = row["Description"]?.ToString();
-                if (!string.IsNullOrEmpty(columnName) && description != null)
-                {
-                    var column = Columns.Find(col => col.ColumnName == columnName);
-                    if (column != null)
-                    {
-                        column.Description = description;
-                    }
-                }
+                column.Description = await SQLDatabaseHelper.GetColumnDescriptionAsync(ObjectName, column.ColumnName, ConnectionString);
             }
         }
 
@@ -495,13 +462,7 @@ WHERE E.name = N'MS_Description'
 
             if (ConnectionString?.Length > 0 && ObjectName.Name.Length > 0)
             {
-                string sql = $@"
-SELECT ORDINAL_POSITION, COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, NUMERIC_PRECISION, NUMERIC_SCALE, DATETIME_PRECISION, IS_NULLABLE, COLUMN_DEFAULT
-FROM Information_schema.columns
-WHERE TABLE_SCHEMA = N'{ObjectName.Schema}' AND TABLE_NAME = N'{ObjectName.Name}'
-ORDER BY ORDINAL_POSITION";
-
-                var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, ConnectionString);
+                var dt = await SQLDatabaseHelper.GetObjectColumnsAsync(ObjectName, ConnectionString);
 
                 if (dt != null && dt.Rows.Count > 0)
                 {
