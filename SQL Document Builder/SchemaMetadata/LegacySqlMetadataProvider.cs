@@ -342,6 +342,73 @@ WHERE s.name = @SchemaName
                 new SqlParameter("@ObjectName", objectName.Name));
         }
 
+        public async Task<DataTable?> GetCheckConstraintsAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default)
+        {
+            const string sql = @"SELECT
+    cc.name AS ConstraintName,
+    s.name AS SchemaName,
+    t.name AS TableName,
+    cc.definition AS CheckDefinition
+FROM sys.check_constraints cc
+INNER JOIN sys.tables t ON cc.parent_object_id = t.object_id
+INNER JOIN sys.schemas s ON t.schema_id = s.schema_id
+WHERE s.name = @SchemaName AND t.name = @ObjectName
+ORDER BY cc.name;";
+
+            return await LoadDataTableAsync(sql, connectionString, cancellationToken,
+                new SqlParameter("@SchemaName", objectName.Schema),
+                new SqlParameter("@ObjectName", objectName.Name));
+        }
+
+        public async Task<DataTable?> GetDefaultConstraintsAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default)
+        {
+            const string sql = @"SELECT
+    dc.name AS ConstraintName,
+    s.name AS SchemaName,
+    t.name AS TableName,
+    c.name AS ColumnName,
+    dc.definition AS DefaultDefinition
+FROM sys.default_constraints dc
+INNER JOIN sys.columns c ON dc.parent_object_id = c.object_id AND dc.parent_column_id = c.column_id
+INNER JOIN sys.tables t ON dc.parent_object_id = t.object_id
+INNER JOIN sys.schemas s ON t.schema_id = s.schema_id
+WHERE s.name = @SchemaName AND t.name = @ObjectName
+ORDER BY dc.name;";
+
+            return await LoadDataTableAsync(sql, connectionString, cancellationToken,
+                new SqlParameter("@SchemaName", objectName.Schema),
+                new SqlParameter("@ObjectName", objectName.Name));
+        }
+
+        public async Task<DataTable?> GetForeignKeyConstraintsAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default)
+        {
+            const string sql = @"SELECT
+    fk.name AS ForeignKeyName,
+    s.name AS SchemaName,
+    tp.name AS ParentTable,
+    fkc.constraint_column_id AS ColumnOrder,
+    cp.name AS ParentColumn,
+    tr.name AS ReferencedTable,
+    cr.name AS ReferencedColumn,
+    rs.name AS ReferencedSchema,
+    fk.delete_referential_action_desc AS OnDeleteAction,
+    fk.update_referential_action_desc AS OnUpdateAction
+FROM sys.foreign_keys fk
+INNER JOIN sys.tables tp ON fk.parent_object_id = tp.object_id
+INNER JOIN sys.schemas s ON tp.schema_id = s.schema_id
+INNER JOIN sys.foreign_key_columns fkc ON fk.object_id = fkc.constraint_object_id
+INNER JOIN sys.columns cp ON fkc.parent_column_id = cp.column_id AND cp.object_id = tp.object_id
+INNER JOIN sys.tables tr ON fk.referenced_object_id = tr.object_id
+INNER JOIN sys.schemas rs ON tr.schema_id = rs.schema_id
+INNER JOIN sys.columns cr ON fkc.referenced_column_id = cr.column_id AND cr.object_id = tr.object_id
+WHERE s.name = @SchemaName AND tp.name = @ObjectName
+ORDER BY fk.name, fkc.constraint_column_id;";
+
+            return await LoadDataTableAsync(sql, connectionString, cancellationToken,
+                new SqlParameter("@SchemaName", objectName.Schema),
+                new SqlParameter("@ObjectName", objectName.Name));
+        }
+
         public async Task<bool> HasIdentityColumnAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default)
         {
             if (objectName.ObjectType != ObjectTypeEnums.Table)

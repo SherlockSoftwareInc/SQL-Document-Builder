@@ -448,6 +448,36 @@ namespace SQL_Document_Builder
             return await SchemaMetadataProviderContext.Current.GetObjectConstraintsAsync(objectName, connectionString);
         }
 
+        internal static async Task<DataTable?> GetCheckConstraintsAsync(ObjectName objectName, string? connectionString)
+        {
+            if (string.IsNullOrEmpty(connectionString) || objectName == null || objectName.IsEmpty())
+            {
+                return null;
+            }
+
+            return await SchemaMetadataProviderContext.Current.GetCheckConstraintsAsync(objectName, connectionString);
+        }
+
+        internal static async Task<DataTable?> GetDefaultConstraintsAsync(ObjectName objectName, string? connectionString)
+        {
+            if (string.IsNullOrEmpty(connectionString) || objectName == null || objectName.IsEmpty())
+            {
+                return null;
+            }
+
+            return await SchemaMetadataProviderContext.Current.GetDefaultConstraintsAsync(objectName, connectionString);
+        }
+
+        internal static async Task<DataTable?> GetForeignKeyConstraintsAsync(ObjectName objectName, string? connectionString)
+        {
+            if (string.IsNullOrEmpty(connectionString) || objectName == null || objectName.IsEmpty())
+            {
+                return null;
+            }
+
+            return await SchemaMetadataProviderContext.Current.GetForeignKeyConstraintsAsync(objectName, connectionString);
+        }
+
         /// <summary>
         /// Gets the stored procedures async.
         /// </summary>
