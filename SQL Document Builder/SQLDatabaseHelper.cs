@@ -381,32 +381,7 @@ namespace SQL_Document_Builder
                 return [];
             }
 
-            var objects = new List<ObjectName>();
-
-            var query = @"SELECT
-    s.name AS SchemaName,
-    o.name AS FunctionName,
-    o.type_desc AS FunctionType
-FROM sys.objects o
-JOIN sys.schemas s ON o.schema_id = s.schema_id
-WHERE o.type IN ('FN', 'IF', 'TF')
-ORDER BY s.name, o.name;";
-
-            using var connection = new SqlConnection(connectionString);
-            using var command = new SqlCommand(query, connection)
-            {
-                CommandType = CommandType.Text,
-                CommandTimeout = 50000
-            };
-            await connection.OpenAsync();
-
-            using var reader = await command.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
-            {
-                objects.Add(new ObjectName(ObjectTypeEnums.Function, reader["SchemaName"].ToString(), reader["FunctionName"].ToString()));
-            }
-
-            return objects;
+            return await SchemaMetadataProviderContext.Current.GetDatabaseObjectsAsync(ObjectTypeEnums.Function, connectionString);
         }
 
         /// <summary>
@@ -434,26 +409,7 @@ ORDER BY s.name, o.name;";
                 return [];
             }
 
-            var objects = new List<ObjectName>();
-
-            var query = @"SELECT
-    s.name AS SchemaName,
-    p.name AS SPName
-FROM sys.procedures p
-JOIN sys.schemas s ON p.schema_id = s.schema_id
-ORDER BY s.name, p.name;";
-
-            using var connection = new SqlConnection(connectionString);
-            using var command = new SqlCommand(query, connection) { CommandType = CommandType.Text, CommandTimeout = 50000 };
-            await connection.OpenAsync();
-
-            using var reader = await command.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
-            {
-                objects.Add(new ObjectName(ObjectTypeEnums.StoredProcedure, reader["SchemaName"].ToString(), reader["SPName"].ToString()));
-            }
-
-            return objects;
+            return await SchemaMetadataProviderContext.Current.GetDatabaseObjectsAsync(ObjectTypeEnums.StoredProcedure, connectionString);
         }
 
         /// <summary>
@@ -467,130 +423,7 @@ ORDER BY s.name, p.name;";
                 return [];
             }
 
-            var objects = new List<ObjectName>();
-
-            var query = @"
-                SELECT
-                    TABLE_SCHEMA,
-                    TABLE_NAME
-                FROM INFORMATION_SCHEMA.TABLES
-                WHERE TABLE_TYPE = 'BASE TABLE'
-                ORDER BY TABLE_SCHEMA, TABLE_NAME";
-
-            using var connection = new SqlConnection(connectionString);
-            using var command = new SqlCommand(query, connection) { CommandType = CommandType.Text, CommandTimeout = 50000 };
-            await connection.OpenAsync();
-
-            using var reader = await command.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
-            {
-                objects.Add(new ObjectName(ObjectTypeEnums.Table, reader["TABLE_SCHEMA"].ToString(), reader["TABLE_NAME"].ToString()));
-            }
-
-            return objects;
-        }
-
-        /// <summary>
-        /// Gets the synonyms async.
-        /// </summary>
-        /// <param name="connectionString">The connection string.</param>
-        /// <returns>A Task.</returns>
-        private static async Task<List<ObjectName>> GetSynonymsAsync(string connectionString)
-        {
-            var objects = new List<ObjectName>();
-
-            var query = @"
-SELECT
-    sch.name AS SchemaName,
-    syn.name AS SynonymName
-FROM sys.synonyms syn
-INNER JOIN sys.schemas sch ON syn.schema_id = sch.schema_id
-ORDER BY sch.name, syn.name;";
-
-            using var connection = new SqlConnection(connectionString);
-            using var command = new SqlCommand(query, connection)
-            {
-                CommandType = CommandType.Text,
-                CommandTimeout = 50000
-            };
-            await connection.OpenAsync();
-
-            using var reader = await command.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
-            {
-                objects.Add(new ObjectName(ObjectTypeEnums.Synonym, reader["SchemaName"].ToString(), reader["SynonymName"].ToString()));
-            }
-
-            return objects;
-        }
-
-        /// <summary>
-        /// Gets the triggers.
-        /// </summary>
-        /// <param name="connectionString">The connection string.</param>
-        /// <returns>A Task.</returns>
-        private static async Task<List<ObjectName>> GetTriggersAsync(string connectionString)
-        {
-            var objects = new List<ObjectName>();
-
-            var query = @"SELECT s.name AS SchemaName, tr.name AS TriggerName
-FROM sys.triggers tr
-JOIN sys.objects o ON tr.parent_id = o.object_id
-JOIN sys.schemas s ON o.schema_id = s.schema_id";
-
-            using var connection = new SqlConnection(connectionString);
-            using var command = new SqlCommand(query, connection)
-            {
-                CommandType = CommandType.Text,
-                CommandTimeout = 50000
-            };
-            await connection.OpenAsync();
-
-            using var reader = await command.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
-            {
-                objects.Add(new ObjectName(ObjectTypeEnums.Trigger, reader["SchemaName"].ToString(), reader["TriggerName"].ToString()));
-            }
-
-            return objects;
-        }
-
-        /// <summary>
-        /// Gets the views async.
-        /// </summary>
-        /// <returns>A Task.</returns>
-        private static async Task<List<ObjectName>> GetViewsAsync(string? connectionString)
-        {
-            if (string.IsNullOrEmpty(connectionString))
-            {
-                return [];
-            }
-
-            var objects = new List<ObjectName>();
-
-            var query = @"
-                SELECT
-                    TABLE_SCHEMA,
-                    TABLE_NAME
-                FROM INFORMATION_SCHEMA.TABLES
-                WHERE TABLE_TYPE = 'View'
-                ORDER BY TABLE_SCHEMA, TABLE_NAME";
-
-            using var connection = new SqlConnection(connectionString);
-            using var command = new SqlCommand(query, connection)
-            {
-                CommandType = CommandType.Text,
-                CommandTimeout = 50000
-            };
-            await connection.OpenAsync();
-
-            using var reader = await command.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
-            {
-                objects.Add(new ObjectName(ObjectTypeEnums.View, reader["TABLE_SCHEMA"].ToString(), reader["TABLE_NAME"].ToString()));
-            }
-
-            return objects;
+            return await SchemaMetadataProviderContext.Current.GetDatabaseObjectsAsync(ObjectTypeEnums.Table, connectionString);
         }
 
         #endregion Database Object Metadata Retrieval
