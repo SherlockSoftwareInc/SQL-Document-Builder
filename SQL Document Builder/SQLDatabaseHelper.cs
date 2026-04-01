@@ -617,44 +617,15 @@ WHERE t.name = @TriggerName;";
             if (objectName == null || objectName?.ObjectType == ObjectTypeEnums.None || string.IsNullOrEmpty(connectionString))
                 return false;
 
-            bool result = false;
-            string sql = @"
-SELECT
-    ic.name AS identity_column_name
-FROM sys.tables AS t
-INNER JOIN sys.schemas AS s ON t.schema_id = s.schema_id
-INNER JOIN sys.identity_columns AS ic ON t.object_id = ic.object_id
-WHERE t.name = @TableName
-AND s.name = @SchemaName;";
-
-            await using var conn = new SqlConnection(connectionString);
             try
             {
-                await conn.OpenAsync();
-                await using var cmd = new SqlCommand(sql, conn)
-                {
-                    CommandType = CommandType.Text,
-                    CommandTimeout = 50000
-                };
-                cmd.Parameters.AddWithValue("@TableName", objectName?.Name);
-                cmd.Parameters.AddWithValue("@SchemaName", objectName?.Schema);
-
-                await using var reader = await cmd.ExecuteReaderAsync();
-                if (await reader.ReadAsync())
-                {
-                    result = true;
-                }
+                return await SchemaMetadataProviderContext.Current.HasIdentityColumnAsync(objectName, connectionString);
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
             }
-            finally
-            {
-                await conn.CloseAsync();
-            }
-
-            return result;
         }
 
         /// <summary>

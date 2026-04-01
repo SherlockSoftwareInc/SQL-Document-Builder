@@ -38,6 +38,9 @@ namespace SQL_Document_Builder.SchemaMetadata
         public Task<DataTable?> GetForeignTablesAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default)
             => throw new NotSupportedException("Legacy provider is no longer supported.");
 
+        public Task<bool> HasIdentityColumnAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default)
+            => throw new NotSupportedException("Legacy provider is no longer supported.");
+
         public Task UpdateObjectDescriptionAsync(ObjectName objectName, string description, string connectionString, CancellationToken cancellationToken = default)
             => throw new NotSupportedException("Legacy provider is no longer supported.");
 

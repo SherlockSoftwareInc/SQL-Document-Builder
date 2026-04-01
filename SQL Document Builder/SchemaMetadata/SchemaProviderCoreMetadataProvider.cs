@@ -156,6 +156,18 @@ namespace SQL_Document_Builder.SchemaMetadata
             return table;
         }
 
+        public async Task<bool> HasIdentityColumnAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default)
+        {
+            if (objectName.ObjectType != ObjectTypeEnums.Table)
+            {
+                return false;
+            }
+
+            await using var provider = await ConnectAsync(connectionString, cancellationToken);
+            var tableMetadata = await provider.GetTableMetadataAsync(objectName.Schema, objectName.Name, cancellationToken);
+            return tableMetadata?.HasIdentityColumn ?? false;
+        }
+
         public async Task UpdateObjectDescriptionAsync(ObjectName objectName, string description, string connectionString, CancellationToken cancellationToken = default)
         {
             await using var provider = await ConnectAsync(connectionString, cancellationToken);
