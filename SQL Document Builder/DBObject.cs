@@ -315,33 +315,7 @@ namespace SQL_Document_Builder
         /// <returns>A dictionary where the key is the column name and the value is a tuple containing seed and increment values.</returns>
         internal async Task<Dictionary<string, (int SeedValue, int IncrementValue)>> GetIdentityColumns(DatabaseConnectionItem connection)
         {
-            var identityColumns = new Dictionary<string, (int SeedValue, int IncrementValue)>();
-
-            string identityQuery = $@"
-SELECT
-    ic.name AS identity_column_name,
-    ic.seed_value,
-    ic.increment_value
-FROM sys.tables AS t
-INNER JOIN sys.schemas AS s ON t.schema_id = s.schema_id
-INNER JOIN sys.identity_columns AS ic ON t.object_id = ic.object_id
-WHERE t.name = N'{ObjectName.Name}'
-AND s.name = N'{ObjectName.Schema}';";
-
-            var dt = await SQLDatabaseHelper.GetDataTableAsync(identityQuery, connection.ConnectionString);
-            if (dt == null || dt.Rows.Count == 0)
-                return identityColumns;
-
-            foreach (DataRow row in dt.Rows)
-            {
-                string columnName = row["identity_column_name"]?.ToString() ?? string.Empty;
-                int seedValue = row["seed_value"] != DBNull.Value ? Convert.ToInt32(row["seed_value"]) : 0;
-                int incrementValue = row["increment_value"] != DBNull.Value ? Convert.ToInt32(row["increment_value"]) : 0;
-                if (!string.IsNullOrEmpty(columnName))
-                    identityColumns[columnName] = (seedValue, incrementValue);
-            }
-
-            return identityColumns;
+            return await SQLDatabaseHelper.GetIdentityColumnsAsync(ObjectName, connection.ConnectionString);
         }
 
         /// <summary>

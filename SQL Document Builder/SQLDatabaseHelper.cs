@@ -478,6 +478,16 @@ namespace SQL_Document_Builder
             return await SchemaMetadataProviderContext.Current.GetForeignKeyConstraintsAsync(objectName, connectionString);
         }
 
+        internal static async Task<Dictionary<string, (int SeedValue, int IncrementValue)>> GetIdentityColumnsAsync(ObjectName objectName, string? connectionString)
+        {
+            if (string.IsNullOrEmpty(connectionString) || objectName == null || objectName.IsEmpty())
+            {
+                return [];
+            }
+
+            return await SchemaMetadataProviderContext.Current.GetIdentityColumnsAsync(objectName, connectionString);
+        }
+
         /// <summary>
         /// Gets the stored procedures async.
         /// </summary>

@@ -155,6 +155,45 @@ ORDER BY ind.name, ic.key_ordinal";
                 new SqlParameter("@ObjectName", objectName.Name));
         }
 
+        public async Task<Dictionary<string, (int SeedValue, int IncrementValue)>> GetIdentityColumnsAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default)
+        {
+            var identityColumns = new Dictionary<string, (int SeedValue, int IncrementValue)>();
+
+            if (objectName.ObjectType != ObjectTypeEnums.Table)
+            {
+                return identityColumns;
+            }
+
+            const string sql = @"
+SELECT
+    ic.name AS identity_column_name,
+    ic.seed_value,
+    ic.increment_value
+FROM sys.tables AS t
+INNER JOIN sys.schemas AS s ON t.schema_id = s.schema_id
+INNER JOIN sys.identity_columns AS ic ON t.object_id = ic.object_id
+WHERE t.name = @ObjectName
+  AND s.name = @SchemaName;";
+
+            var dt = await LoadDataTableAsync(sql, connectionString, cancellationToken,
+                new SqlParameter("@ObjectName", objectName.Name),
+                new SqlParameter("@SchemaName", objectName.Schema));
+
+            foreach (DataRow row in dt.Rows)
+            {
+                string columnName = row["identity_column_name"]?.ToString() ?? string.Empty;
+                int seedValue = row["seed_value"] != DBNull.Value ? Convert.ToInt32(row["seed_value"]) : 0;
+                int incrementValue = row["increment_value"] != DBNull.Value ? Convert.ToInt32(row["increment_value"]) : 0;
+
+                if (!string.IsNullOrEmpty(columnName))
+                {
+                    identityColumns[columnName] = (seedValue, incrementValue);
+                }
+            }
+
+            return identityColumns;
+        }
+
         public async Task<DataTable?> GetCheckConstraintsAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default)
         {
             const string sql = @"SELECT
