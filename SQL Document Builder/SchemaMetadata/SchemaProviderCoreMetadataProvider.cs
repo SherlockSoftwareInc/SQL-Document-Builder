@@ -189,6 +189,12 @@ namespace SQL_Document_Builder.SchemaMetadata
             return await provider.GetObjectIndexesAsync(objectName.Schema, objectName.Name, cancellationToken);
         }
 
+        public async Task<DataTable?> GetCreateIndexesMetadataAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default)
+        {
+            await using var provider = await ConnectAsync(connectionString, cancellationToken);
+            return await provider.GetCreateIndexesMetadataAsync(objectName.Schema, objectName.Name, cancellationToken);
+        }
+
         public async Task<Dictionary<string, (int SeedValue, int IncrementValue)>> GetIdentityColumnsAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default)
         {
             await using var provider = await ConnectAsync(connectionString, cancellationToken);

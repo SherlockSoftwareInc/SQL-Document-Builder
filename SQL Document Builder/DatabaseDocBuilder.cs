@@ -66,18 +66,7 @@ namespace SQL_Document_Builder
                 createScript.AppendLine("GO");
             }
 
-            // Query to get the base object name for the synonym
-            string sql = $@"
-SELECT s.base_object_name
-FROM sys.synonyms s
-INNER JOIN sys.schemas sch ON s.schema_id = sch.schema_id
-WHERE sch.name = N'{dbObject.Schema}' AND s.name = N'{dbObject.Name}'";
-
-            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, connection.ConnectionString);
-            if (dt == null || dt.Rows.Count == 0)
-                return string.Empty;
-
-            string baseObjectName = dt.Rows[0]["base_object_name"]?.ToString() ?? string.Empty;
+            string baseObjectName = await SQLDatabaseHelper.GetSynonymBaseObjectAsync(dbObject, connection.ConnectionString);
             if (string.IsNullOrEmpty(baseObjectName))
                 return string.Empty;
 
@@ -685,33 +674,31 @@ GO";
 
             StringBuilder sb = new();
 
-            // Query to get all triggers for the specified table/view
-            string sql = $@"
-SELECT
-    tr.name AS TriggerName,
-    s.name AS SchemaName,
-    OBJECT_NAME(tr.parent_id) AS ParentObjectName,
-    sm.definition AS TriggerDefinition,
-    tr.is_disabled
-FROM sys.triggers tr
-INNER JOIN sys.objects o ON tr.parent_id = o.object_id
-INNER JOIN sys.schemas s ON o.schema_id = s.schema_id
-INNER JOIN sys.sql_modules sm ON tr.object_id = sm.object_id
-WHERE s.name = N'{objectName.Schema}'
-  AND o.name = N'{objectName.Name}'
-ORDER BY tr.name";
-
-            var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, connection.ConnectionString);
-            if (dt == null || dt.Rows.Count == 0)
+            var allTriggers = await SQLDatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.Trigger, connection.ConnectionString);
+            if (allTriggers.Count == 0)
                 return string.Empty;
 
-            foreach (DataRow dr in dt.Rows)
+            foreach (var triggerObject in allTriggers)
             {
-                string triggerName = dr["TriggerName"].ToString() ?? "";
-                string schema = dr["SchemaName"].ToString() ?? "";
-                string parentName = dr["ParentObjectName"].ToString() ?? "";
-                string definition = dr["TriggerDefinition"].ToString() ?? "";
-                bool isDisabled = dr["is_disabled"] != DBNull.Value && (bool)dr["is_disabled"];
+                var triggerInfo = await SQLDatabaseHelper.GetTriggerInfoAsync(triggerObject, connection.ConnectionString);
+                if (triggerInfo == null || triggerInfo.Rows.Count == 0)
+                {
+                    continue;
+                }
+
+                var infoRow = triggerInfo.Rows[0];
+                string schema = infoRow["ParentObjectSchema"]?.ToString() ?? string.Empty;
+                string parentName = infoRow["ParentObjectName"]?.ToString() ?? string.Empty;
+
+                if (!schema.Equals(objectName.Schema, StringComparison.OrdinalIgnoreCase) ||
+                    !parentName.Equals(objectName.Name, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                string triggerName = triggerObject.Name;
+                string definition = await SQLDatabaseHelper.GetObjectDefinitionAsync(triggerObject, connection.ConnectionString);
+                bool isDisabled = string.Equals(infoRow["IsDisabled"]?.ToString(), "Yes", StringComparison.OrdinalIgnoreCase);
 
                 // Add header
                 sb.AppendLine($"/****** Object:  Trigger [{schema}].[{triggerName}] on [{schema}].[{parentName}] ******/");
