@@ -659,6 +659,16 @@ WHERE t.name = @TriggerName;";
             return await SchemaMetadataProviderContext.Current.GetObjectDefinitionAsync(objectName, connectionString);
         }
 
+        internal static async Task<string> GetSynonymBaseObjectAsync(ObjectName objectName, string? connectionString)
+        {
+            if (objectName == null || objectName.ObjectType != ObjectTypeEnums.Synonym || string.IsNullOrEmpty(connectionString))
+            {
+                return string.Empty;
+            }
+
+            return await SchemaMetadataProviderContext.Current.GetSynonymBaseObjectAsync(objectName, connectionString);
+        }
+
         #endregion Object Definitions
 
         #region Miscellaneous Methods

@@ -82,6 +82,29 @@ namespace SQL_Document_Builder.SchemaMetadata
             return await provider.GetObjectDefinitionAsync(objectName.Schema, objectName.Name, cancellationToken);
         }
 
+        public async Task<string> GetSynonymBaseObjectAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default)
+        {
+            const string sql = @"
+SELECT s.base_object_name
+FROM sys.synonyms s
+INNER JOIN sys.schemas sch ON s.schema_id = sch.schema_id
+WHERE sch.name = @SchemaName AND s.name = @ObjectName";
+
+            await using var connection = new SqlConnection(connectionString);
+            await using var command = new SqlCommand(sql, connection)
+            {
+                CommandType = CommandType.Text,
+                CommandTimeout = 50000
+            };
+
+            command.Parameters.AddWithValue("@SchemaName", objectName.Schema);
+            command.Parameters.AddWithValue("@ObjectName", objectName.Name);
+
+            await connection.OpenAsync(cancellationToken);
+            var result = await command.ExecuteScalarAsync(cancellationToken);
+            return result == null || result == DBNull.Value ? string.Empty : result.ToString() ?? string.Empty;
+        }
+
         public async Task<string> GetObjectDescriptionAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default)
         {
             await using var provider = await ConnectAsync(connectionString, cancellationToken);

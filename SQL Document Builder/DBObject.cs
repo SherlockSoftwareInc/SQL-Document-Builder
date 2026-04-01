@@ -5,7 +5,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using Microsoft.Data.SqlClient;
 using static SQL_Document_Builder.ObjectName;
 
 namespace SQL_Document_Builder
@@ -594,30 +593,13 @@ namespace SQL_Document_Builder
         /// <returns>A Task.</returns>
         private async Task<bool> OpenSynonymAsync()
         {
-            // Get the synonym's base object name and description
-            // 1. Get the synonym's base object (target object) using sys.synonyms
-            // 2. Optionally, get the description from extended properties
-
             if (ObjectName == null || ObjectName.IsEmpty() || string.IsNullOrEmpty(ConnectionString))
                 return false;
 
-            // Query to get the base object name for the synonym
-            const string sql = @"
-SELECT s.base_object_name
-FROM sys.synonyms s
-INNER JOIN sys.schemas sch ON s.schema_id = sch.schema_id
-WHERE sch.name = @SchemaName AND s.name = @ObjectName";
-
-            var dt = await LoadDataTableAsync(sql, ConnectionString,
-                new SqlParameter("@SchemaName", ObjectName.Schema),
-                new SqlParameter("@ObjectName", ObjectName.Name));
-            if (dt == null || dt.Rows.Count == 0)
+            Definition = await SQLDatabaseHelper.GetSynonymBaseObjectAsync(ObjectName, ConnectionString);
+            if (string.IsNullOrEmpty(Definition))
                 return false;
 
-            // Set the Definition property to the base object name
-            Definition = dt.Rows[0]["base_object_name"]?.ToString() ?? string.Empty;
-
-            // Get the description (if any) from extended properties
             Description = await SQLDatabaseHelper.GetObjectDescriptionAsync(ObjectName, ConnectionString);
 
             return true;
@@ -655,32 +637,6 @@ WHERE sch.name = @SchemaName AND s.name = @ObjectName";
             }
 
             return result;
-        }
-
-        private static async Task<DataTable?> LoadDataTableAsync(string sql, string connectionString, params SqlParameter[] parameters)
-        {
-            if (string.IsNullOrEmpty(connectionString))
-                return null;
-
-            var table = new DataTable();
-
-            await using var connection = new SqlConnection(connectionString);
-            await using var command = new SqlCommand(sql, connection)
-            {
-                CommandType = CommandType.Text,
-                CommandTimeout = 50000
-            };
-
-            if (parameters.Length > 0)
-            {
-                command.Parameters.AddRange(parameters);
-            }
-
-            await connection.OpenAsync();
-            await using var reader = await command.ExecuteReaderAsync();
-            table.Load(reader);
-
-            return table;
         }
 
         /// <summary>
