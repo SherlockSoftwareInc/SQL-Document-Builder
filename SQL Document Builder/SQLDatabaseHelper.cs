@@ -834,40 +834,17 @@ AND s.name = @SchemaName;";
         {
             var views = new List<ObjectName>();
 
-            //var tableSchema = string.IsNullOrEmpty(objectName.Schema) ? "dbo" : objectName.Schema;
-
-            string query = $@"
-SELECT
-    o.type_desc AS ReferencingObjectType,
-    s.name AS ReferencingSchema,
-    o.name AS ReferencingObjectName
-FROM
-    sys.sql_expression_dependencies d
-INNER JOIN
-    sys.objects o ON d.referencing_id = o.object_id
-INNER JOIN
-    sys.schemas s ON o.schema_id = s.schema_id
-WHERE
-    d.referenced_schema_name = N'{objectName.Schema}'
-    AND d.referenced_entity_name = N'{objectName.Name}'";
-
-            var dt = await GetDataTableAsync(query, connectionString);
+            var dt = await SchemaMetadataProviderContext.Current.GetReferencingObjectsAsync(objectName, connectionString);
             if (dt == null || dt.Rows.Count == 0)
                 return views;
 
             foreach (DataRow row in dt.Rows)
             {
-                string typeName = row["ReferencingObjectType"]?.ToString() ?? "";
-                var objectType = typeName switch
-                {
-                    "VIEW" => ObjectName.ObjectTypeEnums.View,
-                    "SQL_SCALAR_FUNCTION" => ObjectName.ObjectTypeEnums.Function,
-                    "SQL_STORED_PROCEDURE" => ObjectName.ObjectTypeEnums.StoredProcedure,
-                    _ => ObjectName.ObjectTypeEnums.Table
-                };
+                string typeName = row["ObjectType"]?.ToString() ?? "";
+                var objectType = ObjectName.ConvertObjectType(typeName);
 
-                string name = row["ReferencingObjectName"]?.ToString() ?? "";
-                string schema = row["ReferencingSchema"]?.ToString() ?? "";
+                string name = row["ObjectName"]?.ToString() ?? "";
+                string schema = row["Schema"]?.ToString() ?? "";
                 if (!string.IsNullOrEmpty(name) && !string.IsNullOrEmpty(schema))
                 {
                     views.Add(new ObjectName(objectType, schema, name));

@@ -274,5 +274,17 @@ namespace SQL_Document_Builder.Properties {
                 this["CopyToClipboard"] = value;
             }
         }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool UseSchemaProviderCoreMetadata {
+            get {
+                return ((bool)(this["UseSchemaProviderCoreMetadata"]));
+            }
+            set {
+                this["UseSchemaProviderCoreMetadata"] = value;
+            }
+        }
     }
 }
