@@ -4,6 +4,7 @@ using OctofyPro.SchemaProvider.Core.Providers;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Common;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -389,9 +390,41 @@ namespace SQL_Document_Builder.SchemaMetadata
 
         private static async Task<IDatabaseSchemaProvider> ConnectAsync(string connectionString, CancellationToken cancellationToken)
         {
-            var provider = DatabaseSchemaProviderFactory.Create(DatabaseProviderKind.SqlServer);
+            var provider = DatabaseSchemaProviderFactory.Create(ResolveProviderKind(connectionString));
             await provider.ConnectAsync(connectionString, cancellationToken);
             return provider;
+        }
+
+        private static DatabaseProviderKind ResolveProviderKind(string connectionString)
+        {
+            if (string.IsNullOrWhiteSpace(connectionString))
+            {
+                return DatabaseProviderKind.SqlServer;
+            }
+
+            try
+            {
+                var builder = new DbConnectionStringBuilder
+                {
+                    ConnectionString = connectionString
+                };
+
+                if (builder.ContainsKey("Driver") || builder.ContainsKey("Dsn"))
+                {
+                    return DatabaseProviderKind.Odbc;
+                }
+            }
+            catch (ArgumentException)
+            {
+                // Fall through to string heuristics below.
+            }
+
+            if (connectionString.IndexOf("oracle", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                return DatabaseProviderKind.Odbc;
+            }
+
+            return DatabaseProviderKind.SqlServer;
         }
 
         private static DatabaseObjectType ToDatabaseObjectType(ObjectTypeEnums objectType)
