@@ -1,0 +1,42 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="groupBox1.Text" xml:space="preserve">
+    <value>サーバーにログオンします</value>
+  </data>
+  <data name="manualLoginCheckBox.Text" xml:space="preserve">
+    <value>手動でのログインが必要</value>
+  </data>
+  <data name="rememberPasswordCheckBox.Text" xml:space="preserve">
+    <value>パスワードを記憶する</value>
+  </data>
+  <metadata name="$this.Localizable" xml:space="preserve" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <data name="dsnLabel.Text" xml:space="preserve">
+    <value>ODBCデータソース:</value>
+  </data>
+  <data name="userNameLabel.Location" xml:space="preserve" type="System.Drawing.Point, System.Drawing">
+    <value>49, 23</value>
+  </data>
+  <data name="userNameLabel.Text" xml:space="preserve">
+    <value>ユーザー名:</value>
+  </data>
+  <data name="passwordLabel.Location" xml:space="preserve" type="System.Drawing.Point, System.Drawing">
+    <value>61, 46</value>
+  </data>
+  <data name="passwordLabel.Text" xml:space="preserve">
+    <value>パスワード:</value>
+  </data>
+</root>

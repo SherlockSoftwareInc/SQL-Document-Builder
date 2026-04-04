@@ -5,9 +5,11 @@ using SQL_Document_Builder.Template;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Data.Odbc;
 using System.Drawing;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using static SQL_Document_Builder.ObjectName;
@@ -32,6 +34,7 @@ namespace SQL_Document_Builder
         private bool _aiDescriptionBusy = false;
         private ObjectName? _previousSelectedObject = null;
         private bool _ignoreObjectListSelect = false;
+        private CancellationTokenSource? _connectionChangeCts;
 
         /// <summary>
         /// The tables.
@@ -238,42 +241,56 @@ namespace SQL_Document_Builder
         private async Task<bool> AddConnection()
         {
             using var dlg = new NewSQLServerConnectionDialog();
-            if (dlg.ShowDialog() == DialogResult.OK)
+            if (dlg.ShowDialog() != DialogResult.OK)
             {
-                var connection = new DatabaseConnectionItem()
-                {
-                    Name = dlg.ConnectionName,
-                    ServerName = dlg.ServerName,
-                    Database = dlg.DatabaseName,
-                    AuthenticationType = dlg.Authentication,
-                    UserName = dlg.UserName,
-                    Password = dlg.Password,
-                    RememberPassword = dlg.RememberPassword,
-                    DatabaseDescription = dlg.DatabaseDescription
-                };
-
-                connection.BuildConnectionString();
-                _connections.Add(dlg.ConnectionName, dlg.ServerName, dlg.DatabaseName,
-                    dlg.Authentication, dlg.UserName, dlg.Password,
-                    connection.ConnectionString, dlg.RememberPassword);
-
-                _connections.Save();
-
-                dataSourcesToolStripComboBox.Items.Add(connection);
-
-                var submenuitem = new ConnectionMenuItem(connection)
-                {
-                    Name = ConnectionMenuItemName(),
-                    Size = new Size(300, 26),
-                };
-                submenuitem.Click += new System.EventHandler(this.OnConnectionToolStripMenuItem_Click);
-                connectToToolStripMenuItem.DropDown.Items.Add(submenuitem);
-
-                await ChangeDBConnectionAsync(connection);
-
-                return true;
+                return false;
             }
-            return false;
+
+            bool isOdbc = dlg.ConnectionType.Equals("ODBC", StringComparison.OrdinalIgnoreCase);
+
+            var connection = new DatabaseConnectionItem()
+            {
+                Name = dlg.ConnectionName,
+                ConnectionType = isOdbc ? "ODBC" : "SQL Server",
+                DatabaseDescription = dlg.DatabaseDescription,
+                UserName = dlg.UserName,
+                Password = dlg.Password,
+                RememberPassword = dlg.RememberPassword,
+                RequireManualLogin = dlg.RequireManualLogin
+            };
+
+            if (isOdbc)
+            {
+                connection.DSN = dlg.DSN;
+                connection.ServerName = dlg.DSN;
+                connection.Database = string.Empty;
+            }
+            else
+            {
+                connection.ServerName = dlg.ServerName;
+                connection.Database = dlg.DatabaseName;
+                connection.AuthenticationType = dlg.Authentication;
+                connection.EncryptConnection = dlg.EncryptConnection;
+                connection.TrustServerCertificate = dlg.TrustServerCertificate;
+            }
+
+            connection.BuildConnectionString();
+            _connections.Add(connection);
+            _connections.Save();
+
+            dataSourcesToolStripComboBox.Items.Add(connection);
+
+            var submenuitem = new ConnectionMenuItem(connection)
+            {
+                Name = ConnectionMenuItemName(),
+                Size = new Size(300, 26),
+            };
+            submenuitem.Click += new System.EventHandler(this.OnConnectionToolStripMenuItem_Click);
+            connectToToolStripMenuItem.DropDown.Items.Add(submenuitem);
+
+            await ChangeDBConnectionAsync(connection);
+
+            return true;
         }
 
         /// <summary>
@@ -439,68 +456,213 @@ namespace SQL_Document_Builder
         /// <param name="connection">The connection.</param>
         private async Task ChangeDBConnectionAsync(DatabaseConnectionItem connection)
         {
-            if (connection != null)
+            var previousConnection = _currentConnection;
+
+            if (connection == null)
             {
-                serverToolStripStatusLabel.Text = "";
-                databaseToolStripStatusLabel.Text = "";
-                objectsListBox.Items.Clear();
-                await definitionPanel.OpenAsync(null, null);
-
-                string? connectionString = connection?.ConnectionString?.Length == 0 ? await connection.Login() : connection?.ConnectionString;
-
-                if (connectionString?.Length > 0)
-                {
-                    serverToolStripStatusLabel.Text = $"Connect to {connection?.ServerName}...";
-
-                    // test the connection
-                    if (!await SQLDatabaseHelper.TestConnectionAsync(connectionString))
-                    {
-                        Common.MsgBox("Failed to connect to the database. Please check your connection settings.", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        serverToolStripStatusLabel.Text = $"Unable to connect to {connection?.ServerName}";
-                        databaseToolStripStatusLabel.Text = connection?.Database;
-
-                        // restore the previous connection if it exists
-                        if (_currentConnection != null && _currentConnection.ConnectionString?.Length > 0)
-                        {
-                            // restore the dataSourcesToolStripComboBox to the previous connection
-                            dataSourcesToolStripComboBox.SelectedItem = _currentConnection;
-
-                            //serverToolStripStatusLabel.Text = _currentConnection?.ServerName;
-                            //databaseToolStripStatusLabel.Text = _currentConnection?.Database;
-                        }
-                        return;
-                    }
-                    else
-                    {
-                        serverToolStripStatusLabel.Text = connection?.ServerName;
-                        databaseToolStripStatusLabel.Text = connection?.Database;
-                        Properties.Settings.Default.dbConnectionString = connectionString;
-                        _currentConnection = connection;
-
-                        // load all objects from the database in a background thread
-                        _allObjects = await Task.Run(() => SQLDatabaseHelper.GetAllObjectsAsync(connection?.ConnectionString));
-                    }
-                }
-
-                for (int i = 0; i < connectToToolStripMenuItem.DropDown.Items.Count; i++)
-                {
-                    var submenuitem = (ConnectionMenuItem)connectToToolStripMenuItem.DropDown.Items[i];
-                    if (submenuitem.Connection.Equals(connection))
-                    {
-                        submenuitem.Checked = true;
-
-                        Properties.Settings.Default.LastAccessConnection = submenuitem.Connection.ConnectionID.ToString();
-                        Properties.Settings.Default.Save();
-                    }
-                    else
-                    {
-                        submenuitem.Checked = false;
-                    }
-                }
+                await OpenConnectionAsync(null, CancellationToken.None);
+                SetConnectionMenuChecked(null);
+                return;
             }
-            else
+
+            bool isOdbc = connection.ConnectionType.Equals("ODBC", StringComparison.OrdinalIgnoreCase);
+
+            if (isOdbc && !TrySelectOdbcDbqFile(connection))
+            {
+                connection.ConnectionString = string.Empty;
+                connection.LoginSucceed = false;
+
+                if (previousConnection != null && !string.IsNullOrWhiteSpace(previousConnection.ConnectionString))
+                {
+                    await OpenConnectionAsync(previousConnection, CancellationToken.None);
+                    SetConnectionComboBox(previousConnection);
+                    SetConnectionMenuChecked(previousConnection);
+                }
+                else
+                {
+                    await OpenConnectionAsync(null, CancellationToken.None);
+                    SetConnectionMenuChecked(null);
+                }
+
+                return;
+            }
+
+            bool isDifferentConnection = previousConnection == null || previousConnection.ConnectionID != connection.ConnectionID;
+            if (isDifferentConnection)
+            {
+                CancelPendingSchemaLoad();
+                _connectionChangeCts = new CancellationTokenSource();
+                connection.LoginSucceed = false;
+            }
+
+            var cancellationToken = _connectionChangeCts?.Token ?? CancellationToken.None;
+
+            try
+            {
+                if (!connection.LoginSucceed)
+                {
+                    bool needsLogin = string.IsNullOrWhiteSpace(connection.ConnectionString) || (isOdbc && connection.RequireManualLogin);
+                    var loginConnectionString = needsLogin ? await connection.Login() : connection.ConnectionString;
+                    connection.LoginSucceed = !string.IsNullOrWhiteSpace(loginConnectionString);
+
+                    if (connection.LoginSucceed)
+                    {
+                        connection.ConnectionString = loginConnectionString;
+                    }
+                }
+
+                if (!connection.LoginSucceed || string.IsNullOrWhiteSpace(connection.ConnectionString))
+                {
+                    await OpenConnectionAsync(null, cancellationToken);
+                    SetConnectionMenuChecked(null);
+                    return;
+                }
+
+                bool opened = await OpenConnectionAsync(connection, cancellationToken);
+                if (!opened)
+                {
+                    connection.LoginSucceed = false;
+                    connection.ConnectionString = string.Empty;
+
+                    if (previousConnection != null && !string.IsNullOrWhiteSpace(previousConnection.ConnectionString))
+                    {
+                        await OpenConnectionAsync(previousConnection, cancellationToken);
+                        SetConnectionComboBox(previousConnection);
+                        SetConnectionMenuChecked(previousConnection);
+                    }
+                    else
+                    {
+                        await OpenConnectionAsync(null, cancellationToken);
+                        SetConnectionMenuChecked(null);
+                    }
+
+                    Common.MsgBox("Failed to connect to the database. Please check your connection settings.", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                SetConnectionMenuChecked(connection);
+                Properties.Settings.Default.LastAccessConnection = connection.ConnectionID.ToString();
+                Properties.Settings.Default.Save();
+            }
+            catch (OperationCanceledException)
+            {
+                // Ignore canceled connection changes.
+            }
+        }
+
+        private void CancelPendingSchemaLoad()
+        {
+            if (_connectionChangeCts != null)
+            {
+                _connectionChangeCts.Cancel();
+                _connectionChangeCts.Dispose();
+                _connectionChangeCts = null;
+            }
+        }
+
+        private async Task<bool> OpenConnectionAsync(DatabaseConnectionItem? connection, CancellationToken cancellationToken)
+        {
+            serverToolStripStatusLabel.Text = string.Empty;
+            databaseToolStripStatusLabel.Text = string.Empty;
+            objectsListBox.Items.Clear();
+            messageLabel.Text = string.Empty;
+            _tables = [];
+            _allObjects = [];
+
+            await definitionPanel.OpenAsync(null, null);
+
+            if (connection == null || string.IsNullOrWhiteSpace(connection.ConnectionString))
             {
                 _currentConnection = null;
+                return false;
+            }
+
+            bool isOdbc = connection.ConnectionType.Equals("ODBC", StringComparison.OrdinalIgnoreCase);
+            string endpoint = isOdbc
+                ? (connection.DSN ?? connection.ServerName ?? connection.Name ?? string.Empty)
+                : (connection.ServerName ?? string.Empty);
+            string database = isOdbc ? "ODBC" : (connection.Database ?? string.Empty);
+
+            serverToolStripStatusLabel.Text = $"Connect to {endpoint}...";
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            bool canConnect = isOdbc
+                ? await Task.Run(() => ODBCDataSource.TestConnection(connection.ConnectionString), cancellationToken)
+                : await SQLDatabaseHelper.TestConnectionAsync(connection.ConnectionString);
+
+            if (!canConnect)
+            {
+                serverToolStripStatusLabel.Text = $"Unable to connect to {endpoint}";
+                databaseToolStripStatusLabel.Text = database;
+                return false;
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            _allObjects = await Task.Run(() => SQLDatabaseHelper.GetAllObjectsAsync(connection.ConnectionString), cancellationToken);
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            _currentConnection = connection;
+            Properties.Settings.Default.dbConnectionString = connection.ConnectionString;
+            serverToolStripStatusLabel.Text = endpoint;
+            databaseToolStripStatusLabel.Text = database;
+
+            await definitionPanel.OpenAsync(null, _currentConnection);
+
+            return true;
+        }
+
+        private bool TrySelectOdbcDbqFile(DatabaseConnectionItem connection)
+        {
+            if (!connection.ConnectionType.Equals("ODBC", StringComparison.OrdinalIgnoreCase) || string.IsNullOrWhiteSpace(connection.FileFilter))
+            {
+                return true;
+            }
+
+            using var openFileDialog = new OpenFileDialog
+            {
+                Filter = connection.FileFilter,
+                Multiselect = false,
+                CheckFileExists = true,
+                Title = "Select ODBC source file"
+            };
+
+            if (openFileDialog.ShowDialog() != DialogResult.OK)
+            {
+                connection.ConnectionString = string.Empty;
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(connection.ConnectionString))
+            {
+                connection.BuildConnectionString();
+            }
+
+            var builder = string.IsNullOrWhiteSpace(connection.ConnectionString)
+                ? new OdbcConnectionStringBuilder()
+                : new OdbcConnectionStringBuilder(connection.ConnectionString);
+
+            if (string.IsNullOrWhiteSpace(builder.Dsn))
+            {
+                builder.Dsn = connection.DSN ?? connection.ServerName ?? connection.Name ?? string.Empty;
+            }
+
+            builder["Dbq"] = openFileDialog.FileName;
+            connection.ConnectionString = builder.ConnectionString;
+
+            return true;
+        }
+
+        private void SetConnectionMenuChecked(DatabaseConnectionItem? connection)
+        {
+            for (int i = 0; i < connectToToolStripMenuItem.DropDown.Items.Count; i++)
+            {
+                if (connectToToolStripMenuItem.DropDown.Items[i] is ConnectionMenuItem submenuitem)
+                {
+                    submenuitem.Checked = connection != null && submenuitem.Connection.ConnectionID == connection.ConnectionID;
+                }
             }
         }
 
@@ -1056,31 +1218,13 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The event arguments.</param>
-        private void DataSourcesToolStripComboBox_SelectedIndexChanged(object sender, EventArgs e)
+        private async void DataSourcesToolStripComboBox_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (dataSourcesToolStripComboBox.SelectedItem != null && !_ignoreConnectionComboBoxIndexChange)
             {
                 if (dataSourcesToolStripComboBox.SelectedItem is DatabaseConnectionItem selectedItem)
                 {
-                    // find the menu item
-                    foreach (ToolStripMenuItem item in connectToToolStripMenuItem.DropDown.Items)
-                    {
-                        if (item is ConnectionMenuItem connectionMenuItem)
-                        {
-                            if (connectionMenuItem.Connection.ConnectionID == selectedItem.ConnectionID)
-                            {
-                                connectionMenuItem.Checked = true;
-                                // perform menu item click event to update the connection
-                                _ignoreConnectionComboBoxIndexChange = true;
-                                OnConnectionToolStripMenuItem_Click(connectionMenuItem, EventArgs.Empty);
-                                _ignoreConnectionComboBoxIndexChange = false;
-                            }
-                            else
-                            {
-                                connectionMenuItem.Checked = false;
-                            }
-                        }
-                    }
+                    await SwitchConnectionAsync(selectedItem, updateComboBoxSelection: false, sender, e);
                 }
 
                 messageLabel.Text = "";
@@ -1900,25 +2044,30 @@ namespace SQL_Document_Builder
             if (sender?.GetType() == typeof(ConnectionMenuItem))
             {
                 ConnectionMenuItem menuItem = (ConnectionMenuItem)sender;
+                await SwitchConnectionAsync(menuItem.Connection, updateComboBoxSelection: true, sender, e);
+            }
+        }
 
-                messageLabel.Text = string.Format("Connect to {0}...", menuItem.ToString());
-                Cursor = Cursors.WaitCursor;
+        private async Task SwitchConnectionAsync(DatabaseConnectionItem connection, bool updateComboBoxSelection, object? sender, EventArgs e)
+        {
+            messageLabel.Text = string.Format("Connect to {0}...", connection.ToString());
+            Cursor = Cursors.WaitCursor;
 
-                _populating = true;
+            _populating = true;
 
-                // keep the current selection in the combo boxes
-                int selectedObjectTypeIndex = objectTypeComboBox.SelectedIndex;
-                //var selectedSchema = schemaComboBox.Text;
+            // keep the current selection in the combo boxes
+            int selectedObjectTypeIndex = objectTypeComboBox.SelectedIndex;
 
-                // clean up the schema and object list boxes
-                //schemaComboBox.Items.Clear();
-                objectsListBox.Items.Clear();
+            // clean up the object list box
+            objectsListBox.Items.Clear();
 
-                await ChangeDBConnectionAsync(menuItem.Connection);
+            await ChangeDBConnectionAsync(connection);
 
-                if (!_ignoreConnectionComboBoxIndexChange)
-                    SetConnectionComboBox(menuItem.Connection);
+            if (updateComboBoxSelection && !_ignoreConnectionComboBoxIndexChange)
+                SetConnectionComboBox(connection);
 
+            if (_currentConnection != null)
+            {
                 // restore the object type
                 int objectTypeIndex = selectedObjectTypeIndex;
                 if (objectTypeIndex < 0 && objectTypeComboBox.Items.Count > 0)
@@ -1930,18 +2079,18 @@ namespace SQL_Document_Builder
                 {
                     if (objectTypeComboBox.SelectedIndex == objectTypeIndex)
                     {
-                        ObjectTypeComboBox_SelectedIndexChanged(sender, e); // re-populate the object list box
+                        ObjectTypeComboBox_SelectedIndexChanged(sender ?? this, e); // re-populate the object list box
                     }
                     else
                     {
                         objectTypeComboBox.SelectedIndex = objectTypeIndex;
                     }
                 }
-
-                _populating = false;
-                Cursor = Cursors.Default;
-                messageLabel.Text = "";
             }
+
+            _populating = false;
+            Cursor = Cursors.Default;
+            messageLabel.Text = "";
         }
 
         /// <summary>
@@ -2980,6 +3129,8 @@ namespace SQL_Document_Builder
         /// <param name="e">The event arguments.</param>
         private void TableBuilderForm_FormClosing(object sender, FormClosingEventArgs e)
         {
+            CancelPendingSchemaLoad();
+
             if (CloseAllTabs() == DialogResult.Cancel)
             {
                 e.Cancel = true;

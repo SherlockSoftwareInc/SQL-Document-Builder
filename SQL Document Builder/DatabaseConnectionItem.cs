@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data.Odbc;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -47,6 +48,8 @@ namespace SQL_Document_Builder
     /// </summary>
     public class DatabaseConnectionItem
     {
+        private string? _dsn;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="DatabaseConnectionItem"/> class.
         /// </summary>
@@ -61,6 +64,7 @@ namespace SQL_Document_Builder
             AuthenticationType = AuthenticationMethod.ActiveDirectoryIntegrated;
             ConnectionString = "";
             ConnectionType = "SQL Server";
+            DSN = "";
             ConnectionID = Guid.NewGuid();
         }
 
@@ -151,6 +155,64 @@ namespace SQL_Document_Builder
         public bool IsCustom { get; set; }
 
         /// <summary>
+        /// Gets or sets DSN name for ODBC connections.
+        /// </summary>
+        public string? DSN
+        {
+            get
+            {
+                if (!string.IsNullOrWhiteSpace(_dsn))
+                {
+                    return _dsn;
+                }
+
+                if (!string.IsNullOrWhiteSpace(ServerName) && ConnectionType.Equals("ODBC", StringComparison.OrdinalIgnoreCase))
+                {
+                    return ServerName;
+                }
+
+                if (!string.IsNullOrWhiteSpace(Name) && ConnectionType.Equals("ODBC", StringComparison.OrdinalIgnoreCase))
+                {
+                    return Name;
+                }
+
+                return string.Empty;
+            }
+            set => _dsn = value;
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether manual login is required.
+        /// </summary>
+        public bool RequireManualLogin { get; set; }
+
+        /// <summary>
+        /// Gets or sets optional endpoint metadata.
+        /// </summary>
+        public string? Endpoint { get; set; }
+
+        /// <summary>
+        /// Gets or sets optional API key metadata.
+        /// </summary>
+        public string? APIKey { get; set; }
+
+        /// <summary>
+        /// Gets or sets optional file picker filter for DBQ-based ODBC sources.
+        /// </summary>
+        public string? FileFilter { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether login has succeeded for current runtime session.
+        /// </summary>
+        [JsonIgnore]
+        public bool LoginSucceed { get; set; }
+
+        /// <summary>
+        /// Gets or sets ODBC driver display name.
+        /// </summary>
+        public string? Driver { get; set; }
+
+        /// <summary>
         /// Gets or sets the description for the database connection.
         /// </summary>
         public string? DatabaseDescription { get; set; }
@@ -183,6 +245,45 @@ namespace SQL_Document_Builder
         /// </summary>
         public void BuildConnectionString()
         {
+            if (ConnectionType.Equals("ODBC", StringComparison.OrdinalIgnoreCase))
+            {
+                if (string.IsNullOrWhiteSpace(_dsn) && !string.IsNullOrWhiteSpace(ServerName))
+                {
+                    _dsn = ServerName;
+                }
+
+                if (string.IsNullOrWhiteSpace(_dsn) && !string.IsNullOrWhiteSpace(Name))
+                {
+                    _dsn = Name;
+                }
+
+                if (string.IsNullOrWhiteSpace(_dsn))
+                {
+                    ConnectionString = string.Empty;
+                    return;
+                }
+
+                var odbcBuilder = new OdbcConnectionStringBuilder
+                {
+                    Dsn = _dsn
+                };
+
+                if (!string.IsNullOrWhiteSpace(UserName))
+                {
+                    odbcBuilder["Uid"] = UserName;
+                }
+
+                if (!string.IsNullOrWhiteSpace(Password))
+                {
+                    odbcBuilder["Pwd"] = Password;
+                }
+
+                ServerName = _dsn;
+                ConnectionString = odbcBuilder.ConnectionString;
+
+                return;
+            }
+
             if (string.IsNullOrEmpty(ServerName) || string.IsNullOrEmpty(Database))
             {
                 ConnectionString = string.Empty;
@@ -231,6 +332,65 @@ namespace SQL_Document_Builder
         /// <returns>A Task.</returns>
         public async Task<string?> Login()
         {
+            if (ConnectionType.Equals("ODBC", StringComparison.OrdinalIgnoreCase))
+            {
+                string dsn = DSN ?? string.Empty;
+                if (string.IsNullOrWhiteSpace(dsn))
+                {
+                    return string.Empty;
+                }
+
+                string userName = UserName ?? string.Empty;
+                string password = Password ?? string.Empty;
+
+                if (RequireManualLogin)
+                {
+                    using var loginDialog = new ODBCLoginDialog
+                    {
+                        DSN = dsn,
+                        UserName = userName,
+                        Password = password
+                    };
+
+                    if (loginDialog.ShowDialog() != DialogResult.OK)
+                    {
+                        return string.Empty;
+                    }
+
+                    userName = loginDialog.UserName ?? string.Empty;
+                    password = loginDialog.Password ?? string.Empty;
+                }
+
+                var odbcBuilder = new OdbcConnectionStringBuilder
+                {
+                    Dsn = dsn
+                };
+
+                if (!string.IsNullOrWhiteSpace(userName))
+                {
+                    odbcBuilder["Uid"] = userName;
+                }
+
+                if (!string.IsNullOrWhiteSpace(password))
+                {
+                    odbcBuilder["Pwd"] = password;
+                }
+
+                string odbcConnectionString = odbcBuilder.ConnectionString;
+                bool canConnect = await Task.Run(() => ODBCDataSource.TestConnection(odbcConnectionString));
+                if (!canConnect)
+                {
+                    return string.Empty;
+                }
+
+                UserName = userName;
+                Password = RememberPassword ? password : string.Empty;
+                _dsn = dsn;
+                ServerName = dsn;
+                ConnectionString = odbcConnectionString;
+                return ConnectionString;
+            }
+
             string connectionString = string.Empty;
 
             using (var dlg = new SQLServerLoginDialog

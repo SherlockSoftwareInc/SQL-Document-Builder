@@ -1,0 +1,66 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="rememberPasswordCheckBox.Text" xml:space="preserve">
+    <value>记住密碼</value>
+  </data>
+  <data name="authenticationComboBox.Items" xml:space="preserve">
+    <value>Windows身分驗證</value>
+  </data>
+  <data name="authenticationComboBox.Items1" xml:space="preserve">
+    <value>SQL Server 身分驗證</value>
+  </data>
+  <data name="groupBox1.Text" xml:space="preserve">
+    <value>登入伺服器</value>
+  </data>
+  <metadata name="$this.Localizable" xml:space="preserve" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>True</value>
+  </metadata>
+  <data name="passwordLabel.Text" xml:space="preserve">
+    <value>密碼:</value>
+  </data>
+  <data name="serverNameLabel.Text" xml:space="preserve">
+    <value>伺服器名稱:</value>
+  </data>
+  <data name="userNameLabel.Text" xml:space="preserve">
+    <value>使用者名稱:</value>
+  </data>
+  <data name="authenticationLabel.Text" xml:space="preserve">
+    <value>認證:</value>
+  </data>
+  <data name="databaseLabel.Text" xml:space="preserve">
+    <value>資料庫名稱:</value>
+  </data>
+  <data name="authenticationComboBox.Items2" xml:space="preserve">
+    <value>Active Directory 密碼验证</value>
+  </data>
+  <data name="authenticationComboBox.Items3" xml:space="preserve">
+    <value>Active Directory 集成身分驗證</value>
+  </data>
+  <data name="authenticationComboBox.Items4" xml:space="preserve">
+    <value>Active Directory 交互式身分驗證</value>
+  </data>
+  <data name="authenticationComboBox.Items5" xml:space="preserve">
+    <value>服务主体身分驗證</value>
+  </data>
+  <data name="authenticationComboBox.Items6" xml:space="preserve">
+    <value>托管服务身分驗證</value>
+  </data>
+  <data name="trustCheckBox.Text" xml:space="preserve">
+    <value>信任伺服器憑證</value>
+  </data>
+  <data name="encryptCheckBox.Text" xml:space="preserve">
+    <value>加密連接</value>
+  </data>
+</root>

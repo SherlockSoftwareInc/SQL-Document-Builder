@@ -103,9 +103,24 @@ namespace SQL_Document_Builder
             _selectedIndex = -1;
             //tabPage1.Text = "";
             connectionNameTextBox.Text = "";
+            dbDescTextBox.Text = string.Empty;
+
+            _connectionTypeComboBox.SelectedIndex = 0;
+            _sqlConnSettingBox.ServerName = string.Empty;
+            _sqlConnSettingBox.DatabaseName = string.Empty;
+            _sqlConnSettingBox.UserName = string.Empty;
+            _sqlConnSettingBox.Password = string.Empty;
+            _sqlConnSettingBox.RememberPassword = false;
+
+            _odbcConnSettingBox.DSN = string.Empty;
+            _odbcConnSettingBox.UserName = string.Empty;
+            _odbcConnSettingBox.Password = string.Empty;
+            _odbcConnSettingBox.RememberPassword = false;
+            _odbcConnSettingBox.RequireManualLogin = false;
 
             tabPage1.Enabled = false;
             _changed = false;
+            _populating = false;
         }
 
         /// <summary>
@@ -134,23 +149,6 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private void ConnectionManageForm_Load(object sender, EventArgs e)
         {
-            // Creating a dictionary mapping authentication method names to AuthenticationMethod values
-            Dictionary<string, AuthenticationMethod> authMethods = new()
-            {
-                //{ "Windows Authentication", AuthenticationMethod.ActiveDirectoryDefault },
-                { "SQL Server Authentication", AuthenticationMethod.SqlPassword },
-                { "Microsoft Entra Integrated", AuthenticationMethod.ActiveDirectoryIntegrated },
-                { "Microsoft Entra Interactive", AuthenticationMethod.ActiveDirectoryInteractive },
-                { "Microsoft Entra Password", AuthenticationMethod.ActiveDirectoryPassword },
-                { "Microsoft Entra Managed Identity", AuthenticationMethod.ActiveDirectoryManagedIdentity },
-                { "Microsoft Entra Service Principal", AuthenticationMethod.ActiveDirectoryServicePrincipal }
-            };
-
-            // Adding authentication methods to the combo box using data binding
-            authenticationComboBox.DataSource = new BindingSource(authMethods, null);
-            authenticationComboBox.DisplayMember = "Key"; // Display the name of the authentication method
-            authenticationComboBox.ValueMember = "Value"; // Use the AuthenticationMethod as the value
-
             PopulateConnections();
 
             if (connectionsListBox.Items.Count > 0)
@@ -262,10 +260,7 @@ namespace SQL_Document_Builder
             {
                 foreach (var item in _connections.Connections)
                 {
-                    if (!item.ConnectionType.Equals("ODBC", StringComparison.OrdinalIgnoreCase))
-                    {
-                        connectionsListBox.Items.Add(item);
-                    }
+                    connectionsListBox.Items.Add(item);
                 }
             }
             saveButton.Visible = false;
@@ -286,17 +281,32 @@ namespace SQL_Document_Builder
                 _populating = true;
 
                 connectionNameTextBox.Text = item.Name;
-                serverNameTextBox.Text = item.ServerName;
-                databaseComboBox.Text = item.Database;
-                authenticationComboBox.SelectedValue = item.AuthenticationType;
-                userNameTextBox.Text = item.UserName;
-                rememberPasswordCheckBox.Checked = item.RememberPassword;
-                passwordTextBox.Text = item.Password;
-                encrptyCheckBox.Checked = item.EncryptConnection;
-                trustCertificateCheckBox.Checked = item.TrustServerCertificate;
                 dbDescTextBox.Text = item.DatabaseDescription;
 
-                _populating = true;
+                bool isOdbc = item.ConnectionType.Equals("ODBC", StringComparison.OrdinalIgnoreCase);
+                _connectionTypeComboBox.SelectedIndex = isOdbc ? 1 : 0;
+
+                if (isOdbc)
+                {
+                    _odbcConnSettingBox.DSN = item.DSN ?? item.ServerName ?? string.Empty;
+                    _odbcConnSettingBox.UserName = item.UserName ?? string.Empty;
+                    _odbcConnSettingBox.Password = item.Password ?? string.Empty;
+                    _odbcConnSettingBox.RememberPassword = item.RememberPassword;
+                    _odbcConnSettingBox.RequireManualLogin = item.RequireManualLogin;
+                }
+                else
+                {
+                    _sqlConnSettingBox.ServerName = item.ServerName ?? string.Empty;
+                    _sqlConnSettingBox.DatabaseName = item.Database ?? string.Empty;
+                    _sqlConnSettingBox.Authentication = (short)item.AuthenticationType;
+                    _sqlConnSettingBox.UserName = item.UserName ?? string.Empty;
+                    _sqlConnSettingBox.Password = item.Password ?? string.Empty;
+                    _sqlConnSettingBox.RememberPassword = item.RememberPassword;
+                    _sqlConnSettingBox.EncryptConnection = item.EncryptConnection;
+                    _sqlConnSettingBox.TrustServerCertificate = item.TrustServerCertificate;
+                }
+
+                ApplyConnectionTypeVisibility();
 
                 tabPage1.Enabled = true;
             }
@@ -313,18 +323,36 @@ namespace SQL_Document_Builder
 
             if (!_populating)
             {
-                _currentConnectionItem.Name = connectionNameTextBox.Text;
-                _currentConnectionItem.ServerName = serverNameTextBox.Text;
-                _currentConnectionItem.Database = databaseComboBox.Text;
-                _currentConnectionItem.AuthenticationType = GetAuthentication();
-                _currentConnectionItem.UserName = userNameTextBox.Text;
-                _currentConnectionItem.Password = passwordTextBox.Text;
-                _currentConnectionItem.RememberPassword = rememberPasswordCheckBox.Checked;
-                _currentConnectionItem.EncryptConnection = encrptyCheckBox.Checked;
-                _currentConnectionItem.TrustServerCertificate = trustCertificateCheckBox.Checked;
-                _currentConnectionItem.BuildConnectionString();
-                _currentConnectionItem.IsCustom = false;
+                _currentConnectionItem.Name = connectionNameTextBox.Text.Trim();
                 _currentConnectionItem.DatabaseDescription = dbDescTextBox.Text;
+
+                if (IsOdbcSelected())
+                {
+                    _currentConnectionItem.ConnectionType = "ODBC";
+                    _currentConnectionItem.DSN = _odbcConnSettingBox.DSN;
+                    _currentConnectionItem.ServerName = _odbcConnSettingBox.DSN;
+                    _currentConnectionItem.Database = string.Empty;
+                    _currentConnectionItem.UserName = _odbcConnSettingBox.UserName;
+                    _currentConnectionItem.Password = _odbcConnSettingBox.Password;
+                    _currentConnectionItem.RememberPassword = _odbcConnSettingBox.RememberPassword;
+                    _currentConnectionItem.RequireManualLogin = _odbcConnSettingBox.RequireManualLogin;
+                    _currentConnectionItem.BuildConnectionString();
+                }
+                else
+                {
+                    _currentConnectionItem.ConnectionType = "SQL Server";
+                    _currentConnectionItem.ServerName = _sqlConnSettingBox.ServerName;
+                    _currentConnectionItem.Database = _sqlConnSettingBox.DatabaseName;
+                    _currentConnectionItem.AuthenticationType = (AuthenticationMethod)_sqlConnSettingBox.Authentication;
+                    _currentConnectionItem.UserName = _sqlConnSettingBox.UserName;
+                    _currentConnectionItem.Password = _sqlConnSettingBox.Password;
+                    _currentConnectionItem.RememberPassword = _sqlConnSettingBox.RememberPassword;
+                    _currentConnectionItem.EncryptConnection = _sqlConnSettingBox.EncryptConnection;
+                    _currentConnectionItem.TrustServerCertificate = _sqlConnSettingBox.TrustServerCertificate;
+                    _currentConnectionItem.BuildConnectionString();
+                }
+
+                _currentConnectionItem.IsCustom = false;
 
                 _connections.SaveTemp();
                 _changed = false;
@@ -339,31 +367,43 @@ namespace SQL_Document_Builder
         /// <param name="e"></param>
         private void SaveButton_Click(object sender, EventArgs e)
         {
-            var selectedAuthentication = authenticationComboBox.SelectedItem as KeyValuePair<string, AuthenticationMethod>?;
-
             var connection = new DatabaseConnectionItem()
             {
-                Name = connectionNameTextBox.Text,
-                ServerName = serverNameTextBox.Text,
-                Database = databaseComboBox.Text,
-                AuthenticationType = selectedAuthentication?.Value ?? AuthenticationMethod.ActiveDirectoryIntegrated,
-                UserName = userNameTextBox.Text,
-                Password = passwordTextBox.Text,
-                RememberPassword = rememberPasswordCheckBox.Checked,
-                EncryptConnection = encrptyCheckBox.Checked,
-                TrustServerCertificate = trustCertificateCheckBox.Checked,
+                Name = connectionNameTextBox.Text.Trim(),
                 DatabaseDescription = dbDescTextBox.Text
             };
 
-            if (connection != null)
+            if (IsOdbcSelected())
             {
+                connection.ConnectionType = "ODBC";
+                connection.DSN = _odbcConnSettingBox.DSN;
+                connection.ServerName = _odbcConnSettingBox.DSN;
+                connection.Database = string.Empty;
+                connection.UserName = _odbcConnSettingBox.UserName;
+                connection.Password = _odbcConnSettingBox.Password;
+                connection.RememberPassword = _odbcConnSettingBox.RememberPassword;
+                connection.RequireManualLogin = _odbcConnSettingBox.RequireManualLogin;
                 connection.BuildConnectionString();
-                _connections.Add(connection);
-
-                PopulateConnections();
-                if (connectionsListBox.Items.Count > 0)
-                    connectionsListBox.SelectedIndex = connectionsListBox.Items.Count - 1;
             }
+            else
+            {
+                connection.ConnectionType = "SQL Server";
+                connection.ServerName = _sqlConnSettingBox.ServerName;
+                connection.Database = _sqlConnSettingBox.DatabaseName;
+                connection.AuthenticationType = (AuthenticationMethod)_sqlConnSettingBox.Authentication;
+                connection.UserName = _sqlConnSettingBox.UserName;
+                connection.Password = _sqlConnSettingBox.Password;
+                connection.RememberPassword = _sqlConnSettingBox.RememberPassword;
+                connection.EncryptConnection = _sqlConnSettingBox.EncryptConnection;
+                connection.TrustServerCertificate = _sqlConnSettingBox.TrustServerCertificate;
+                connection.BuildConnectionString();
+            }
+
+            _connections.Add(connection);
+
+            PopulateConnections();
+            if (connectionsListBox.Items.Count > 0)
+                connectionsListBox.SelectedIndex = connectionsListBox.Items.Count - 1;
         }
 
         /// <summary>
@@ -407,22 +447,34 @@ namespace SQL_Document_Builder
             try
             {
                 bool result = false;
-                var item = new DatabaseConnectionItem()
-                {
-                    ConnectionType = "SQL Server",
-                };
+                var item = new DatabaseConnectionItem();
 
                 if (CanSave())
                 {
                     item.Name = connectionNameTextBox.Text;
-                    item.ServerName = serverNameTextBox.Text;
-                    item.Database = databaseComboBox.Text;
-                    item.AuthenticationType = GetAuthentication();
-                    item.UserName = userNameTextBox.Text;
-                    item.Password = passwordTextBox.Text;
-                    item.RememberPassword = rememberPasswordCheckBox.Checked;
-                    item.EncryptConnection = encrptyCheckBox.Checked;
-                    item.TrustServerCertificate = trustCertificateCheckBox.Checked;
+                    if (IsOdbcSelected())
+                    {
+                        item.ConnectionType = "ODBC";
+                        item.DSN = _odbcConnSettingBox.DSN;
+                        item.ServerName = _odbcConnSettingBox.DSN;
+                        item.UserName = _odbcConnSettingBox.UserName;
+                        item.Password = _odbcConnSettingBox.Password;
+                        item.RememberPassword = _odbcConnSettingBox.RememberPassword;
+                        item.RequireManualLogin = _odbcConnSettingBox.RequireManualLogin;
+                    }
+                    else
+                    {
+                        item.ConnectionType = "SQL Server";
+                        item.ServerName = _sqlConnSettingBox.ServerName;
+                        item.Database = _sqlConnSettingBox.DatabaseName;
+                        item.AuthenticationType = (AuthenticationMethod)_sqlConnSettingBox.Authentication;
+                        item.UserName = _sqlConnSettingBox.UserName;
+                        item.Password = _sqlConnSettingBox.Password;
+                        item.RememberPassword = _sqlConnSettingBox.RememberPassword;
+                        item.EncryptConnection = _sqlConnSettingBox.EncryptConnection;
+                        item.TrustServerCertificate = _sqlConnSettingBox.TrustServerCertificate;
+                    }
+
                     item.DatabaseDescription = dbDescTextBox.Text;
                     item.BuildConnectionString();
                     result = await Task.Run(() => (TestConnection(item)));
@@ -448,30 +500,33 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Gets the authentication.
-        /// </summary>
-        /// <returns>A AuthenticationMethod.</returns>
-        private AuthenticationMethod GetAuthentication()
-        {
-            var selectedItem = authenticationComboBox.SelectedItem as KeyValuePair<string, AuthenticationMethod>?;
-            return selectedItem?.Value ?? AuthenticationMethod.ActiveDirectoryIntegrated;
-        }
-
-        /// <summary>
         /// Tests the connection.
         /// </summary>
         /// <param name="connection">The connection.</param>
         /// <returns>A Task.</returns>
         private static async Task<bool> TestConnection(DatabaseConnectionItem connection)
         {
-            bool result = false;
-
-            if (connection != null || !string.IsNullOrEmpty(connection?.ConnectionString))
+            if (connection == null)
             {
-                result = await SQLDatabaseHelper.TestConnectionAsync(connection?.ConnectionString);
+                return false;
             }
 
-            return result;
+            if (string.IsNullOrWhiteSpace(connection.ConnectionString))
+            {
+                connection.BuildConnectionString();
+            }
+
+            if (string.IsNullOrWhiteSpace(connection.ConnectionString))
+            {
+                return false;
+            }
+
+            if (connection.ConnectionType.Equals("ODBC", StringComparison.OrdinalIgnoreCase))
+            {
+                return await Task.Run(() => ODBCDataSource.TestConnection(connection.ConnectionString));
+            }
+
+            return await SQLDatabaseHelper.TestConnectionAsync(connection.ConnectionString);
         }
 
         /// <summary>
@@ -480,68 +535,36 @@ namespace SQL_Document_Builder
         /// <returns>A bool.</returns>
         private bool CanSave()
         {
-            bool enabled = (serverNameTextBox.Text.Trim().Length > 1 &&
-                databaseComboBox.Text.Trim().Length > 1);
-            if (enabled)
-            {
-                if (GetAuthentication() == AuthenticationMethod.SqlPassword)
-                {
-                    enabled = (userNameTextBox.Text.Trim().Length > 1 && passwordTextBox.Text.Trim().Length > 1);
-                }
-            }
-            return enabled;
+            return IsOdbcSelected() ? _odbcConnSettingBox.CanSave : _sqlConnSettingBox.CanSave;
         }
 
-        /// <summary>
-        /// Handles the selected index changed event of the authentication combo box.
-        /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The e.</param>
-        private void AuthenticationComboBox_SelectedIndexChanged(object sender, EventArgs e)
+        private bool IsOdbcSelected() => _connectionTypeComboBox.SelectedIndex == 1;
+
+        private void ConnectionTypeComboBox_SelectedIndexChanged(object? sender, EventArgs e)
         {
-            var selectedItem = authenticationComboBox.SelectedItem as KeyValuePair<string, AuthenticationMethod>?;
-
-            if (selectedItem.HasValue) // Fix for CS8629: Ensure the nullable value type is not null
+            if (!_populating)
             {
-                var authenticationMethod = selectedItem.Value.Value; // Fix for CS0029: Access the 'Value' property of the KeyValuePair to get the AuthenticationMethod
-
-                switch (authenticationMethod) // Fix for CS0077: Directly use the value without 'as' since it's a non-nullable value type
-                {
-                    case AuthenticationMethod.NotSpecified:
-                        break;
-
-                    case AuthenticationMethod.SqlPassword:
-                    case AuthenticationMethod.ActiveDirectoryPassword:
-                    case AuthenticationMethod.ActiveDirectoryServicePrincipal:
-                    case AuthenticationMethod.ActiveDirectoryManagedIdentity:
-                        userNameTextBox.Enabled = true;
-                        passwordTextBox.Enabled = true;
-                        rememberPasswordCheckBox.Enabled = true;
-                        break;
-
-                    case AuthenticationMethod.ActiveDirectoryIntegrated:
-                    case AuthenticationMethod.ActiveDirectoryInteractive:
-                        userNameTextBox.Enabled = true;
-                        passwordTextBox.Text = String.Empty;
-                        passwordTextBox.Enabled = false;
-                        rememberPasswordCheckBox.Enabled = false;
-                        break;
-
-                    default:
-                        userNameTextBox.Enabled = false;
-                        passwordTextBox.Text = String.Empty;
-                        passwordTextBox.Enabled = false;
-                        rememberPasswordCheckBox.Enabled = false;
-                        break;
-                }
-
-                if (!_populating)
-                {
-                    _changed = true;
-                }
+                _changed = true;
             }
 
-            //CheckCompleteStatus();
+            ApplyConnectionTypeVisibility();
         }
+
+        private void ApplyConnectionTypeVisibility()
+        {
+            bool isOdbc = IsOdbcSelected();
+            _odbcConnSettingBox.Visible = isOdbc;
+            _sqlConnSettingBox.Visible = !isOdbc;
+
+            if (isOdbc)
+            {
+                _odbcConnSettingBox.BringToFront();
+            }
+            else
+            {
+                _sqlConnSettingBox.BringToFront();
+            }
+        }
+
     }
 }
