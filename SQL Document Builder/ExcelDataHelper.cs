@@ -1,7 +1,4 @@
-﻿using NPOI.SS.Formula.Functions;
-using NPOI.SS.UserModel;
-using NPOI.XSSF.UserModel;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
@@ -33,65 +30,46 @@ namespace SQL_Document_Builder
         public DataTable Data { get; }
 
         /// <summary>
-        /// Exports the descriptions to excel.
+        /// Exports the descriptions to CSV.
         /// </summary>
         /// <param name="selectedObjects">The selected objects.</param>
         /// <param name="fileName">The file name.</param>
-        /// <param name="connectionString">The connection string.</param>
-        internal static async Task ExportDescriptionsToExcel(List<ObjectName> selectedObjects, string fileName, DatabaseConnectionItem? connection)
+        /// <param name="connection">The connection.</param>
+        internal static async Task ExportDescriptionsToCsv(List<ObjectName> selectedObjects, string fileName, DatabaseConnectionItem? connection)
         {
             if (connection == null || selectedObjects?.Count == 0)
             {
                 return;
             }
 
-            // Create a new Excel package
-            // Create a new XLSX workbook
-            XSSFWorkbook workbook = new();
-            ISheet sheet = workbook.CreateSheet("Descriptions");
+            var lines = new List<string>
+            {
+                "Level0Type,Level0Name,Level1Type,Level1Name,Level2Type,Level2Name,Value"
+            };
 
-            // Write column headers to first row
-            //Level0Type	Level0Name	level1Type	level1Name	level2Type	level2Name	Value
-            IRow headerRow = sheet.CreateRow(0);
-            headerRow.CreateCell(0).SetCellValue("Level0Type");
-            headerRow.CreateCell(1).SetCellValue("Level0Name");
-            headerRow.CreateCell(2).SetCellValue("Level1Type");
-            headerRow.CreateCell(3).SetCellValue("Level1Name");
-            headerRow.CreateCell(4).SetCellValue("Level2Type");
-            headerRow.CreateCell(5).SetCellValue("Level2Name");
-            headerRow.CreateCell(6).SetCellValue("Value");
-
-            int rowIndex = 1;
             for (int i = 0; i < selectedObjects.Count; i++)
             {
                 // Output the object descriptions
-                rowIndex = await OutputObjectDescription(selectedObjects[i], sheet, rowIndex, connection);
+                await OutputObjectDescription(selectedObjects[i], lines, connection);
             }
 
-            // Save the workbook to the selected file
-            using FileStream stream = new(fileName, FileMode.Create, FileAccess.Write);
-            workbook.Write(stream);
+            await File.WriteAllLinesAsync(fileName, lines, Encoding.UTF8);
         }
 
         /// <summary>
         /// Outputs the object description.
         /// </summary>
         /// <param name="objectName">The object name.</param>
-        /// <param name="sheet">The sheet.</param>
-        /// <param name="v">The v.</param>
-        /// <param name="connectionString">The connection string.</param>
-        /// <returns>An int.</returns>
-        private static async Task<int> OutputObjectDescription(ObjectName objectName, ISheet sheet, int v, DatabaseConnectionItem connection)
+        /// <param name="lines">The CSV output lines.</param>
+        /// <param name="connection">The connection.</param>
+        private static async Task OutputObjectDescription(ObjectName objectName, List<string> lines, DatabaseConnectionItem connection)
         {
             // open the object
             var table = new DBObject();
             if (!await table.OpenAsync(objectName, connection))
             {
-                return v; // If the object cannot be opened, skip it
+                return; // If the object cannot be opened, skip it
             }
-
-            // Create a new row in the sheet for the object description
-            IRow row = sheet.CreateRow(v++);
 
             string level1Type = objectName.ObjectType switch
             {
@@ -104,11 +82,7 @@ namespace SQL_Document_Builder
             };
 
             // Set the values for the row based on the objectName description
-            row.CreateCell(0).SetCellValue("SCHEMA");
-            row.CreateCell(1).SetCellValue(objectName.Schema);
-            row.CreateCell(2).SetCellValue(level1Type);
-            row.CreateCell(3).SetCellValue(objectName.Name);
-            row.CreateCell(6).SetCellValue(table.Description ?? "");
+            lines.Add(ToCsvLine("SCHEMA", objectName.Schema, level1Type, objectName.Name, "", "", table.Description ?? ""));
 
             // output the columns for table or view
             if (objectName.ObjectType == ObjectTypeEnums.Table || objectName.ObjectType == ObjectTypeEnums.View)
@@ -116,16 +90,9 @@ namespace SQL_Document_Builder
                 // Loop through columns
                 for (int r = 0; r < table.Columns.Count; r++)
                 {
-                    IRow colRow = sheet.CreateRow(v++);
                     var col = table.Columns[r];
 
-                    colRow.CreateCell(0).SetCellValue("SCHEMA");
-                    colRow.CreateCell(1).SetCellValue(objectName.Schema);
-                    colRow.CreateCell(2).SetCellValue(level1Type);
-                    colRow.CreateCell(3).SetCellValue(objectName.Name);
-                    colRow.CreateCell(4).SetCellValue("COLUMN");
-                    colRow.CreateCell(5).SetCellValue(col.ColumnName);
-                    colRow.CreateCell(6).SetCellValue(col.Description ?? "");
+                    lines.Add(ToCsvLine("SCHEMA", objectName.Schema, level1Type, objectName.Name, "COLUMN", col.ColumnName, col.Description ?? ""));
                 }
             }
             else if (objectName.ObjectType == ObjectTypeEnums.StoredProcedure || objectName.ObjectType == ObjectTypeEnums.Function)
@@ -133,20 +100,32 @@ namespace SQL_Document_Builder
                 // loop through parameters
                 for (int r = 0; r < table.Parameters.Count; r++)
                 {
-                    IRow paramRow = sheet.CreateRow(v++);
                     var param = table.Parameters[r];
-                    paramRow.CreateCell(0).SetCellValue("SCHEMA");
-                    paramRow.CreateCell(1).SetCellValue(objectName.Schema);
-                    paramRow.CreateCell(2).SetCellValue(level1Type);
-                    paramRow.CreateCell(3).SetCellValue(objectName.Name);
-                    paramRow.CreateCell(4).SetCellValue("PARAMETER");
-                    paramRow.CreateCell(5).SetCellValue(param.Name);
-                    paramRow.CreateCell(6).SetCellValue(param.Description ?? "");
+
+                    lines.Add(ToCsvLine("SCHEMA", objectName.Schema, level1Type, objectName.Name, "PARAMETER", param.Name, param.Description ?? ""));
                 }
             }
+        }
 
-            // Return the next row index
-            return v;
+        private static string ToCsvLine(params string[] fields)
+        {
+            return string.Join(",", fields.Select(EscapeCsv));
+        }
+
+        private static string EscapeCsv(string? value)
+        {
+            value ??= string.Empty;
+            if (value.Contains('"'))
+            {
+                value = value.Replace("\"", "\"\"");
+            }
+
+            if (value.Contains(',') || value.Contains('"') || value.Contains('\r') || value.Contains('\n'))
+            {
+                value = $"\"{value}\"";
+            }
+
+            return value;
         }
 
         /// <summary>

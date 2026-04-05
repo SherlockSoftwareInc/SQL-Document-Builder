@@ -69,12 +69,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="ExcelDataReader" Version="3.7.0" />
-    <PackageReference Include="ExcelDataReader.DataSet" Version="3.7.0" />
+    <PackageReference Include="ExcelDataReader" Version="3.8.0" />
+    <PackageReference Include="ExcelDataReader.DataSet" Version="3.8.0" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="7.0.0" />
-    <PackageReference Include="NPOI.Excel" Version="2.1.1" />
-    <PackageReference Include="ReverseMarkdown" Version="5.2.0" />
-    <PackageReference Include="Scintilla5.NET" Version="6.0.1" />
+    <PackageReference Include="ReverseMarkdown" Version="5.3.0" />
+    <PackageReference Include="Scintilla5.NET" Version="6.1.2" />
   </ItemGroup>
 
   <ItemGroup>

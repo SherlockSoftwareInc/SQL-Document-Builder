@@ -5,12 +5,15 @@ using SQL_Document_Builder.DatabaseAccess;
 using SQL_Document_Builder.ScintillaNetUtils;
 using SQL_Document_Builder.Template;
 using SQL_Document_Builder.UI.UserControls;
+using ExcelDataReader;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Odbc;
 using System.Drawing;
+using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -4384,7 +4387,7 @@ namespace SQL_Document_Builder
 
         /// <summary>
         /// Handles the click event of the export descriptions tool strip menu item.
-        /// Export descriptions of the selected objects to an Excel file.
+        /// Export descriptions of the selected objects to a CSV file.
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The event arguments.</param>
@@ -4392,12 +4395,12 @@ namespace SQL_Document_Builder
         {
             if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
 
-            // get the file name to save the Excel file
+            // get the file name to save the CSV file
             using SaveFileDialog saveFileDialog = new()
             {
-                Filter = "Excel Files|*.xlsx",
-                Title = "Export Descriptions to Excel",
-                FileName = "Descriptions.xlsx"
+                Filter = "CSV Files|*.csv",
+                Title = "Export Descriptions to CSV",
+                FileName = "Descriptions.csv"
             };
             if (saveFileDialog.ShowDialog() == DialogResult.OK)
             {
@@ -4410,17 +4413,17 @@ namespace SQL_Document_Builder
                 }
 
                 Cursor = Cursors.WaitCursor;
-                messageLabel.Text = "Exporting descriptions to Excel...";
-                // export the descriptions to Excel
+                messageLabel.Text = "Exporting descriptions to CSV...";
+                // export the descriptions to CSV
                 try
                 {
-                    await ExcelDataHelper.ExportDescriptionsToExcel(selectedObjects, saveFileDialog.FileName, _currentConnection);
+                    await ExcelDataHelper.ExportDescriptionsToCsv(selectedObjects, saveFileDialog.FileName, _currentConnection);
 
                     Common.MsgBox("Descriptions exported successfully.", MessageBoxIcon.Information);
                 }
                 catch (Exception ex)
                 {
-                    Common.MsgBox($"Error exporting descriptions: {ex.Message}", MessageBoxIcon.Error);
+                    Common.MsgBox($"Error exporting descriptions to CSV: {ex.Message}", MessageBoxIcon.Error);
                 }
                 Cursor = Cursors.Default;
             }
@@ -4435,10 +4438,10 @@ namespace SQL_Document_Builder
         {
             if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
 
-            // get the Excel file name
+            // get the file name (CSV default, Excel supported)
             var openFileDialog = new OpenFileDialog
             {
-                Filter = "Excel files (*.xls;*.xlsx)|*.xls;*.xlsx|All files (*.*)|*.*",
+                Filter = "CSV files (*.csv)|*.csv|Excel files (*.xls;*.xlsx)|*.xls;*.xlsx|All files (*.*)|*.*",
                 Multiselect = false
             };
             if (openFileDialog.ShowDialog() != DialogResult.OK)
@@ -4448,16 +4451,26 @@ namespace SQL_Document_Builder
 
             var fileName = openFileDialog.FileName;
 
-            using var form = new ExcelSheetsForm()
+            DataTable? descriptionData;
+            if (Path.GetExtension(fileName).Equals(".csv", StringComparison.OrdinalIgnoreCase))
             {
-                FileName = fileName
-            };
-            form.ShowDialog();
-            if (form.ResultDataTable != null)
+                descriptionData = LoadDescriptionDataFromCsv(fileName);
+            }
+            else
             {
-                if (!IsValidDescriptionData(form.ResultDataTable))
+                using var form = new ExcelSheetsForm()
                 {
-                    Common.MsgBox("The selected Excel sheet does not contain valid description data.", MessageBoxIcon.Warning);
+                    FileName = fileName
+                };
+                form.ShowDialog();
+                descriptionData = form.ResultDataTable;
+            }
+
+            if (descriptionData != null)
+            {
+                if (!IsValidDescriptionData(descriptionData))
+                {
+                    Common.MsgBox("The selected file does not contain valid description data.", MessageBoxIcon.Warning);
                     return;
                 }
 
@@ -4473,9 +4486,32 @@ namespace SQL_Document_Builder
 
                 AppendText(editBox, $"-- Data source: {fileName}" + Environment.NewLine);
 
-                var dataHelper = new ExcelDataHelper(form.ResultDataTable);
+                var dataHelper = new ExcelDataHelper(descriptionData);
                 AppendText(editBox, dataHelper.GetDescriptionStatement());
             }
+        }
+
+        private static DataTable? LoadDescriptionDataFromCsv(string fileName)
+        {
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+            using var stream = File.Open(fileName, FileMode.Open, FileAccess.Read);
+            var configuration = new ExcelReaderConfiguration
+            {
+                AutodetectSeparators = [',', ';', '\t', '|', '#'],
+                FallbackEncoding = Encoding.UTF8
+            };
+
+            using var reader = ExcelReaderFactory.CreateCsvReader(stream, configuration);
+            var dataSet = reader.AsDataSet(new ExcelDataSetConfiguration
+            {
+                ConfigureDataTable = _ => new ExcelDataTableConfiguration
+                {
+                    UseHeaderRow = true
+                }
+            });
+
+            return dataSet.Tables.Count > 0 ? dataSet.Tables[0] : null;
         }
 
         /// <summary>
