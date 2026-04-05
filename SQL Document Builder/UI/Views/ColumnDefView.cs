@@ -1,4 +1,6 @@
-﻿using System;
+﻿using SQL_Document_Builder.AI;
+using SQL_Document_Builder.UI.UserControls;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;

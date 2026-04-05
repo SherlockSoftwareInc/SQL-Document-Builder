@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SQL_Document_Builder.AI;
+using System;
 using System.Windows.Forms;
 
 namespace SQL_Document_Builder

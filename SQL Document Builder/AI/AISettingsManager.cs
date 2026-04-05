@@ -1,7 +1,7 @@
 using System;
 using System.Windows.Forms;
 
-namespace SQL_Document_Builder
+namespace SQL_Document_Builder.AI
 {
     public static class AISettingsManager
     {

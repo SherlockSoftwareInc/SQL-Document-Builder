@@ -2,7 +2,7 @@ using System;
 using System.Drawing;
 using System.Windows.Forms;
 
-namespace SQL_Document_Builder
+namespace SQL_Document_Builder.UI.UserControls
 {
     /// <summary>
     /// The closable tab control.
@@ -79,12 +79,12 @@ namespace SQL_Document_Builder
 
             for (int i = 0; i < TabPages.Count; i++)
             {
-                TabPage tabPage = this.TabPages[i];
+                TabPage tabPage = TabPages[i];
                 tabPage.BorderStyle = BorderStyle.FixedSingle;
 
                 var tBounds = e.Bounds;
 
-                bool isSelected = (this.SelectedIndex == i);
+                bool isSelected = SelectedIndex == i;
 
                 // Choose colors based on dark mode
                 Color tabColor, textColor, closeColor;
@@ -97,8 +97,8 @@ namespace SQL_Document_Builder
                 else
                 {
                     tabColor = SystemColors.Control;
-                    textColor = this.ForeColor;
-                    closeColor = isSelected ? this.ForeColor : Color.Gray;
+                    textColor = ForeColor;
+                    closeColor = isSelected ? ForeColor : Color.Gray;
                 }
 
                 tabPage.BackColor = tabColor;
@@ -110,12 +110,12 @@ namespace SQL_Document_Builder
                 TextRenderer.DrawText(
                     e.Graphics,
                     tabPage.Text,
-                    this.Font,
+                    Font,
                     GetTabRect(i),
                     textColor,
                     TextFormatFlags.Left | TextFormatFlags.VerticalCenter);
 
-                var tabRect = this.GetTabRect(i);
+                var tabRect = GetTabRect(i);
                 // Calculate close button rectangle
                 Rectangle closeButton = new(
                     tabRect.Right - CloseButtonSize - CloseButtonMargin - 2,
@@ -137,9 +137,9 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         protected override void OnMouseDown(MouseEventArgs e)
         {
-            for (int i = 0; i < this.TabPages.Count; i++)
+            for (int i = 0; i < TabPages.Count; i++)
             {
-                Rectangle tabRect = this.GetTabRect(i);
+                Rectangle tabRect = GetTabRect(i);
                 Rectangle closeButton = new(
                     tabRect.Right - CloseButtonSize - CloseButtonMargin - 2,
                     tabRect.Top + (tabRect.Height - CloseButtonSize) / 2 + 1,
@@ -148,7 +148,7 @@ namespace SQL_Document_Builder
 
                 if (closeButton.Contains(e.Location))
                 {
-                    var args = new TabCloseRequestedEventArgs(this.TabPages[i]);
+                    var args = new TabCloseRequestedEventArgs(TabPages[i]);
                     TabCloseRequested?.Invoke(this, args);
                     //this.TabPages.RemoveAt(i);
                     break;

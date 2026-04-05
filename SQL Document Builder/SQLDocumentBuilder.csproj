@@ -43,9 +43,18 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="CollapsibleSplitter.bmp" />
+    <None Remove="DDLGenerate.png" />
+    <None Remove="Docs.png" />
+    <None Remove="Markdown.png" />
+    <None Remove="project.ICO" />
+    <None Remove="SQLBuilder.ico" />
+    <None Remove="sql_script.ico" />
+    <None Remove="StoredProcedure.png" />
     <None Remove="SQL128.png" />
     <None Remove="SQL400.png" />
     <None Remove="SQL512.png" />
+    <None Remove="TemplateEditor.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -93,13 +102,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="CollapsibleSplitter.bmp">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Docs.png">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
     <None Update="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>

@@ -2,12 +2,12 @@
 using System.Drawing;
 using System.Windows.Forms;
 
-namespace SQL_Document_Builder
+namespace SQL_Document_Builder.UI.UserControls
 {
     /// <summary>
     /// The object name panel.
     /// </summary>
-    internal class ObjectNamePanel : System.Windows.Forms.Panel
+    internal class ObjectNamePanel : Panel
     {
         private ObjectName? _objectName;
 
@@ -39,7 +39,7 @@ namespace SQL_Document_Builder
         public void Open(ObjectName? objectName)
         {
             _objectName = objectName;
-            this.Invalidate();
+            Invalidate();
         }
 
         /// <summary>
@@ -51,7 +51,7 @@ namespace SQL_Document_Builder
             base.OnPaint(e);
 
             // Clear the background
-            e.Graphics.Clear(this.BackColor);
+            e.Graphics.Clear(BackColor);
 
             if (_objectName == null) { return; }
 
@@ -60,20 +60,20 @@ namespace SQL_Document_Builder
             string objectNameText = _objectName.FullName ?? string.Empty;
 
             // Set image size to font height
-            int imageHeight = (int)Math.Ceiling(this.Font.GetHeight(e.Graphics));
+            int imageHeight = (int)Math.Ceiling(Font.GetHeight(e.Graphics));
             if (imageHeight < 8) imageHeight = 8; // Minimum image size
 
             int imageWidth = imageHeight;
             int spacing = 3; // Space between image and text
 
             // Measure text
-            SizeF textSize = e.Graphics.MeasureString(objectNameText, this.Font);
+            SizeF textSize = e.Graphics.MeasureString(objectNameText, Font);
 
             // Calculate total block size (width and height)
             float totalHeight = Math.Max(imageHeight, textSize.Height);
 
             // Calculate top-left position to center the block
-            float startY = (this.Height - totalHeight) / 2f;
+            float startY = (Height - totalHeight) / 2f;
             float startX = startY; // Padding from left
 
             // Draw image (vertically centered within the block)
@@ -87,8 +87,8 @@ namespace SQL_Document_Builder
             // Draw text (vertically centered within the block)
             if (!string.IsNullOrEmpty(objectNameText))
             {
-                using Brush brush = new SolidBrush(this.ForeColor);
-                e.Graphics.DrawString(objectNameText, this.Font, brush, startX, startY);
+                using Brush brush = new SolidBrush(ForeColor);
+                e.Graphics.DrawString(objectNameText, Font, brush, startX, startY);
             }
         }
 
@@ -98,7 +98,7 @@ namespace SQL_Document_Builder
         internal void Clear()
         {
             _objectName = null;
-            this.Invalidate();
+            Invalidate();
         }
 
         /// <summary>

@@ -1,8 +1,10 @@
 ﻿using ReverseMarkdown;
 using ScintillaNET;
+using SQL_Document_Builder.AI;
 using SQL_Document_Builder.DatabaseAccess;
 using SQL_Document_Builder.ScintillaNetUtils;
 using SQL_Document_Builder.Template;
+using SQL_Document_Builder.UI.UserControls;
 using System;
 using System.Collections.Generic;
 using System.Data;

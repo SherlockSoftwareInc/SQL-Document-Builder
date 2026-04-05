@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.IO;
 
-namespace SQL_Document_Builder
+namespace SQL_Document_Builder.AI
 {
     /// <summary>
     /// Represents AI-related settings for persistence.

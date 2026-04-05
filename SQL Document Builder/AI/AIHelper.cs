@@ -5,7 +5,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace SQL_Document_Builder
+namespace SQL_Document_Builder.AI
 {
     /// <summary>
     /// Provides helper methods for generating SQL table and column documentation
@@ -453,7 +453,7 @@ Output only valid JSON.{LanguageInstruction()}";
 
             var requestBody = new
             {
-                model = model,
+                model,
                 messages = new[]
                 {
                     new { role = "system", content = "You are a helpful assistant for SQL documentation." },
