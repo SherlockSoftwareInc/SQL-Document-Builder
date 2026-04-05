@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace OctofyPro.SchemaData
+namespace SQL_Document_Builder
 {
     public sealed class DBSchemaItem
     {

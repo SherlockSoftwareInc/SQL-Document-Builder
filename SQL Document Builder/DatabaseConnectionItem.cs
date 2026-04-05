@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Data.Odbc;
+using SQL_Document_Builder.DatabaseAccess;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -421,7 +422,8 @@ namespace SQL_Document_Builder
                 }
             }
 
-            if (!await SQLDatabaseHelper.TestConnectionAsync(connectionString))
+            var provider = DatabaseAccessProviderFactory.GetProvider(this);
+            if (!await provider.TestConnectionAsync(connectionString))
             {
                 return string.Empty;
             }

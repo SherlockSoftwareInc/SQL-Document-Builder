@@ -3,6 +3,8 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using SQL_Document_Builder.DatabaseAccess;
+using SQL_Document_Builder.SchemaMetadata;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -15,13 +17,27 @@ namespace SQL_Document_Builder
     /// </summary>
     internal class DocumentBuilder
     {
+        private sealed class ObjectMetadataSnapshot
+        {
+            public string Description { get; set; } = string.Empty;
+            public string Definition { get; set; } = string.Empty;
+            public List<DBColumn> Columns { get; } = [];
+            public List<IndexItem> Indexes { get; } = [];
+            public List<ConstraintItem> Constraints { get; } = [];
+            public List<DBParameter> Parameters { get; } = [];
+            public string SynonymBaseObjectName { get; set; } = string.Empty;
+            public string SynonymBaseObjectType { get; set; } = string.Empty;
+        }
+
+        private static readonly ISchemaMetadataProvider MetadataProvider = new SchemaProviderCoreMetadataProvider();
+
         /// <summary>
         /// Builds the table list.
         /// </summary>
         /// <param name="schemaName">The schema name.</param>
         /// <param name="progress">The progress.</param>
         /// <returns>A Task.</returns>
-        internal static async Task<string> BuildObjectList(List<ObjectName> objectList, DatabaseConnectionItem? connection, TemplateItem template, IProgress<int> progress)
+        internal static async Task<string> BuildObjectList(List<ObjectName> objectList, DatabaseConnectionItem? connection, TemplateItem template, IProgress<int> progress, DBSchema? schemaCache = null)
         {
             if (objectList == null || objectList.Count == 0 || connection == null || template == null)
             {
@@ -49,7 +65,9 @@ namespace SQL_Document_Builder
                         ObjectName dr = objectList[i];
                         string tableSchema = useQuotedId ? dr.Schema.QuotedName() : dr.Schema.RemoveQuote();
                         string tableName = useQuotedId ? dr.Name.QuotedName() : dr.Name.RemoveQuote();
-                        string description = await SQLDatabaseHelper.GetObjectDescriptionAsync(dr, connection.ConnectionString);
+                        string description = schemaCache != null
+                            ? await schemaCache.GetObjectDescriptionAsync(dr)
+                            : await MetadataProvider.GetObjectDescriptionAsync(dr, connection.ConnectionString);
                         var objectName = new ObjectName(dr.ObjectType, dr.Schema, dr.Name);
                         string fullName = useQuotedId ? objectName.FullName : objectName.FullNameNoQuote;
 
@@ -183,7 +201,7 @@ namespace SQL_Document_Builder
         /// <param name="connectionString">The connection string.</param>
         /// <param name="templateBody">The template body.</param>
         /// <returns>A Task.</returns>
-        internal static async Task<string> GetObjectDef(ObjectName objectName, DatabaseConnectionItem? connection, TemplateItem template, TemplateItem? dataTemplate)
+        internal static async Task<string> GetObjectDef(ObjectName objectName, DatabaseConnectionItem? connection, TemplateItem template, TemplateItem? dataTemplate, DBSchema? schemaCache = null)
         {
             if (objectName == null || connection == null || template == null)
             {
@@ -194,9 +212,7 @@ namespace SQL_Document_Builder
             {
                 string doc = template.Body;
 
-                // open the database oobjects
-                var tableView = new DBObject();
-                await tableView.OpenAsync(objectName, connection);
+                var objectMetadata = await LoadObjectMetadataAsync(objectName, connection, schemaCache);
 
                 bool useQuotedId = Properties.Settings.Default.UseQuotedIdentifier;
 
@@ -208,10 +224,10 @@ namespace SQL_Document_Builder
                 doc = doc.Replace("~TriggerName~", useQuotedId ? objectName.Name : objectName.Name.RemoveQuote());
 
                 //doc = doc.Replace("~Description~", tableView.Description.Length == 0 ? " " : tableView.Description);
-                doc = ProcessSection(doc, "Description", "~Description~", tableView.Description.Length == 0 ? " " : tableView.Description);
+                doc = ProcessSection(doc, "Description", "~Description~", objectMetadata.Description.Length == 0 ? " " : objectMetadata.Description);
 
                 //doc = doc.Replace("~Definition~", tableView.Definition);
-                doc = ProcessSection(doc, "Definition", "~Definition~", tableView.Definition);
+                doc = ProcessSection(doc, "Definition", "~Definition~", objectMetadata.Definition);
 
                 // Build the columns table
                 if (doc.Contains("~Columns~"))
@@ -220,7 +236,7 @@ namespace SQL_Document_Builder
                     if (columnsDoc.Contains("~ColumnItem~", StringComparison.CurrentCultureIgnoreCase))
                     {
                         string columnItemTemplate = template.Columns.ColumnRow;
-                        var columnsBody = GetColumnsBody(tableView.Columns, columnItemTemplate);
+                        var columnsBody = GetColumnsBody(objectMetadata.Columns, columnItemTemplate);
                         columnsDoc = columnsDoc.Replace("~ColumnItem~", columnsBody);
                     }
                     //doc = doc.Replace("~Columns~", columnsDoc);
@@ -234,7 +250,7 @@ namespace SQL_Document_Builder
                     if (indexesDoc.Contains("~IndexItem~", StringComparison.CurrentCultureIgnoreCase))
                     {
                         string indexItemTemplate = template.Indexes.IndexRow;
-                        var indexesBody = GetIndexesBody(tableView.Indexes, indexItemTemplate);
+                        var indexesBody = GetIndexesBody(objectMetadata.Indexes, indexItemTemplate);
                         if(string.IsNullOrEmpty(indexesBody))
                         {
                             indexesDoc = string.Empty;
@@ -255,7 +271,7 @@ namespace SQL_Document_Builder
                     if (constraintDoc.Contains("~ConstraintItem~", StringComparison.CurrentCultureIgnoreCase))
                     {
                         string constraintItemTemplate = template.Constraints.ConstraintRow;
-                        var constraintsBody = GetConstraintsBody(tableView.Constraints, constraintItemTemplate);
+                        var constraintsBody = GetConstraintsBody(objectMetadata.Constraints, constraintItemTemplate);
                         if (string.IsNullOrEmpty(constraintsBody))
                         {
                             constraintDoc = string.Empty;
@@ -276,7 +292,7 @@ namespace SQL_Document_Builder
                     if (parameterDoc.Contains("~ParameterItem~", StringComparison.CurrentCultureIgnoreCase))
                     {
                         string parameterItemTemplate = template.Parameters.ParameterRow;
-                        var parametersBody = GetParametersBody(tableView.Parameters, parameterItemTemplate);
+                        var parametersBody = GetParametersBody(objectMetadata.Parameters, parameterItemTemplate);
                         if (string.IsNullOrEmpty(parametersBody))
                         {
                             parameterDoc = string.Empty;
@@ -294,8 +310,8 @@ namespace SQL_Document_Builder
                 // synonyms
                 if (objectName.ObjectType == ObjectName.ObjectTypeEnums.Synonym)
                 {
-                    doc = doc.Replace("~BaseObjectName~", tableView.SynonymInformation?.BaseObjectName);
-                    doc = doc.Replace("~BaseObjectType~", tableView.SynonymInformation?.BaseObjectType);
+                    doc = doc.Replace("~BaseObjectName~", objectMetadata.SynonymBaseObjectName);
+                    doc = doc.Replace("~BaseObjectType~", objectMetadata.SynonymBaseObjectType);
                 }
 
                 // table values
@@ -304,7 +320,8 @@ namespace SQL_Document_Builder
                     string tableValuesDoc = string.Empty;
                     string sql = $"SELECT * FROM {objectName.FullName}";
                     // Check if the SQL statement is a valid SELECT statement
-                    if (!await SQLDatabaseHelper.IsValidSelectStatement(sql, connection.ConnectionString))
+                    var provider = DatabaseAccessProviderFactory.GetProvider(connection);
+                    if (!await provider.IsValidSelectStatementAsync(sql, connection.ConnectionString))
                     {
                         tableValuesDoc = "Cannot generate the value list because the object contains columns with unsupported data types.";
                     }
@@ -319,7 +336,7 @@ namespace SQL_Document_Builder
                 // triggers
                 if (doc.Contains("~Triggers~") && !string.IsNullOrEmpty( template.Triggers ))
                 {
-                    string triggersDoc = await GetObjectTriggersAsync(objectName, connection, template.Triggers?? "");
+                    string triggersDoc = await GetObjectTriggersAsync(objectName, connection, template.Triggers?? "", schemaCache);
                     doc = ProcessSection(doc, "Triggers", "~Triggers~", triggersDoc);
                 }
 
@@ -362,6 +379,152 @@ namespace SQL_Document_Builder
 
         }
 
+        private static async Task<ObjectMetadataSnapshot> LoadObjectMetadataAsync(ObjectName objectName, DatabaseConnectionItem connection, DBSchema? schemaCache)
+        {
+            var snapshot = new ObjectMetadataSnapshot
+            {
+                Description = schemaCache != null
+                    ? await schemaCache.GetObjectDescriptionAsync(objectName)
+                    : await MetadataProvider.GetObjectDescriptionAsync(objectName, connection.ConnectionString)
+            };
+
+            switch (objectName.ObjectType)
+            {
+                case ObjectName.ObjectTypeEnums.Table:
+                case ObjectName.ObjectTypeEnums.View:
+                {
+                    var cachedColumns = schemaCache?.GetCachedColumns(objectName) ?? [];
+                    if (cachedColumns.Count > 0)
+                    {
+                        snapshot.Columns.AddRange(cachedColumns);
+                    }
+                    else
+                    {
+                        var dtColumns = await MetadataProvider.GetObjectColumnsAsync(objectName, connection.ConnectionString);
+                        if (dtColumns != null)
+                        {
+                            foreach (DataRow row in dtColumns.Rows)
+                            {
+                                snapshot.Columns.Add(new DBColumn(row));
+                            }
+                        }
+                    }
+
+                    foreach (var column in snapshot.Columns)
+                    {
+                        column.Description = schemaCache != null
+                            ? await schemaCache.GetLevel2DescriptionAsync(objectName, column.ColumnName)
+                            : await MetadataProvider.GetColumnDescriptionAsync(objectName, column.ColumnName, connection.ConnectionString);
+                    }
+
+                    if (objectName.ObjectType == ObjectName.ObjectTypeEnums.Table)
+                    {
+                        var primaryKeyColumns = await MetadataProvider.GetPrimaryKeyColumnsAsync(objectName, connection.ConnectionString);
+                        foreach (var primaryKeyColumn in primaryKeyColumns)
+                        {
+                            var column = snapshot.Columns.Find(c => c.ColumnName.Equals(primaryKeyColumn, StringComparison.OrdinalIgnoreCase));
+                            if (column != null && !column.Ord.Contains("🗝", StringComparison.Ordinal))
+                            {
+                                column.Ord += "🗝";
+                            }
+                        }
+
+                        var dtConstraints = await MetadataProvider.GetObjectConstraintsAsync(objectName, connection.ConnectionString);
+                        if (dtConstraints != null)
+                        {
+                            foreach (DataRow row in dtConstraints.Rows)
+                            {
+                                snapshot.Constraints.Add(new ConstraintItem(row));
+                            }
+                        }
+                    }
+
+                    var dtIndexes = await MetadataProvider.GetObjectIndexesAsync(objectName, connection.ConnectionString);
+                    if (dtIndexes != null && dtIndexes.Rows.Count > 0)
+                    {
+                        var indexGroups = dtIndexes.AsEnumerable()
+                            .GroupBy(row => row["IndexName"]?.ToString() ?? string.Empty);
+
+                        foreach (var group in indexGroups)
+                        {
+                            var firstRow = group.First();
+                            string indexName = firstRow["IndexName"]?.ToString() ?? string.Empty;
+                            string type = firstRow["Type"]?.ToString() ?? string.Empty;
+                            bool isUnique = firstRow["IsUnique"] != DBNull.Value && Convert.ToBoolean(firstRow["IsUnique"]);
+                            string columns = string.Join(", ", group.Select(r => $"{r["ColumnName"]}"));
+
+                            snapshot.Indexes.Add(new IndexItem(indexName, type, columns, isUnique));
+
+                            foreach (var row in group)
+                            {
+                                var columnName = row["ColumnName"]?.ToString();
+                                if (string.IsNullOrWhiteSpace(columnName))
+                                {
+                                    continue;
+                                }
+
+                                var column = snapshot.Columns.Find(c => c.ColumnName.Equals(columnName, StringComparison.OrdinalIgnoreCase));
+                                if (column != null && !column.Ord.Contains("🔢", StringComparison.Ordinal))
+                                {
+                                    column.Ord += "🔢";
+                                }
+                            }
+                        }
+                    }
+
+                    if (objectName.ObjectType == ObjectName.ObjectTypeEnums.View)
+                    {
+                        snapshot.Definition = await MetadataProvider.GetObjectDefinitionAsync(objectName, connection.ConnectionString);
+                    }
+
+                    break;
+                }
+
+                case ObjectName.ObjectTypeEnums.StoredProcedure:
+                case ObjectName.ObjectTypeEnums.Function:
+                {
+                    snapshot.Definition = await MetadataProvider.GetObjectDefinitionAsync(objectName, connection.ConnectionString);
+
+                    var dtParameters = await MetadataProvider.GetObjectParametersAsync(objectName, connection.ConnectionString);
+                    if (dtParameters != null)
+                    {
+                        foreach (DataRow row in dtParameters.Rows)
+                        {
+                            var parameter = new DBParameter(row)
+                            {
+                                Description = schemaCache != null
+                                    ? await schemaCache.GetLevel2DescriptionAsync(objectName, row["PARAMETER_NAME"]?.ToString() ?? string.Empty)
+                                    : await MetadataProvider.GetColumnDescriptionAsync(objectName, row["PARAMETER_NAME"]?.ToString() ?? string.Empty, connection.ConnectionString)
+                            };
+                            snapshot.Parameters.Add(parameter);
+                        }
+                    }
+
+                    break;
+                }
+
+                case ObjectName.ObjectTypeEnums.Trigger:
+                    snapshot.Definition = await MetadataProvider.GetObjectDefinitionAsync(objectName, connection.ConnectionString);
+                    break;
+
+                case ObjectName.ObjectTypeEnums.Synonym:
+                {
+                    snapshot.Definition = await MetadataProvider.GetSynonymBaseObjectAsync(objectName, connection.ConnectionString);
+                    var synonymInfo = await MetadataProvider.GetSynonymInfoAsync(objectName, connection.ConnectionString);
+                    if (synonymInfo != null && synonymInfo.Rows.Count > 0)
+                    {
+                        var row = synonymInfo.Rows[0];
+                        snapshot.SynonymBaseObjectName = row["BaseObjectName"]?.ToString() ?? string.Empty;
+                        snapshot.SynonymBaseObjectType = row["BaseObjectType"]?.ToString() ?? string.Empty;
+                    }
+
+                    break;
+                }
+            }
+
+            return snapshot;
+        }
+
         /// <summary>
         /// Gets the relationships body.
         /// </summary>
@@ -375,7 +538,7 @@ namespace SQL_Document_Builder
                 return string.Empty;
             }
 
-            var dt = await SQLDatabaseHelper.GetObjectRelationshipsAsync(objectName, connection.ConnectionString);
+            var dt = await MetadataProvider.GetObjectRelationshipsAsync(objectName, connection.ConnectionString);
 
             if(dt?.Rows.Count > 0)
             {
@@ -469,7 +632,7 @@ namespace SQL_Document_Builder
         /// <param name="connection">The connection.</param>
         /// <param name="template">The template.</param>
         /// <returns>A Task.</returns>
-        private static async Task<string> GetObjectTriggersAsync(ObjectName objectName, DatabaseConnectionItem? connection, string templateBody)
+        private static async Task<string> GetObjectTriggersAsync(ObjectName objectName, DatabaseConnectionItem? connection, string templateBody, DBSchema? schemaCache)
         {
             if (objectName == null || connection == null || string.IsNullOrEmpty(templateBody))
             {
@@ -480,13 +643,13 @@ namespace SQL_Document_Builder
             {
                 StringBuilder sb = new();
 
-                var allTriggers = await SQLDatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.Trigger, connection.ConnectionString);
+                var allTriggers = await MetadataProvider.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.Trigger, connection.ConnectionString);
                 if (allTriggers.Count == 0)
                     return "";
 
                 foreach (var triggerObject in allTriggers)
                 {
-                    var triggerInfo = await SQLDatabaseHelper.GetTriggerInfoAsync(triggerObject, connection.ConnectionString);
+                    var triggerInfo = await MetadataProvider.GetTriggerInfoAsync(triggerObject, connection.ConnectionString);
                     if (triggerInfo == null || triggerInfo.Rows.Count == 0)
                     {
                         continue;
@@ -503,7 +666,7 @@ namespace SQL_Document_Builder
                     }
 
                     string triggerName = triggerObject.Name;
-                    string definition = await SQLDatabaseHelper.GetObjectDefinitionAsync(triggerObject, connection.ConnectionString);
+                    string definition = await MetadataProvider.GetObjectDefinitionAsync(triggerObject, connection.ConnectionString);
                     string triggerType = infoRow["TriggerType"]?.ToString() ?? "UNKNOWN";
 
                     string triggerDoc = templateBody;
@@ -516,7 +679,9 @@ namespace SQL_Document_Builder
                     if (triggerDoc.Contains("~Description~"))
                     {
                         // get trigger description
-                        string description = await SQLDatabaseHelper.GetObjectDescriptionAsync(triggerObject, connection.ConnectionString);
+                        string description = schemaCache != null
+                            ? await schemaCache.GetObjectDescriptionAsync(triggerObject)
+                            : await MetadataProvider.GetObjectDescriptionAsync(triggerObject, connection.ConnectionString);
 
                         triggerDoc = ProcessSection(triggerDoc, "Description", "~Description~", description.Length == 0 ? " " : description);
                     }
@@ -546,7 +711,7 @@ namespace SQL_Document_Builder
 
             if (connection.DBMSType == DBMSTypeEnums.SQLServer)
             {
-                var triggerInfo = await SQLDatabaseHelper.GetTriggerInfoAsync(objectName, connection.ConnectionString);
+                var triggerInfo = await MetadataProvider.GetTriggerInfoAsync(objectName, connection.ConnectionString);
                 if (triggerInfo == null || triggerInfo.Rows.Count == 0)
                     return string.Empty;
 
@@ -579,7 +744,8 @@ namespace SQL_Document_Builder
 
             if (connection.DBMSType == DBMSTypeEnums.SQLServer)
             {
-                DataTable? dt = await SQLDatabaseHelper.GetDataTableAsync(sql, connection?.ConnectionString);
+                var provider = DatabaseAccessProviderFactory.GetProvider(connection);
+                DataTable? dt = await provider.GetDataTableAsync(sql, connection?.ConnectionString ?? string.Empty);
                 if (dt == null || dt.Rows.Count == 0)
                 {
                     return string.Empty;

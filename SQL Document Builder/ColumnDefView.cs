@@ -663,16 +663,24 @@ GO
         {
             if (_isChanged && _dbObject.ObjectType != ObjectName.ObjectTypeEnums.None)
             {
-                // save the table description
-                await _dbObject.UpdateObjectDescAsync(tableDescTextBox.Text);
+                // save the table description only if it changed
+                if (NormalizeDescription(tableDescTextBox.Text) != _originalTableDescription)
+                {
+                    await _dbObject.UpdateObjectDescAsync(tableDescTextBox.Text);
+                }
 
-                // save description for each column
+                // save description for each column only if it changed
                 if (_dbObject.ObjectType == ObjectName.ObjectTypeEnums.Table || _dbObject.ObjectType == ObjectName.ObjectTypeEnums.View)
                 {
                     foreach (var column in _tableContext.Columns)
                     {
-                        // Only update if the description is not null (avoid unnecessary DB calls)
-                        if (!string.IsNullOrEmpty(column.ColumnName))
+                        if (string.IsNullOrEmpty(column.ColumnName))
+                        {
+                            continue;
+                        }
+
+                        _originalColumnDescriptions.TryGetValue(column.ColumnName, out var originalDescription);
+                        if (NormalizeDescription(column.Description) != NormalizeDescription(originalDescription))
                         {
                             await _dbObject.UpdateLevel2DescriptionAsync(column.ColumnName, column.Description!, _dbObject.ObjectType);
                         }
@@ -925,6 +933,7 @@ GO
                     TableName = $"[{Schema}].[{TableName}]",
                     EnableValueFrequency = true,
                     DatabaseIndex = 0,
+                    Connection = Connection,
                     ConnectionString = Connection.ConnectionString!
                 };
                 dlg.ShowDialog();
@@ -1057,6 +1066,7 @@ GO
                 TableName = $"[{Schema}].[{TableName}]",
                 EnableValueFrequency = true,
                 DatabaseIndex = 0,
+                Connection = Connection,
                 ConnectionString = Connection.ConnectionString
             };
             dlg.ShowDialog();

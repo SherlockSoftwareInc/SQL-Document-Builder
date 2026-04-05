@@ -1,10 +1,10 @@
 ﻿
-using Microsoft.Data.SqlClient;
 using System;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using SQL_Document_Builder.DatabaseAccess;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -39,6 +39,9 @@ namespace SQL_Document_Builder
         /// </summary>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string ConnectionString { get; set; } = string.Empty;
+
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public DatabaseConnectionItem? Connection { get; set; }
 
         /// <summary>
         /// Indicates which database to access: 0 = cvi-source, 1 = EDW
@@ -338,41 +341,10 @@ namespace SQL_Document_Builder
         /// <returns>A Task.</returns>
         private async Task<DataTable?> GetDataAsync(string sql, CancellationToken cancellationToken)
         {
-            DataTable dt = new();
-
             try
             {
-                using var conn = new SqlConnection(ConnectionString);
-                using var cmd = new SqlCommand(sql, conn)
-                {
-                    CommandType = System.Data.CommandType.Text,
-                    CommandTimeout = 50000
-                };
-
-                await conn.OpenAsync(cancellationToken);
-                using var crt = cancellationToken.Register(() => cmd.Cancel());
-
-                using var dr = await cmd.ExecuteReaderAsync(cancellationToken);
-
-                // Load the schema from the data reader and create DataTable columns
-                for (int i = 0; i < dr.FieldCount; i++)
-                {
-                    dt.Columns.Add(dr.GetName(i), dr.GetFieldType(i));
-                }
-
-                // Read rows one by one, checking for cancellation
-                while (await dr.ReadAsync(cancellationToken))
-                {
-                    DataRow row = dt.NewRow();
-                    for (int i = 0; i < dr.FieldCount; i++)
-                    {
-                        row[i] = dr.IsDBNull(i) ? DBNull.Value : dr.GetValue(i);
-                    }
-                    dt.Rows.Add(row);
-
-                    // Check for cancellation request
-                    cancellationToken.ThrowIfCancellationRequested();
-                }
+                var provider = DatabaseAccessProviderFactory.GetProvider(Connection);
+                return await provider.GetDataTableAsync(sql, ConnectionString, cancellationToken);
             }
             catch (OperationCanceledException)
             {
@@ -387,7 +359,7 @@ namespace SQL_Document_Builder
                 //this.Invoke((MethodInvoker)delegate { this.Close(); });
                 throw;
             }
-            return dt;
+            return null;
         }
 
         /// <summary>
@@ -401,19 +373,8 @@ namespace SQL_Document_Builder
                 var sql = SQL;
                 if (topToolStripComboBox.SelectedIndex == 0)
                 {
-                    // ensure the SQL statement contain the "TOP" keyword, if not, add TOP 1000 to the SQL statement
-                    if (!sql.Contains(" TOP ", StringComparison.CurrentCultureIgnoreCase))
-                    {
-                        sql = sql.Insert(sql.IndexOf("SELECT", StringComparison.CurrentCultureIgnoreCase) + 6, " TOP 1000 ");
-                    }
-                }
-                else
-                {
-                    // remove the TOP keyword from the SQL statement
-                    if (sql.Contains(" TOP ", StringComparison.CurrentCultureIgnoreCase))
-                    {
-                        sql = sql.Remove(sql.IndexOf(" TOP 1000 ", StringComparison.CurrentCultureIgnoreCase), 9);
-                    }
+                    var provider = DatabaseAccessProviderFactory.GetProvider(Connection);
+                    sql = provider.ApplyRowLimit(sql, 1000);
                 }
 
                 messageLabel.Text = "Please wait while loading data...";
@@ -566,6 +527,7 @@ namespace SQL_Document_Builder
                     DatabaseIndex = 0,
                     MultipleValue = false,
                     MaximizeForm = false,
+                        Connection = Connection,
                     ConnectionString = ConnectionString
                 };
                 dlg.ShowDialog();
@@ -589,6 +551,7 @@ namespace SQL_Document_Builder
                         DatabaseIndex = 0,
                         MultipleValue = false,
                         MaximizeForm = false,
+                        Connection = Connection,
                         ConnectionString = ConnectionString
                     };
                     dlg.ShowDialog();

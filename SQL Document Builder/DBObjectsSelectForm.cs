@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using SQL_Document_Builder.SchemaMetadata;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -165,7 +166,7 @@ namespace SQL_Document_Builder
         /// Gets the recent objects.
         /// </summary>
         /// <returns>A list of ObjectNames.</returns>
-        private List<ObjectName> GetRecentObjects()
+        private async Task<List<ObjectName>> GetRecentObjectsAsync()
         {
             // get the date range for the recent objects
             var dlg = new DateRangeSelector();
@@ -174,7 +175,7 @@ namespace SQL_Document_Builder
                 var startDate = dlg.StartDate;
                 var endDate = dlg.EndDate;
 
-                return SQLDatabaseHelper.GetRecentObjects(startDate, endDate, ConnectionString);
+                return await SchemaMetadataProviderContext.Current.GetRecentObjectsAsync(startDate, endDate, ConnectionString);
             }
 
             return [];
@@ -211,7 +212,7 @@ namespace SQL_Document_Builder
                 // Retrieve the database objects asynchronously
                 _selectableObjects = SchemaCache != null && SchemaCache.HasObjects
                     ? SchemaCache.Objects(selectedObjectType)
-                    : await SQLDatabaseHelper.GetDatabaseObjectsAsync(selectedObjectType, ConnectionString);
+                    : await SchemaMetadataProviderContext.Current.GetDatabaseObjectsAsync(selectedObjectType, ConnectionString);
 
                 // Populate the selectable objects list box
                 PopulateSelectableObjects();
@@ -250,7 +251,7 @@ namespace SQL_Document_Builder
                 // Get all database objects
                 var allObjects = SchemaCache != null && SchemaCache.HasObjects
                     ? SchemaCache.AllObjects()
-                    : await SQLDatabaseHelper.GetAllObjectsAsync(ConnectionString);
+                    : await SchemaMetadataProviderContext.Current.GetAllObjectsAsync(ConnectionString);
 
                 // Loop through each item in the clipboard text
                 foreach (string item in items)
@@ -288,7 +289,7 @@ namespace SQL_Document_Builder
 
             var schemas = SchemaCache != null && SchemaCache.HasObjects
                 ? SchemaCache.Schemas.ToList()
-                : await SQLDatabaseHelper.GetSchemasAsync(ConnectionString);
+                : await SchemaMetadataProviderContext.Current.GetSchemasAsync(ConnectionString);
 
             // Add schemas to the combo box
             foreach (var schema in schemas)
@@ -345,10 +346,10 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The e.</param>
-        private void RecentObjectsToolStripMenuItem_Click(object sender, EventArgs e)
+        private async void RecentObjectsToolStripMenuItem_Click(object sender, EventArgs e)
         {
             // Get the list of recently used objects
-            var recentObjects = GetRecentObjects();
+            var recentObjects = await GetRecentObjectsAsync();
 
             // Add them to the selectable list box
             foreach (var obj in recentObjects)

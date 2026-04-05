@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using SQL_Document_Builder.DatabaseAccess;
+using SQL_Document_Builder.SchemaMetadata;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -66,7 +68,7 @@ namespace SQL_Document_Builder
                 createScript.AppendLine("GO");
             }
 
-            string baseObjectName = await SQLDatabaseHelper.GetSynonymBaseObjectAsync(dbObject, connection.ConnectionString);
+            string baseObjectName = await SchemaMetadataProviderContext.Current.GetSynonymBaseObjectAsync(dbObject, connection.ConnectionString);
             if (string.IsNullOrEmpty(baseObjectName))
                 return string.Empty;
 
@@ -90,7 +92,8 @@ namespace SQL_Document_Builder
             try
             {
                 // Use SQLDatabaseHelper to get the data as a DataTable
-                var dt = await SQLDatabaseHelper.GetDataTableAsync(sql, connection.ConnectionString);
+                var provider = DatabaseAccessProviderFactory.GetProvider(connection);
+                var dt = await provider.GetDataTableAsync(sql, connection.ConnectionString);
 
                 if (dt != null && dt.Rows.Count > 0)
                 {
@@ -205,13 +208,14 @@ namespace SQL_Document_Builder
 
             var sql = $"select * from {tableName.FullName}";
             // check if the SQL statement is a valid SELECT statement to generate JSON data
-            if (!await SQLDatabaseHelper.IsValidSelectStatement(sql, connection.ConnectionString))
+            var provider = DatabaseAccessProviderFactory.GetProvider(connection);
+            if (!await provider.IsValidSelectStatementAsync(sql, connection.ConnectionString))
             {
                 MessageBox.Show("Cannot generate the JSON data because the table or view contains columns with unsupported data types.", "Invalid SQL", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return "";
             }
 
-            var hasIdentity = await SQLDatabaseHelper.HasIdentityColumnAsync(tableName, connection.ConnectionString);
+            var hasIdentity = await SchemaMetadataProviderContext.Current.HasIdentityColumnAsync(tableName, connection.ConnectionString);
             return await QueryDataToInsertStatementAsync(sql, connection, tableName.FullName, hasIdentity);
         }
 
@@ -228,7 +232,7 @@ namespace SQL_Document_Builder
 
             StringBuilder sb = new();
 
-            var dt = await SQLDatabaseHelper.GetCreateIndexesMetadataAsync(objectName, connection.ConnectionString);
+            var dt = await SchemaMetadataProviderContext.Current.GetCreateIndexesMetadataAsync(objectName, connection.ConnectionString);
             if (dt == null || dt.Rows.Count == 0)
                 return string.Empty;
 
@@ -616,7 +620,7 @@ GO";
                 createScript.AppendLine($"GO");
             }
 
-            var script = await SQLDatabaseHelper.GetObjectDefinitionAsync(objectName, connection.ConnectionString);
+            var script = await SchemaMetadataProviderContext.Current.GetObjectDefinitionAsync(objectName, connection.ConnectionString);
 
             if (string.IsNullOrEmpty(script))
             {
@@ -643,13 +647,13 @@ GO";
 
             StringBuilder sb = new();
 
-            var allTriggers = await SQLDatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.Trigger, connection.ConnectionString);
+            var allTriggers = await SchemaMetadataProviderContext.Current.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.Trigger, connection.ConnectionString);
             if (allTriggers.Count == 0)
                 return string.Empty;
 
             foreach (var triggerObject in allTriggers)
             {
-                var triggerInfo = await SQLDatabaseHelper.GetTriggerInfoAsync(triggerObject, connection.ConnectionString);
+                var triggerInfo = await SchemaMetadataProviderContext.Current.GetTriggerInfoAsync(triggerObject, connection.ConnectionString);
                 if (triggerInfo == null || triggerInfo.Rows.Count == 0)
                 {
                     continue;
@@ -666,7 +670,7 @@ GO";
                 }
 
                 string triggerName = triggerObject.Name;
-                string definition = await SQLDatabaseHelper.GetObjectDefinitionAsync(triggerObject, connection.ConnectionString);
+                string definition = await SchemaMetadataProviderContext.Current.GetObjectDefinitionAsync(triggerObject, connection.ConnectionString);
                 bool isDisabled = string.Equals(infoRow["IsDisabled"]?.ToString(), "Yes", StringComparison.OrdinalIgnoreCase);
 
                 // Add header
@@ -745,7 +749,7 @@ GO";
             // Validate the single full name parameter
             if (!string.IsNullOrWhiteSpace(objectName.FullName))
             {
-                string? definition = await SQLDatabaseHelper.GetObjectDefinitionAsync(objectName, connection?.ConnectionString);
+            string? definition = await SchemaMetadataProviderContext.Current.GetObjectDefinitionAsync(objectName, connection?.ConnectionString);
 
                 if (string.IsNullOrEmpty(definition))
                 {

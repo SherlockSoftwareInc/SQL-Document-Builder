@@ -1,6 +1,7 @@
 ﻿
 using System;
 using System.ComponentModel;
+using SQL_Document_Builder.DatabaseAccess;
 using System.Windows.Forms;
 
 namespace SQL_Document_Builder
@@ -24,6 +25,9 @@ namespace SQL_Document_Builder
         /// </summary>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string ConnectionString { get; set; } = string.Empty;
+
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public DatabaseConnectionItem? Connection { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether the generated document is a insert statement or not.
@@ -60,7 +64,8 @@ namespace SQL_Document_Builder
         {
             if (sqlTextBox.Text.Contains("select", StringComparison.CurrentCultureIgnoreCase))
             {
-                var syntaxCheck = await SQLDatabaseHelper.SyntaxCheckAsync(sqlTextBox.Text, ConnectionString);
+                var provider = DatabaseAccessProviderFactory.GetProvider(Connection);
+                var syntaxCheck = await provider.SyntaxCheckAsync(sqlTextBox.Text, ConnectionString);
 
                 if (string.IsNullOrEmpty(syntaxCheck))
                 {

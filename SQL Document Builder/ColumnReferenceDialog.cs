@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using SQL_Document_Builder.SchemaMetadata;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -92,7 +93,7 @@ namespace SQL_Document_Builder
             {
                 _objects = SchemaCache != null && SchemaCache.HasObjects
                     ? SchemaCache.Objects(ObjectName.ObjectTypeEnums.Table)
-                    : await SQLDatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.Table, connectionString) ?? new List<ObjectName>();
+                    : await SchemaMetadataProviderContext.Current.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.Table, connectionString) ?? new List<ObjectName>();
 
                 _allObjects.Clear();
                 _allObjects.AddRange(SchemaCache != null && SchemaCache.HasObjects

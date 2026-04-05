@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel;
+using SQL_Document_Builder.SchemaMetadata;
 using System.Threading.Tasks;
 
 namespace SQL_Document_Builder
@@ -62,7 +63,7 @@ namespace SQL_Document_Builder
             SchemaName = objectName.Schema;
             SynonymName = objectName.Name;
 
-            var dt = await SQLDatabaseHelper.GetSynonymInfoAsync(objectName, connectionString);
+            var dt = await SchemaMetadataProviderContext.Current.GetSynonymInfoAsync(objectName, connectionString);
 
             if (dt?.Rows.Count > 0)
             {

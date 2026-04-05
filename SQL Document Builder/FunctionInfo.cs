@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel;
 using System.Data;
+using SQL_Document_Builder.SchemaMetadata;
 using System.Threading.Tasks;
 
 namespace SQL_Document_Builder
@@ -66,7 +67,7 @@ namespace SQL_Document_Builder
             if (objectName == null || string.IsNullOrEmpty(objectName.Name) || string.IsNullOrEmpty(objectName.Schema))
                 return false;
 
-            DataTable? dt = await SQLDatabaseHelper.GetFunctionInfoAsync(objectName, connectionString);
+            DataTable? dt = await SchemaMetadataProviderContext.Current.GetFunctionInfoAsync(objectName, connectionString);
             if (dt != null && dt.Rows.Count > 0)
             {
                 DataRow row = dt.Rows[0];

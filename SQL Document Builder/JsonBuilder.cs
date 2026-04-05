@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using SQL_Document_Builder.DatabaseAccess;
+using SQL_Document_Builder.SchemaMetadata;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -180,7 +182,7 @@ namespace SQL_Document_Builder
                     }
 
                     ObjectName dr = objectList[i];
-                    string description = await SQLDatabaseHelper.GetObjectDescriptionAsync(dr, connection.ConnectionString);
+                    string description = await SchemaMetadataProviderContext.Current.GetObjectDescriptionAsync(dr, connection.ConnectionString);
                     list.Add(new
                     {
                         Schema = dr.Schema,
@@ -211,7 +213,8 @@ namespace SQL_Document_Builder
 
             if (connection.DBMSType == DBMSTypeEnums.SQLServer)
             {
-                DataTable? dt = await SQLDatabaseHelper.GetDataTableAsync(sql, connection?.ConnectionString);
+                var provider = DatabaseAccessProviderFactory.GetProvider(connection);
+                DataTable? dt = await provider.GetDataTableAsync(sql, connection?.ConnectionString ?? string.Empty);
                 if (dt == null || dt.Rows.Count == 0)
                 {
                     return "";

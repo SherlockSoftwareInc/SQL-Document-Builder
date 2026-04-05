@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using SQL_Document_Builder.DatabaseAccess;
+using SQL_Document_Builder.SchemaMetadata;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -33,14 +35,8 @@ namespace SQL_Document_Builder
             DataTable dt;
             try
             {
-                if (string.Equals(connection.ConnectionType, "ODBC", StringComparison.OrdinalIgnoreCase))
-                {
-                    dt = await ODBCDataSource.GetDataTableAsync(connection.ConnectionString, sql, cancellationToken);
-                }
-                else
-                {
-                    dt = await SQLDatabaseHelper.GetDataTableAsync(sql, connection.ConnectionString) ?? new DataTable();
-                }
+                var provider = DatabaseAccessProviderFactory.GetProvider(connection);
+                dt = await provider.GetDataTableAsync(sql, connection.ConnectionString, cancellationToken) ?? new DataTable();
             }
             catch (System.Exception)
             {
@@ -74,7 +70,7 @@ namespace SQL_Document_Builder
         {
             if (string.Equals(connection.ConnectionType, "SQL Server", StringComparison.OrdinalIgnoreCase))
             {
-                var objects = await SQLDatabaseHelper.GetDatabaseObjectsAsync(objectType, connection.ConnectionString);
+                var objects = await SchemaMetadataProviderContext.Current.GetDatabaseObjectsAsync(objectType, connection.ConnectionString);
                 return objects.Select(o => o.FullNameNoQuote).ToList();
             }
             else
@@ -90,9 +86,8 @@ namespace SQL_Document_Builder
         {
             if (connection.ConnectionString.Length > 0)
             {
-                if (string.Equals(connection.ConnectionType, "SQL Server", StringComparison.OrdinalIgnoreCase))
-                    return SQLDatabaseHelper.TestConnectionAsync(connection.ConnectionString).GetAwaiter().GetResult();
-                return ODBCDataSource.TestConnection(connection.ConnectionString);
+                var provider = DatabaseAccessProviderFactory.GetProvider(connection);
+                return provider.TestConnectionAsync(connection.ConnectionString).GetAwaiter().GetResult();
             }
             return false;
         }
@@ -102,15 +97,8 @@ namespace SQL_Document_Builder
             bool result = false;
             if (connection.ConnectionString.Length > 0)
             {
-                if (string.Equals(connection.ConnectionType, "SQL Server", StringComparison.OrdinalIgnoreCase))
-                {
-                    result = await SQLDatabaseHelper.TestConnectionAsync(connection.ConnectionString);
-                }
-                else
-                {
-                    var odbc = new ODBCDataSource();
-                    result = await odbc.TestConnectionAsync(connection.ConnectionString, cancellationToken);
-                }
+                var provider = DatabaseAccessProviderFactory.GetProvider(connection);
+                result = await provider.TestConnectionAsync(connection.ConnectionString, cancellationToken);
             }
             return result;
         }

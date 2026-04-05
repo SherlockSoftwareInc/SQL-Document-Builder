@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Linq;
+using SQL_Document_Builder.SchemaMetadata;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -84,7 +85,8 @@ namespace SQL_Document_Builder
                 var item = (ObjectName)objectsListBox.CheckedItems[i];
                 if (item != null)
                 {
-                    await SQLDatabaseHelper.UpdateLevel2DescriptionAsync(item, columnName, desc, ConnectionString);
+                    await SchemaMetadataProviderContext.Current.UpdateLevel2DescriptionAsync(item, columnName, desc, ConnectionString);
+                    SchemaCache?.SetLevel2Description(item, columnName, desc);
                 }
             }
         }
@@ -98,7 +100,7 @@ namespace SQL_Document_Builder
         {
             _schemas = SchemaCache != null && SchemaCache.HasObjects
                 ? [.. SchemaCache.Schemas]
-                : await SQLDatabaseHelper.GetSchemasAsync(ConnectionString);
+                : await SchemaMetadataProviderContext.Current.GetSchemasAsync(ConnectionString);
             PopulateSchema();
         }
 
@@ -117,7 +119,7 @@ namespace SQL_Document_Builder
 
             var objects = SchemaCache != null && SchemaCache.HasObjects
                 ? SchemaCache.AllObjects()
-                : await SQLDatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.All, ConnectionString);
+                : await SchemaMetadataProviderContext.Current.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.All, ConnectionString);
             if (objects.Count > 0)
             {
                 // get the select schema name
@@ -160,7 +162,7 @@ namespace SQL_Document_Builder
                     }
                     else
                     {
-                        var columns = await SQLDatabaseHelper.GetObjectColumnsAsync(dbObject, ConnectionString);
+                        var columns = await SchemaMetadataProviderContext.Current.GetObjectColumnsAsync(dbObject, ConnectionString);
                         if (columns == null || columns.Rows.Count == 0)
                         {
                             continue;
@@ -190,7 +192,7 @@ namespace SQL_Document_Builder
             messageToolStripStatusLabel.Text = objectsListBox.Items.Count switch
             {
                 0 => "No match found",
-                1 => "one matche found",
+                1 => "one match found",
                 _ => string.Format("{0} matches found", objectsListBox.Items.Count),
             };
 

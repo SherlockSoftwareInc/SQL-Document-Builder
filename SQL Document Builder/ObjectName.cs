@@ -283,7 +283,7 @@ namespace SQL_Document_Builder
             {
                 return string.Format("{0}.{1}", Schema, Name);
             }
-            return string.Empty;
+            return Name;
         }
 
         /// <summary>

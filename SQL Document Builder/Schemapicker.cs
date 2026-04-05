@@ -1,6 +1,7 @@
 ﻿
 using System;
 using System.ComponentModel;
+using SQL_Document_Builder.SchemaMetadata;
 using System.Windows.Forms;
 
 namespace SQL_Document_Builder
@@ -68,7 +69,7 @@ namespace SQL_Document_Builder
             schemaListBox.Items.Clear();
             schemaListBox.Items.Add("(All)");
 
-            var schemas = await SQLDatabaseHelper.GetSchemasAsync(ConnectionString);
+            var schemas = await SchemaMetadataProviderContext.Current.GetSchemasAsync(ConnectionString);
 
             // Add schemas to the combo box
             foreach (var schema in schemas)

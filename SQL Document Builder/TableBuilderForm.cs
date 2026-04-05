@@ -1,5 +1,6 @@
 ﻿using ReverseMarkdown;
 using ScintillaNET;
+using SQL_Document_Builder.DatabaseAccess;
 using SQL_Document_Builder.ScintillaNetUtils;
 using SQL_Document_Builder.Template;
 using System;
@@ -98,7 +99,8 @@ namespace SQL_Document_Builder
 
                 if (!string.IsNullOrEmpty(query))
                 {
-                    var result = await SQLDatabaseHelper.ExecuteSQLAsync(query, connection.ConnectionString);
+                    var provider = DatabaseAccessProviderFactory.GetProvider(connection);
+                    var result = await provider.ExecuteSqlAsync(query, connection.ConnectionString);
                     if (result != string.Empty)
                     {
                         // Return immediately if an error occurs
@@ -596,9 +598,8 @@ namespace SQL_Document_Builder
 
             cancellationToken.ThrowIfCancellationRequested();
 
-            bool canConnect = isOdbc
-                ? await Task.Run(() => ODBCDataSource.TestConnection(connection.ConnectionString), cancellationToken)
-                : await SQLDatabaseHelper.TestConnectionAsync(connection.ConnectionString);
+            var provider = DatabaseAccessProviderFactory.GetProvider(connection);
+            bool canConnect = await provider.TestConnectionAsync(connection.ConnectionString, cancellationToken);
 
             if (!canConnect)
             {
@@ -1051,7 +1052,8 @@ namespace SQL_Document_Builder
 
                     // get the insert statement for the object
                     // get the number of rows in the table
-                    var rowCount = await SQLDatabaseHelper.GetRowCountAsync(obj.FullName, connectionString);
+                    var provider = DatabaseAccessProviderFactory.GetProvider(_currentConnection);
+                    var rowCount = await provider.GetRowCountAsync(obj.FullName, connectionString);
 
                     // confirm if the user wants to continue when the number of rows is too much
                     if (rowCount > Properties.Settings.Default.InertMaxRows)
@@ -1767,7 +1769,8 @@ namespace SQL_Document_Builder
                     }
 
                     // get the number of rows in the table
-                    var rowCount = await SQLDatabaseHelper.GetRowCountAsync(objectName.FullName, connectionString);
+                    var provider = DatabaseAccessProviderFactory.GetProvider(_currentConnection);
+                    var rowCount = await provider.GetRowCountAsync(objectName.FullName, connectionString);
 
                     // confirm if the user wants to continue when the number of rows is too much
                     if (rowCount > 1000)
@@ -2646,6 +2649,7 @@ namespace SQL_Document_Builder
             using var form = new QueryDataToTableForm()
             {
                 ConnectionString = connectionString,
+                Connection = _currentConnection,
                 InsertStatement = true
             };
             if (form.ShowDialog() == DialogResult.OK)
@@ -2655,7 +2659,8 @@ namespace SQL_Document_Builder
                 if (BeginAddDDLScript())
                 {
                     // Check if the SQL statement is a valid SELECT statement
-                    if (!await SQLDatabaseHelper.IsValidSelectStatement(form.SQL, connectionString))
+                    var provider = DatabaseAccessProviderFactory.GetProvider(_currentConnection);
+                    if (!await provider.IsValidSelectStatementAsync(form.SQL, connectionString))
                     {
                         MessageBox.Show("Cannot generate the INSERT statement because the table or view contains columns with unsupported data types.", "Invalid SQL", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         return;
@@ -3934,7 +3939,7 @@ namespace SQL_Document_Builder
         {
             if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
 
-            using var form = new QueryDataToTableForm() { ConnectionString = connectionString };
+            using var form = new QueryDataToTableForm() { ConnectionString = connectionString, Connection = _currentConnection };
             if (form.ShowDialog() == DialogResult.OK)
             {
                 if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
@@ -3956,7 +3961,8 @@ namespace SQL_Document_Builder
                 if (datatableTemplate != null)
                 {
                     // Check if the SQL statement is a valid SELECT statement
-                    if (!await SQLDatabaseHelper.IsValidSelectStatement(form.SQL, connectionString))
+                var provider = DatabaseAccessProviderFactory.GetProvider(_currentConnection);
+                if (!await provider.IsValidSelectStatementAsync(form.SQL, connectionString))
                     {
                         MessageBox.Show("Cannot generate the INSERT statement because the table or view contains columns with unsupported data types.", "Invalid SQL", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         return;
@@ -4020,7 +4026,7 @@ namespace SQL_Document_Builder
                     datatableTemplate = template.TemplateLists.FirstOrDefault(t => t.ObjectType == TemplateItem.ObjectTypeEnums.DataTable);
                 }
 
-                var scripts = await DocumentBuilder.GetObjectDef(objectName, _currentConnection, objectTemplate, datatableTemplate);
+                var scripts = await DocumentBuilder.GetObjectDef(objectName, _currentConnection, objectTemplate, datatableTemplate, _dbSchema);
                 if (scripts.Length == 0)
                 {
                     Common.MsgBox($"No definition found for {objectName.FullName}", MessageBoxIcon.Information);
@@ -4082,7 +4088,7 @@ namespace SQL_Document_Builder
             string scripts = String.Empty;
             await Task.Run(async () =>
             {
-                scripts = await DocumentBuilder.BuildObjectList(selectedObjects, _currentConnection, objectListTemplate, progress);
+                scripts = await DocumentBuilder.BuildObjectList(selectedObjects, _currentConnection, objectListTemplate, progress, _dbSchema);
             });
 
             AppendText(editBox, scripts);
@@ -4135,7 +4141,8 @@ namespace SQL_Document_Builder
 
                 string sql = $"select * from {objectName.FullName}";
                 // Check if the SQL statement is a valid SELECT statement
-                if (!await SQLDatabaseHelper.IsValidSelectStatement(sql, connectionString))
+                var provider = DatabaseAccessProviderFactory.GetProvider(_currentConnection);
+                if (!await provider.IsValidSelectStatementAsync(sql, connectionString))
                 {
                     MessageBox.Show("Cannot generate script or document because the table or view contains columns with unsupported data types.", "Invalid SQL", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
@@ -4310,7 +4317,7 @@ namespace SQL_Document_Builder
         {
             if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
 
-            using var form = new QueryDataToTableForm() { ConnectionString = connectionString };
+            using var form = new QueryDataToTableForm() { ConnectionString = connectionString, Connection = _currentConnection };
             if (form.ShowDialog() == DialogResult.OK)
             {
                 if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
@@ -4318,7 +4325,8 @@ namespace SQL_Document_Builder
                 if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Json) != DialogResult.Yes) return;
 
                 // check if the SQL statement is a valid SELECT statement to generate JSON data
-                if (!await SQLDatabaseHelper.IsValidSelectStatement(form.SQL, connectionString))
+                var provider = DatabaseAccessProviderFactory.GetProvider(_currentConnection);
+                if (!await provider.IsValidSelectStatementAsync(form.SQL, connectionString))
                 {
                     MessageBox.Show("Cannot generate the JSON data because the table or view contains columns with unsupported data types.", "Invalid SQL", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
@@ -4351,7 +4359,8 @@ namespace SQL_Document_Builder
 
                 // Check if the SQL statement is a valid SELECT statement
                 string sql = $"select * from {objectName.FullName}";
-                if (!await SQLDatabaseHelper.IsValidSelectStatement(sql, connectionString))
+                var provider = DatabaseAccessProviderFactory.GetProvider(_currentConnection);
+                if (!await provider.IsValidSelectStatementAsync(sql, connectionString))
                 {
                     MessageBox.Show("Cannot generate the JSON data because the table or view contains columns with unsupported data types.", "Invalid SQL", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
@@ -5029,7 +5038,8 @@ namespace SQL_Document_Builder
                 var trimmedBatch = batch.Trim();
                 if (!string.IsNullOrEmpty(trimmedBatch))
                 {
-                    string verifyResult = await Task.Run(() => SQLDatabaseHelper.VerifySQL(trimmedBatch, _currentConnection?.ConnectionString));
+                    var provider = DatabaseAccessProviderFactory.GetProvider(_currentConnection);
+                    string verifyResult = await Task.Run(() => provider.VerifySqlAsync(trimmedBatch, _currentConnection?.ConnectionString ?? string.Empty));
                     if (!string.IsNullOrEmpty(verifyResult))
                     {
                         return verifyResult;

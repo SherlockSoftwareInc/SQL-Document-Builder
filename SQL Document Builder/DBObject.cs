@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using SQL_Document_Builder.SchemaMetadata;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -133,9 +134,20 @@ namespace SQL_Document_Builder
         {
             if (ConnectionString?.Length == 0) return;
 
-            if (Connection?.DBMSType == DBMSTypeEnums.SQLServer)
+            if (objectType == ObjectTypeEnums.Table
+                || objectType == ObjectTypeEnums.View
+                || objectType == ObjectTypeEnums.StoredProcedure
+                || objectType == ObjectTypeEnums.Function)
             {
-                await SQLDatabaseHelper.UpdateLevel2DescriptionAsync(ObjectName, columnOrParameter, newDescription, ConnectionString);
+                try
+                {
+                    await SchemaMetadataProviderContext.Current.UpdateLevel2DescriptionAsync(ObjectName, columnOrParameter, newDescription, ConnectionString);
+                }
+                catch (NotSupportedException)
+                {
+                    // Some providers do not support level-2 description updates for all object types.
+                    return;
+                }
             }
 
             if (objectType == ObjectTypeEnums.Table || objectType == ObjectTypeEnums.View)
@@ -156,6 +168,8 @@ namespace SQL_Document_Builder
                     parameter.Description = newDescription;
                 }
             }
+
+            SchemaCache?.SetLevel2Description(ObjectName, columnOrParameter, newDescription);
         }
 
         /// <summary>
@@ -165,15 +179,62 @@ namespace SQL_Document_Builder
         /// <returns>A Task.</returns>
         public async Task UpdateObjectDescAsync(string newDescription)
         {
-            Description = newDescription;
-
-            if (string.IsNullOrEmpty(ConnectionString) || ObjectName.IsEmpty()) return;
-
-            if (Connection?.DBMSType == DBMSTypeEnums.SQLServer)
+            if (string.IsNullOrEmpty(ConnectionString) || ObjectName.IsEmpty())
             {
-                await SQLDatabaseHelper.UpdateObjectDescAsync(ObjectName, newDescription, ConnectionString);
+                Description = newDescription;
                 return;
             }
+
+            if (ObjectName.ObjectType != ObjectTypeEnums.None)
+            {
+                try
+                {
+                    await SchemaMetadataProviderContext.Current.UpdateObjectDescriptionAsync(ObjectName, newDescription, ConnectionString);
+                }
+                catch (NotSupportedException)
+                {
+                    // Some providers do not support object description updates for all object types.
+                    return;
+                }
+            }
+
+            Description = newDescription;
+            SchemaCache?.SetObjectDescription(ObjectName, newDescription);
+        }
+
+        private bool SupportsObjectDescriptionUpdate()
+        {
+            if (Connection == null)
+            {
+                return false;
+            }
+
+            return Connection.DBMSType switch
+            {
+                DBMSTypeEnums.SQLServer => true,
+                DBMSTypeEnums.MySQL or DBMSTypeEnums.MariaDB or DBMSTypeEnums.PostgreSQL or DBMSTypeEnums.Oracle
+                    => ObjectName.ObjectType is ObjectTypeEnums.Table or ObjectTypeEnums.View,
+                _ => false,
+            };
+        }
+
+        private bool SupportsLevel2DescriptionUpdate(ObjectName.ObjectTypeEnums objectType)
+        {
+            if (Connection == null)
+            {
+                return false;
+            }
+
+            return Connection.DBMSType switch
+            {
+                DBMSTypeEnums.SQLServer => objectType is ObjectTypeEnums.Table
+                    or ObjectTypeEnums.View
+                    or ObjectTypeEnums.StoredProcedure
+                    or ObjectTypeEnums.Function,
+                DBMSTypeEnums.MySQL or DBMSTypeEnums.MariaDB or DBMSTypeEnums.PostgreSQL or DBMSTypeEnums.Oracle
+                    => objectType is ObjectTypeEnums.Table or ObjectTypeEnums.View,
+                _ => false,
+            };
         }
 
         /// <summary>
@@ -191,8 +252,28 @@ namespace SQL_Document_Builder
 
             if (connection?.DBMSType == DBMSTypeEnums.SQLServer)
             {
-                var sqlServerObjectList = await SQLDatabaseHelper.GetObjectsUsingTableAsync(objectName, connection.ConnectionString);
-                return sqlServerObjectList;
+                var sqlServerObjectList = await SchemaMetadataProviderContext.Current.GetDatabaseObjectsAsync(ObjectTypeEnums.View, connection.ConnectionString);
+                var dependentObjects = await SchemaMetadataProviderContext.Current.GetReferencingObjectsAsync(objectName, connection.ConnectionString);
+                if (dependentObjects == null || dependentObjects.Rows.Count == 0)
+                {
+                    return [];
+                }
+
+                var filtered = new List<ObjectName>();
+                foreach (DataRow row in dependentObjects.Rows)
+                {
+                    string typeName = row["ObjectType"]?.ToString() ?? string.Empty;
+                    var objectType = ObjectName.ConvertObjectType(typeName);
+                    string name = row["ObjectName"]?.ToString() ?? string.Empty;
+                    string schema = row["Schema"]?.ToString() ?? string.Empty;
+                    if (!string.IsNullOrEmpty(name) && !string.IsNullOrEmpty(schema))
+                    {
+                        filtered.Add(new ObjectName(objectType, schema, name));
+                    }
+                }
+
+                var sqlServerObjectListLookup = new HashSet<string>(sqlServerObjectList.Select(o => o.FullNameNoQuote), StringComparer.OrdinalIgnoreCase);
+                return filtered.Where(o => sqlServerObjectListLookup.Contains(o.FullNameNoQuote)).ToList();
             }
 
             return [];
@@ -208,7 +289,7 @@ namespace SQL_Document_Builder
                 return null;
 
             StringBuilder sb = new();
-            var dt = await SQLDatabaseHelper.GetCheckConstraintsAsync(ObjectName, ConnectionString);
+            var dt = await SchemaMetadataProviderContext.Current.GetCheckConstraintsAsync(ObjectName, ConnectionString);
             if (dt == null || dt.Rows.Count == 0)
                 return string.Empty;
 
@@ -237,7 +318,7 @@ namespace SQL_Document_Builder
                 return null;
 
             StringBuilder sb = new();
-            var dt = await SQLDatabaseHelper.GetDefaultConstraintsAsync(ObjectName, ConnectionString);
+            var dt = await SchemaMetadataProviderContext.Current.GetDefaultConstraintsAsync(ObjectName, ConnectionString);
             if (dt == null || dt.Rows.Count == 0)
                 return string.Empty;
 
@@ -267,7 +348,7 @@ namespace SQL_Document_Builder
                 return null;
 
             StringBuilder sb = new();
-            var dt = await SQLDatabaseHelper.GetForeignKeyConstraintsAsync(ObjectName, ConnectionString);
+            var dt = await SchemaMetadataProviderContext.Current.GetForeignKeyConstraintsAsync(ObjectName, ConnectionString);
             if (dt == null || dt.Rows.Count == 0)
                 return string.Empty;
 
@@ -316,7 +397,7 @@ namespace SQL_Document_Builder
         /// <returns>A dictionary where the key is the column name and the value is a tuple containing seed and increment values.</returns>
         internal async Task<Dictionary<string, (int SeedValue, int IncrementValue)>> GetIdentityColumns(DatabaseConnectionItem connection)
         {
-            return await SQLDatabaseHelper.GetIdentityColumnsAsync(ObjectName, connection.ConnectionString);
+            return await SchemaMetadataProviderContext.Current.GetIdentityColumnsAsync(ObjectName, connection.ConnectionString);
         }
 
         /// <summary>
@@ -361,7 +442,7 @@ namespace SQL_Document_Builder
         /// <returns>A Task.</returns>
         private static async Task<DataTable?> GetParametersAsync(ObjectName objectName, DatabaseConnectionItem connection)
         {
-            return await SQLDatabaseHelper.GetObjectParametersAsync(objectName, connection.ConnectionString);
+            return await SchemaMetadataProviderContext.Current.GetObjectParametersAsync(objectName, connection.ConnectionString);
         }
 
         /// <summary>
@@ -376,7 +457,7 @@ namespace SQL_Document_Builder
             {
                 column.Description = SchemaCache != null
                     ? await SchemaCache.GetLevel2DescriptionAsync(ObjectName, column.ColumnName)
-                    : await SQLDatabaseHelper.GetColumnDescriptionAsync(ObjectName, column.ColumnName, ConnectionString);
+                    : await SchemaMetadataProviderContext.Current.GetColumnDescriptionAsync(ObjectName, column.ColumnName, ConnectionString);
             }
         }
 
@@ -402,7 +483,7 @@ namespace SQL_Document_Builder
                     }
                 }
 
-                var dt = await SQLDatabaseHelper.GetObjectColumnsAsync(ObjectName, ConnectionString);
+                var dt = await SchemaMetadataProviderContext.Current.GetObjectColumnsAsync(ObjectName, ConnectionString);
 
                 if (dt != null && dt.Rows.Count > 0)
                 {
@@ -427,7 +508,7 @@ namespace SQL_Document_Builder
             if (ObjectName == null || ObjectName.IsEmpty() || string.IsNullOrEmpty(ConnectionString))
                 return;
 
-            var dt = await SQLDatabaseHelper.GetObjectConstraintsAsync(ObjectName, ConnectionString);
+            var dt = await SchemaMetadataProviderContext.Current.GetObjectConstraintsAsync(ObjectName, ConnectionString);
             if (dt == null || dt.Rows.Count == 0)
                 return;
 
@@ -448,7 +529,7 @@ namespace SQL_Document_Builder
             if (objectName == null || objectName.IsEmpty())
                 return;
 
-            var dt = await SQLDatabaseHelper.GetObjectIndexesAsync(objectName, ConnectionString);
+            var dt = await SchemaMetadataProviderContext.Current.GetObjectIndexesAsync(objectName, ConnectionString);
             if (dt == null || dt.Rows.Count == 0)
                 return;
 
@@ -498,7 +579,7 @@ namespace SQL_Document_Builder
             {
                 parameter.Description = SchemaCache != null
                     ? await SchemaCache.GetLevel2DescriptionAsync(ObjectName, parameter.Name)
-                    : await SQLDatabaseHelper.GetColumnDescriptionAsync(ObjectName, parameter.Name, ConnectionString);
+                    : await SchemaMetadataProviderContext.Current.GetColumnDescriptionAsync(ObjectName, parameter.Name, ConnectionString);
             }
         }
 
@@ -511,7 +592,7 @@ namespace SQL_Document_Builder
         {
             PrimaryKeyColumns = string.Empty;
 
-            var primaryKeyColumns = await SQLDatabaseHelper.GetPrimaryKeyColumnsAsync(objectName, ConnectionString);
+            var primaryKeyColumns = await SchemaMetadataProviderContext.Current.GetPrimaryKeyColumnsAsync(objectName, ConnectionString);
             if (primaryKeyColumns.Count == 0)
                 return;
 
@@ -539,8 +620,8 @@ namespace SQL_Document_Builder
             //get the object description and definition
             Description = SchemaCache != null
                 ? await SchemaCache.GetObjectDescriptionAsync(ObjectName)
-                : await SQLDatabaseHelper.GetObjectDescriptionAsync(ObjectName, ConnectionString);
-            Definition = await SQLDatabaseHelper.GetObjectDefinitionAsync(ObjectName, ConnectionString);
+                : await SchemaMetadataProviderContext.Current.GetObjectDescriptionAsync(ObjectName, ConnectionString);
+            Definition = await SchemaMetadataProviderContext.Current.GetObjectDefinitionAsync(ObjectName, ConnectionString);
 
             // Get the function parameters
             Parameters.Clear();
@@ -614,13 +695,13 @@ namespace SQL_Document_Builder
             if (ObjectName == null || ObjectName.IsEmpty() || string.IsNullOrEmpty(ConnectionString))
                 return false;
 
-            Definition = await SQLDatabaseHelper.GetSynonymBaseObjectAsync(ObjectName, ConnectionString);
+            Definition = await SchemaMetadataProviderContext.Current.GetSynonymBaseObjectAsync(ObjectName, ConnectionString);
             if (string.IsNullOrEmpty(Definition))
                 return false;
 
             Description = SchemaCache != null
                 ? await SchemaCache.GetObjectDescriptionAsync(ObjectName)
-                : await SQLDatabaseHelper.GetObjectDescriptionAsync(ObjectName, ConnectionString);
+                : await SchemaMetadataProviderContext.Current.GetObjectDescriptionAsync(ObjectName, ConnectionString);
 
             return true;
         }
@@ -648,13 +729,13 @@ namespace SQL_Document_Builder
 
                 Description = SchemaCache != null
                     ? await SchemaCache.GetObjectDescriptionAsync(ObjectName)
-                    : await SQLDatabaseHelper.GetObjectDescriptionAsync(ObjectName, ConnectionString);
+                    : await SchemaMetadataProviderContext.Current.GetObjectDescriptionAsync(ObjectName, ConnectionString);
                 await GetColumnDescAsync();
 
                 // get the definition if it is a view
                 if (ObjectName.ObjectType == ObjectTypeEnums.View)
                 {
-                    Definition = await SQLDatabaseHelper.GetObjectDefinitionAsync(ObjectName, ConnectionString);
+                    Definition = await SchemaMetadataProviderContext.Current.GetObjectDefinitionAsync(ObjectName, ConnectionString);
                 }
             }
 
@@ -670,8 +751,8 @@ namespace SQL_Document_Builder
             //get the object description and definition
             Description = SchemaCache != null
                 ? await SchemaCache.GetObjectDescriptionAsync(ObjectName)
-                : await SQLDatabaseHelper.GetObjectDescriptionAsync(ObjectName, ConnectionString);
-            Definition = await SQLDatabaseHelper.GetObjectDefinitionAsync(ObjectName, ConnectionString);
+                : await SchemaMetadataProviderContext.Current.GetObjectDescriptionAsync(ObjectName, ConnectionString);
+            Definition = await SchemaMetadataProviderContext.Current.GetObjectDefinitionAsync(ObjectName, ConnectionString);
 
             // clear the parameters
             Parameters.Clear();
@@ -692,7 +773,7 @@ namespace SQL_Document_Builder
             }
             if (connection?.DBMSType == DBMSTypeEnums.SQLServer)
             {
-                return await SQLDatabaseHelper.GetReferencingObjectsAsync(ObjectName, connection.ConnectionString);
+                return await SchemaMetadataProviderContext.Current.GetReferencingObjectsAsync(ObjectName, connection.ConnectionString);
             }
             return null;
         }
@@ -710,7 +791,7 @@ namespace SQL_Document_Builder
             }
             if (connection?.DBMSType == DBMSTypeEnums.SQLServer)
             {
-                return await SQLDatabaseHelper.GetReferencedObjectsAsync(ObjectName, connection.ConnectionString);
+                return await SchemaMetadataProviderContext.Current.GetReferencedObjectsAsync(ObjectName, connection.ConnectionString);
             }
             return null;
         }
@@ -728,7 +809,7 @@ namespace SQL_Document_Builder
             }
             if (connection?.DBMSType == DBMSTypeEnums.SQLServer)
             {
-                return await SQLDatabaseHelper.GetForeignTablesAsync(ObjectName, connection.ConnectionString);
+                return await SchemaMetadataProviderContext.Current.GetForeignTablesAsync(ObjectName, connection.ConnectionString);
             }
             return null;
         }

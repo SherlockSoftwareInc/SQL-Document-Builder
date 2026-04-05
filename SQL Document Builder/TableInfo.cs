@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel;
+using SQL_Document_Builder.SchemaMetadata;
 using System.Threading.Tasks;
 
 namespace SQL_Document_Builder
@@ -61,7 +62,7 @@ namespace SQL_Document_Builder
             TableName = objectName.Name;
             SchemaName = objectName.Schema;
 
-            var dt = await SQLDatabaseHelper.GetTableInfoAsync(objectName, connectionString);
+            var dt = await SchemaMetadataProviderContext.Current.GetTableInfoAsync(objectName, connectionString);
 
             if (dt?.Rows.Count > 0)
             {

@@ -106,6 +106,11 @@ namespace SQL_Document_Builder
                 return false;
             }
 
+            if (!await LoadAllDescriptionsAsync(token))
+            {
+                return false;
+            }
+
             return true;
         }
 
@@ -150,6 +155,83 @@ namespace SQL_Document_Builder
             }
         }
 
+        public async Task<bool> LoadAllDescriptionsAsync(CancellationToken token = default)
+        {
+            if (_connection == null)
+            {
+                return false;
+            }
+
+            try
+            {
+                await using var provider = await ConnectAsync(_connection, token);
+
+                _objectDescriptions.Clear();
+                var objectDescriptions = await provider.GetObjectDescriptionsAsync(token);
+                foreach (var kvp in objectDescriptions)
+                {
+                    var schemaName = kvp.Key.SchemaName ?? string.Empty;
+                    var objectName = kvp.Key.ObjectName ?? string.Empty;
+                    var description = kvp.Value ?? string.Empty;
+
+                    foreach (var (item, objectType) in FindSchemaItemsByName(schemaName, objectName))
+                    {
+                        item.Description = description;
+                        item.DescriptionsLoaded = true;
+
+                        var objectKey = GetObjectCacheKey(new ObjectName(objectType, schemaName, objectName));
+                        _objectDescriptions[objectKey] = description;
+                    }
+                }
+
+                _level2Descriptions.Clear();
+                var columnDescriptions = await provider.GetColumnDescriptionsAsync(token);
+                foreach (var kvp in columnDescriptions)
+                {
+                    var schemaName = kvp.Key.SchemaName ?? string.Empty;
+                    var objectName = kvp.Key.ObjectName ?? string.Empty;
+
+                    foreach (var (item, objectType) in FindDataSchemaItemsByName(schemaName, objectName))
+                    {
+                        var level2Map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                        foreach (var desc in kvp.Value)
+                        {
+                            level2Map[desc.Key] = desc.Value ?? string.Empty;
+                        }
+
+                        var objectKey = GetObjectCacheKey(new ObjectName(objectType, schemaName, objectName));
+                        _level2Descriptions[objectKey] = level2Map;
+
+                        for (int i = 0; i < item.Columns.Count; i++)
+                        {
+                            var columnName = item.Columns[i].ColumnName;
+                            if (string.IsNullOrWhiteSpace(columnName))
+                            {
+                                continue;
+                            }
+
+                            if (level2Map.TryGetValue(columnName, out var description))
+                            {
+                                item.Columns[i].Description = description;
+                            }
+                        }
+
+                        item.DescriptionsLoaded = true;
+                    }
+                }
+
+                return true;
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         public async Task<bool> LoadAllObjectsAsync(CancellationToken token = default)
         {
             if (_connection == null)
@@ -160,6 +242,9 @@ namespace SQL_Document_Builder
             _tables.Clear();
             _views.Clear();
             _functions.Clear();
+            _storedProcedures.Clear();
+            _triggers.Clear();
+            _synonyms.Clear();
 
             try
             {
@@ -168,6 +253,9 @@ namespace SQL_Document_Builder
                 var tables = await provider.GetAllTablesAsync(string.Empty, token);
                 var views = await provider.GetAllViewsAsync(string.Empty, token);
                 var functions = await provider.GetAllFunctionsAsync(string.Empty, token);
+                var storedProcedures = await provider.GetAllStoredProceduresAsync(string.Empty, token);
+                var triggers = await provider.GetAllTriggersAsync(string.Empty, token);
+                var synonyms = await provider.GetAllSynonymsAsync(string.Empty, token);
 
                 foreach (var table in tables)
                 {
@@ -182,6 +270,21 @@ namespace SQL_Document_Builder
                 foreach (var function in functions)
                 {
                     AddObjectIfInSchema(_functions, ReadSchema(function), ReadObjectName(function));
+                }
+
+                foreach (var proc in storedProcedures)
+                {
+                    AddObjectIfInSchema(_storedProcedures, ReadSchema(proc), ReadObjectName(proc));
+                }
+
+                foreach (var trigger in triggers)
+                {
+                    AddObjectIfInSchema(_triggers, ReadSchema(trigger), ReadObjectName(trigger));
+                }
+
+                foreach (var synonym in synonyms)
+                {
+                    AddObjectIfInSchema(_synonyms, ReadSchema(synonym), ReadObjectName(synonym));
                 }
 
                 if (IsSqlServer(_connection))
@@ -200,6 +303,9 @@ namespace SQL_Document_Builder
                 SortObjects(_tables);
                 SortObjects(_views);
                 SortObjects(_functions);
+                SortObjects(_storedProcedures);
+                SortObjects(_triggers);
+                SortObjects(_synonyms);
 
                 return true;
             }
@@ -283,6 +389,9 @@ namespace SQL_Document_Builder
                 var tables = await provider.GetAllTablesAsync(schemaName, token);
                 var views = await provider.GetAllViewsAsync(schemaName, token);
                 var functions = await provider.GetAllFunctionsAsync(schemaName, token);
+                var storedProcedures = await provider.GetAllStoredProceduresAsync(schemaName, token);
+                var triggers = await provider.GetAllTriggersAsync(schemaName, token);
+                var synonyms = await provider.GetAllSynonymsAsync(schemaName, token);
 
                 foreach (var table in tables)
                 {
@@ -299,9 +408,27 @@ namespace SQL_Document_Builder
                     AddObjectIfInSchema(_functions, ReadSchema(function), ReadObjectName(function), skipDuplicates: true);
                 }
 
+                foreach (var proc in storedProcedures)
+                {
+                    AddObjectIfInSchema(_storedProcedures, ReadSchema(proc), ReadObjectName(proc), skipDuplicates: true);
+                }
+
+                foreach (var trigger in triggers)
+                {
+                    AddObjectIfInSchema(_triggers, ReadSchema(trigger), ReadObjectName(trigger), skipDuplicates: true);
+                }
+
+                foreach (var synonym in synonyms)
+                {
+                    AddObjectIfInSchema(_synonyms, ReadSchema(synonym), ReadObjectName(synonym), skipDuplicates: true);
+                }
+
                 SortObjects(_tables);
                 SortObjects(_views);
                 SortObjects(_functions);
+                SortObjects(_storedProcedures);
+                SortObjects(_triggers);
+                SortObjects(_synonyms);
 
                 return true;
             }
@@ -503,6 +630,67 @@ namespace SQL_Document_Builder
             return objectDescriptions.TryGetValue(level2Name, out var value) ? value : string.Empty;
         }
 
+        public void SetObjectDescription(ObjectName objectName, string description)
+        {
+            if (objectName == null || objectName.IsEmpty())
+            {
+                return;
+            }
+
+            var normalizedDescription = description ?? string.Empty;
+            _objectDescriptions[GetObjectCacheKey(objectName)] = normalizedDescription;
+
+            var schemaItem = FindSchemaItem(objectName);
+            if (schemaItem != null)
+            {
+                schemaItem.Description = normalizedDescription;
+                schemaItem.DescriptionsLoaded = true;
+            }
+        }
+
+        public void SetLevel2Description(ObjectName objectName, string level2Name, string description)
+        {
+            if (objectName == null || objectName.IsEmpty() || string.IsNullOrWhiteSpace(level2Name))
+            {
+                return;
+            }
+
+            var normalizedDescription = description ?? string.Empty;
+            var objectKey = GetObjectCacheKey(objectName);
+
+            if (!_level2Descriptions.TryGetValue(objectKey, out var objectDescriptions))
+            {
+                objectDescriptions = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+                var dataObject = FindDataObject(objectName);
+                if (dataObject != null)
+                {
+                    foreach (var column in dataObject.Columns)
+                    {
+                        if (!string.IsNullOrWhiteSpace(column.ColumnName))
+                        {
+                            objectDescriptions[column.ColumnName] = column.Description ?? string.Empty;
+                        }
+                    }
+                }
+
+                _level2Descriptions[objectKey] = objectDescriptions;
+            }
+
+            objectDescriptions[level2Name] = normalizedDescription;
+
+            var schemaItem = FindDataObject(objectName);
+            if (schemaItem != null)
+            {
+                var column = schemaItem.Columns.FirstOrDefault(c =>
+                    c.ColumnName.Equals(level2Name, StringComparison.OrdinalIgnoreCase));
+                if (column != null)
+                {
+                    column.Description = normalizedDescription;
+                }
+            }
+        }
+
         public void Clear()
         {
             _connection = null;
@@ -536,9 +724,22 @@ namespace SQL_Document_Builder
         private static DatabaseProviderKind ResolveProviderKind(DatabaseConnectionItem connection)
         {
             var connectionType = ReadConnectionType(connection);
-            return connectionType.Contains("odbc", StringComparison.OrdinalIgnoreCase)
-                ? DatabaseProviderKind.Odbc
-                : DatabaseProviderKind.SqlServer;
+
+            if (connectionType.Contains("odbc", StringComparison.OrdinalIgnoreCase))
+            {
+                return DatabaseProviderKind.Odbc;
+            }
+
+            if (connectionType.Contains("sql server", StringComparison.OrdinalIgnoreCase)
+                || connectionType.Contains("mssql", StringComparison.OrdinalIgnoreCase)
+                || (string.IsNullOrWhiteSpace(connectionType) && connection.DBMSType == DBMSTypeEnums.SQLServer))
+            {
+                return DatabaseProviderKind.SqlServer;
+            }
+
+            // SchemaProvider.Core currently supports SQL Server and ODBC.
+            // Route non-SQL Server connection types (e.g., MySQL) through ODBC metadata.
+            return DatabaseProviderKind.Odbc;
         }
 
         private static bool IsSqlServer(DatabaseConnectionItem connection) =>
@@ -600,6 +801,104 @@ namespace SQL_Document_Builder
 
         private static bool IsSchemaMatch(string left, string right) =>
             string.Equals(left ?? string.Empty, right ?? string.Empty, StringComparison.OrdinalIgnoreCase);
+
+        private IEnumerable<(DBSchemaItem Item, ObjectTypeEnums ObjectType)> FindSchemaItemsByName(string schemaName, string objectName)
+        {
+            foreach (var item in _tables.Where(i => IsSchemaMatch(i.SchemaName, schemaName) && i.ObjectName.Equals(objectName, StringComparison.OrdinalIgnoreCase)))
+            {
+                yield return (item, ObjectTypeEnums.Table);
+            }
+
+            foreach (var item in _views.Where(i => IsSchemaMatch(i.SchemaName, schemaName) && i.ObjectName.Equals(objectName, StringComparison.OrdinalIgnoreCase)))
+            {
+                yield return (item, ObjectTypeEnums.View);
+            }
+
+            foreach (var item in _functions.Where(i => IsSchemaMatch(i.SchemaName, schemaName) && i.ObjectName.Equals(objectName, StringComparison.OrdinalIgnoreCase)))
+            {
+                yield return (item, ObjectTypeEnums.Function);
+            }
+
+            foreach (var item in _storedProcedures.Where(i => IsSchemaMatch(i.SchemaName, schemaName) && i.ObjectName.Equals(objectName, StringComparison.OrdinalIgnoreCase)))
+            {
+                yield return (item, ObjectTypeEnums.StoredProcedure);
+            }
+
+            foreach (var item in _triggers.Where(i => IsSchemaMatch(i.SchemaName, schemaName) && i.ObjectName.Equals(objectName, StringComparison.OrdinalIgnoreCase)))
+            {
+                yield return (item, ObjectTypeEnums.Trigger);
+            }
+
+            foreach (var item in _synonyms.Where(i => IsSchemaMatch(i.SchemaName, schemaName) && i.ObjectName.Equals(objectName, StringComparison.OrdinalIgnoreCase)))
+            {
+                yield return (item, ObjectTypeEnums.Synonym);
+            }
+        }
+
+        private IEnumerable<(DBSchemaItem Item, ObjectTypeEnums ObjectType)> FindDataSchemaItemsByName(string schemaName, string objectName)
+        {
+            foreach (var item in _tables.Where(i => IsSchemaMatch(i.SchemaName, schemaName) && i.ObjectName.Equals(objectName, StringComparison.OrdinalIgnoreCase)))
+            {
+                yield return (item, ObjectTypeEnums.Table);
+            }
+
+            foreach (var item in _views.Where(i => IsSchemaMatch(i.SchemaName, schemaName) && i.ObjectName.Equals(objectName, StringComparison.OrdinalIgnoreCase)))
+            {
+                yield return (item, ObjectTypeEnums.View);
+            }
+        }
+
+        private DBSchemaItem? FindDataObject(ObjectName objectName)
+        {
+            if (objectName == null || objectName.IsEmpty())
+            {
+                return null;
+            }
+
+            var source = objectName.ObjectType switch
+            {
+                ObjectTypeEnums.Table => _tables,
+                ObjectTypeEnums.View => _views,
+                _ => null
+            };
+
+            if (source == null)
+            {
+                return null;
+            }
+
+            return source.Find(i =>
+                i.SchemaName.Equals(objectName.Schema, StringComparison.OrdinalIgnoreCase)
+                && i.ObjectName.Equals(objectName.Name, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private DBSchemaItem? FindSchemaItem(ObjectName objectName)
+        {
+            if (objectName == null || objectName.IsEmpty())
+            {
+                return null;
+            }
+
+            var source = objectName.ObjectType switch
+            {
+                ObjectTypeEnums.Table => _tables,
+                ObjectTypeEnums.View => _views,
+                ObjectTypeEnums.StoredProcedure => _storedProcedures,
+                ObjectTypeEnums.Function => _functions,
+                ObjectTypeEnums.Trigger => _triggers,
+                ObjectTypeEnums.Synonym => _synonyms,
+                _ => null
+            };
+
+            if (source == null)
+            {
+                return null;
+            }
+
+            return source.Find(i =>
+                i.SchemaName.Equals(objectName.Schema, StringComparison.OrdinalIgnoreCase)
+                && i.ObjectName.Equals(objectName.Name, StringComparison.OrdinalIgnoreCase));
+        }
 
         private static string GetObjectCacheKey(ObjectName objectName) =>
             $"{objectName.ObjectType}|{objectName.Schema}|{objectName.Name}";

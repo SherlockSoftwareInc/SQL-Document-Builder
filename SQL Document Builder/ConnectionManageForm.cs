@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using SQL_Document_Builder.DatabaseAccess;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -521,12 +522,8 @@ namespace SQL_Document_Builder
                 return false;
             }
 
-            if (connection.ConnectionType.Equals("ODBC", StringComparison.OrdinalIgnoreCase))
-            {
-                return await Task.Run(() => ODBCDataSource.TestConnection(connection.ConnectionString));
-            }
-
-            return await SQLDatabaseHelper.TestConnectionAsync(connection.ConnectionString);
+            var provider = DatabaseAccessProviderFactory.GetProvider(connection);
+            return await provider.TestConnectionAsync(connection.ConnectionString);
         }
 
         /// <summary>
