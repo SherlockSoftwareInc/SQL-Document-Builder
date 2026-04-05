@@ -148,6 +148,11 @@ namespace SQL_Document_Builder
                     // Some providers do not support level-2 description updates for all object types.
                     return;
                 }
+                catch (Exception ex)
+                {
+                    Common.MsgBox($"Failed to update description for '{columnOrParameter}': {ex.Message}", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
             }
 
             if (objectType == ObjectTypeEnums.Table || objectType == ObjectTypeEnums.View)
@@ -194,6 +199,11 @@ namespace SQL_Document_Builder
                 catch (NotSupportedException)
                 {
                     // Some providers do not support object description updates for all object types.
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    Common.MsgBox($"Failed to update object description for '{ObjectName.FullName}': {ex.Message}", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
             }
