@@ -2068,42 +2068,55 @@ namespace SQL_Document_Builder
 
             _populating = true;
 
-            // keep the current selection in the combo boxes
-            int selectedObjectTypeIndex = objectTypeComboBox.SelectedIndex;
-
-            // clean up the object list box
-            objectsListBox.Items.Clear();
-
-            await ChangeDBConnectionAsync(connection);
-
-            if (updateComboBoxSelection && !_ignoreConnectionComboBoxIndexChange)
-                SetConnectionComboBox(connection);
-
-            if (_currentConnection != null)
+            try
             {
-                // restore the object type
-                int objectTypeIndex = selectedObjectTypeIndex;
-                if (objectTypeIndex < 0 && objectTypeComboBox.Items.Count > 0)
-                {
-                    objectTypeIndex = 0; // default to the first item
-                }
+                // keep the current selection in the combo boxes
+                int selectedObjectTypeIndex = objectTypeComboBox.SelectedIndex;
 
-                if (objectTypeIndex >= 0)
+                // clean up the object list box
+                objectsListBox.Items.Clear();
+
+                await ChangeDBConnectionAsync(connection);
+
+                if (updateComboBoxSelection && !_ignoreConnectionComboBoxIndexChange)
+                    SetConnectionComboBox(connection);
+
+                if (_currentConnection != null)
                 {
-                    if (objectTypeComboBox.SelectedIndex == objectTypeIndex)
+                    // restore the object type
+                    int objectTypeIndex = selectedObjectTypeIndex;
+                    if (objectTypeIndex < 0 && objectTypeComboBox.Items.Count > 0)
                     {
-                        ObjectTypeComboBox_SelectedIndexChanged(sender ?? this, e); // re-populate the object list box
+                        objectTypeIndex = 0; // default to the first item
                     }
-                    else
+
+                    if (objectTypeIndex >= 0)
                     {
-                        objectTypeComboBox.SelectedIndex = objectTypeIndex;
+                        if (objectTypeComboBox.SelectedIndex == objectTypeIndex)
+                        {
+                            ObjectTypeComboBox_SelectedIndexChanged(sender ?? this, e); // re-populate the object list box
+                        }
+                        else
+                        {
+                            objectTypeComboBox.SelectedIndex = objectTypeIndex;
+                        }
                     }
                 }
             }
-
-            _populating = false;
-            Cursor = Cursors.Default;
-            messageLabel.Text = "";
+            catch (OperationCanceledException)
+            {
+                messageLabel.Text = "Connection change was canceled.";
+            }
+            catch (Exception ex)
+            {
+                messageLabel.Text = "Connection change failed.";
+                Common.MsgBox($"Failed to change database connection: {ex.Message}", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                _populating = false;
+                Cursor = Cursors.Default;
+            }
         }
 
         /// <summary>
