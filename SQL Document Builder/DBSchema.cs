@@ -56,6 +56,8 @@ namespace SQL_Document_Builder
         private readonly List<DBSchemaItem> _storedProcedures = [];
         private readonly List<DBSchemaItem> _triggers = [];
         private readonly List<DBSchemaItem> _synonyms = [];
+        private readonly Dictionary<string, string> _objectDescriptions = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, Dictionary<string, string>> _level2Descriptions = new(StringComparer.OrdinalIgnoreCase);
 
         public string Catalog { get; private set; } = string.Empty;
 
@@ -426,6 +428,81 @@ namespace SQL_Document_Builder
                 .OrderBy(n => n, StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
+        public List<DBColumn> GetCachedColumns(ObjectName objectName)
+        {
+            if (objectName == null || objectName.IsEmpty())
+            {
+                return [];
+            }
+
+            var source = objectName.ObjectType switch
+            {
+                ObjectTypeEnums.Table => _tables,
+                ObjectTypeEnums.View => _views,
+                _ => null
+            };
+
+            if (source == null)
+            {
+                return [];
+            }
+
+            var item = source.Find(i =>
+                i.SchemaName.Equals(objectName.Schema, StringComparison.OrdinalIgnoreCase)
+                && i.ObjectName.Equals(objectName.Name, StringComparison.OrdinalIgnoreCase));
+
+            if (item == null || item.Columns.Count == 0)
+            {
+                return [];
+            }
+
+            return item.Columns.Select(CloneColumn).ToList();
+        }
+
+        public async Task<string> GetObjectDescriptionAsync(ObjectName objectName, CancellationToken token = default)
+        {
+            if (_connection == null || objectName == null || objectName.IsEmpty())
+            {
+                return string.Empty;
+            }
+
+            var key = GetObjectCacheKey(objectName);
+            if (_objectDescriptions.TryGetValue(key, out var cachedValue))
+            {
+                return cachedValue;
+            }
+
+            try
+            {
+                await using var provider = await ConnectAsync(_connection, token);
+                var description = await provider.GetObjectDescriptionAsync(objectName.Schema, objectName.Name, token);
+                description ??= string.Empty;
+                _objectDescriptions[key] = description;
+                return description;
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
+
+        public async Task<string> GetLevel2DescriptionAsync(ObjectName objectName, string level2Name, CancellationToken token = default)
+        {
+            if (_connection == null || objectName == null || objectName.IsEmpty() || string.IsNullOrWhiteSpace(level2Name))
+            {
+                return string.Empty;
+            }
+
+            var objectKey = GetObjectCacheKey(objectName);
+            if (!_level2Descriptions.TryGetValue(objectKey, out var objectDescriptions))
+            {
+                objectDescriptions = await LoadLevel2DescriptionsAsync(objectName, token);
+                _level2Descriptions[objectKey] = objectDescriptions;
+            }
+
+            return objectDescriptions.TryGetValue(level2Name, out var value) ? value : string.Empty;
+        }
+
         public void Clear()
         {
             _connection = null;
@@ -443,6 +520,8 @@ namespace SQL_Document_Builder
             _storedProcedures.Clear();
             _triggers.Clear();
             _synonyms.Clear();
+            _objectDescriptions.Clear();
+            _level2Descriptions.Clear();
             Schemaless = false;
         }
 
@@ -522,6 +601,37 @@ namespace SQL_Document_Builder
         private static bool IsSchemaMatch(string left, string right) =>
             string.Equals(left ?? string.Empty, right ?? string.Empty, StringComparison.OrdinalIgnoreCase);
 
+        private static string GetObjectCacheKey(ObjectName objectName) =>
+            $"{objectName.ObjectType}|{objectName.Schema}|{objectName.Name}";
+
+        private async Task<Dictionary<string, string>> LoadLevel2DescriptionsAsync(ObjectName objectName, CancellationToken token)
+        {
+            if (_connection == null)
+            {
+                return new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            }
+
+            try
+            {
+                await using var provider = await ConnectAsync(_connection, token);
+
+                IReadOnlyDictionary<string, string> descriptions = objectName.ObjectType switch
+                {
+                    ObjectTypeEnums.StoredProcedure or ObjectTypeEnums.Function =>
+                        await provider.GetParameterDescriptionsAsync(objectName.Schema, objectName.Name, token),
+                    _ => await provider.GetColumnDescriptionsAsync(objectName.Schema, objectName.Name, token)
+                };
+
+                return descriptions == null
+                    ? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                    : new Dictionary<string, string>(descriptions, StringComparer.OrdinalIgnoreCase);
+            }
+            catch
+            {
+                return new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            }
+        }
+
         private static List<ObjectName> ToObjectNames(List<DBSchemaItem> source, ObjectTypeEnums objectType, string schemaName = "") =>
             source
                 .Where(i => string.IsNullOrWhiteSpace(schemaName) || IsSchemaMatch(i.SchemaName, schemaName))
@@ -529,6 +639,39 @@ namespace SQL_Document_Builder
                 .OrderBy(i => i.Schema, StringComparer.OrdinalIgnoreCase)
                 .ThenBy(i => i.Name, StringComparer.OrdinalIgnoreCase)
                 .ToList();
+
+        private static DBColumn CloneColumn(DBColumn source)
+        {
+            var column = new DBColumn(CreateColumnDataRow(source));
+            column.Description = source.Description;
+            return column;
+        }
+
+        private static DataRow CreateColumnDataRow(DBColumn source)
+        {
+            var table = new DataTable();
+            table.Columns.Add("ORDINAL_POSITION", typeof(string));
+            table.Columns.Add("COLUMN_NAME", typeof(string));
+            table.Columns.Add("DATA_TYPE", typeof(string));
+            table.Columns.Add("CHARACTER_MAXIMUM_LENGTH", typeof(int));
+            table.Columns.Add("NUMERIC_PRECISION", typeof(int));
+            table.Columns.Add("NUMERIC_SCALE", typeof(int));
+            table.Columns.Add("DATETIME_PRECISION", typeof(int));
+            table.Columns.Add("IS_NULLABLE", typeof(string));
+
+            var row = table.NewRow();
+            row["ORDINAL_POSITION"] = source.Ord;
+            row["COLUMN_NAME"] = source.ColumnName;
+            row["DATA_TYPE"] = source.DataType;
+            row["CHARACTER_MAXIMUM_LENGTH"] = DBNull.Value;
+            row["NUMERIC_PRECISION"] = DBNull.Value;
+            row["NUMERIC_SCALE"] = DBNull.Value;
+            row["DATETIME_PRECISION"] = DBNull.Value;
+            row["IS_NULLABLE"] = source.Nullable ? "YES" : "NO";
+            table.Rows.Add(row);
+
+            return row;
+        }
 
         private static Regex CreateLikeRegex(string likePattern)
         {

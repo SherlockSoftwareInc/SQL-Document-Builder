@@ -112,6 +112,8 @@ namespace SQL_Document_Builder
         /// </summary>
         internal ViewInfo? ViewInformation { get; set; }
 
+        internal DBSchema? SchemaCache { get; set; }
+
         /// <summary>
         /// Gets or sets the connection.
         /// </summary>
@@ -372,7 +374,9 @@ namespace SQL_Document_Builder
 
             foreach (var column in Columns)
             {
-                column.Description = await SQLDatabaseHelper.GetColumnDescriptionAsync(ObjectName, column.ColumnName, ConnectionString);
+                column.Description = SchemaCache != null
+                    ? await SchemaCache.GetLevel2DescriptionAsync(ObjectName, column.ColumnName)
+                    : await SQLDatabaseHelper.GetColumnDescriptionAsync(ObjectName, column.ColumnName, ConnectionString);
             }
         }
 
@@ -388,6 +392,16 @@ namespace SQL_Document_Builder
 
             if (ConnectionString?.Length > 0 && ObjectName.Name.Length > 0)
             {
+                if (SchemaCache != null)
+                {
+                    var cachedColumns = SchemaCache.GetCachedColumns(ObjectName);
+                    if (cachedColumns.Count > 0)
+                    {
+                        Columns.AddRange(cachedColumns);
+                        return true;
+                    }
+                }
+
                 var dt = await SQLDatabaseHelper.GetObjectColumnsAsync(ObjectName, ConnectionString);
 
                 if (dt != null && dt.Rows.Count > 0)
@@ -482,7 +496,9 @@ namespace SQL_Document_Builder
 
             foreach (var parameter in Parameters)
             {
-                parameter.Description = await SQLDatabaseHelper.GetColumnDescriptionAsync(ObjectName, parameter.Name, ConnectionString);
+                parameter.Description = SchemaCache != null
+                    ? await SchemaCache.GetLevel2DescriptionAsync(ObjectName, parameter.Name)
+                    : await SQLDatabaseHelper.GetColumnDescriptionAsync(ObjectName, parameter.Name, ConnectionString);
             }
         }
 
@@ -521,7 +537,9 @@ namespace SQL_Document_Builder
         private async Task<bool> OpenFunctionAsync()
         {
             //get the object description and definition
-            Description = await SQLDatabaseHelper.GetObjectDescriptionAsync(ObjectName, ConnectionString);
+            Description = SchemaCache != null
+                ? await SchemaCache.GetObjectDescriptionAsync(ObjectName)
+                : await SQLDatabaseHelper.GetObjectDescriptionAsync(ObjectName, ConnectionString);
             Definition = await SQLDatabaseHelper.GetObjectDefinitionAsync(ObjectName, ConnectionString);
 
             // Get the function parameters
@@ -600,7 +618,9 @@ namespace SQL_Document_Builder
             if (string.IsNullOrEmpty(Definition))
                 return false;
 
-            Description = await SQLDatabaseHelper.GetObjectDescriptionAsync(ObjectName, ConnectionString);
+            Description = SchemaCache != null
+                ? await SchemaCache.GetObjectDescriptionAsync(ObjectName)
+                : await SQLDatabaseHelper.GetObjectDescriptionAsync(ObjectName, ConnectionString);
 
             return true;
         }
@@ -626,7 +646,9 @@ namespace SQL_Document_Builder
 
                 await GetIndexesAsync(ObjectName);
 
-                Description = await SQLDatabaseHelper.GetObjectDescriptionAsync(ObjectName, ConnectionString);
+                Description = SchemaCache != null
+                    ? await SchemaCache.GetObjectDescriptionAsync(ObjectName)
+                    : await SQLDatabaseHelper.GetObjectDescriptionAsync(ObjectName, ConnectionString);
                 await GetColumnDescAsync();
 
                 // get the definition if it is a view
@@ -646,7 +668,9 @@ namespace SQL_Document_Builder
         private async Task<bool> OpenTriggerAsync()
         {
             //get the object description and definition
-            Description = await SQLDatabaseHelper.GetObjectDescriptionAsync(ObjectName, ConnectionString);
+            Description = SchemaCache != null
+                ? await SchemaCache.GetObjectDescriptionAsync(ObjectName)
+                : await SQLDatabaseHelper.GetObjectDescriptionAsync(ObjectName, ConnectionString);
             Definition = await SQLDatabaseHelper.GetObjectDefinitionAsync(ObjectName, ConnectionString);
 
             // clear the parameters

@@ -460,6 +460,7 @@ GO
             else
             {
                 _dbObject = new DBObject();
+                _dbObject.SchemaCache = SchemaCache;
                 if (!await _dbObject.OpenAsync(objectName, connection))
                 {
                     return;
