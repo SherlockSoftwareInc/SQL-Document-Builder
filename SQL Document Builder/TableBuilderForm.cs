@@ -562,16 +562,21 @@ namespace SQL_Document_Builder
             }
         }
 
+        private void ResetSchemaCacheState()
+        {
+            _dbSchema.Clear();
+            _tables = [];
+            _allObjects = [];
+            definitionPanel.SchemaCache = null;
+        }
+
         private async Task<bool> OpenConnectionAsync(DatabaseConnectionItem? connection, CancellationToken cancellationToken)
         {
             serverToolStripStatusLabel.Text = string.Empty;
             databaseToolStripStatusLabel.Text = string.Empty;
             objectsListBox.Items.Clear();
             messageLabel.Text = string.Empty;
-            _tables = [];
-            _allObjects = [];
-            _dbSchema.Clear();
-            definitionPanel.SchemaCache = null;
+            ResetSchemaCacheState();
 
             await definitionPanel.OpenAsync(null, null);
 
@@ -605,6 +610,12 @@ namespace SQL_Document_Builder
             cancellationToken.ThrowIfCancellationRequested();
 
             var schemaLoaded = await _dbSchema.OpenAsync(connection, loadColumns: true, cancellationToken);
+            if (!schemaLoaded)
+            {
+                // Fallback: keep connection usable even if eager column preload fails.
+                schemaLoaded = await _dbSchema.OpenAsync(connection, loadColumns: false, cancellationToken);
+            }
+
             if (!schemaLoaded)
             {
                 serverToolStripStatusLabel.Text = $"Unable to load metadata from {endpoint}";
