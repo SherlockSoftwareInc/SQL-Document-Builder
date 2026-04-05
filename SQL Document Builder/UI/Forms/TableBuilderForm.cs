@@ -193,13 +193,28 @@ namespace SQL_Document_Builder
                 createScript += Environment.NewLine;
             }
 
-            // get the object description for table and view
-            var description = await ObjectDescription.BuildObjectDescription(objectName, _currentConnection, Properties.Settings.Default.UseExtendedProperties);
-            if (description.Length > 0)
+            // Description script generation is SQL Server specific (extended properties / usp_addupdateextendedproperty).
+            // Skip it for ODBC and other non-SQL Server providers to avoid provider-specific failures.
+            bool canBuildSqlServerDescription =
+                connection.ConnectionType.Equals("SQL Server", StringComparison.OrdinalIgnoreCase) &&
+                connection.DBMSType == DBMSTypeEnums.SQLServer;
+
+            if (canBuildSqlServerDescription)
             {
-                // append the description to the script
-                createScript += description;
-                createScript += "GO" + Environment.NewLine;
+                try
+                {
+                    var description = await ObjectDescription.BuildObjectDescription(objectName, connection, Properties.Settings.Default.UseExtendedProperties);
+                    if (description.Length > 0)
+                    {
+                        // append the description to the script
+                        createScript += description;
+                        createScript += "GO" + Environment.NewLine;
+                    }
+                }
+                catch
+                {
+                    // Ignore description script failures; CREATE script should still be returned.
+                }
             }
 
             return createScript;
@@ -1138,20 +1153,30 @@ namespace SQL_Document_Builder
             if (SelectedObject == null || SelectedObject?.ObjectType == ObjectTypeEnums.None) return;
 
             Cursor = Cursors.WaitCursor;
-            var script = await GetObjectCreateScriptAsync(SelectedObject, _currentConnection);
-
-            if (!string.IsNullOrEmpty(script))
+            try
             {
-                if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
+                var script = await GetObjectCreateScriptAsync(SelectedObject, _currentConnection);
 
-                if (!BeginAddDDLScript()) return;
+                if (!string.IsNullOrEmpty(script))
+                {
+                    if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
 
-                AddDataSourceText();
+                    if (!BeginAddDDLScript()) return;
 
-                AppendText(editBox, script);
-                CopyToClipboard(editBox);
+                    AddDataSourceText();
+
+                    AppendText(editBox, script);
+                    CopyToClipboard(editBox);
+                }
             }
-            Cursor = Cursors.Default;
+            catch (Exception ex)
+            {
+                Common.MsgBox($"Failed to generate CREATE script for {SelectedObject?.FullName}: {ex.Message}", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                Cursor = Cursors.Default;
+            }
         }
 
         /// <summary>

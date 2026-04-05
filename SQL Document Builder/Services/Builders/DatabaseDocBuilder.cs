@@ -230,6 +230,36 @@ namespace SQL_Document_Builder
                 (objectName.ObjectType != ObjectTypeEnums.Table && objectName.ObjectType != ObjectTypeEnums.View))
                 return string.Empty;
 
+            static bool ReadBooleanValue(object value)
+            {
+                if (value == null || value == DBNull.Value)
+                {
+                    return false;
+                }
+
+                if (value is bool b)
+                {
+                    return b;
+                }
+
+                if (value is byte or sbyte or short or ushort or int or uint or long or ulong)
+                {
+                    return Convert.ToInt64(value) != 0;
+                }
+
+                if (bool.TryParse(value.ToString(), out var parsedBool))
+                {
+                    return parsedBool;
+                }
+
+                if (long.TryParse(value.ToString(), out var parsedNumber))
+                {
+                    return parsedNumber != 0;
+                }
+
+                return false;
+            }
+
             StringBuilder sb = new();
 
             var dt = await SchemaMetadataProviderContext.Current.GetCreateIndexesMetadataAsync(objectName, connection.ConnectionString);
@@ -253,12 +283,12 @@ namespace SQL_Document_Builder
             {
                 string indexName = dr["IndexName"].ToString() ?? "";
                 string indexType = dr["IndexType"].ToString() ?? "";
-                bool isUnique = dr["IsUnique"] != DBNull.Value && (bool)dr["IsUnique"];
+                bool isUnique = ReadBooleanValue(dr["IsUnique"]);
                 string schema = dr["SchemaName"].ToString() ?? "";
                 string objName = dr["ObjectName"].ToString() ?? "";
                 string columns = dr["IndexColumns"].ToString() ?? "";
                 string? filter = dr["FilterDefinition"] as string;
-                bool isDisabled = dr["IsDisabled"] != DBNull.Value && (bool)dr["IsDisabled"];
+                bool isDisabled = ReadBooleanValue(dr["IsDisabled"]);
                 object usingXmlIndexIdObj = dr["using_xml_index_id"];
                 string? secondaryType = dr["secondary_type"] as string;
 
