@@ -106,6 +106,9 @@ namespace SQL_Document_Builder
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public DatabaseConnectionItem? Connection { get; set; }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public DBSchema? SchemaCache { get; set; }
+
         /// <summary>
         /// Gets or sets the object name.
         /// </summary>
@@ -1329,7 +1332,8 @@ GO
             // Open the column reference dialog
             using var dlg = new ColumnReferenceDialog()
             {
-                Connection = Connection
+                Connection = Connection,
+                SchemaCache = SchemaCache
             };
 
             if (dlg.ShowDialog() == DialogResult.OK)

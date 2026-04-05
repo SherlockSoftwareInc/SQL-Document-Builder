@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -29,6 +30,9 @@ namespace SQL_Document_Builder
         /// </summary>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string ConnectionString { get; set; } = string.Empty;
+
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public DBSchema? SchemaCache { get; set; }
 
         /// <summary>
         /// Handles the click event of the apply button
@@ -92,7 +96,9 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void BatchColumnDesc_Load(object sender, EventArgs e)
         {
-            _schemas = await SQLDatabaseHelper.GetSchemasAsync(ConnectionString);
+            _schemas = SchemaCache != null && SchemaCache.HasObjects
+                ? [.. SchemaCache.Schemas]
+                : await SQLDatabaseHelper.GetSchemasAsync(ConnectionString);
             PopulateSchema();
         }
 
@@ -109,7 +115,9 @@ namespace SQL_Document_Builder
                 return;
             }
 
-            var objects = await SQLDatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.All, ConnectionString);
+            var objects = SchemaCache != null && SchemaCache.HasObjects
+                ? SchemaCache.AllObjects()
+                : await SQLDatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.All, ConnectionString);
             if (objects.Count > 0)
             {
                 // get the select schema name
@@ -129,20 +137,44 @@ namespace SQL_Document_Builder
                         continue;
                     }
 
-                    var columns = await SQLDatabaseHelper.GetObjectColumnsAsync(dbObject, ConnectionString);
-                    if (columns == null || columns.Rows.Count == 0)
+                    bool hasMatch;
+                    if (SchemaCache != null && SchemaCache.HasColumns)
                     {
-                        continue;
-                    }
+                        var schemaItem = SchemaCache.DataObjects.Find(o =>
+                            o.SchemaName.Equals(dbObject.Schema, StringComparison.OrdinalIgnoreCase)
+                            && o.ObjectName.Equals(dbObject.Name, StringComparison.OrdinalIgnoreCase));
 
-                    var hasMatch = false;
-                    foreach (DataRow column in columns.Rows)
-                    {
-                        var columnName = column["COLUMN_NAME"]?.ToString() ?? string.Empty;
-                        if (columnName.Equals(searchFor, StringComparison.OrdinalIgnoreCase))
+                        hasMatch = false;
+                        if (schemaItem != null)
                         {
-                            hasMatch = true;
-                            break;
+                            for (int i = 0; i < schemaItem.Columns.Count; i++)
+                            {
+                                var cachedColumnName = schemaItem.Columns[i].ColumnName ?? string.Empty;
+                                if (cachedColumnName.Equals(searchFor, StringComparison.OrdinalIgnoreCase))
+                                {
+                                    hasMatch = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        var columns = await SQLDatabaseHelper.GetObjectColumnsAsync(dbObject, ConnectionString);
+                        if (columns == null || columns.Rows.Count == 0)
+                        {
+                            continue;
+                        }
+
+                        hasMatch = false;
+                        foreach (DataRow column in columns.Rows)
+                        {
+                            var columnName = column["COLUMN_NAME"]?.ToString() ?? string.Empty;
+                            if (columnName.Equals(searchFor, StringComparison.OrdinalIgnoreCase))
+                            {
+                                hasMatch = true;
+                                break;
+                            }
                         }
                     }
 

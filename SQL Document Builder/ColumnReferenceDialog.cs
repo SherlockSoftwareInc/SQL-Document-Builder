@@ -47,6 +47,8 @@ namespace SQL_Document_Builder
         /// </summary>
         public DatabaseConnectionItem? Connection { get; set; }
 
+        public DBSchema? SchemaCache { get; set; }
+
         /// <summary>
         /// Gets the object selected by the user.
         /// </summary>
@@ -88,7 +90,15 @@ namespace SQL_Document_Builder
             string connectionString = Connection.ConnectionString;
             try
             {
-                _objects = await SQLDatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.Table, connectionString) ?? new List<ObjectName>();
+                _objects = SchemaCache != null && SchemaCache.HasObjects
+                    ? SchemaCache.Objects(ObjectName.ObjectTypeEnums.Table)
+                    : await SQLDatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.Table, connectionString) ?? new List<ObjectName>();
+
+                _allObjects.Clear();
+                _allObjects.AddRange(SchemaCache != null && SchemaCache.HasObjects
+                    ? SchemaCache.AllObjects()
+                    : _objects);
+
                 PopulateSchema();
                 if (schemaComboBox.Items.Count > 0)
                 {

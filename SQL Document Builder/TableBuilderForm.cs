@@ -25,6 +25,7 @@ namespace SQL_Document_Builder
         /// The database connections.
         /// </summary>
         private readonly DatabaseConnections _connections = new();
+        private readonly DBSchema _dbSchema = new();
 
         private DatabaseConnectionItem? _currentConnection;
         private List<ObjectName> _allObjects = new();
@@ -432,7 +433,8 @@ namespace SQL_Document_Builder
 
             using var frm = new BatchColumnDesc()
             {
-                ConnectionString = connectionString
+                ConnectionString = connectionString,
+                SchemaCache = _dbSchema
             };
             frm.ShowDialog();
         }
@@ -568,6 +570,8 @@ namespace SQL_Document_Builder
             messageLabel.Text = string.Empty;
             _tables = [];
             _allObjects = [];
+            _dbSchema.Clear();
+            definitionPanel.SchemaCache = null;
 
             await definitionPanel.OpenAsync(null, null);
 
@@ -600,11 +604,20 @@ namespace SQL_Document_Builder
 
             cancellationToken.ThrowIfCancellationRequested();
 
-            _allObjects = await Task.Run(() => SQLDatabaseHelper.GetAllObjectsAsync(connection.ConnectionString), cancellationToken);
+            var schemaLoaded = await _dbSchema.OpenAsync(connection, loadColumns: true, cancellationToken);
+            if (!schemaLoaded)
+            {
+                serverToolStripStatusLabel.Text = $"Unable to load metadata from {endpoint}";
+                databaseToolStripStatusLabel.Text = database;
+                return false;
+            }
+
+            _allObjects = _dbSchema.AllObjects();
 
             cancellationToken.ThrowIfCancellationRequested();
 
             _currentConnection = connection;
+            definitionPanel.SchemaCache = _dbSchema;
             Properties.Settings.Default.dbConnectionString = connection.ConnectionString;
             serverToolStripStatusLabel.Text = endpoint;
             databaseToolStripStatusLabel.Text = database;
@@ -1958,9 +1971,9 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The event arguments.</param>
-        private async void ObjectTypeComboBox_SelectedIndexChanged(object sender, EventArgs e)
+        private void ObjectTypeComboBox_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (_init || !GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
+            if (_init || _currentConnection == null || !_dbSchema.HasObjects) return;
 
             // keep the selected schema
             string schemaName = schemaComboBox.Text;
@@ -1971,32 +1984,32 @@ namespace SQL_Document_Builder
                 switch (objectTypeComboBox.SelectedIndex)
                 {
                     case 0:
-                        _tables = await SQLDatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.Table, connectionString);
+                        _tables = _dbSchema.Objects(ObjectName.ObjectTypeEnums.Table);
                         EnableTableValue(true);
                         break;
 
                     case 1:
-                        _tables = await SQLDatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.View, connectionString);
+                        _tables = _dbSchema.Objects(ObjectName.ObjectTypeEnums.View);
                         EnableTableValue(true);
                         break;
 
                     case 2:
-                        _tables = await SQLDatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.StoredProcedure, connectionString);
+                        _tables = _dbSchema.Objects(ObjectName.ObjectTypeEnums.StoredProcedure);
                         EnableTableValue(false);
                         break;
 
                     case 3:
-                        _tables = await SQLDatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.Function, connectionString);
+                        _tables = _dbSchema.Objects(ObjectName.ObjectTypeEnums.Function);
                         EnableTableValue(false);
                         break;
 
                     case 4:
-                        _tables = await SQLDatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.Trigger, connectionString);
+                        _tables = _dbSchema.Objects(ObjectName.ObjectTypeEnums.Trigger);
                         EnableTableValue(false);
                         break;
 
                     case 5:
-                        _tables = await SQLDatabaseHelper.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.Synonym, connectionString);
+                        _tables = _dbSchema.Objects(ObjectName.ObjectTypeEnums.Synonym);
                         EnableTableValue(false);
                         break;
 
@@ -2184,8 +2197,11 @@ namespace SQL_Document_Builder
                 {
                     Common.MsgBox("Execute completed successfully", MessageBoxIcon.Information);
 
-                    // re-load all objects from the database in a background thread
-                    _allObjects = await Task.Run(() => SQLDatabaseHelper.GetAllObjectsAsync(connection?.ConnectionString));
+                    if (_currentConnection != null)
+                    {
+                        await _dbSchema.OpenAsync(_currentConnection, loadColumns: true);
+                        _allObjects = _dbSchema.AllObjects();
+                    }
                 }
 
                 Cursor = Cursors.Default;
@@ -2860,6 +2876,7 @@ namespace SQL_Document_Builder
             var form = new DBObjectsSelectForm()
             {
                 ConnectionString = connectionString,
+                SchemaCache = _dbSchema,
             };
             if (form.ShowDialog() == DialogResult.OK)
             {

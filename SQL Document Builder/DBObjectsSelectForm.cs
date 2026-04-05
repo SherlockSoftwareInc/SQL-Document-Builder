@@ -31,6 +31,9 @@ namespace SQL_Document_Builder
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string ConnectionString { get; set; } = string.Empty;
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
+        public DBSchema? SchemaCache { get; set; }
+
         /// <summary>
         /// Gets the selected database objects.
         /// </summary>
@@ -206,7 +209,9 @@ namespace SQL_Document_Builder
                 }
 
                 // Retrieve the database objects asynchronously
-                _selectableObjects = await SQLDatabaseHelper.GetDatabaseObjectsAsync(selectedObjectType, ConnectionString);
+                _selectableObjects = SchemaCache != null && SchemaCache.HasObjects
+                    ? SchemaCache.Objects(selectedObjectType)
+                    : await SQLDatabaseHelper.GetDatabaseObjectsAsync(selectedObjectType, ConnectionString);
 
                 // Populate the selectable objects list box
                 PopulateSelectableObjects();
@@ -243,7 +248,9 @@ namespace SQL_Document_Builder
                 string[] items = clipboardText.Split([Environment.NewLine], StringSplitOptions.RemoveEmptyEntries);
 
                 // Get all database objects
-                var allObjects = await SQLDatabaseHelper.GetAllObjectsAsync(ConnectionString);
+                var allObjects = SchemaCache != null && SchemaCache.HasObjects
+                    ? SchemaCache.AllObjects()
+                    : await SQLDatabaseHelper.GetAllObjectsAsync(ConnectionString);
 
                 // Loop through each item in the clipboard text
                 foreach (string item in items)
@@ -279,7 +286,9 @@ namespace SQL_Document_Builder
             schemaComboBox.Items.Clear();
             schemaComboBox.Items.Add("(All)");
 
-            var schemas = await SQLDatabaseHelper.GetSchemasAsync(ConnectionString);
+            var schemas = SchemaCache != null && SchemaCache.HasObjects
+                ? SchemaCache.Schemas.ToList()
+                : await SQLDatabaseHelper.GetSchemasAsync(ConnectionString);
 
             // Add schemas to the combo box
             foreach (var schema in schemas)
