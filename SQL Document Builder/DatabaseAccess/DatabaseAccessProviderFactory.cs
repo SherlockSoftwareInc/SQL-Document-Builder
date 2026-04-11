@@ -22,11 +22,14 @@ namespace SQL_Document_Builder.DatabaseAccess
                 return SqlServerProvider;
             }
 
+            if (connection.ConnectionType.Equals("ODBC", StringComparison.OrdinalIgnoreCase))
+            {
+                return OdbcProvider;
+            }
+
             return connection.DBMSType switch
             {
-                DBMSTypeEnums.SQLServer => connection.ConnectionType.Equals("ODBC", StringComparison.OrdinalIgnoreCase)
-                    ? OdbcProvider
-                    : SqlServerProvider,
+                DBMSTypeEnums.SQLServer => SqlServerProvider,
                 DBMSTypeEnums.MySQL => MySqlProvider,
                 DBMSTypeEnums.PostgreSQL => PostgreSqlProvider,
                 DBMSTypeEnums.Oracle => OracleProvider,
@@ -35,9 +38,7 @@ namespace SQL_Document_Builder.DatabaseAccess
                 DBMSTypeEnums.Redis => RedisProvider,
                 DBMSTypeEnums.Cassandra => CassandraProvider,
                 DBMSTypeEnums.MariaDB => MariaDbProvider,
-                DBMSTypeEnums.Other => connection.ConnectionType.Equals("ODBC", StringComparison.OrdinalIgnoreCase)
-                    ? OdbcProvider
-                    : OtherProvider,
+                DBMSTypeEnums.Other => OtherProvider,
                 _ => SqlServerProvider
             };
         }

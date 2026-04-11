@@ -360,17 +360,34 @@ namespace SQL_Document_Builder
             if (!string.IsNullOrEmpty(SelectedColumn))
             {
                 string indexName = $"IX_{Schema}_{TableName}_{SelectedColumn}";
-                sql = $@"IF NOT EXISTS (
+                string quotedIndex = indexName.QuotedName();
+                string quotedTable = $"{Schema!.QuotedName()}.{TableName!.QuotedName()}";
+                string quotedColumn = SelectedColumn.QuotedName();
+
+                bool isSqlServer = Connection != null &&
+                    (Connection.ConnectionType.Equals("SQL Server", StringComparison.OrdinalIgnoreCase) ||
+                     Connection.DBMSType == DBMSTypeEnums.SQLServer);
+
+                if (isSqlServer)
+                {
+                    sql = $@"IF NOT EXISTS (
     SELECT * FROM sys.indexes
     WHERE name = '{indexName}'
-    AND object_id = OBJECT_ID(N'[{Schema}].[{TableName}]')
+    AND object_id = OBJECT_ID(N'{quotedTable}')
 )
 BEGIN
     CREATE INDEX {indexName}
-    ON [{Schema}].[{TableName}] ({SelectedColumn});
+    ON {quotedTable} ({quotedColumn});
 END
 GO
 ";
+                }
+                else
+                {
+                    sql = $@"CREATE INDEX {quotedIndex}
+ON {quotedTable} ({quotedColumn});
+";
+                }
             }
 
             return sql;
@@ -633,10 +650,19 @@ GO
         {
             string sql = "";
             // get the first column name from the data grid view
-            if (columnDefDataGridView.Rows.Count > 0)
+            if (columnDefDataGridView.Rows.Count > 0 && !string.IsNullOrEmpty(Schema) && !string.IsNullOrEmpty(TableName))
             {
                 string columnName = (string)columnDefDataGridView.Rows[0].Cells["ColumnName"].Value;
-                sql = $@"IF NOT EXISTS (
+                string quotedTable = $"{Schema.QuotedName()}.{TableName.QuotedName()}";
+                string quotedColumn = columnName.QuotedName();
+
+                bool isSqlServer = Connection != null &&
+                    (Connection.ConnectionType.Equals("SQL Server", StringComparison.OrdinalIgnoreCase) ||
+                     Connection.DBMSType == DBMSTypeEnums.SQLServer);
+
+                if (isSqlServer)
+                {
+                    sql = $@"IF NOT EXISTS (
     SELECT * FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS
     WHERE CONSTRAINT_TYPE = 'PRIMARY KEY'
     AND TABLE_NAME = '{TableName}'
@@ -644,14 +670,22 @@ GO
 )
 BEGIN
     -- Make the column non-nullable
-    --ALTER TABLE [{Schema}].[{TableName}]
-    --ALTER COLUMN {columnName} smallint NOT NULL;
+    --ALTER TABLE {quotedTable}
+    --ALTER COLUMN {quotedColumn} smallint NOT NULL;
 
-    ALTER TABLE [{Schema}].[{TableName}]
-    ADD CONSTRAINT PK_{Schema}_{TableName} PRIMARY KEY ({columnName})
+    ALTER TABLE {quotedTable}
+    ADD CONSTRAINT PK_{Schema}_{TableName} PRIMARY KEY ({quotedColumn})
 END
 GO
 ";
+                }
+                else
+                {
+                    string quotedConstraint = $"PK_{Schema}_{TableName}".QuotedName();
+                    sql = $@"ALTER TABLE {quotedTable}
+ADD CONSTRAINT {quotedConstraint} PRIMARY KEY ({quotedColumn});
+";
+                }
             }
 
             return sql;
@@ -926,13 +960,15 @@ GO
                     return;
                 }
 
-                string sql = $@"SELECT {columnName}, COUNT(*) AS Frequency FROM [{Schema}].[{TableName}] GROUP BY {columnName}";
+                string quotedColumn = columnName.QuotedName();
+                string quotedTable = $"{Schema?.QuotedName()}.{TableName?.QuotedName()}";
+                string sql = $@"SELECT {quotedColumn}, COUNT(*) AS Frequency FROM {quotedTable} GROUP BY {quotedColumn}";
                 using var dlg = new DataViewForm()
                 {
                     SQL = sql,
                     MultipleValue = false,
                     Text = $"{columnName}",
-                    TableName = $"[{Schema}].[{TableName}]",
+                    TableName = quotedTable,
                     EnableValueFrequency = true,
                     DatabaseIndex = 0,
                     Connection = Connection,
@@ -994,9 +1030,11 @@ GO
             if (viewList != null && viewList.Count > 0)
             {
                 // build the view list string
-                var viewListString = string.Join(", ", viewList.Select(v => $"[{v.Schema}].[{v.Name}]"));
+                var viewListString = string.Join(", ", viewList.Select(v => $"{v.Schema.QuotedName()}.{v.Name.QuotedName()}"));
 
-                return $"This table, [{Schema}].[{TableName}], serves as a reference table defining .... It is utilized in the views: {viewListString}.";
+                var quotedTable = $"{Schema?.QuotedName()}.{TableName?.QuotedName()}";
+
+                return $"This table, {quotedTable}, serves as a reference table defining .... It is utilized in the views: {viewListString}.";
             }
 
             return string.Empty;
@@ -1059,13 +1097,14 @@ GO
                 return;
             }
 
-            var sql = $@"SELECT * FROM [{Schema}].[{TableName}]";
+            var quotedTable = $"{Schema.QuotedName()}.{TableName.QuotedName()}";
+            var sql = $@"SELECT * FROM {quotedTable}";
             using var dlg = new DataViewForm()
             {
                 SQL = sql,
                 MultipleValue = false,
                 Text = $"{TableName}",
-                TableName = $"[{Schema}].[{TableName}]",
+                TableName = quotedTable,
                 EnableValueFrequency = true,
                 DatabaseIndex = 0,
                 Connection = Connection,

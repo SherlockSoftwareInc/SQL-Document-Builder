@@ -1,4 +1,5 @@
 ﻿using System;
+using System;
 using System.Text;
 using System.Threading.Tasks;
 using static SQL_Document_Builder.ObjectName;
@@ -18,123 +19,27 @@ namespace SQL_Document_Builder
         /// <returns>A string.</returns>
         public static async Task<string> BuildObjectDescription(ObjectName objectName, DatabaseConnectionItem? connection, bool useExtendedProperties)
         {
-            bool spaceAdded = false;
             var sb = new StringBuilder();
+            var dbmsType = GetEffectiveDbmsType(connection);
 
             var dbTable = new DBObject();
             if (await dbTable.OpenAsync(objectName, connection))
             {
-                var tableDesc = dbTable.Description;
-                string level1type = objectName.ObjectType switch
-                {
-                    ObjectTypeEnums.Table => "TABLE",
-                    ObjectTypeEnums.View => "VIEW",
-                    ObjectTypeEnums.StoredProcedure => "PROCEDURE",
-                    ObjectTypeEnums.Function => "FUNCTION",
-                    ObjectTypeEnums.Trigger => "TRIGGER",
-                    ObjectTypeEnums.Synonym => "SYNONYM",
-                    _ => throw new InvalidOperationException("Unsupported object type for description update.")
-                };
-
-                if (tableDesc.Length > 0)
-                {
-                    //sb.AppendLine();
-                    spaceAdded = true;
-
-                    if (useExtendedProperties)
-                    {
-                        // Use sp_addextendedproperty for table description
-                        sb.AppendLine($"EXEC sp_addextendedproperty " +
-                                      $"@name = N'MS_Description', " +
-                                      $"@value = N'{tableDesc.Replace("'", "''")}', " +
-                                      $"@level0type = N'SCHEMA', @level0name = N'{objectName.Schema}', " +
-                                      $"@level1type = N'{level1type}', @level1name = N'{objectName.Name}';");
-                    }
-                    else
-                    {
-                        // Use the default stored procedure for table description
-                        sb.AppendLine($"EXEC usp_addupdateextendedproperty " +
-                                      $"@name = N'MS_Description', " +
-                                      $"@value = N'{tableDesc.Replace("'", "''")}', " +
-                                      $"@level0type = N'SCHEMA', @level0name = N'{objectName.Schema}', " +
-                                      $"@level1type = N'{level1type}', @level1name = N'{objectName.Name}';");
-
-                        //sb.AppendLine($"EXEC usp_AddObjectDescription '{objectName.Schema}.{objectName.Name}', N'{tableDesc.Replace("'", "''")}';");
-                    }
-                }
+                AppendObjectDescriptionScript(sb, objectName, dbmsType, dbTable.Description, useExtendedProperties);
 
                 if (objectName.ObjectType == ObjectTypeEnums.Table ||
                    objectName.ObjectType == ObjectTypeEnums.View)
                 {
                     foreach (var column in dbTable.Columns)
                     {
-                        var colDesc = column.Description.Replace("'", "''");
-                        if (colDesc.Length > 0)
-                        {
-                            if (!spaceAdded)
-                            {
-                                //sb.AppendLine();
-                                spaceAdded = true;
-                            }
-
-                            if (useExtendedProperties)
-                            {
-                                // Use sp_addextendedproperty for column description
-                                sb.AppendLine($"EXEC sp_addextendedproperty " +
-                                              $"@name = N'MS_Description', " +
-                                              $"@value = N'{colDesc}', " +
-                                              $"@level0type = N'SCHEMA', @level0name = N'{objectName.Schema}', " +
-                                              $"@level1type = N'{level1type}', @level1name = N'{objectName.Name}', " +
-                                              $"@level2type = N'COLUMN', @level2name = N'{column.ColumnName}';");
-                            }
-                            else
-                            {
-                                // Use the default stored procedure for column description
-                                sb.AppendLine($"EXEC usp_addupdateextendedproperty " +
-                                              $"@name = N'MS_Description', " +
-                                              $"@value = N'{colDesc}', " +
-                                              $"@level0type = N'SCHEMA', @level0name = N'{objectName.Schema}', " +
-                                              $"@level1type = N'{level1type}', @level1name = N'{objectName.Name}', " +
-                                              $"@level2type = N'COLUMN', @level2name = N'{column.ColumnName}';");
-                                //sb.AppendLine($"EXEC usp_AddColumnDescription '{objectName.Schema}.{objectName.Name}', '{column.ColumnName}', N'{colDesc.Replace("'", "''")}';");
-                            }
-                        }
+                        AppendColumnDescriptionScript(sb, objectName, dbmsType, column.ColumnName, column.Description, useExtendedProperties);
                     }
                 }
                 else
                 {
                     foreach (var parameter in dbTable.Parameters)
                     {
-                        var paraDesc = parameter.Description.Replace("'", "''");
-                        if (paraDesc.Length > 0)
-                        {
-                            if (!spaceAdded)
-                            {
-                                //sb.AppendLine();
-                                spaceAdded = true;
-                            }
-
-                            if (useExtendedProperties)
-                            {
-                                // Use sp_addextendedproperty for column description
-                                sb.AppendLine($"EXEC sp_addextendedproperty " +
-                                              $"@name = N'MS_Description', " +
-                                              $"@value = N'{paraDesc}', " +
-                                              $"@level0type = N'SCHEMA', @level0name = N'{objectName.Schema}', " +
-                                              $"@level1type = N'{level1type}', @level1name = N'{objectName.Name}', " +
-                                              $"@level2type = N'PARAMETER', @level2name = N'{parameter.Name}';");
-                            }
-                            else
-                            {
-                                // Use the default stored procedure for column description
-                                sb.AppendLine($"EXEC usp_addupdateextendedproperty " +
-                                              $"@name = N'MS_Description', " +
-                                              $"@value = N'{paraDesc}', " +
-                                              $"@level0type = N'SCHEMA', @level0name = N'{objectName.Schema}', " +
-                                              $"@level1type = N'{level1type}', @level1name = N'{objectName.Name}', " +
-                                              $"@level2type = N'PARAMETER', @level2name = N'{parameter.Name}';");
-                            }
-                        }
+                        AppendParameterDescriptionScript(sb, objectName, dbmsType, parameter.Name, parameter.Description, useExtendedProperties);
                     }
                 }
             }
@@ -148,6 +53,166 @@ namespace SQL_Document_Builder
             }
 
             return script;
+        }
+
+        private static DBMSTypeEnums GetEffectiveDbmsType(DatabaseConnectionItem? connection)
+        {
+            if (connection == null)
+            {
+                return DBMSTypeEnums.Other;
+            }
+
+            if (connection.ConnectionType.Equals("SQL Server", StringComparison.OrdinalIgnoreCase))
+            {
+                return DBMSTypeEnums.SQLServer;
+            }
+
+            if (connection.ConnectionType.Equals("ODBC", StringComparison.OrdinalIgnoreCase) &&
+                connection.DBMSType == DBMSTypeEnums.SQLServer)
+            {
+                return DBMSTypeEnums.Other;
+            }
+
+            return connection.DBMSType;
+        }
+
+        private static void AppendObjectDescriptionScript(StringBuilder sb, ObjectName objectName, DBMSTypeEnums dbmsType, string? description, bool useExtendedProperties)
+        {
+            if (string.IsNullOrWhiteSpace(description))
+            {
+                return;
+            }
+
+            var escapedDescription = EscapeSqlLiteral(description);
+
+            switch (dbmsType)
+            {
+                case DBMSTypeEnums.SQLServer:
+                    var level1type = GetSqlServerLevel1Type(objectName.ObjectType);
+                    var sqlServerProcedure = useExtendedProperties ? "sp_addextendedproperty" : "usp_addupdateextendedproperty";
+                    sb.AppendLine($"EXEC {sqlServerProcedure} " +
+                                  $"@name = N'MS_Description', " +
+                                  $"@value = N'{escapedDescription}', " +
+                                  $"@level0type = N'SCHEMA', @level0name = N'{EscapeSqlLiteral(objectName.Schema)}', " +
+                                  $"@level1type = N'{level1type}', @level1name = N'{EscapeSqlLiteral(objectName.Name)}';");
+                    break;
+
+                case DBMSTypeEnums.PostgreSQL:
+                    if (objectName.ObjectType is ObjectTypeEnums.Table or ObjectTypeEnums.View)
+                    {
+                        var objectKind = objectName.ObjectType == ObjectTypeEnums.View ? "VIEW" : "TABLE";
+                        sb.AppendLine($"COMMENT ON {objectKind} {GetQualifiedName(objectName, dbmsType)} IS '{escapedDescription}';");
+                    }
+                    break;
+
+                case DBMSTypeEnums.Oracle:
+                    if (objectName.ObjectType is ObjectTypeEnums.Table or ObjectTypeEnums.View)
+                    {
+                        sb.AppendLine($"COMMENT ON TABLE {GetQualifiedName(objectName, dbmsType)} IS '{escapedDescription}';");
+                    }
+                    break;
+
+                case DBMSTypeEnums.MySQL:
+                case DBMSTypeEnums.MariaDB:
+                    if (objectName.ObjectType == ObjectTypeEnums.Table)
+                    {
+                        sb.AppendLine($"ALTER TABLE {GetQualifiedName(objectName, dbmsType)} COMMENT = '{escapedDescription}';");
+                    }
+                    break;
+            }
+        }
+
+        private static void AppendColumnDescriptionScript(StringBuilder sb, ObjectName objectName, DBMSTypeEnums dbmsType, string? columnName, string? description, bool useExtendedProperties)
+        {
+            if (string.IsNullOrWhiteSpace(columnName) || string.IsNullOrWhiteSpace(description))
+            {
+                return;
+            }
+
+            var escapedDescription = EscapeSqlLiteral(description);
+            switch (dbmsType)
+            {
+                case DBMSTypeEnums.SQLServer:
+                    var level1type = GetSqlServerLevel1Type(objectName.ObjectType);
+                    var sqlServerProcedure = useExtendedProperties ? "sp_addextendedproperty" : "usp_addupdateextendedproperty";
+                    sb.AppendLine($"EXEC {sqlServerProcedure} " +
+                                  $"@name = N'MS_Description', " +
+                                  $"@value = N'{escapedDescription}', " +
+                                  $"@level0type = N'SCHEMA', @level0name = N'{EscapeSqlLiteral(objectName.Schema)}', " +
+                                  $"@level1type = N'{level1type}', @level1name = N'{EscapeSqlLiteral(objectName.Name)}', " +
+                                  $"@level2type = N'COLUMN', @level2name = N'{EscapeSqlLiteral(columnName)}';");
+                    break;
+
+                case DBMSTypeEnums.PostgreSQL:
+                case DBMSTypeEnums.Oracle:
+                    sb.AppendLine($"COMMENT ON COLUMN {GetQualifiedName(objectName, dbmsType)}.{QuoteIdentifier(columnName, dbmsType)} IS '{escapedDescription}';");
+                    break;
+            }
+        }
+
+        private static void AppendParameterDescriptionScript(StringBuilder sb, ObjectName objectName, DBMSTypeEnums dbmsType, string? parameterName, string? description, bool useExtendedProperties)
+        {
+            if (string.IsNullOrWhiteSpace(parameterName) || string.IsNullOrWhiteSpace(description))
+            {
+                return;
+            }
+
+            if (dbmsType != DBMSTypeEnums.SQLServer)
+            {
+                return;
+            }
+
+            var level1type = GetSqlServerLevel1Type(objectName.ObjectType);
+            var escapedDescription = EscapeSqlLiteral(description);
+            var sqlServerProcedure = useExtendedProperties ? "sp_addextendedproperty" : "usp_addupdateextendedproperty";
+
+            sb.AppendLine($"EXEC {sqlServerProcedure} " +
+                          $"@name = N'MS_Description', " +
+                          $"@value = N'{escapedDescription}', " +
+                          $"@level0type = N'SCHEMA', @level0name = N'{EscapeSqlLiteral(objectName.Schema)}', " +
+                          $"@level1type = N'{level1type}', @level1name = N'{EscapeSqlLiteral(objectName.Name)}', " +
+                          $"@level2type = N'PARAMETER', @level2name = N'{EscapeSqlLiteral(parameterName)}';");
+        }
+
+        private static string GetSqlServerLevel1Type(ObjectTypeEnums objectType)
+        {
+            return objectType switch
+            {
+                ObjectTypeEnums.Table => "TABLE",
+                ObjectTypeEnums.View => "VIEW",
+                ObjectTypeEnums.StoredProcedure => "PROCEDURE",
+                ObjectTypeEnums.Function => "FUNCTION",
+                ObjectTypeEnums.Trigger => "TRIGGER",
+                ObjectTypeEnums.Synonym => "SYNONYM",
+                _ => throw new InvalidOperationException("Unsupported object type for description update.")
+            };
+        }
+
+        private static string GetQualifiedName(ObjectName objectName, DBMSTypeEnums dbmsType)
+        {
+            var quotedName = QuoteIdentifier(objectName.Name, dbmsType);
+            if (string.IsNullOrWhiteSpace(objectName.Schema))
+            {
+                return quotedName;
+            }
+
+            return $"{QuoteIdentifier(objectName.Schema, dbmsType)}.{quotedName}";
+        }
+
+        private static string QuoteIdentifier(string? identifier, DBMSTypeEnums dbmsType)
+        {
+            var value = identifier ?? string.Empty;
+            return dbmsType switch
+            {
+                DBMSTypeEnums.MySQL or DBMSTypeEnums.MariaDB => $"`{value.Replace("`", "``")}`",
+                DBMSTypeEnums.PostgreSQL or DBMSTypeEnums.Oracle => $"\"{value.Replace("\"", "\"\"")}\"",
+                _ => $"[{value.Replace("]", "]]" )}]"
+            };
+        }
+
+        private static string EscapeSqlLiteral(string value)
+        {
+            return (value ?? string.Empty).Replace("'", "''");
         }
     }
 }

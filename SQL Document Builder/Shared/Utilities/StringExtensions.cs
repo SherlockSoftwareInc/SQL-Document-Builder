@@ -6,6 +6,30 @@ namespace SQL_Document_Builder
     public static class StringExtensions
     {
         /// <summary>
+        /// Gets the current DBMS type used for identifier quoting by the parameterless <see cref="QuotedName(string)"/> overload.
+        /// This is a global setting designed for single-connection scenarios (WinForms). Call
+        /// <see cref="SetIdentifierQuoteDbms"/> when the active connection changes.
+        /// </summary>
+        public static DBMSTypeEnums IdentifierQuoteDbmsType { get; private set; } = DBMSTypeEnums.SQLServer;
+
+        public static void SetIdentifierQuoteDbms(DatabaseConnectionItem? connection)
+        {
+            if (connection == null)
+            {
+                IdentifierQuoteDbmsType = DBMSTypeEnums.SQLServer;
+                return;
+            }
+
+            if (connection.ConnectionType.Equals("SQL Server", StringComparison.OrdinalIgnoreCase))
+            {
+                IdentifierQuoteDbmsType = DBMSTypeEnums.SQLServer;
+                return;
+            }
+
+            IdentifierQuoteDbmsType = connection.DBMSType;
+        }
+
+        /// <summary>
         /// Convert a Pascal case string to normal string with space between each word
         /// </summary>
         /// <param name="str"></param>
@@ -100,8 +124,20 @@ namespace SQL_Document_Builder
         /// <returns></returns>
         public static string QuotedName(this string value)
         {
+            return QuotedName(value, IdentifierQuoteDbmsType);
+        }
+
+        public static string QuotedName(this string value, DBMSTypeEnums dbmsType)
+        {
             if (value.Length == 0) return value;
-            if (value[0] == '[' && value[^1] == ']') return value;
+
+            bool isBracketQuoted = value[0] == '[' && value[^1] == ']';
+            bool isDoubleQuoted = value[0] == '"' && value[^1] == '"';
+            bool isBacktickQuoted = value[0] == '`' && value[^1] == '`';
+            if (isBracketQuoted || isDoubleQuoted || isBacktickQuoted)
+            {
+                return value;
+            }
 
             /*
                         if (value.Contains(' ')) return "[" + value + "]";
@@ -142,7 +178,13 @@ namespace SQL_Document_Builder
                         return value;
             */
 
-            return $"[{value}]";
+            return dbmsType switch
+            {
+                DBMSTypeEnums.SQLServer => $"[{value}]",
+                DBMSTypeEnums.MySQL or DBMSTypeEnums.MariaDB => $"`{value}`",
+                DBMSTypeEnums.PostgreSQL or DBMSTypeEnums.Oracle or DBMSTypeEnums.SQLite => $"\"{value}\"",
+                _ => value
+            };
         }
 
         /// <summary>
@@ -153,6 +195,14 @@ namespace SQL_Document_Builder
         public static string RemoveQuote(this string value)
         {
             if (value.StartsWith('[') && value.EndsWith(']'))
+            {
+                return value[1..^1];
+            }
+            else if (value.StartsWith('"') && value.EndsWith('"'))
+            {
+                return value[1..^1];
+            }
+            else if (value.StartsWith('`') && value.EndsWith('`'))
             {
                 return value[1..^1];
             }

@@ -94,8 +94,20 @@ namespace SQL_Document_Builder
             // end of the script is removed.
             var scriptWithoutComments = Regex.Replace(script, @"/\*.*?(?:\*/|$)", "", RegexOptions.Singleline);
 
-            // Then, split the script into individual SQL statements using 'GO' as a delimiter
-            var sqlStatements = Regex.Split(scriptWithoutComments, @"\bGO\b", RegexOptions.IgnoreCase | RegexOptions.Multiline);
+            bool isSqlServer = IsSqlServerConnection(connection);
+
+            string[] sqlStatements;
+
+            if (isSqlServer)
+            {
+                // Split SQL Server script batches by GO
+                sqlStatements = Regex.Split(scriptWithoutComments, @"\bGO\b", RegexOptions.IgnoreCase | RegexOptions.Multiline);
+            }
+            else
+            {
+                // Split non-SQL Server scripts by ';' statement terminator
+                sqlStatements = scriptWithoutComments.Split(';');
+            }
 
             // Execute each statement
             foreach (var sql in sqlStatements)
@@ -114,6 +126,22 @@ namespace SQL_Document_Builder
                 }
             }
             return string.Empty;
+        }
+
+        private static bool IsSqlServerConnection(DatabaseConnectionItem connection)
+        {
+            if (connection.ConnectionType.Equals("SQL Server", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            if (connection.ConnectionType.Equals("ODBC", StringComparison.OrdinalIgnoreCase) &&
+                connection.DBMSType == DBMSTypeEnums.SQLServer)
+            {
+                return false;
+            }
+
+            return connection.DBMSType == DBMSTypeEnums.SQLServer;
         }
 
         /// <summary>
@@ -183,38 +211,35 @@ namespace SQL_Document_Builder
             // remove the space and new line at the end of the script
             createScript = createScript.TrimEnd([' ', '\r', '\n', '\t']);
 
-            // add "GO" at the end of the script if it doesn't exist
-            if (!createScript.EndsWith("GO", StringComparison.CurrentCultureIgnoreCase))
+            bool isSqlServer = IsSqlServerConnection(connection);
+
+            string batchSeparator = isSqlServer ? "GO" : ";";
+
+            // add batch separator at the end of the script if it doesn't exist
+            if (!createScript.EndsWith(batchSeparator, StringComparison.CurrentCultureIgnoreCase))
             {
-                createScript += Environment.NewLine + "GO" + Environment.NewLine;
+                createScript += Environment.NewLine + batchSeparator + Environment.NewLine;
             }
             else
             {
                 createScript += Environment.NewLine;
             }
 
-            // Description script generation is SQL Server specific (extended properties / usp_addupdateextendedproperty).
-            // Skip it for ODBC and other non-SQL Server providers to avoid provider-specific failures.
-            bool canBuildSqlServerDescription =
-                connection.ConnectionType.Equals("SQL Server", StringComparison.OrdinalIgnoreCase) &&
-                connection.DBMSType == DBMSTypeEnums.SQLServer;
-
-            if (canBuildSqlServerDescription)
+            // Build description script when supported by the active DBMS.
+            // ObjectDescription.BuildObjectDescription handles DBMS-specific script generation internally.
+            try
             {
-                try
+                var description = await ObjectDescription.BuildObjectDescription(objectName, connection, Properties.Settings.Default.UseExtendedProperties);
+                if (description.Length > 0)
                 {
-                    var description = await ObjectDescription.BuildObjectDescription(objectName, connection, Properties.Settings.Default.UseExtendedProperties);
-                    if (description.Length > 0)
-                    {
-                        // append the description to the script
-                        createScript += description;
-                        createScript += "GO" + Environment.NewLine;
-                    }
+                    // append the description to the script
+                    createScript += description;
+                    createScript += batchSeparator + Environment.NewLine;
                 }
-                catch
-                {
-                    // Ignore description script failures; CREATE script should still be returned.
-                }
+            }
+            catch
+            {
+                // Ignore description script failures; CREATE script should still be returned.
             }
 
             return createScript;
@@ -594,6 +619,8 @@ namespace SQL_Document_Builder
 
         private async Task<bool> OpenConnectionAsync(DatabaseConnectionItem? connection, CancellationToken cancellationToken)
         {
+            UpdateSqlServerSpecificMenuItems(connection);
+
             serverToolStripStatusLabel.Text = string.Empty;
             databaseToolStripStatusLabel.Text = string.Empty;
             objectsListBox.Items.Clear();
@@ -605,6 +632,7 @@ namespace SQL_Document_Builder
             if (connection == null || string.IsNullOrWhiteSpace(connection.ConnectionString))
             {
                 _currentConnection = null;
+                StringExtensions.SetIdentifierQuoteDbms(null);
                 return false;
             }
 
@@ -649,6 +677,7 @@ namespace SQL_Document_Builder
             cancellationToken.ThrowIfCancellationRequested();
 
             _currentConnection = connection;
+            StringExtensions.SetIdentifierQuoteDbms(_currentConnection);
             definitionPanel.SchemaCache = _dbSchema;
             Properties.Settings.Default.dbConnectionString = connection.ConnectionString;
             serverToolStripStatusLabel.Text = endpoint;
@@ -657,6 +686,13 @@ namespace SQL_Document_Builder
             await definitionPanel.OpenAsync(null, _currentConnection);
 
             return true;
+        }
+
+        private void UpdateSqlServerSpecificMenuItems(DatabaseConnectionItem? connection)
+        {
+            bool isSqlServer = connection != null && IsSqlServerConnection(connection);
+            uspToolStripMenuItem.Visible = isSqlServer;
+            toolStripSeparator14.Visible = isSqlServer;
         }
 
         private bool TrySelectOdbcDbqFile(DatabaseConnectionItem connection)
@@ -1073,7 +1109,7 @@ namespace SQL_Document_Builder
                     // get the insert statement for the object
                     // get the number of rows in the table
                     var provider = DatabaseAccessProviderFactory.GetProvider(_currentConnection);
-                    var rowCount = await provider.GetRowCountAsync(obj.FullName, connectionString);
+                    var rowCount = await provider.GetRowCountAsync(obj.FullNameNoQuote, connectionString);
 
                     // confirm if the user wants to continue when the number of rows is too much
                     if (rowCount > Properties.Settings.Default.InertMaxRows)
@@ -1426,7 +1462,7 @@ namespace SQL_Document_Builder
                     AppendText(editBox, $"-- Data source: {fileName}" + Environment.NewLine);
 
                     var dataHelper = new ExcelDataHelper(form.ResultDataTable);
-                    AppendText(editBox, dataHelper.GetInsertStatement(form.TableName, form.NullForBlank));
+                    AppendText(editBox, dataHelper.GetInsertStatement(form.TableName, form.NullForBlank, _currentConnection));
                     CopyToClipboard(editBox);
                 }
             }
@@ -4512,7 +4548,7 @@ namespace SQL_Document_Builder
                 AppendText(editBox, $"-- Data source: {fileName}" + Environment.NewLine);
 
                 var dataHelper = new ExcelDataHelper(descriptionData);
-                AppendText(editBox, dataHelper.GetDescriptionStatement());
+                AppendText(editBox, dataHelper.GetDescriptionStatement(_currentConnection));
             }
         }
 

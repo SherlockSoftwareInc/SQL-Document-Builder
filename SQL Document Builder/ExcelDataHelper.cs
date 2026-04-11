@@ -132,9 +132,10 @@ namespace SQL_Document_Builder
         /// Gets the description statement.
         /// </summary>
         /// <returns>A string.</returns>
-        internal string GetDescriptionStatement()
+        internal string GetDescriptionStatement(DatabaseConnectionItem? connection)
         {
             var descriptionStatements = new StringBuilder();
+            var dbmsType = GetEffectiveDbmsType(connection);
 
             // Iterate through each row in the DataTable
             foreach (DataRow row in Data.Rows)
@@ -153,27 +154,83 @@ namespace SQL_Document_Builder
                 string level2type = row["Level2Type"].ToString();
                 string level2name = row["Level2Name"].ToString();
 
-                // Check if Level2Type is null or empty
-                if (string.IsNullOrEmpty(level2type))
+                if (dbmsType == DBMSTypeEnums.SQLServer)
                 {
-                    descriptionStatements.AppendLine($"EXEC usp_addupdateextendedproperty @name = N'MS_Description', @value = N'{value}', @level0type = N'{level0type}', @level0name = N'{level0name}', @level1type = N'{level1type}', @level1name = N'{level1name}';");
+                    // Check if Level2Type is null or empty
+                    if (string.IsNullOrEmpty(level2type))
+                    {
+                        descriptionStatements.AppendLine($"EXEC usp_addupdateextendedproperty @name = N'MS_Description', @value = N'{value}', @level0type = N'{level0type}', @level0name = N'{level0name}', @level1type = N'{level1type}', @level1name = N'{level1name}';");
+                    }
+                    else
+                    {
+                        descriptionStatements.AppendLine($"EXEC usp_addupdateextendedproperty @name = N'MS_Description', @value = N'{value}', @level0type = N'{level0type}', @level0name = N'{level0name}', @level1type = N'{level1type}', @level1name = N'{level1name}', @level2type = N'{level2type}', @level2name = N'{level2name}';");
+                    }
                 }
-                else
+                else if (dbmsType == DBMSTypeEnums.PostgreSQL || dbmsType == DBMSTypeEnums.Oracle)
                 {
-                    descriptionStatements.AppendLine($"EXEC usp_addupdateextendedproperty @name = N'MS_Description', @value = N'{value}', @level0type = N'{level0type}', @level0name = N'{level0name}', @level1type = N'{level1type}', @level1name = N'{level1name}', @level2type = N'{level2type}', @level2name = N'{level2name}';");
+                    if (string.IsNullOrEmpty(level2type))
+                    {
+                        var objectKind = level1type.Equals("VIEW", StringComparison.OrdinalIgnoreCase) ? "VIEW" : "TABLE";
+                        descriptionStatements.AppendLine($"COMMENT ON {objectKind} {QuoteName(level0name, dbmsType)}.{QuoteName(level1name, dbmsType)} IS '{value}';");
+                    }
+                    else if (level2type.Equals("COLUMN", StringComparison.OrdinalIgnoreCase))
+                    {
+                        descriptionStatements.AppendLine($"COMMENT ON COLUMN {QuoteName(level0name, dbmsType)}.{QuoteName(level1name, dbmsType)}.{QuoteName(level2name, dbmsType)} IS '{value}';");
+                    }
+                }
+                else if ((dbmsType == DBMSTypeEnums.MySQL || dbmsType == DBMSTypeEnums.MariaDB) &&
+                         string.IsNullOrEmpty(level2type) &&
+                         level1type.Equals("TABLE", StringComparison.OrdinalIgnoreCase))
+                {
+                    descriptionStatements.AppendLine($"ALTER TABLE {QuoteName(level0name, dbmsType)}.{QuoteName(level1name, dbmsType)} COMMENT = '{value}';");
                 }
             }
 
             return descriptionStatements.ToString();
         }
 
+        private static DBMSTypeEnums GetEffectiveDbmsType(DatabaseConnectionItem? connection)
+        {
+            if (connection == null)
+            {
+                return DBMSTypeEnums.Other;
+            }
+
+            if (connection.ConnectionType.Equals("SQL Server", StringComparison.OrdinalIgnoreCase))
+            {
+                return DBMSTypeEnums.SQLServer;
+            }
+
+            if (connection.ConnectionType.Equals("ODBC", StringComparison.OrdinalIgnoreCase) &&
+                connection.DBMSType == DBMSTypeEnums.SQLServer)
+            {
+                return DBMSTypeEnums.Other;
+            }
+
+            return connection.DBMSType;
+        }
+
+        private static string QuoteName(string? name, DBMSTypeEnums dbmsType)
+        {
+            string value = name ?? string.Empty;
+
+            return dbmsType switch
+            {
+                DBMSTypeEnums.MySQL or DBMSTypeEnums.MariaDB => $"`{value.Replace("`", "``")}`",
+                DBMSTypeEnums.PostgreSQL or DBMSTypeEnums.Oracle => $"\"{value.Replace("\"", "\"\"")}\"",
+                _ => $"[{value.Replace("]", "]]" )}]"
+            };
+        }
+
         /// <summary>
         /// Gets the insert statement from the DataTable.
         /// </summary>
         /// <returns>A string.</returns>
-        internal string GetInsertStatement(string tableName, bool nullForBlank)
+        internal string GetInsertStatement(string tableName, bool nullForBlank, DatabaseConnectionItem? connection = null)
         {
             var sb = new StringBuilder();
+            var dbmsType = GetEffectiveDbmsType(connection);
+            var isSqlServer = dbmsType == DBMSTypeEnums.SQLServer;
 
             if (string.IsNullOrWhiteSpace(tableName))
             {
@@ -195,6 +252,9 @@ namespace SQL_Document_Builder
                 tableName = string.Join(".", parts.Skip(1));
             }
             var objectName = new ObjectName(ObjectTypeEnums.Table, schemaName, tableName);
+            var quotedTableName = string.IsNullOrWhiteSpace(schemaName)
+                ? QuoteName(tableName, dbmsType)
+                : $"{QuoteName(schemaName, dbmsType)}.{QuoteName(tableName, dbmsType)}";
 
             // Infer types for each column using up to 1000 rows
             var inferredTypes = new Type[Data.Columns.Count];
@@ -203,42 +263,45 @@ namespace SQL_Document_Builder
                 inferredTypes[i] = InferColumnType(i, 1000);
             }
 
-            if (Properties.Settings.Default.AddDropStatement)
+            if (isSqlServer && Properties.Settings.Default.AddDropStatement)
             {
                 sb.AppendLine($"IF OBJECT_ID(N'{objectName.FullName}', 'U') IS NOT NULL");
                 sb.AppendLine($"\tDROP TABLE {objectName.FullName};");
                 sb.AppendLine("GO");
             }
 
-            // CREATE TABLE statement using inferred types
-            sb.AppendLine($"CREATE TABLE {objectName.FullName} (");
-            for (var i = 0; i < Data.Columns.Count; i++)
+            // CREATE TABLE statement using inferred types (SQL Server only)
+            if (isSqlServer)
             {
-                var column = Data.Columns[i];
-                var type = inferredTypes[i];
-                sb.Append($"    [{column.ColumnName}] ");
+                sb.AppendLine($"CREATE TABLE {objectName.FullName} (");
+                for (var i = 0; i < Data.Columns.Count; i++)
+                {
+                    var column = Data.Columns[i];
+                    var type = inferredTypes[i];
+                    sb.Append($"    [{column.ColumnName}] ");
 
-                string sqlType = type == typeof(int) ? "INT"
-                    : type == typeof(long) ? "BIGINT"
-                    : type == typeof(short) ? "SMALLINT"
-                    : type == typeof(byte) ? "TINYINT"
-                    : type == typeof(bool) ? "BIT"
-                    : type == typeof(decimal) ? "DECIMAL(18,4)"
-                    : type == typeof(double) ? "FLOAT"
-                    : type == typeof(float) ? "REAL"
-                    : type == typeof(DateTime) ? "DATETIME"
-                    : type == typeof(Guid) ? "UNIQUEIDENTIFIER"
-                    : $"NVARCHAR({(column.MaxLength > 0 ? column.MaxLength.ToString() : "255")})";
+                    string sqlType = type == typeof(int) ? "INT"
+                        : type == typeof(long) ? "BIGINT"
+                        : type == typeof(short) ? "SMALLINT"
+                        : type == typeof(byte) ? "TINYINT"
+                        : type == typeof(bool) ? "BIT"
+                        : type == typeof(decimal) ? "DECIMAL(18,4)"
+                        : type == typeof(double) ? "FLOAT"
+                        : type == typeof(float) ? "REAL"
+                        : type == typeof(DateTime) ? "DATETIME"
+                        : type == typeof(Guid) ? "UNIQUEIDENTIFIER"
+                        : $"NVARCHAR({(column.MaxLength > 0 ? column.MaxLength.ToString() : "255")})";
 
-                sb.Append(sqlType);
+                    sb.Append(sqlType);
 
-                if (i < Data.Columns.Count - 1)
-                    sb.AppendLine(",");
-                else
-                    sb.AppendLine();
+                    if (i < Data.Columns.Count - 1)
+                        sb.AppendLine(",");
+                    else
+                        sb.AppendLine();
+                }
+                sb.AppendLine(");");
+                sb.AppendLine("GO");
             }
-            sb.AppendLine(");");
-            sb.AppendLine("GO");
 
             // Batch size with safe fallback
             int batchSize = 20;
@@ -253,10 +316,10 @@ namespace SQL_Document_Builder
             {
                 var batchEnd = Math.Min(batchStart + batchSize, Data.Rows.Count);
 
-                sb.Append($"INSERT INTO {objectName.FullName} (");
+                sb.Append($"INSERT INTO {quotedTableName} (");
                 for (var i = 0; i < Data.Columns.Count; i++)
                 {
-                    sb.Append($"[{Data.Columns[i].ColumnName}]");
+                    sb.Append(QuoteName(Data.Columns[i].ColumnName, dbmsType));
                     if (i < Data.Columns.Count - 1)
                         sb.Append(", ");
                 }
@@ -301,7 +364,7 @@ namespace SQL_Document_Builder
                         else if (type == typeof(bool))
                         {
                             if (bool.TryParse(valueStr, out var bval))
-                                sb.Append(bval ? "1" : "0");
+                                sb.Append(dbmsType == DBMSTypeEnums.PostgreSQL ? (bval ? "TRUE" : "FALSE") : (bval ? "1" : "0"));
                             else
                                 sb.Append("NULL");
                         }
@@ -322,7 +385,7 @@ namespace SQL_Document_Builder
                             else
                             {
                                 var value = valueStr?.Replace("'", "''");
-                                sb.Append($"N'{value}'");
+                                sb.Append(isSqlServer ? $"N'{value}'" : $"'{value}'");
                             }
                         }
 
@@ -336,7 +399,10 @@ namespace SQL_Document_Builder
                         sb.AppendLine(";");
                 }
             }
-            sb.AppendLine("GO");
+            if (isSqlServer)
+            {
+                sb.AppendLine("GO");
+            }
             //sb.AppendLine($"SELECT * FROM {objectName.FullName}");
 
             return sb.ToString();

@@ -329,10 +329,13 @@ namespace SQL_Document_Builder
 
                 if (IsOdbcSelected())
                 {
+                    var selectedDsn = _odbcConnSettingBox.CanSave ? _odbcConnSettingBox.SelectedConnection : null;
                     _currentConnectionItem.ConnectionType = "ODBC";
                     _currentConnectionItem.DSN = _odbcConnSettingBox.DSN;
                     _currentConnectionItem.ServerName = _odbcConnSettingBox.DSN;
                     _currentConnectionItem.Database = string.Empty;
+                    _currentConnectionItem.DBMSType = selectedDsn?.DBMSType ?? DBMSTypeEnums.Other;
+                    _currentConnectionItem.Driver = selectedDsn?.Driver;
                     _currentConnectionItem.UserName = _odbcConnSettingBox.UserName;
                     _currentConnectionItem.Password = _odbcConnSettingBox.Password;
                     _currentConnectionItem.RememberPassword = _odbcConnSettingBox.RememberPassword;
@@ -376,10 +379,13 @@ namespace SQL_Document_Builder
 
             if (IsOdbcSelected())
             {
+                var selectedDsn = _odbcConnSettingBox.CanSave ? _odbcConnSettingBox.SelectedConnection : null;
                 connection.ConnectionType = "ODBC";
                 connection.DSN = _odbcConnSettingBox.DSN;
                 connection.ServerName = _odbcConnSettingBox.DSN;
                 connection.Database = string.Empty;
+                connection.DBMSType = selectedDsn?.DBMSType ?? DBMSTypeEnums.Other;
+                connection.Driver = selectedDsn?.Driver;
                 connection.UserName = _odbcConnSettingBox.UserName;
                 connection.Password = _odbcConnSettingBox.Password;
                 connection.RememberPassword = _odbcConnSettingBox.RememberPassword;
@@ -455,9 +461,12 @@ namespace SQL_Document_Builder
                     item.Name = connectionNameTextBox.Text;
                     if (IsOdbcSelected())
                     {
+                        var selectedDsn = _odbcConnSettingBox.CanSave ? _odbcConnSettingBox.SelectedConnection : null;
                         item.ConnectionType = "ODBC";
                         item.DSN = _odbcConnSettingBox.DSN;
                         item.ServerName = _odbcConnSettingBox.DSN;
+                        item.DBMSType = selectedDsn?.DBMSType ?? DBMSTypeEnums.Other;
+                        item.Driver = selectedDsn?.Driver;
                         item.UserName = _odbcConnSettingBox.UserName;
                         item.Password = _odbcConnSettingBox.Password;
                         item.RememberPassword = _odbcConnSettingBox.RememberPassword;

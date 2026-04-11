@@ -1,9 +1,10 @@
 ﻿using System;
-using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Xml;
+using Microsoft.Win32;
 
 namespace SQL_Document_Builder
 {
@@ -184,22 +185,86 @@ namespace SQL_Document_Builder
 
             foreach (var item in dsn.SystemDsns)
             {
+                var driver = GetDsnDriver(item, isSystem: true);
                 AvailableDSNs.Add(new DatabaseConnectionItem
                 {
                     ConnectionType = "ODBC",
                     Name = item,
-                    DBMSType = DBMSTypeEnums.Other
+                    Driver = driver,
+                    DBMSType = ResolveDbmsTypeFromOdbcDriver(driver)
                 });
             }
             foreach (var item in dsn.UserDsns)
             {
+                var driver = GetDsnDriver(item, isSystem: false);
                 AvailableDSNs.Add(new DatabaseConnectionItem
                 {
                     ConnectionType = "ODBC",
                     Name = item,
-                    DBMSType = DBMSTypeEnums.Other
+                    Driver = driver,
+                    DBMSType = ResolveDbmsTypeFromOdbcDriver(driver)
                 });
             }
+        }
+
+        private static string GetDsnDriver(string dsnName, bool isSystem)
+        {
+            if (string.IsNullOrWhiteSpace(dsnName))
+            {
+                return string.Empty;
+            }
+
+            var hive = isSystem ? Registry.LocalMachine : Registry.CurrentUser;
+
+            try
+            {
+                using var dataSourcesKey = hive.OpenSubKey(@"Software\ODBC\ODBC.INI\ODBC Data Sources");
+                var driver = dataSourcesKey?.GetValue(dsnName)?.ToString();
+                if (!string.IsNullOrWhiteSpace(driver))
+                {
+                    return driver;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to read ODBC Data Sources registry for DSN '{dsnName}': {ex.Message}");
+            }
+
+            try
+            {
+                using var dsnKey = hive.OpenSubKey($@"Software\ODBC\ODBC.INI\{dsnName}");
+                return dsnKey?.GetValue("Driver")?.ToString() ?? string.Empty;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to read ODBC registry key for DSN '{dsnName}': {ex.Message}");
+                return string.Empty;
+            }
+        }
+
+        private static DBMSTypeEnums ResolveDbmsTypeFromOdbcDriver(string? driver)
+        {
+            if (string.IsNullOrWhiteSpace(driver))
+            {
+                return DBMSTypeEnums.Other;
+            }
+
+            var name = driver.ToLowerInvariant();
+
+            if (name.Contains("mariadb")) return DBMSTypeEnums.MariaDB;
+            if (name.Contains("mysql")) return DBMSTypeEnums.MySQL;
+            if (name.Contains("postgres") || name.Contains("pgsql") || name.Contains("psql")) return DBMSTypeEnums.PostgreSQL;
+            if (name.Contains("oracle")) return DBMSTypeEnums.Oracle;
+            if (name.Contains("sqlite")) return DBMSTypeEnums.SQLite;
+            if (name.Contains("mongo")) return DBMSTypeEnums.MongoDB;
+            if (name.Contains("redis")) return DBMSTypeEnums.Redis;
+            if (name.Contains("cassandra")) return DBMSTypeEnums.Cassandra;
+            if (name.Contains("sql server") || name.Contains("msodbcsql") || name.Contains("sqlncli") || name.Contains("native client"))
+            {
+                return DBMSTypeEnums.SQLServer;
+            }
+
+            return DBMSTypeEnums.Other;
         }
 
         /// <summary>

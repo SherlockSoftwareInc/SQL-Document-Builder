@@ -62,10 +62,12 @@ namespace SQL_Document_Builder
 
             if (Properties.Settings.Default.AddDropStatement)
             {
-                // Add drop synonym statement
-                createScript.AppendLine($"IF OBJECT_ID(N'{dbObject.FullName}', 'SN') IS NOT NULL");
-                createScript.AppendLine($"\tDROP SYNONYM {dbObject.FullName};");
-                createScript.AppendLine("GO");
+                AppendConditionalDropStatement(
+                    createScript,
+                    connection,
+                    $"OBJECT_ID(N'{dbObject.FullName}', 'SN') IS NOT NULL",
+                    $"DROP SYNONYM {dbObject.FullName}",
+                    $"DROP SYNONYM IF EXISTS {dbObject.FullName}");
             }
 
             string baseObjectName = await SchemaMetadataProviderContext.Current.GetSynonymBaseObjectAsync(dbObject, connection.ConnectionString);
@@ -74,7 +76,7 @@ namespace SQL_Document_Builder
 
             // Add the CREATE SYNONYM statement
             createScript.AppendLine($"CREATE SYNONYM {dbObject.FullName} FOR {baseObjectName};");
-            createScript.AppendLine("GO");
+            createScript.AppendLine(GetBatchSeparator(connection));
 
             return createScript.ToString();
         }
@@ -98,91 +100,67 @@ namespace SQL_Document_Builder
                 if (dt != null && dt.Rows.Count > 0)
                 {
                     // Get the column names
-                    var columnNames = string.Join(", ", dt.Columns.Cast<DataColumn>().Select(c => $"[{c.ColumnName}]"));
+                    var columnNames = string.Join(", ", dt.Columns.Cast<DataColumn>().Select(c => QuoteIdentifier(c.ColumnName, connection)));
+                    var qualifiedTableName = QuoteQualifiedName(tableName, connection);
 
-                    int rowCount = 0;
-                    int batchCount = 0;
+                    var identityOverrideClause = GetIdentityInsertOverrideClause(connection, hasIdentity);
+                    bool isOracle = IsOracleConnection(connection);
 
-                    if (hasIdentity)
+                    if (hasIdentity && IsSqlServerConnection(connection))
                     {
                         // add SET IDENTITY_INSERT  ON;
-                        sb.AppendLine($"SET IDENTITY_INSERT {tableName} ON;");
+                        sb.AppendLine($"SET IDENTITY_INSERT {qualifiedTableName} ON;");
                     }
 
-                    int batchSize = Properties.Settings.Default.InsertBatchRows;
-                    if (batchSize <= 0)
+                    if (isOracle)
                     {
-                        batchSize = 20; // Default batch size
-                    }
-
-                    foreach (DataRow row in dt.Rows)
-                    {
-                        // Start a new batch every batchSize rows
-                        if (rowCount % batchSize == 0)
+                        foreach (DataRow row in dt.Rows)
                         {
-                            if (batchCount > 0)
-                            {
-                                // Remove the trailing comma from the previous batch
-                                sb.Length -= 3; // Remove ",\n"
-                                sb.AppendLine(";");
-                            }
-                            sb.AppendLine($"INSERT INTO {tableName} ({columnNames}) VALUES");
-                            batchCount++;
+                            var rowValues = BuildInsertRowValues(row, dt.Columns, connection);
+                            sb.AppendLine($"INSERT INTO {qualifiedTableName} ({columnNames}){identityOverrideClause} VALUES ({rowValues});");
+                        }
+                    }
+                    else
+                    {
+                        int rowCount = 0;
+                        int batchCount = 0;
+                        int batchSize = Properties.Settings.Default.InsertBatchRows;
+                        if (batchSize <= 0)
+                        {
+                            batchSize = 20; // Default batch size
                         }
 
-                        sb.Append("\t(");
-                        for (int i = 0; i < dt.Columns.Count; i++)
+                        foreach (DataRow row in dt.Rows)
                         {
-                            var value = row[i];
-                            var type = dt.Columns[i].DataType;
-
-                            if (value == DBNull.Value)
+                            // Start a new batch every batchSize rows
+                            if (rowCount % batchSize == 0)
                             {
-                                sb.Append("NULL");
-                            }
-                            else if (type == typeof(string))
-                            {
-                                sb.Append("N'" + value.ToString().Replace("'", "''") + "'");
-                            }
-                            else if (type == typeof(DateTime))
-                            {
-                                sb.Append("'" + ((DateTime)value).ToString("yyyy-MM-dd HH:mm:ss") + "'");
-                            }
-                            else if (type == typeof(Int16) || type == typeof(Int32) || type == typeof(Int64) ||
-                                     type == typeof(decimal) || type == typeof(double) || type == typeof(float) ||
-                                     type == typeof(byte))
-                            {
-                                sb.Append(Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture));
-                            }
-                            else if (type == typeof(bool))
-                            {
-                                sb.Append((bool)value ? "1" : "0");
-                            }
-                            else
-                            {
-                                sb.Append("N'" + value.ToString().Replace("'", "''") + "'");
+                                if (batchCount > 0)
+                                {
+                                    // Remove the trailing comma from the previous batch
+                                    sb.Length -= 3; // Remove ",\n"
+                                    sb.AppendLine(";");
+                                }
+                                sb.AppendLine($"INSERT INTO {qualifiedTableName} ({columnNames}){identityOverrideClause} VALUES");
+                                batchCount++;
                             }
 
-                            if (i < dt.Columns.Count - 1)
-                            {
-                                sb.Append(", ");
-                            }
+                            var rowValues = BuildInsertRowValues(row, dt.Columns, connection);
+                            sb.AppendLine($"\t({rowValues}),");
+                            rowCount++;
                         }
-                        sb.AppendLine("),");
 
-                        rowCount++;
+                        // Remove the trailing comma from the last row in the last batch
+                        if (rowCount > 0)
+                        {
+                            sb.Length -= 3; // Remove ",\n"
+                            sb.AppendLine(";");
+                        }
                     }
 
-                    // Remove the trailing comma from the last row in the last batch
-                    if (sb.Length > 0)
+                    if (hasIdentity && IsSqlServerConnection(connection))
                     {
-                        sb.Length -= 3; // Remove ",\n"
-                        sb.AppendLine(";");
-                    }
-
-                    if (hasIdentity)
-                    {
-                        sb.AppendLine($"SET IDENTITY_INSERT {tableName} OFF;");
+                        sb.AppendLine($"SET IDENTITY_INSERT {qualifiedTableName} OFF;");
                     }
                 }
             }
@@ -206,7 +184,8 @@ namespace SQL_Document_Builder
                 throw new ArgumentException("Invalid table name or connection.");
             }
 
-            var sql = $"select * from {tableName.FullName}";
+            var sourceTableName = QuoteQualifiedName(tableName.FullNameNoQuote, connection);
+            var sql = $"select * from {sourceTableName}";
             // check if the SQL statement is a valid SELECT statement to generate JSON data
             var provider = DatabaseAccessProviderFactory.GetProvider(connection);
             if (!await provider.IsValidSelectStatementAsync(sql, connection.ConnectionString))
@@ -216,7 +195,7 @@ namespace SQL_Document_Builder
             }
 
             var hasIdentity = await SchemaMetadataProviderContext.Current.HasIdentityColumnAsync(tableName, connection.ConnectionString);
-            return await QueryDataToInsertStatementAsync(sql, connection, tableName.FullName, hasIdentity);
+            return await QueryDataToInsertStatementAsync(sql, connection, tableName.FullNameNoQuote, hasIdentity);
         }
 
         /// <summary>
@@ -432,19 +411,21 @@ GO";
             // Add the header
             createScript.AppendLine($"/****** Object:  Function {objectName.FullName} ******/");
 
-            // Use IF EXISTS with sys.objects and type IN ('FN','IF','TF')
-            createScript.AppendLine(
-                $"IF EXISTS (SELECT 1 FROM sys.objects WHERE object_id = OBJECT_ID(N'{objectName.FullName}') AND type IN ('FN','IF','TF'))");
-            createScript.AppendLine($"\tDROP FUNCTION {objectName.FullName};");
-            createScript.AppendLine($"GO");
+            AppendConditionalDropStatement(
+                createScript,
+                connection,
+                $"EXISTS (SELECT 1 FROM sys.objects WHERE object_id = OBJECT_ID(N'{objectName.FullName}') AND type IN ('FN','IF','TF'))",
+                $"DROP FUNCTION {objectName.FullName}",
+                $"DROP FUNCTION IF EXISTS {objectName.FullName}");
 
             var script = await GetDefinitionAsync(objectName, connection);
             if (string.IsNullOrEmpty(script))
             {
                 return string.Empty;
             }
+
             createScript.Append(script);
-            createScript.AppendLine($"GO");
+            createScript.AppendLine(GetBatchSeparator(connection));
             return createScript.ToString();
         }
 
@@ -462,10 +443,12 @@ GO";
 
             if (Properties.Settings.Default.AddDropStatement)
             {
-                // Add drop table statement
-                createScript.AppendLine($"IF OBJECT_ID(N'{objectName.FullName}', 'P') IS NOT NULL");
-                createScript.AppendLine($"\tDROP PROCEDURE {objectName.FullName};");
-                createScript.AppendLine($"GO");
+                AppendConditionalDropStatement(
+                    createScript,
+                    connection,
+                    $"OBJECT_ID(N'{objectName.FullName}', 'P') IS NOT NULL",
+                    $"DROP PROCEDURE {objectName.FullName}",
+                    $"DROP PROCEDURE IF EXISTS {objectName.FullName}");
             }
 
             var script = await GetDefinitionAsync(objectName, connection);
@@ -476,7 +459,7 @@ GO";
             }
 
             createScript.Append(script);
-            createScript.AppendLine($"GO");
+            createScript.AppendLine(GetBatchSeparator(connection));
             return createScript.ToString();
         }
 
@@ -502,9 +485,12 @@ GO";
             // Add drop table statement
             if (Properties.Settings.Default.AddDropStatement)
             {
-                createScript.AppendLine($"IF OBJECT_ID(N'{objectName.FullName}', 'U') IS NOT NULL");
-                createScript.AppendLine($"\tDROP TABLE {objectName.FullName};");
-                createScript.AppendLine($"GO");
+                AppendConditionalDropStatement(
+                    createScript,
+                    connection,
+                    $"OBJECT_ID(N'{objectName.FullName}', 'U') IS NOT NULL",
+                    $"DROP TABLE {objectName.FullName}",
+                    $"DROP TABLE IF EXISTS {objectName.FullName}");
             }
 
             // Get the primary key column names that the Ord ends with "🗝"
@@ -557,7 +543,7 @@ GO";
                 createScript.AppendLine($"\tCONSTRAINT PK_{objectName.Schema}_{objectName.Name} PRIMARY KEY ({primaryKeyColumns})");
             }
             createScript.AppendLine(");");
-            createScript.AppendLine("GO");
+            createScript.AppendLine(GetBatchSeparator(connection));
 
             // add the foreign key constraints
             var foreignKeyConstraints = await table.GetForeignKeyConstraintsScript();
@@ -599,7 +585,7 @@ GO";
             if (!string.IsNullOrEmpty(triggerScript))
             {
                 // if the createScript does not ended with a line of "GO", add it
-                AddGOStatement(createScript);
+                AddBatchSeparatorStatement(createScript, connection);
 
                 // remove the new line at the end of the script
                 triggerScript = triggerScript.TrimEnd('\r', '\n');
@@ -607,7 +593,7 @@ GO";
             }
 
             // add GO statement
-            AddGOStatement(createScript);
+            AddBatchSeparatorStatement(createScript, connection);
             //if (!createScript.ToString().EndsWith(Environment.NewLine + "GO" + Environment.NewLine, StringComparison.OrdinalIgnoreCase))
             //{
             //    createScript.AppendLine($"GO");
@@ -617,16 +603,175 @@ GO";
         }
 
         /// <summary>
-        /// Adds GO statement to the script if the script does not already end with it.
+        /// Adds the DBMS batch separator to the script if the script does not already end with it.
         /// </summary>
         /// <param name="sb">The sb.</param>
-        private static void AddGOStatement(StringBuilder sb)
+        private static void AddBatchSeparatorStatement(StringBuilder sb, DatabaseConnectionItem connection)
         {
-            // Add a "GO" statement to separate batches in the script
-            if (!sb.ToString().EndsWith(Environment.NewLine + "GO" + Environment.NewLine, StringComparison.OrdinalIgnoreCase))
+            var batchSeparator = GetBatchSeparator(connection);
+            if (!sb.ToString().EndsWith(Environment.NewLine + batchSeparator + Environment.NewLine, StringComparison.OrdinalIgnoreCase))
             {
-                sb.AppendLine($"GO");
+                sb.AppendLine(batchSeparator);
             }
+        }
+
+        private static string GetBatchSeparator(DatabaseConnectionItem connection)
+        {
+            bool isSqlServer = IsSqlServerConnection(connection);
+
+            return isSqlServer ? "GO" : ";";
+        }
+
+        private static bool IsSqlServerConnection(DatabaseConnectionItem connection)
+        {
+            return connection.ConnectionType.Equals("SQL Server", StringComparison.OrdinalIgnoreCase) ||
+                   (!connection.ConnectionType.Equals("ODBC", StringComparison.OrdinalIgnoreCase) &&
+                    connection.DBMSType == DBMSTypeEnums.SQLServer);
+        }
+
+        private static bool IsPostgreSqlConnection(DatabaseConnectionItem connection)
+        {
+            return connection.DBMSType == DBMSTypeEnums.PostgreSQL ||
+                   connection.ConnectionType.Equals("PostgreSQL", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsOracleConnection(DatabaseConnectionItem connection)
+        {
+            return connection.DBMSType == DBMSTypeEnums.Oracle ||
+                   connection.ConnectionType.Equals("Oracle", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static string GetIdentityInsertOverrideClause(DatabaseConnectionItem connection, bool hasIdentity)
+        {
+            if (!hasIdentity)
+            {
+                return string.Empty;
+            }
+
+            if (IsPostgreSqlConnection(connection) || IsOracleConnection(connection))
+            {
+                return " OVERRIDING SYSTEM VALUE";
+            }
+
+            return string.Empty;
+        }
+
+        private static string BuildInsertRowValues(DataRow row, DataColumnCollection columns, DatabaseConnectionItem connection)
+        {
+            var values = new List<string>(columns.Count);
+
+            for (int i = 0; i < columns.Count; i++)
+            {
+                values.Add(FormatInsertValue(row[i], columns[i].DataType, connection));
+            }
+
+            return string.Join(", ", values);
+        }
+
+        private static string FormatInsertValue(object value, Type type, DatabaseConnectionItem connection)
+        {
+            if (value == DBNull.Value)
+            {
+                return "NULL";
+            }
+
+            if (type == typeof(string))
+            {
+                return BuildStringLiteral(value.ToString(), connection);
+            }
+
+            if (type == typeof(DateTime))
+            {
+                return "'" + ((DateTime)value).ToString("yyyy-MM-dd HH:mm:ss") + "'";
+            }
+
+            if (type == typeof(Int16) || type == typeof(Int32) || type == typeof(Int64) ||
+                type == typeof(decimal) || type == typeof(double) || type == typeof(float) ||
+                type == typeof(byte))
+            {
+                return Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture);
+            }
+
+            if (type == typeof(bool))
+            {
+                if (IsPostgreSqlConnection(connection))
+                {
+                    return (bool)value ? "TRUE" : "FALSE";
+                }
+
+                return (bool)value ? "1" : "0";
+            }
+
+            return BuildStringLiteral(value.ToString(), connection);
+        }
+
+        private static string BuildStringLiteral(string? value, DatabaseConnectionItem connection)
+        {
+            var escapedValue = (value ?? string.Empty).Replace("'", "''");
+            var prefix = IsSqlServerConnection(connection) ? "N" : string.Empty;
+            return $"{prefix}'{escapedValue}'";
+        }
+
+        private static string QuoteQualifiedName(string name, DatabaseConnectionItem connection)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                return name;
+            }
+
+            return string.Join(".", name.Split('.').Select(part => QuoteIdentifier(part, connection)));
+        }
+
+        private static string QuoteIdentifier(string identifier, DatabaseConnectionItem connection)
+        {
+            string value = identifier.Trim();
+            if (value.Length >= 2)
+            {
+                bool isBracketQuoted = value[0] == '[' && value[^1] == ']';
+                bool isDoubleQuoted = value[0] == '"' && value[^1] == '"';
+                bool isBacktickQuoted = value[0] == '`' && value[^1] == '`';
+                if (isBracketQuoted || isDoubleQuoted || isBacktickQuoted)
+                {
+                    value = value[1..^1];
+                }
+            }
+
+            if (IsSqlServerConnection(connection))
+            {
+                return $"[{value.Replace("]", "]]" )}]";
+            }
+
+            if (connection.DBMSType == DBMSTypeEnums.MySQL || connection.DBMSType == DBMSTypeEnums.MariaDB)
+            {
+                return $"`{value.Replace("`", "``")}`";
+            }
+
+            if (IsPostgreSqlConnection(connection) || IsOracleConnection(connection))
+            {
+                return $"\"{value.Replace("\"", "\"\"")}\"";
+            }
+
+            return $"[{value.Replace("]", "]]" )}]";
+        }
+
+        private static void AppendConditionalDropStatement(
+            StringBuilder script,
+            DatabaseConnectionItem connection,
+            string sqlServerCondition,
+            string sqlServerDropStatement,
+            string nonSqlServerDropStatement)
+        {
+            if (IsSqlServerConnection(connection))
+            {
+                script.AppendLine($"IF {sqlServerCondition}");
+                script.AppendLine($"\t{sqlServerDropStatement};");
+            }
+            else
+            {
+                script.AppendLine($"{nonSqlServerDropStatement};");
+            }
+
+            script.AppendLine(GetBatchSeparator(connection));
         }
 
         /// <summary>
@@ -644,10 +789,12 @@ GO";
 
             if (Properties.Settings.Default.AddDropStatement)
             {
-                // Add drop table statement
-                createScript.AppendLine($"IF OBJECT_ID(N'{objectName.FullName}', 'TR') IS NOT NULL");
-                createScript.AppendLine($"\tDROP TRIGGER {objectName.FullName};");
-                createScript.AppendLine($"GO");
+                AppendConditionalDropStatement(
+                    createScript,
+                    connection,
+                    $"OBJECT_ID(N'{objectName.FullName}', 'TR') IS NOT NULL",
+                    $"DROP TRIGGER {objectName.FullName}",
+                    $"DROP TRIGGER IF EXISTS {objectName.FullName}");
             }
 
             var script = await SchemaMetadataProviderContext.Current.GetObjectDefinitionAsync(objectName, connection.ConnectionString);
@@ -658,7 +805,7 @@ GO";
             }
 
             createScript.Append(script);
-            createScript.AppendLine($"GO");
+            createScript.AppendLine(GetBatchSeparator(connection));
             return createScript.ToString();
         }
 
@@ -709,20 +856,23 @@ GO";
                 // Add drop statement if configured
                 if (Properties.Settings.Default.AddDropStatement)
                 {
-                    sb.AppendLine($"IF OBJECT_ID(N'{schema}.{triggerName}', 'TR') IS NOT NULL");
-                    sb.AppendLine($"\tDROP TRIGGER [{schema}].[{triggerName}];");
-                    sb.AppendLine("GO");
+                    AppendConditionalDropStatement(
+                        sb,
+                        connection,
+                        $"OBJECT_ID(N'[{schema}].[{triggerName}]', 'TR') IS NOT NULL",
+                        $"DROP TRIGGER [{schema}].[{triggerName}]",
+                        $"DROP TRIGGER IF EXISTS [{schema}].[{triggerName}]");
                 }
 
                 // Add the trigger definition
                 sb.Append(definition.TrimEnd('\r', '\n', ' ', '\t') + Environment.NewLine);
-                sb.AppendLine("GO");
+                sb.AppendLine(GetBatchSeparator(connection));
 
                 // Optionally, add DISABLE TRIGGER if the trigger is disabled
                 if (isDisabled)
                 {
                     sb.AppendLine($"ALTER TABLE [{schema}].[{parentName}] DISABLE TRIGGER [{triggerName}];");
-                    sb.AppendLine("GO");
+                    sb.AppendLine(GetBatchSeparator(connection));
                 }
             }
 
@@ -744,9 +894,12 @@ GO";
             // Add drop table statement
             if (Properties.Settings.Default.AddDropStatement)
             {
-                createScript.AppendLine($"IF OBJECT_ID(N'{objectName.FullName}', 'V') IS NOT NULL");
-                createScript.AppendLine($"\tDROP VIEW {objectName.FullName};");
-                createScript.AppendLine($"GO");
+                AppendConditionalDropStatement(
+                    createScript,
+                    connection,
+                    $"OBJECT_ID(N'{objectName.FullName}', 'V') IS NOT NULL",
+                    $"DROP VIEW {objectName.FullName}",
+                    $"DROP VIEW IF EXISTS {objectName.FullName}");
             }
 
             var script = await GetDefinitionAsync(objectName, connection);
@@ -765,7 +918,7 @@ GO";
                 createScript.AppendLine(indexScript);
             }
 
-            createScript.AppendLine($"GO");
+            createScript.AppendLine(GetBatchSeparator(connection));
             return createScript.ToString();
         }
 
