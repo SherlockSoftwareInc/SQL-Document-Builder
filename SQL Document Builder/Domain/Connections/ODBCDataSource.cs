@@ -36,7 +36,7 @@ namespace SQL_Document_Builder
                         await conn.OpenAsync(cancellationToken);
                         using CancellationTokenRegistration crt = cancellationToken.Register(() => cmd.Cancel());
                         using var dr = await cmd.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
-                        dt.Load(dr);
+                        dt = CreateDataTableWithoutConstraints(dr);
                         dr.Close();
                     }
                 }
@@ -75,21 +75,20 @@ namespace SQL_Document_Builder
                     cmd.CommandText = string.Format("SELECT * FROM {0} WHERE 0=1", tableName);
                     conn.Open();
 
-                    var dat = new OdbcDataAdapter(cmd);
-                    var ds = new DataSet();
-                    dat.Fill(ds);
+                    using var reader = cmd.ExecuteReader(CommandBehavior.SchemaOnly);
+                    var dt = CreateDataTableWithoutConstraints(reader);
 
-                    if (ds.Tables.Count > 0)
+                    if (dt.Columns.Count > 0)
                     {
-                        for (int i = 0; i < ds.Tables[0].Columns.Count; i++)
+                        for (int i = 0; i < dt.Columns.Count; i++)
                         {
                             if (i == 0)
                             {
-                                sb.Append("SELECT ").AppendLine(ds.Tables[0].Columns[i].ColumnName.QuotedName());
+                                sb.Append("SELECT ").AppendLine(dt.Columns[i].ColumnName.QuotedName());
                             }
                             else
                             {
-                                sb.Append("      ,").AppendLine(ds.Tables[0].Columns[i].ColumnName.QuotedName());
+                                sb.Append("      ,").AppendLine(dt.Columns[i].ColumnName.QuotedName());
                             }
                         }
                     }
@@ -108,6 +107,44 @@ namespace SQL_Document_Builder
                 }
             }
             return sb.ToString();
+        }
+
+        internal static DataTable CreateDataTableWithoutConstraints(IDataReader reader)
+        {
+            var table = new DataTable();
+            var columnNameCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+            for (var i = 0; i < reader.FieldCount; i++)
+            {
+                var baseName = reader.GetName(i);
+                if (string.IsNullOrWhiteSpace(baseName))
+                {
+                    baseName = $"Column{i + 1}";
+                }
+
+                if (!columnNameCounts.TryGetValue(baseName, out var seen))
+                {
+                    seen = 0;
+                }
+
+                var finalName = seen == 0 ? baseName : $"{baseName}_{seen + 1}";
+                columnNameCounts[baseName] = seen + 1;
+
+                var dataType = reader.GetFieldType(i) ?? typeof(object);
+                table.Columns.Add(new DataColumn(finalName, dataType)
+                {
+                    AllowDBNull = true
+                });
+            }
+
+            var values = new object[reader.FieldCount];
+            while (reader.Read())
+            {
+                reader.GetValues(values);
+                table.Rows.Add((object[])values.Clone());
+            }
+
+            return table;
         }
 
         /// <summary>

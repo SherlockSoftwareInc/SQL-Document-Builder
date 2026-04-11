@@ -1,5 +1,7 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using Microsoft.Win32;
 
 namespace SQL_Document_Builder
 {
@@ -65,26 +67,15 @@ namespace SQL_Document_Builder
         {
             try
             {
-                // get system dsn's
-                Microsoft.Win32.RegistryKey reg = (Microsoft.Win32.Registry.LocalMachine).OpenSubKey("Software");
+                var registryView = Environment.Is64BitOperatingSystem ? RegistryView.Registry64 : RegistryView.Default;
+                using var baseKey = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, registryView);
+                using var reg = baseKey.OpenSubKey(@"Software\ODBC\ODBC.INI\ODBC Data Sources");
+
                 if (reg != null)
                 {
-                    reg = reg.OpenSubKey("ODBC");
-                    if (reg != null)
+                    foreach (string sName in reg.GetValueNames())
                     {
-                        reg = reg.OpenSubKey("ODBC.INI");
-                        if (reg != null)
-                        {
-                            reg = reg.OpenSubKey("ODBC Data Sources");
-                            if (reg != null)
-                            {
-                                // Get all DSN entries defined in DSN_LOC_IN_REGISTRY.
-                                foreach (string sName in reg.GetValueNames())
-                                {
-                                    _systemDsn.Add(sName);
-                                }
-                            }
-                        }
+                        _systemDsn.Add(sName);
                     }
                 }
             }
@@ -99,25 +90,15 @@ namespace SQL_Document_Builder
             // get user dsn's
             try
             {
-                Microsoft.Win32.RegistryKey reg = (Microsoft.Win32.Registry.CurrentUser).OpenSubKey("Software");
+                var registryView = Environment.Is64BitOperatingSystem ? RegistryView.Registry64 : RegistryView.Default;
+                using var baseKey = RegistryKey.OpenBaseKey(RegistryHive.CurrentUser, registryView);
+                using var reg = baseKey.OpenSubKey(@"Software\ODBC\ODBC.INI\ODBC Data Sources");
+
                 if (reg != null)
                 {
-                    reg = reg.OpenSubKey("ODBC");
-                    if (reg != null)
+                    foreach (string sName in reg.GetValueNames())
                     {
-                        reg = reg.OpenSubKey("ODBC.INI");
-                        if (reg != null)
-                        {
-                            reg = reg.OpenSubKey("ODBC Data Sources");
-                            if (reg != null)
-                            {
-                                // Get all DSN entries defined in DSN_LOC_IN_REGISTRY.
-                                foreach (string sName in reg.GetValueNames())
-                                {
-                                    _userDsn.Add(sName);
-                                }
-                            }
-                        }
+                        _userDsn.Add(sName);
                     }
                 }
             }
