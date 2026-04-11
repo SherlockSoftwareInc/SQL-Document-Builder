@@ -31,6 +31,7 @@ namespace SQL_Document_Builder
         /// The database connections.
         /// </summary>
         private readonly DatabaseConnections _connections = new();
+
         private readonly DBSchema _dbSchema = new();
 
         private DatabaseConnectionItem? _currentConnection;
@@ -1069,7 +1070,7 @@ namespace SQL_Document_Builder
         {
             if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
 
-            List<ObjectName>? selectedObjects = SelectObjects();
+            List<ObjectName>? selectedObjects = SelectObjects(false);
 
             if (selectedObjects == null || selectedObjects.Count == 0) { return; }
 
@@ -1225,7 +1226,7 @@ namespace SQL_Document_Builder
         {
             if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
 
-            List<ObjectName>? selectedObjects = SelectObjects();
+            List<ObjectName>? selectedObjects = SelectObjects(false);
 
             if (selectedObjects == null || selectedObjects.Count == 0)
             {
@@ -1988,7 +1989,7 @@ namespace SQL_Document_Builder
         {
             if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
 
-            List<ObjectName>? selectedObjects = SelectObjects();
+            List<ObjectName>? selectedObjects = SelectObjects(false);
 
             if (selectedObjects == null || selectedObjects.Count == 0) return;
 
@@ -2083,10 +2084,21 @@ namespace SQL_Document_Builder
                 _previousSelectedObject = selectedObj;
                 _selectedObject = selectedObj;
                 await definitionPanel.OpenAsync(_selectedObject, _currentConnection);
+
+                // trun off AI description if it is not table or view
+                if (_selectedObject.ObjectType != ObjectName.ObjectTypeEnums.Table && _selectedObject.ObjectType != ObjectName.ObjectTypeEnums.View)
+                {
+                    aIAssistantToolStripMenuItem.Enabled = false;
+                }
+                else
+                {
+                    aIAssistantToolStripMenuItem.Enabled = true;
+                }
             }
             else
             {
                 await definitionPanel.OpenAsync(null, _currentConnection);
+                aIAssistantToolStripMenuItem.Enabled = false;
             }
         }
 
@@ -2998,7 +3010,7 @@ namespace SQL_Document_Builder
         /// Selects the objects.
         /// </summary>
         /// <returns>A List&lt;ObjectName&gt;? .</returns>
-        private List<ObjectName>? SelectObjects()
+        private List<ObjectName>? SelectObjects(bool tableViewOnly)
         {
             if (!GetConnectionString(out string connectionString)) return []; // If we don't have a connection string, exit early
 
@@ -3011,6 +3023,7 @@ namespace SQL_Document_Builder
             {
                 ConnectionString = connectionString,
                 SchemaCache = _dbSchema,
+                TableViewOnly = tableViewOnly
             };
             if (form.ShowDialog() == DialogResult.OK)
             {
@@ -4158,7 +4171,7 @@ namespace SQL_Document_Builder
         {
             if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
 
-            List<ObjectName>? selectedObjects = SelectObjects();
+            List<ObjectName>? selectedObjects = SelectObjects(false);
 
             if (selectedObjects == null || selectedObjects.Count == 0) return;  // If no objects are selected, exit early
 
@@ -4384,7 +4397,7 @@ namespace SQL_Document_Builder
         {
             if (!GetConnectionString(out string connectionString)) return; // If we don't have a connection string, exit early
 
-            List<ObjectName>? selectedObjects = SelectObjects();
+            List<ObjectName>? selectedObjects = SelectObjects(false);
 
             if (selectedObjects == null || selectedObjects.Count == 0)
             {
@@ -4506,7 +4519,7 @@ namespace SQL_Document_Builder
             if (saveFileDialog.ShowDialog() == DialogResult.OK)
             {
                 // get the selected objects
-                List<ObjectName>? selectedObjects = SelectObjects();
+                List<ObjectName>? selectedObjects = SelectObjects(false);
                 if (selectedObjects == null || selectedObjects.Count == 0)
                 {
                     Common.MsgBox("No objects selected to export descriptions.", MessageBoxIcon.Warning);
@@ -5310,7 +5323,7 @@ namespace SQL_Document_Builder
 
         /// <summary>
         /// Handles the click event of the batch describe tool strip menu item.
-        /// Batch generates descriptions for multiple database objects at once using AI, 
+        /// Batch generates descriptions for multiple database objects at once using AI,
         /// and allows the user to review and edit the generated descriptions before saving them to the database.
         /// </summary>
         /// <param name="sender">The sender.</param>
@@ -5328,7 +5341,7 @@ namespace SQL_Document_Builder
 
             if (!AISettingsReady()) return;
 
-            List<ObjectName>? selectedObjects = SelectObjects();
+            List<ObjectName>? selectedObjects = SelectObjects(true);
 
             if (selectedObjects == null || selectedObjects.Count == 0)
             {
@@ -5387,7 +5400,6 @@ namespace SQL_Document_Builder
                 objectsTabControl.Enabled = true;
                 definitionPanel.Enabled = true;
             }
-
         }
 
         /// <summary>

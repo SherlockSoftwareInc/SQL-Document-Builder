@@ -46,7 +46,8 @@ namespace SQL_Document_Builder
                     AppendColumnDescriptionScript(sb, objectName, dbmsType, column, columnDescription, useExtendedProperties);
                 }
             }
-            else
+            else if ((objectName.ObjectType == ObjectTypeEnums.StoredProcedure || objectName.ObjectType == ObjectTypeEnums.Function)
+                && dbmsType == DBMSTypeEnums.SQLServer)
             {
                 var parameterNames = GetParameterNames(await schemaCache.GetObjectParametersAsync(objectName));
                 foreach (var parameterName in parameterNames)

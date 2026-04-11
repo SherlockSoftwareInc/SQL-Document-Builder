@@ -37,34 +37,31 @@ namespace SQL_Document_Builder
         {
             InitializeComponent();
             columnDefDataGridView.EditMode = DataGridViewEditMode.EditOnKeystrokeOrF2;
-            for (int i = 0; i < columnDefDataGridView.Columns.Count; i++)
-            {
-                var column = columnDefDataGridView.Columns[i];
-                if (column.DataPropertyName == "Description")
-                {
-                    column.ReadOnly = false;
-                }
-                else
-                {
-                    column.ReadOnly = true;
-                }
-            }
+            SetDescriptionColumnEditState(columnDefDataGridView, true);
 
             parameterGridView.EditMode = DataGridViewEditMode.EditOnKeystrokeOrF2;
-            for (int i = 0; i < parameterGridView.Columns.Count; i++)
-            {
-                var column = parameterGridView.Columns[i];
-                if (column.DataPropertyName == "Description")
-                {
-                    column.ReadOnly = false;
-                }
-                else
-                {
-                    column.ReadOnly = true;
-                }
-            }
+            SetDescriptionColumnEditState(parameterGridView, true);
 
             definitionTextBox.DocumentType = SqlEditBox.DocumentTypeEnums.Sql;
+        }
+
+        private static void SetDescriptionColumnEditState(DataGridView gridView, bool canEditDescription)
+        {
+            for (int i = 0; i < gridView.Columns.Count; i++)
+            {
+                var column = gridView.Columns[i];
+                column.ReadOnly = column.DataPropertyName != "Description" || !canEditDescription;
+            }
+        }
+
+        private bool CanEditDescriptionForCurrentObjectType()
+        {
+            if (_dbObject.ObjectType == ObjectName.ObjectTypeEnums.Table || _dbObject.ObjectType == ObjectName.ObjectTypeEnums.View)
+            {
+                return true;
+            }
+
+            return Connection?.DBMSType == DBMSTypeEnums.SQLServer;
         }
 
         /// <summary>
@@ -216,6 +213,14 @@ namespace SQL_Document_Builder
         private static string NormalizeDescription(string? value)
         {
             return value ?? string.Empty;
+        }
+
+        private bool TryGetSchemaObjectName(out ObjectName schemaObjectName)
+        {
+            schemaObjectName = _dbObject.ObjectName;
+            return SchemaCache != null
+                && schemaObjectName != null
+                && !schemaObjectName.IsEmpty();
         }
 
         private void CaptureOriginalDescriptions()
@@ -503,6 +508,7 @@ ON {quotedTable} ({quotedColumn});
             if (_dbObject.ObjectType == ObjectName.ObjectTypeEnums.Table || _dbObject.ObjectType == ObjectName.ObjectTypeEnums.View)
             {
                 columnDefDataGridView.DataSource = _tableContext.Columns;
+                SetDescriptionColumnEditState(columnDefDataGridView, CanEditDescriptionForCurrentObjectType());
                 columnDefDataGridView.Visible = true;
 
                 columnDefDataGridView.AutoResizeColumns();
@@ -525,6 +531,7 @@ ON {quotedTable} ({quotedColumn});
             else if (_dbObject.ObjectType == ObjectName.ObjectTypeEnums.StoredProcedure || _dbObject.ObjectType == ObjectName.ObjectTypeEnums.Function)
             {
                 parameterGridView.DataSource = _dbObject.Parameters;
+                SetDescriptionColumnEditState(parameterGridView, CanEditDescriptionForCurrentObjectType());
                 parameterGridView.Visible = true;
 
                 parameterGridView.AutoResizeColumns();
@@ -592,6 +599,8 @@ ON {quotedTable} ({quotedColumn});
             }
 
             CaptureOriginalDescriptions();
+
+
         }
 
         /// <summary>
@@ -676,10 +685,16 @@ ADD CONSTRAINT {quotedConstraint} PRIMARY KEY ({quotedColumn});
         {
             if (_isChanged && _dbObject.ObjectType != ObjectName.ObjectTypeEnums.None)
             {
+                if (!TryGetSchemaObjectName(out var schemaObjectName))
+                {
+                    return;
+                }
+
                 // save the table description only if it changed
                 if (NormalizeDescription(tableDescTextBox.Text) != _originalTableDescription)
                 {
-                    await _dbObject.UpdateObjectDescAsync(tableDescTextBox.Text);
+                    await SchemaCache.UpdateObjectDescriptionAsync(schemaObjectName, tableDescTextBox.Text);
+                    _dbObject.Description = tableDescTextBox.Text;
                 }
 
                 // save description for each column only if it changed
@@ -695,7 +710,13 @@ ADD CONSTRAINT {quotedConstraint} PRIMARY KEY ({quotedColumn});
                         _originalColumnDescriptions.TryGetValue(column.ColumnName, out var originalDescription);
                         if (NormalizeDescription(column.Description) != NormalizeDescription(originalDescription))
                         {
-                            await _dbObject.UpdateLevel2DescriptionAsync(column.ColumnName, column.Description!, _dbObject.ObjectType);
+                            await SchemaCache.UpdateLevel2DescriptionAsync(schemaObjectName, column.ColumnName, column.Description);
+
+                            var dbColumn = _dbObject.Columns.FirstOrDefault(c => c.ColumnName == column.ColumnName);
+                            if (dbColumn != null)
+                            {
+                                dbColumn.Description = column.Description;
+                            }
                         }
                     }
                 }
@@ -731,7 +752,18 @@ ADD CONSTRAINT {quotedConstraint} PRIMARY KEY ({quotedColumn});
         /// <param name="description">The new description.</param>
         public async Task UpdateColumnDescAsync(string columnName, string description)
         {
-            await _dbObject.UpdateLevel2DescriptionAsync(columnName, description, _dbObject.ObjectType);
+            if (!TryGetSchemaObjectName(out var schemaObjectName))
+            {
+                return;
+            }
+
+            await SchemaCache!.UpdateLevel2DescriptionAsync(schemaObjectName, columnName, description);
+
+            var column = _dbObject.Columns.FirstOrDefault(c => c.ColumnName.Equals(columnName, StringComparison.OrdinalIgnoreCase));
+            if (column != null)
+            {
+                column.Description = description;
+            }
         }
 
         /// <summary>
@@ -740,7 +772,14 @@ ADD CONSTRAINT {quotedConstraint} PRIMARY KEY ({quotedColumn});
         /// <param name="description">The new table description.</param>
         public async Task UpdateTableDescriptionAsync(string description)
         {
-            await _dbObject.UpdateObjectDescAsync(description);
+            if (!TryGetSchemaObjectName(out var schemaObjectName))
+            {
+                return;
+            }
+
+            await SchemaCache!.UpdateObjectDescriptionAsync(schemaObjectName, description);
+            _dbObject.Description = description;
+            _tableContext.TableDescription = description;
             TableDescription = description;
         }
 
@@ -802,7 +841,7 @@ ADD CONSTRAINT {quotedConstraint} PRIMARY KEY ({quotedColumn});
             description += await GetTableDependencyScriptAsync();
 
             tableDescTextBox.Text = description;
-            await _dbObject.UpdateObjectDescAsync(description);
+            await UpdateTableDescriptionAsync(description);
         }
 
         /// <summary>
@@ -1127,7 +1166,7 @@ ADD CONSTRAINT {quotedConstraint} PRIMARY KEY ({quotedColumn});
         private async void PasteToolStripMenuItem_Click(object sender, EventArgs e)
         {
             tableDescTextBox.Paste();
-            await _dbObject.UpdateObjectDescAsync(tableDescTextBox.Text);
+            await UpdateTableDescriptionAsync(tableDescTextBox.Text);
         }
 
         /// <summary>
@@ -1174,7 +1213,18 @@ ADD CONSTRAINT {quotedConstraint} PRIMARY KEY ({quotedColumn});
         /// <returns>A task representing the asynchronous operation.</returns>
         private async Task UpdateParameterDescAsync(string name, string parameterDesc)
         {
-            await _dbObject.UpdateLevel2DescriptionAsync(name, parameterDesc, _dbObject.ObjectType);
+            if (!TryGetSchemaObjectName(out var schemaObjectName))
+            {
+                return;
+            }
+
+            await SchemaCache!.UpdateLevel2DescriptionAsync(schemaObjectName, name, parameterDesc);
+
+            var parameter = _dbObject.Parameters.FirstOrDefault(p => p.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+            if (parameter != null)
+            {
+                parameter.Description = parameterDesc;
+            }
         }
 
         private int GetMissingColumnDescriptionCount()

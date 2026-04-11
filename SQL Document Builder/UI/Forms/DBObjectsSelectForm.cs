@@ -53,6 +53,11 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Gets a value indicating whether table view only.
+        /// </summary>
+        public bool TableViewOnly { get; internal set; }
+
+        /// <summary>
         /// Handles the click event of the add button.
         /// </summary>
         /// <param name="sender">The sender.</param>
@@ -139,8 +144,19 @@ namespace SQL_Document_Builder
         {
             try
             {
+                // when TableViewOnly is true, only show tables and views in the object type combo box
+                if(TableViewOnly)
+                {
+                    objectTypeComboBox.Items.Clear();
+                    objectTypeComboBox.Items.Add("Table");
+                    objectTypeComboBox.Items.Add("View");
+                }
+
                 await PopulateSchemasAsync();
-                objectTypeComboBox.SelectedIndex = 1; // Set default selection
+                if (TableViewOnly)
+                    objectTypeComboBox.SelectedIndex = 0; // Set default selection
+                else
+                    objectTypeComboBox.SelectedIndex = 1; // Set default selection
             }
             catch (Exception ex)
             {

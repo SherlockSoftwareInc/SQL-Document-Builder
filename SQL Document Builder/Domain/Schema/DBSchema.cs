@@ -1,5 +1,4 @@
 using OctofyPro.SchemaProvider.Core.Abstractions;
-using OctofyPro.SchemaProvider.Core.Providers;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -470,6 +469,7 @@ namespace SQL_Document_Builder
                             }
                         }
                     }
+
                 }
 
                 return true;
@@ -898,6 +898,32 @@ namespace SQL_Document_Builder
             }
         }
 
+        public async Task<bool> UpdateObjectDescriptionAsync(ObjectName objectName, string? description, CancellationToken token = default)
+        {
+            if (_connection == null || objectName == null || objectName.IsEmpty() || objectName.ObjectType == ObjectTypeEnums.None)
+            {
+                return false;
+            }
+
+            try
+            {
+                await using var provider = await ConnectAsync(_connection, token);
+                await provider.UpdateObjectDescriptionAsync(
+                    objectName.Schema,
+                    objectName.Name,
+                    ToDatabaseObjectType(objectName.ObjectType),
+                    description,
+                    token);
+            }
+            catch
+            {
+                return false;
+            }
+
+            SetObjectDescription(objectName, description ?? string.Empty);
+            return true;
+        }
+
         public void SetLevel2Description(ObjectName objectName, string level2Name, string description)
         {
             if (objectName == null || objectName.IsEmpty() || string.IsNullOrWhiteSpace(level2Name))
@@ -939,6 +965,43 @@ namespace SQL_Document_Builder
                     column.Description = normalizedDescription;
                 }
             }
+        }
+
+        public async Task<bool> UpdateLevel2DescriptionAsync(ObjectName objectName, string level2Name, string? description, CancellationToken token = default)
+        {
+            if (_connection == null || objectName == null || objectName.IsEmpty() || string.IsNullOrWhiteSpace(level2Name))
+            {
+                return false;
+            }
+
+            if (objectName.ObjectType != ObjectTypeEnums.Table
+                && objectName.ObjectType != ObjectTypeEnums.View
+                && objectName.ObjectType != ObjectTypeEnums.StoredProcedure
+                && objectName.ObjectType != ObjectTypeEnums.Function)
+            {
+                return false;
+            }
+
+            try
+            {
+                await using var provider = await ConnectAsync(_connection, token);
+
+                if (objectName.ObjectType == ObjectTypeEnums.StoredProcedure || objectName.ObjectType == ObjectTypeEnums.Function)
+                {
+                    await provider.UpdateParameterDescriptionAsync(objectName.Schema, objectName.Name, level2Name, description, token);
+                }
+                else
+                {
+                    await provider.UpdateColumnDescriptionAsync(objectName.Schema, objectName.Name, level2Name, description, token);
+                }
+            }
+            catch
+            {
+                return false;
+            }
+
+            SetLevel2Description(objectName, level2Name, description ?? string.Empty);
+            return true;
         }
 
         public void Clear()
@@ -1013,33 +1076,33 @@ namespace SQL_Document_Builder
             }
         }
 
-        private static async Task<IDatabaseSchemaProvider> ConnectAsync(DatabaseConnectionItem connection, CancellationToken token)
+        private static async Task<OctofyPro.SchemaProvider.Core.Abstractions.IDatabaseSchemaProvider> ConnectAsync(DatabaseConnectionItem connection, CancellationToken token)
         {
             var providerKind = ResolveProviderKind(connection);
-            var provider = DatabaseSchemaProviderFactory.Create(providerKind);
+            var provider = OctofyPro.SchemaProvider.Core.Providers.DatabaseSchemaProviderFactory.Create(providerKind);
             await provider.ConnectAsync(ReadConnectionString(connection), token);
             return provider;
         }
 
-        private static DatabaseProviderKind ResolveProviderKind(DatabaseConnectionItem connection)
+        private static OctofyPro.SchemaProvider.Core.Providers.DatabaseProviderKind ResolveProviderKind(DatabaseConnectionItem connection)
         {
             var connectionType = ReadConnectionType(connection);
 
             if (connectionType.Contains("odbc", StringComparison.OrdinalIgnoreCase))
             {
-                return DatabaseProviderKind.Odbc;
+                return OctofyPro.SchemaProvider.Core.Providers.DatabaseProviderKind.Odbc;
             }
 
             if (connectionType.Contains("sql server", StringComparison.OrdinalIgnoreCase)
                 || connectionType.Contains("mssql", StringComparison.OrdinalIgnoreCase)
                 || (string.IsNullOrWhiteSpace(connectionType) && connection.DBMSType == DBMSTypeEnums.SQLServer))
             {
-                return DatabaseProviderKind.SqlServer;
+                return OctofyPro.SchemaProvider.Core.Providers.DatabaseProviderKind.SqlServer;
             }
 
             // SchemaProvider.Core currently supports SQL Server and ODBC.
             // Route non-SQL Server connection types (e.g., MySQL) through ODBC metadata.
-            return DatabaseProviderKind.Odbc;
+            return OctofyPro.SchemaProvider.Core.Providers.DatabaseProviderKind.Odbc;
         }
 
         private static bool IsSqlServer(DatabaseConnectionItem connection) =>
@@ -1202,6 +1265,20 @@ namespace SQL_Document_Builder
 
         private static string GetObjectCacheKey(ObjectName objectName) =>
             $"{objectName.ObjectType}|{objectName.Schema}|{objectName.Name}";
+
+        private static OctofyPro.SchemaProvider.Core.Models.DatabaseObjectType ToDatabaseObjectType(ObjectTypeEnums objectType)
+        {
+            return objectType switch
+            {
+                ObjectTypeEnums.Table => OctofyPro.SchemaProvider.Core.Models.DatabaseObjectType.Table,
+                ObjectTypeEnums.View => OctofyPro.SchemaProvider.Core.Models.DatabaseObjectType.View,
+                ObjectTypeEnums.StoredProcedure => OctofyPro.SchemaProvider.Core.Models.DatabaseObjectType.Procedure,
+                ObjectTypeEnums.Function => OctofyPro.SchemaProvider.Core.Models.DatabaseObjectType.Function,
+                ObjectTypeEnums.Trigger => OctofyPro.SchemaProvider.Core.Models.DatabaseObjectType.Trigger,
+                ObjectTypeEnums.Synonym => OctofyPro.SchemaProvider.Core.Models.DatabaseObjectType.Synonym,
+                _ => OctofyPro.SchemaProvider.Core.Models.DatabaseObjectType.Unknown,
+            };
+        }
 
         private async Task<Dictionary<string, string>> LoadLevel2DescriptionsAsync(ObjectName objectName, CancellationToken token)
         {
