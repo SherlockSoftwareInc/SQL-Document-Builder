@@ -44,50 +44,43 @@ namespace SQL_Document_Builder
                 return string.Empty;
             }
 
-            if (connection.DBMSType == DBMSTypeEnums.SQLServer)
+            string doc = template.Body;
+            string objectItemTemplate = template.ObjectLists.ObjectRow;
+
+            var sb = new StringBuilder();
+
+            if (objectList.Count > 0)
             {
-                string doc = template.Body;
-                string objectItemTemplate = template.ObjectLists.ObjectRow;
-
-                var sb = new StringBuilder();
-
-                if (objectList.Count > 0)
+                for (int i = 0; i < objectList.Count; i++)
                 {
-                    for (int i = 0; i < objectList.Count; i++)
+                    int percentComplete = (i * 100) / objectList.Count;
+                    if (percentComplete > 0 && percentComplete % 2 == 0)
                     {
-                        int percentComplete = (i * 100) / objectList.Count;
-                        if (percentComplete > 0 && percentComplete % 2 == 0)
-                        {
-                            progress.Report(percentComplete + 1);
-                        }
-
-                        bool useQuotedId = Properties.Settings.Default.UseQuotedIdentifier;
-                        ObjectName dr = objectList[i];
-                        string tableSchema = useQuotedId ? dr.Schema.QuotedName() : dr.Schema.RemoveQuote();
-                        string tableName = useQuotedId ? dr.Name.QuotedName() : dr.Name.RemoveQuote();
-                        string description = schemaCache != null
-                            ? await schemaCache.GetObjectDescriptionAsync(dr)
-                            : await MetadataProvider.GetObjectDescriptionAsync(dr, connection.ConnectionString);
-                        var objectName = new ObjectName(dr.ObjectType, dr.Schema, dr.Name);
-                        string fullName = useQuotedId ? objectName.FullName : objectName.FullNameNoQuote;
-
-                        string objItemDoc = objectItemTemplate
-                            .Replace("~ObjectName~", tableName)
-                            .Replace("~ObjectSchema~", tableSchema)
-                            .Replace("~ObjectFullName~", fullName)
-                            .Replace("~ObjectType~", ObjectTypeToString(dr.ObjectType))
-                            .Replace("~Description~", description);
-
-                        sb.AppendLine(objItemDoc);
+                        progress.Report(percentComplete + 1);
                     }
-                }
 
-                return doc.Replace("~ObjectItem~", sb.ToString());
+                    bool useQuotedId = Properties.Settings.Default.UseQuotedIdentifier;
+                    ObjectName dr = objectList[i];
+                    string tableSchema = useQuotedId ? dr.Schema.QuotedName() : dr.Schema.RemoveQuote();
+                    string tableName = useQuotedId ? dr.Name.QuotedName() : dr.Name.RemoveQuote();
+                    string description = schemaCache != null
+                        ? await schemaCache.GetObjectDescriptionAsync(dr)
+                        : await MetadataProvider.GetObjectDescriptionAsync(dr, connection.ConnectionString);
+                    var objectName = new ObjectName(dr.ObjectType, dr.Schema, dr.Name);
+                    string fullName = useQuotedId ? objectName.FullName : objectName.FullNameNoQuote;
+
+                    string objItemDoc = objectItemTemplate
+                        .Replace("~ObjectName~", tableName)
+                        .Replace("~ObjectSchema~", tableSchema)
+                        .Replace("~ObjectFullName~", fullName)
+                        .Replace("~ObjectType~", ObjectTypeToString(dr.ObjectType))
+                        .Replace("~Description~", description);
+
+                    sb.AppendLine(objItemDoc);
+                }
             }
 
-            // reserved for future use
-            return string.Empty;
-
+            return doc.Replace("~ObjectItem~", sb.ToString());
         }
 
         /// <summary>
@@ -208,175 +201,168 @@ namespace SQL_Document_Builder
                 return string.Empty;
             }
 
-            if (connection.DBMSType == DBMSTypeEnums.SQLServer)
+            string doc = template.Body;
+
+            var objectMetadata = await LoadObjectMetadataAsync(objectName, connection, schemaCache);
+
+            bool useQuotedId = Properties.Settings.Default.UseQuotedIdentifier;
+
+            // Replace placeholders with actual values
+            doc = doc.Replace("~ObjectName~", useQuotedId? objectName.Name : objectName.Name.RemoveQuote());
+            doc = doc.Replace("~ObjectSchema~", useQuotedId? objectName.Schema : objectName.Schema.RemoveQuote());
+            doc = doc.Replace("~ObjectFullName~", useQuotedId ? objectName.FullName : objectName.FullNameNoQuote);
+            doc = doc.Replace("~ObjectType~", ObjectTypeToString(objectName.ObjectType));
+            doc = doc.Replace("~TriggerName~", useQuotedId ? objectName.Name : objectName.Name.RemoveQuote());
+
+            //doc = doc.Replace("~Description~", tableView.Description.Length == 0 ? " " : tableView.Description);
+            doc = ProcessSection(doc, "Description", "~Description~", objectMetadata.Description.Length == 0 ? " " : objectMetadata.Description);
+
+            //doc = doc.Replace("~Definition~", tableView.Definition);
+            doc = ProcessSection(doc, "Definition", "~Definition~", objectMetadata.Definition);
+
+            // Build the columns table
+            if (doc.Contains("~Columns~"))
             {
-                string doc = template.Body;
-
-                var objectMetadata = await LoadObjectMetadataAsync(objectName, connection, schemaCache);
-
-                bool useQuotedId = Properties.Settings.Default.UseQuotedIdentifier;
-
-                // Replace placeholders with actual values
-                doc = doc.Replace("~ObjectName~", useQuotedId? objectName.Name : objectName.Name.RemoveQuote());
-                doc = doc.Replace("~ObjectSchema~", useQuotedId? objectName.Schema : objectName.Schema.RemoveQuote());
-                doc = doc.Replace("~ObjectFullName~", useQuotedId ? objectName.FullName : objectName.FullNameNoQuote);
-                doc = doc.Replace("~ObjectType~", ObjectTypeToString(objectName.ObjectType));
-                doc = doc.Replace("~TriggerName~", useQuotedId ? objectName.Name : objectName.Name.RemoveQuote());
-
-                //doc = doc.Replace("~Description~", tableView.Description.Length == 0 ? " " : tableView.Description);
-                doc = ProcessSection(doc, "Description", "~Description~", objectMetadata.Description.Length == 0 ? " " : objectMetadata.Description);
-
-                //doc = doc.Replace("~Definition~", tableView.Definition);
-                doc = ProcessSection(doc, "Definition", "~Definition~", objectMetadata.Definition);
-
-                // Build the columns table
-                if (doc.Contains("~Columns~"))
+                string columnsDoc = template.Columns.Body;
+                if (columnsDoc.Contains("~ColumnItem~", StringComparison.CurrentCultureIgnoreCase))
                 {
-                    string columnsDoc = template.Columns.Body;
-                    if (columnsDoc.Contains("~ColumnItem~", StringComparison.CurrentCultureIgnoreCase))
-                    {
-                        string columnItemTemplate = template.Columns.ColumnRow;
-                        var columnsBody = GetColumnsBody(objectMetadata.Columns, columnItemTemplate);
-                        columnsDoc = columnsDoc.Replace("~ColumnItem~", columnsBody);
-                    }
-                    //doc = doc.Replace("~Columns~", columnsDoc);
-                    doc = ProcessSection(doc, "Columns", "~Columns~", columnsDoc);
+                    string columnItemTemplate = template.Columns.ColumnRow;
+                    var columnsBody = GetColumnsBody(objectMetadata.Columns, columnItemTemplate);
+                    columnsDoc = columnsDoc.Replace("~ColumnItem~", columnsBody);
                 }
+                //doc = doc.Replace("~Columns~", columnsDoc);
+                doc = ProcessSection(doc, "Columns", "~Columns~", columnsDoc);
+            }
 
-                // Build the indexes table
-                if (doc.Contains("~Indexes~"))
+            // Build the indexes table
+            if (doc.Contains("~Indexes~"))
+            {
+                string indexesDoc = template.Indexes.Body;
+                if (indexesDoc.Contains("~IndexItem~", StringComparison.CurrentCultureIgnoreCase))
                 {
-                    string indexesDoc = template.Indexes.Body;
-                    if (indexesDoc.Contains("~IndexItem~", StringComparison.CurrentCultureIgnoreCase))
+                    string indexItemTemplate = template.Indexes.IndexRow;
+                    var indexesBody = GetIndexesBody(objectMetadata.Indexes, indexItemTemplate);
+                    if(string.IsNullOrEmpty(indexesBody))
                     {
-                        string indexItemTemplate = template.Indexes.IndexRow;
-                        var indexesBody = GetIndexesBody(objectMetadata.Indexes, indexItemTemplate);
-                        if(string.IsNullOrEmpty(indexesBody))
-                        {
-                            indexesDoc = string.Empty;
-                        }
-                        else
-                        {
-                            indexesDoc = indexesDoc.Replace("~IndexItem~", indexesBody);
-                        }
-                    }
-                    //doc = doc.Replace("~Indexes~", indexesDoc);
-                    doc = ProcessSection(doc, "Indexes", "~Indexes~", indexesDoc);
-                }
-
-                // Build the constraints table
-                if (doc.Contains("~Constraints~"))
-                {
-                    string constraintDoc = template.Constraints.Body;
-                    if (constraintDoc.Contains("~ConstraintItem~", StringComparison.CurrentCultureIgnoreCase))
-                    {
-                        string constraintItemTemplate = template.Constraints.ConstraintRow;
-                        var constraintsBody = GetConstraintsBody(objectMetadata.Constraints, constraintItemTemplate);
-                        if (string.IsNullOrEmpty(constraintsBody))
-                        {
-                            constraintDoc = string.Empty;
-                        }
-                        else
-                        {
-                            constraintDoc = constraintDoc.Replace("~ConstraintItem~", constraintsBody);
-                        }
-                    }
-                    //doc = doc.Replace("~Constraints~", constraintDoc);
-                    doc = ProcessSection(doc, "Constraints", "~Constraints~", constraintDoc);
-                }
-
-                // Build the parameters table
-                if (doc.Contains("~Parameters~"))
-                {
-                    string parameterDoc = template.Parameters.Body;
-                    if (parameterDoc.Contains("~ParameterItem~", StringComparison.CurrentCultureIgnoreCase))
-                    {
-                        string parameterItemTemplate = template.Parameters.ParameterRow;
-                        var parametersBody = GetParametersBody(objectMetadata.Parameters, parameterItemTemplate);
-                        if (string.IsNullOrEmpty(parametersBody))
-                        {
-                            parameterDoc = string.Empty;
-                        }
-                        else
-                        {
-                            // Replace the placeholder with the actual parameters body
-                            parameterDoc = parameterDoc.Replace("~ParameterItem~", parametersBody);
-                        }
-                    }
-                    //doc = doc.Replace("~Parameters~", parameterDoc);
-                    doc = ProcessSection(doc, "Parameters", "~Parameters~", parameterDoc);
-                }
-
-                // synonyms
-                if (objectName.ObjectType == ObjectName.ObjectTypeEnums.Synonym)
-                {
-                    doc = doc.Replace("~BaseObjectName~", objectMetadata.SynonymBaseObjectName);
-                    doc = doc.Replace("~BaseObjectType~", objectMetadata.SynonymBaseObjectType);
-                }
-
-                // table values
-                if (doc.Contains("~TableValues~") && dataTemplate != null)
-                {
-                    string tableValuesDoc = string.Empty;
-                    string sql = $"SELECT * FROM {objectName.FullName}";
-                    // Check if the SQL statement is a valid SELECT statement
-                    var provider = DatabaseAccessProviderFactory.GetProvider(connection);
-                    if (!await provider.IsValidSelectStatementAsync(sql, connection.ConnectionString))
-                    {
-                        tableValuesDoc = "Cannot generate the value list because the object contains columns with unsupported data types.";
+                        indexesDoc = string.Empty;
                     }
                     else
                     {
-                        tableValuesDoc = await GetTableValuesAsync(sql, connection, dataTemplate);
+                        indexesDoc = indexesDoc.Replace("~IndexItem~", indexesBody);
                     }
-
-                    doc = ProcessSection(doc, "TableValues", "~TableValues~", tableValuesDoc);
                 }
-
-                // triggers
-                if (doc.Contains("~Triggers~") && !string.IsNullOrEmpty( template.Triggers ))
-                {
-                    string triggersDoc = await GetObjectTriggersAsync(objectName, connection, template.Triggers?? "", schemaCache);
-                    doc = ProcessSection(doc, "Triggers", "~Triggers~", triggersDoc);
-                }
-
-                // trigger type
-                if (doc.Contains("~TriggerType~"))
-                {
-                    string triggerType = await GetTriggerTypeAsync(objectName, connection);
-                    if (string.IsNullOrEmpty(triggerType))
-                    {
-                        triggerType = "UNKNOWN";
-                    }
-                    doc = doc.Replace("~TriggerType~", triggerType);
-                }
-
-                // relationships
-                if (doc.Contains("~Relationships~"))
-                {
-                    string relationshipsDoc = template.Relationships.Body;
-                    if (relationshipsDoc.Contains("~RelationshipItem~", StringComparison.CurrentCultureIgnoreCase))
-                    {
-                        string relationItemTemplate = template.Relationships.RelationshipRow;
-                        var relationBody = await GetRelationshipsBody(objectName, relationItemTemplate, connection);
-                        if (string.IsNullOrEmpty(relationBody))
-                        {
-                            relationshipsDoc = string.Empty;
-                        }
-                        else
-                        {
-                            relationshipsDoc = relationshipsDoc.Replace("~RelationshipItem~", relationBody);
-                        }
-                    }
-                    doc = ProcessSection(doc, "Relationships", "~Relationships~", relationshipsDoc);
-                }
-
-                return doc;
+                //doc = doc.Replace("~Indexes~", indexesDoc);
+                doc = ProcessSection(doc, "Indexes", "~Indexes~", indexesDoc);
             }
 
-            // reserved for future use
-            return string.Empty;
+            // Build the constraints table
+            if (doc.Contains("~Constraints~"))
+            {
+                string constraintDoc = template.Constraints.Body;
+                if (constraintDoc.Contains("~ConstraintItem~", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    string constraintItemTemplate = template.Constraints.ConstraintRow;
+                    var constraintsBody = GetConstraintsBody(objectMetadata.Constraints, constraintItemTemplate);
+                    if (string.IsNullOrEmpty(constraintsBody))
+                    {
+                        constraintDoc = string.Empty;
+                    }
+                    else
+                    {
+                        constraintDoc = constraintDoc.Replace("~ConstraintItem~", constraintsBody);
+                    }
+                }
+                //doc = doc.Replace("~Constraints~", constraintDoc);
+                doc = ProcessSection(doc, "Constraints", "~Constraints~", constraintDoc);
+            }
 
+            // Build the parameters table
+            if (doc.Contains("~Parameters~"))
+            {
+                string parameterDoc = template.Parameters.Body;
+                if (parameterDoc.Contains("~ParameterItem~", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    string parameterItemTemplate = template.Parameters.ParameterRow;
+                    var parametersBody = GetParametersBody(objectMetadata.Parameters, parameterItemTemplate);
+                    if (string.IsNullOrEmpty(parametersBody))
+                    {
+                        parameterDoc = string.Empty;
+                    }
+                    else
+                    {
+                        // Replace the placeholder with the actual parameters body
+                        parameterDoc = parameterDoc.Replace("~ParameterItem~", parametersBody);
+                    }
+                }
+                //doc = doc.Replace("~Parameters~", parameterDoc);
+                doc = ProcessSection(doc, "Parameters", "~Parameters~", parameterDoc);
+            }
+
+            // synonyms
+            if (objectName.ObjectType == ObjectName.ObjectTypeEnums.Synonym)
+            {
+                doc = doc.Replace("~BaseObjectName~", objectMetadata.SynonymBaseObjectName);
+                doc = doc.Replace("~BaseObjectType~", objectMetadata.SynonymBaseObjectType);
+            }
+
+            // table values
+            if (doc.Contains("~TableValues~") && dataTemplate != null)
+            {
+                string tableValuesDoc = string.Empty;
+                string sql = $"SELECT * FROM {objectName.FullName}";
+                // Check if the SQL statement is a valid SELECT statement
+                var provider = DatabaseAccessProviderFactory.GetProvider(connection);
+                if (!await provider.IsValidSelectStatementAsync(sql, connection.ConnectionString))
+                {
+                    tableValuesDoc = "Cannot generate the value list because the object contains columns with unsupported data types.";
+                }
+                else
+                {
+                    tableValuesDoc = await GetTableValuesAsync(sql, connection, dataTemplate);
+                }
+
+                doc = ProcessSection(doc, "TableValues", "~TableValues~", tableValuesDoc);
+            }
+
+            // triggers
+            if (doc.Contains("~Triggers~") && !string.IsNullOrEmpty( template.Triggers ))
+            {
+                string triggersDoc = await GetObjectTriggersAsync(objectName, connection, template.Triggers?? "", schemaCache);
+                doc = ProcessSection(doc, "Triggers", "~Triggers~", triggersDoc);
+            }
+
+            // trigger type
+            if (doc.Contains("~TriggerType~"))
+            {
+                string triggerType = await GetTriggerTypeAsync(objectName, connection);
+                if (string.IsNullOrEmpty(triggerType))
+                {
+                    triggerType = "UNKNOWN";
+                }
+                doc = doc.Replace("~TriggerType~", triggerType);
+            }
+
+            // relationships
+            if (doc.Contains("~Relationships~"))
+            {
+                string relationshipsDoc = template.Relationships.Body;
+                if (relationshipsDoc.Contains("~RelationshipItem~", StringComparison.CurrentCultureIgnoreCase))
+                {
+                    string relationItemTemplate = template.Relationships.RelationshipRow;
+                    var relationBody = await GetRelationshipsBody(objectName, relationItemTemplate, connection);
+                    if (string.IsNullOrEmpty(relationBody))
+                    {
+                        relationshipsDoc = string.Empty;
+                    }
+                    else
+                    {
+                        relationshipsDoc = relationshipsDoc.Replace("~RelationshipItem~", relationBody);
+                    }
+                }
+                doc = ProcessSection(doc, "Relationships", "~Relationships~", relationshipsDoc);
+            }
+
+            return doc;
         }
 
         private static async Task<ObjectMetadataSnapshot> LoadObjectMetadataAsync(ObjectName objectName, DatabaseConnectionItem connection, DBSchema? schemaCache)
@@ -533,7 +519,7 @@ namespace SQL_Document_Builder
         /// <returns>A string.</returns>
         private static async Task<string> GetRelationshipsBody(ObjectName objectName, string relationItemTemplate, DatabaseConnectionItem connection)
         {
-            if(connection.DBMSType != DBMSTypeEnums.SQLServer || objectName == null || string.IsNullOrEmpty(relationItemTemplate))
+            if(objectName == null || string.IsNullOrEmpty(relationItemTemplate))
             {
                 return string.Empty;
             }
@@ -639,61 +625,55 @@ namespace SQL_Document_Builder
                 return string.Empty;
             }
 
-            if (connection.DBMSType == DBMSTypeEnums.SQLServer)
+            StringBuilder sb = new();
+
+            var allTriggers = await MetadataProvider.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.Trigger, connection.ConnectionString);
+            if (allTriggers.Count == 0)
+                return "";
+
+            foreach (var triggerObject in allTriggers)
             {
-                StringBuilder sb = new();
-
-                var allTriggers = await MetadataProvider.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.Trigger, connection.ConnectionString);
-                if (allTriggers.Count == 0)
-                    return "";
-
-                foreach (var triggerObject in allTriggers)
+                var triggerInfo = await MetadataProvider.GetTriggerInfoAsync(triggerObject, connection.ConnectionString);
+                if (triggerInfo == null || triggerInfo.Rows.Count == 0)
                 {
-                    var triggerInfo = await MetadataProvider.GetTriggerInfoAsync(triggerObject, connection.ConnectionString);
-                    if (triggerInfo == null || triggerInfo.Rows.Count == 0)
-                    {
-                        continue;
-                    }
-
-                    var infoRow = triggerInfo.Rows[0];
-                    var parentSchema = infoRow["ParentObjectSchema"]?.ToString() ?? string.Empty;
-                    var parentName = infoRow["ParentObjectName"]?.ToString() ?? string.Empty;
-
-                    if (!parentSchema.Equals(objectName.Schema, StringComparison.OrdinalIgnoreCase) ||
-                        !parentName.Equals(objectName.Name, StringComparison.OrdinalIgnoreCase))
-                    {
-                        continue;
-                    }
-
-                    string triggerName = triggerObject.Name;
-                    string definition = await MetadataProvider.GetObjectDefinitionAsync(triggerObject, connection.ConnectionString);
-                    string triggerType = infoRow["TriggerType"]?.ToString() ?? "UNKNOWN";
-
-                    string triggerDoc = templateBody;
-                    triggerDoc = triggerDoc
-                        .Replace("~TriggerName~", triggerName)
-                        .Replace("~TriggerType~", triggerType)
-                        .Replace("~Definition~", definition);
-
-                    // if has description, replace the placeholder
-                    if (triggerDoc.Contains("~Description~"))
-                    {
-                        // get trigger description
-                        string description = schemaCache != null
-                            ? await schemaCache.GetObjectDescriptionAsync(triggerObject)
-                            : await MetadataProvider.GetObjectDescriptionAsync(triggerObject, connection.ConnectionString);
-
-                        triggerDoc = ProcessSection(triggerDoc, "Description", "~Description~", description.Length == 0 ? " " : description);
-                    }
-
-                    sb.AppendLine(triggerDoc);
+                    continue;
                 }
 
-                return sb.ToString();
+                var infoRow = triggerInfo.Rows[0];
+                var parentSchema = infoRow["ParentObjectSchema"]?.ToString() ?? string.Empty;
+                var parentName = infoRow["ParentObjectName"]?.ToString() ?? string.Empty;
+
+                if (!parentSchema.Equals(objectName.Schema, StringComparison.OrdinalIgnoreCase) ||
+                    !parentName.Equals(objectName.Name, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                string triggerName = triggerObject.Name;
+                string definition = await MetadataProvider.GetObjectDefinitionAsync(triggerObject, connection.ConnectionString);
+                string triggerType = infoRow["TriggerType"]?.ToString() ?? "UNKNOWN";
+
+                string triggerDoc = templateBody;
+                triggerDoc = triggerDoc
+                    .Replace("~TriggerName~", triggerName)
+                    .Replace("~TriggerType~", triggerType)
+                    .Replace("~Definition~", definition);
+
+                // if has description, replace the placeholder
+                if (triggerDoc.Contains("~Description~"))
+                {
+                    // get trigger description
+                    string description = schemaCache != null
+                        ? await schemaCache.GetObjectDescriptionAsync(triggerObject)
+                        : await MetadataProvider.GetObjectDescriptionAsync(triggerObject, connection.ConnectionString);
+
+                    triggerDoc = ProcessSection(triggerDoc, "Description", "~Description~", description.Length == 0 ? " " : description);
+                }
+
+                sb.AppendLine(triggerDoc);
             }
 
-            // reserved for future use
-            return string.Empty;
+            return sb.ToString();
         }
 
         /// <summary>
@@ -709,25 +689,19 @@ namespace SQL_Document_Builder
                 return string.Empty;
             }
 
-            if (connection.DBMSType == DBMSTypeEnums.SQLServer)
+            var triggerInfo = await MetadataProvider.GetTriggerInfoAsync(objectName, connection.ConnectionString);
+            if (triggerInfo == null || triggerInfo.Rows.Count == 0)
+                return string.Empty;
+
+            var triggerType = triggerInfo.Rows[0]["TriggerType"]?.ToString();
+            if (string.IsNullOrEmpty(triggerType))
             {
-                var triggerInfo = await MetadataProvider.GetTriggerInfoAsync(objectName, connection.ConnectionString);
-                if (triggerInfo == null || triggerInfo.Rows.Count == 0)
-                    return string.Empty;
-
-                var triggerType = triggerInfo.Rows[0]["TriggerType"]?.ToString();
-                if (string.IsNullOrEmpty(triggerType))
-                {
-                    return string.Empty;
-                }
-
-                return triggerType.Equals("INSTEAD OF", StringComparison.OrdinalIgnoreCase)
-                    ? "INSTEAD OF Trigger"
-                    : "AFTER Trigger";
+                return string.Empty;
             }
 
-            // reserved for future use
-            return string.Empty;
+            return triggerType.Equals("INSTEAD OF", StringComparison.OrdinalIgnoreCase)
+                ? "INSTEAD OF Trigger"
+                : "AFTER Trigger";
         }
 
         /// <summary>
@@ -742,19 +716,13 @@ namespace SQL_Document_Builder
                 return string.Empty;
             }
 
-            if (connection.DBMSType == DBMSTypeEnums.SQLServer)
+            var provider = DatabaseAccessProviderFactory.GetProvider(connection);
+            DataTable? dt = await provider.GetDataTableAsync(sql, connection?.ConnectionString ?? string.Empty);
+            if (dt == null || dt.Rows.Count == 0)
             {
-                var provider = DatabaseAccessProviderFactory.GetProvider(connection);
-                DataTable? dt = await provider.GetDataTableAsync(sql, connection?.ConnectionString ?? string.Empty);
-                if (dt == null || dt.Rows.Count == 0)
-                {
-                    return string.Empty;
-                }
-                return DataTableToTemplateDoc(dt, template);
+                return string.Empty;
             }
-
-            // reserved for future use
-            return string.Empty;
+            return DataTableToTemplateDoc(dt, template);
         }
 
         /// <summary>
@@ -832,12 +800,6 @@ namespace SQL_Document_Builder
             }
             else
             {
-                //return columnTemplate
-                //        .Replace("~ColumnOrd~", "")
-                //        .Replace("~ColumnName~", "_No column found_")
-                //        .Replace("~ColumnDataType~", "")
-                //        .Replace("~ColumnNullable~", "")
-                //        .Replace("~ColumnDescription~", "");
                 return string.Empty;
             }
         }
@@ -865,10 +827,6 @@ namespace SQL_Document_Builder
             }
             else
             {
-                //return strTemplate
-                //        .Replace("~ConstraintName~", "_No constraint found_")
-                //        .Replace("~ConstraintType~", "")
-                //        .Replace("~ConstraintColumn~", "");
                 return string.Empty;
             }
         }
@@ -903,11 +861,6 @@ namespace SQL_Document_Builder
             }
             else
             {
-                //return indexTemplate
-                //        .Replace("~IndexName~", "_No index found_")
-                //        .Replace("~IndexType~", "")
-                //        .Replace("~IndexColumns~", "")
-                //        .Replace("~UniqueIndex~", "");
                 return string.Empty;
             }
         }
@@ -938,12 +891,6 @@ namespace SQL_Document_Builder
             }
             else
             {
-                //return parameterTemplate
-                //        .Replace("~ParameterOrd~", "")
-                //        .Replace("~ParameterName~", "_No parameter found_")
-                //        .Replace("~ParameterDataType~", "")
-                //        .Replace("~ParameterDirection~", "")
-                //        .Replace("~ParameterDescription~", "");
                 return string.Empty;
             }
         }

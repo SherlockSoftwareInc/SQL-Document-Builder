@@ -24,33 +24,27 @@ namespace SQL_Document_Builder
         /// <returns>A Task.</returns>
         internal static async Task<string> GetFunctionProcedureDef(ObjectName objectName, DatabaseConnectionItem connection)
         {
-            if (connection.DBMSType == DBMSTypeEnums.SQLServer)
+            var func = new DBObject();
+            await func.OpenAsync(objectName, connection);
+
+            var obj = new
             {
-                var func = new DBObject();
-                await func.OpenAsync(objectName, connection);
-
-                var obj = new
+                ObjectName = objectName.Name,
+                ObjectSchema = objectName.Schema,
+                ObjectType = ObjectTypeToString(objectName.ObjectType),
+                func.Description,
+                func.Definition,
+                Parameters = func.Parameters?.ConvertAll(dr => new
                 {
-                    ObjectName = objectName.Name,
-                    ObjectSchema = objectName.Schema,
-                    ObjectType = ObjectTypeToString(objectName.ObjectType),
-                    func.Description,
-                    func.Definition,
-                    Parameters = func.Parameters?.ConvertAll(dr => new
-                    {
-                        dr.Ord,
-                        dr.Name,
-                        dr.DataType,
-                        dr.Mode,
-                        dr.Description
-                    })
-                };
+                    dr.Ord,
+                    dr.Name,
+                    dr.DataType,
+                    dr.Mode,
+                    dr.Description
+                })
+            };
 
-                return JsonSerializer.Serialize(obj, new JsonSerializerOptions { WriteIndented = true });
-            }
-
-            // reserved for future use
-            return string.Empty;
+            return JsonSerializer.Serialize(obj, new JsonSerializerOptions { WriteIndented = true });
         }
 
         /// <summary>
@@ -67,44 +61,38 @@ namespace SQL_Document_Builder
                 return string.Empty;
             }
 
-            if (connection.DBMSType == DBMSTypeEnums.SQLServer)
+            var tableView = new DBObject();
+            await tableView.OpenAsync(objectName, connection);
+
+            var obj = new
             {
-                var tableView = new DBObject();
-                await tableView.OpenAsync(objectName, connection);
-
-                var obj = new
+                ObjectName = objectName.Name,
+                ObjectSchema = objectName.Schema,
+                ObjectType = ObjectTypeToString(objectName.ObjectType),
+                Description = string.IsNullOrEmpty(tableView.Description) ? " " : tableView.Description,
+                Columns = tableView.Columns?.ConvertAll(col => new
                 {
-                    ObjectName = objectName.Name,
-                    ObjectSchema = objectName.Schema,
-                    ObjectType = ObjectTypeToString(objectName.ObjectType),
-                    Description = string.IsNullOrEmpty(tableView.Description) ? " " : tableView.Description,
-                    Columns = tableView.Columns?.ConvertAll(col => new
-                    {
-                        OrdinalPosition = col.OrdinalPosition,
-                        col.ColumnName,
-                        col.DataType,
-                        col.Description
-                    }),
-                    Indexes = tableView.Indexes?.ConvertAll(idx => new
-                    {
-                        idx.Name,
-                        idx.Type,
-                        idx.Columns,
-                        idx.IsUnique
-                    }),
-                    Constraints = tableView.Constraints?.ConvertAll(constraint => new
-                    {
-                        constraint.Name,
-                        constraint.Type,
-                        Column = constraint.Column?.QuotedName()
-                    })
-                };
+                    OrdinalPosition = col.OrdinalPosition,
+                    col.ColumnName,
+                    col.DataType,
+                    col.Description
+                }),
+                Indexes = tableView.Indexes?.ConvertAll(idx => new
+                {
+                    idx.Name,
+                    idx.Type,
+                    idx.Columns,
+                    idx.IsUnique
+                }),
+                Constraints = tableView.Constraints?.ConvertAll(constraint => new
+                {
+                    constraint.Name,
+                    constraint.Type,
+                    Column = constraint.Column?.QuotedName()
+                })
+            };
 
-                return JsonSerializer.Serialize(obj, new JsonSerializerOptions { WriteIndented = true });
-            }
-
-            // reserved for future use
-            return string.Empty;
+            return JsonSerializer.Serialize(obj, new JsonSerializerOptions { WriteIndented = true });
         }
 
         /// <summary>
@@ -120,39 +108,33 @@ namespace SQL_Document_Builder
                 return string.Empty;
             }
 
-            if (connection.DBMSType == DBMSTypeEnums.SQLServer)
+            var tableView = new DBObject();
+            await tableView.OpenAsync(objectName, connection);
+
+            var obj = new
             {
-                var tableView = new DBObject();
-                await tableView.OpenAsync(objectName, connection);
-
-                var obj = new
+                ObjectName = objectName.Name,
+                ObjectSchema = objectName.Schema,
+                ObjectType = ObjectTypeToString(objectName.ObjectType),
+                Description = string.IsNullOrEmpty(tableView.Description) ? " " : tableView.Description,
+                tableView.Definition,
+                Columns = tableView.Columns?.ConvertAll(col => new
                 {
-                    ObjectName = objectName.Name,
-                    ObjectSchema = objectName.Schema,
-                    ObjectType = ObjectTypeToString(objectName.ObjectType),
-                    Description = string.IsNullOrEmpty(tableView.Description) ? " " : tableView.Description,
-                    tableView.Definition,
-                    Columns = tableView.Columns?.ConvertAll(col => new
-                    {
-                        OrdinalPosition = col.OrdinalPosition,
-                        col.ColumnName,
-                        col.DataType,
-                        col.Description
-                    }),
-                    Indexes = tableView.Indexes?.ConvertAll(idx => new
-                    {
-                        idx.Name,
-                        idx.Type,
-                        idx.Columns,
-                        idx.IsUnique
-                    })
-                };
+                    OrdinalPosition = col.OrdinalPosition,
+                    col.ColumnName,
+                    col.DataType,
+                    col.Description
+                }),
+                Indexes = tableView.Indexes?.ConvertAll(idx => new
+                {
+                    idx.Name,
+                    idx.Type,
+                    idx.Columns,
+                    idx.IsUnique
+                })
+            };
 
-                return JsonSerializer.Serialize(obj, new JsonSerializerOptions { WriteIndented = true });
-            }
-
-            // reserved for future use
-            return string.Empty;
+            return JsonSerializer.Serialize(obj, new JsonSerializerOptions { WriteIndented = true });
         }
 
         /// <summary>
@@ -169,33 +151,27 @@ namespace SQL_Document_Builder
                 return string.Empty;
             }
 
-            if (connection.DBMSType == DBMSTypeEnums.SQLServer)
+            var list = new List<object>();
+
+            for (int i = 0; i < objectList.Count; i++)
             {
-                var list = new List<object>();
-
-                for (int i = 0; i < objectList.Count; i++)
+                int percentComplete = (i * 100) / objectList.Count;
+                if (percentComplete > 0 && percentComplete % 2 == 0)
                 {
-                    int percentComplete = (i * 100) / objectList.Count;
-                    if (percentComplete > 0 && percentComplete % 2 == 0)
-                    {
-                        progress.Report(percentComplete + 1);
-                    }
-
-                    ObjectName dr = objectList[i];
-                    string description = await SchemaMetadataProviderContext.Current.GetObjectDescriptionAsync(dr, connection.ConnectionString);
-                    list.Add(new
-                    {
-                        Schema = dr.Schema,
-                        Name = dr.Name,
-                        Description = description
-                    });
+                    progress.Report(percentComplete + 1);
                 }
 
-                return JsonSerializer.Serialize(list, new JsonSerializerOptions { WriteIndented = true });
+                ObjectName dr = objectList[i];
+                string description = await SchemaMetadataProviderContext.Current.GetObjectDescriptionAsync(dr, connection.ConnectionString);
+                list.Add(new
+                {
+                    Schema = dr.Schema,
+                    Name = dr.Name,
+                    Description = description
+                });
             }
 
-            // reserved for future use
-            return string.Empty;
+            return JsonSerializer.Serialize(list, new JsonSerializerOptions { WriteIndented = true });
         }
 
         /// <summary>
@@ -211,19 +187,13 @@ namespace SQL_Document_Builder
                 return "";
             }
 
-            if (connection.DBMSType == DBMSTypeEnums.SQLServer)
+            var provider = DatabaseAccessProviderFactory.GetProvider(connection);
+            DataTable? dt = await provider.GetDataTableAsync(sql, connection?.ConnectionString ?? string.Empty);
+            if (dt == null || dt.Rows.Count == 0)
             {
-                var provider = DatabaseAccessProviderFactory.GetProvider(connection);
-                DataTable? dt = await provider.GetDataTableAsync(sql, connection?.ConnectionString ?? string.Empty);
-                if (dt == null || dt.Rows.Count == 0)
-                {
-                    return "";
-                }
-                return DataTableToJson(dt);
+                return "";
             }
-
-            // reserved for future use
-            return string.Empty;
+            return DataTableToJson(dt);
         }
 
         /// <summary>

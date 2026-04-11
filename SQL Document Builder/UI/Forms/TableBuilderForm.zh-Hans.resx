@@ -117,9 +117,6 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <metadata name="toolStrip1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>17, 17</value>
-  </metadata>
   <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
   <data name="newToolStripButton1.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
@@ -176,12 +173,87 @@
         fG2ZY1ZwJE8CrfUrEhL8d4dhuBHRVd5bAjVHwZnjH09nNMQPJAEAAAAAAElFTkSuQmCC
 </value>
   </data>
-  <metadata name="toolTip1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>607, 17</value>
-  </metadata>
-  <metadata name="menuStrip1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>122, 17</value>
-  </metadata>
+  <data name="toolStrip1.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="objectsTabControl.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="tabPage1.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="objectsListBox.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="panel2.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="searchTextBox.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="schemaLabel.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="searchLabel.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="label1.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="tabPage2.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="autoCopyCheckBox.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="quotedIDCheckBox.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="groupBox2.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="label2.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="label3.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="insertMaxTextBox.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="insertBatchTextBox.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="groupBox1.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="useUspDescRadioButton.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="useExtendedPropertyRadioButton.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="indexesCheckBox.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="includeHeadersCheckBox.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="scriptDataCheckBox.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="noCollationCheckBox.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="addDataSourceCheckBox.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="scriptDropsCheckBox.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="menuStrip1.ToolTip" xml:space="preserve">
+    <value />
+  </data>
   <data name="newToolStripMenuItem1.Image" type="System.Drawing.Bitmap, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
         iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8
@@ -241,21 +313,51 @@
         mcEmFVAaohwAAAAASUVORK5CYII=
 </value>
   </data>
-  <metadata name="statusStrip1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>237, 17</value>
-  </metadata>
-  <metadata name="timer1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>352, 17</value>
-  </metadata>
-  <metadata name="tabContextMenuStrip.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>440, 17</value>
-  </metadata>
-  <metadata name="startTimer.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>705, 17</value>
-  </metadata>
-  <metadata name="waitTimer.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
-    <value>813, 17</value>
-  </metadata>
+  <data name="statusStrip1.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="searchPanel.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="closeSearchButton.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="nextSearchButton.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="prevSearchButton.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="searchSQLTextBox.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="defiCollapsibleSplitter.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="splitContainer1.Panel1.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="replacePanel.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="tabControl1.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="splitContainer1.Panel2.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="splitContainer1.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="replaceReplaceTextBox.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="replaceSearchTextBox.ToolTip" xml:space="preserve">
+    <value />
+  </data>
+  <data name="tabContextMenuStrip.ToolTip" xml:space="preserve">
+    <value />
+  </data>
   <data name="$this.Icon" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>
         AAABAAMAMDAAAAEAIACoJQAANgAAACAgAAABACAAqBAAAN4lAAAQEAAAAQAgAGgEAACGNgAAKAAAADAA
@@ -511,5 +613,8 @@
         AAAAAAAAAAAAAAAAAAAAAAAAAAAAAMAHrEHAB6xBgAesQYAHrEGAB6xBgAesQYADrEGAAaxBwAGsQcAA
         rEHAAKxBwACsQcAHrEHAD6xBwB+sQcA/rEE=
 </value>
+  </data>
+  <data name="$this.ToolTip" xml:space="preserve">
+    <value />
   </data>
 </root>
