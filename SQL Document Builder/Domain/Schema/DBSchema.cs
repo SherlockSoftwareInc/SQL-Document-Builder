@@ -1,5 +1,4 @@
 using OctofyPro.SchemaProvider.Core.Abstractions;
-using OctofyPro.SchemaProvider.Core.Models;
 using OctofyPro.SchemaProvider.Core.Providers;
 using System;
 using System.Collections.Generic;
@@ -58,6 +57,16 @@ namespace SQL_Document_Builder
         private readonly List<DBSchemaItem> _synonyms = [];
         private readonly Dictionary<string, string> _objectDescriptions = new(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, Dictionary<string, string>> _level2Descriptions = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, string> _objectDefinitions = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, string> _synonymBaseObjects = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, DataTable> _triggerInfos = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, List<string>> _primaryKeyColumns = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, Dictionary<string, (int SeedValue, int IncrementValue)>> _identityColumns = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, DataTable> _checkConstraints = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, DataTable> _defaultConstraints = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, DataTable> _foreignKeyConstraints = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, DataTable> _createIndexesMetadata = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, DataTable> _objectParameters = new(StringComparer.OrdinalIgnoreCase);
 
         public string Catalog { get; private set; } = string.Empty;
 
@@ -106,11 +115,6 @@ namespace SQL_Document_Builder
                 return false;
             }
 
-            if (!await LoadAllDescriptionsAsync(token))
-            {
-                return false;
-            }
-
             return true;
         }
 
@@ -153,6 +157,111 @@ namespace SQL_Document_Builder
             {
                 return false;
             }
+        }
+
+        public bool HasObject(ObjectName objectName)
+        {
+            return FindSchemaItem(objectName) != null;
+        }
+
+        public async Task<List<string>> GetPrimaryKeyColumnsAsync(ObjectName objectName, CancellationToken token = default)
+        {
+            if (_connection == null || objectName == null || objectName.IsEmpty() || objectName.ObjectType != ObjectTypeEnums.Table)
+            {
+                return [];
+            }
+
+            var key = GetObjectCacheKey(objectName);
+            if (_primaryKeyColumns.TryGetValue(key, out var cachedColumns))
+            {
+                return [.. cachedColumns];
+            }
+
+            try
+            {
+                await using var provider = await ConnectAsync(_connection, token);
+                var columns = await provider.GetPrimaryKeyColumnsAsync(objectName.Schema, objectName.Name, token);
+                var result = columns?.ToList() ?? [];
+                _primaryKeyColumns[key] = [.. result];
+                return result;
+            }
+            catch
+            {
+                return [];
+            }
+        }
+
+        public async Task<Dictionary<string, (int SeedValue, int IncrementValue)>> GetIdentityColumnsAsync(ObjectName objectName, CancellationToken token = default)
+        {
+            if (_connection == null || objectName == null || objectName.IsEmpty() || objectName.ObjectType != ObjectTypeEnums.Table)
+            {
+                return new Dictionary<string, (int SeedValue, int IncrementValue)>(StringComparer.OrdinalIgnoreCase);
+            }
+
+            var key = GetObjectCacheKey(objectName);
+            if (_identityColumns.TryGetValue(key, out var cachedIdentityColumns))
+            {
+                return new Dictionary<string, (int SeedValue, int IncrementValue)>(cachedIdentityColumns, StringComparer.OrdinalIgnoreCase);
+            }
+
+            try
+            {
+                await using var provider = await ConnectAsync(_connection, token);
+                var columns = await provider.GetIdentityColumnsAsync(objectName.Schema, objectName.Name, token);
+                columns ??= new Dictionary<string, (int SeedValue, int IncrementValue)>(StringComparer.OrdinalIgnoreCase);
+                _identityColumns[key] = new Dictionary<string, (int SeedValue, int IncrementValue)>(columns, StringComparer.OrdinalIgnoreCase);
+                return columns;
+            }
+            catch
+            {
+                return new Dictionary<string, (int SeedValue, int IncrementValue)>(StringComparer.OrdinalIgnoreCase);
+            }
+        }
+
+        public async Task<DataTable?> GetCheckConstraintsAsync(ObjectName objectName, CancellationToken token = default)
+        {
+            return await GetCachedDataTableAsync(_checkConstraints, objectName, ObjectTypeEnums.Table, token,
+                async () =>
+                {
+                    await using var provider = await ConnectAsync(_connection!, token);
+                    return await provider.GetCheckConstraintsAsync(objectName.Schema, objectName.Name, token);
+                });
+        }
+
+        public async Task<DataTable?> GetDefaultConstraintsAsync(ObjectName objectName, CancellationToken token = default)
+        {
+            return await GetCachedDataTableAsync(_defaultConstraints, objectName, ObjectTypeEnums.Table, token,
+                async () =>
+                {
+                    await using var provider = await ConnectAsync(_connection!, token);
+                    return await provider.GetDefaultConstraintsAsync(objectName.Schema, objectName.Name, token);
+                });
+        }
+
+        public async Task<DataTable?> GetForeignKeyConstraintsAsync(ObjectName objectName, CancellationToken token = default)
+        {
+            return await GetCachedDataTableAsync(_foreignKeyConstraints, objectName, ObjectTypeEnums.Table, token,
+                async () =>
+                {
+                    await using var provider = await ConnectAsync(_connection!, token);
+                    return await provider.GetForeignKeyConstraintsAsync(objectName.Schema, objectName.Name, token);
+                });
+        }
+
+        public async Task<DataTable?> GetCreateIndexesMetadataAsync(ObjectName objectName, CancellationToken token = default)
+        {
+            if (objectName == null || objectName.IsEmpty() ||
+                (objectName.ObjectType != ObjectTypeEnums.Table && objectName.ObjectType != ObjectTypeEnums.View))
+            {
+                return null;
+            }
+
+            return await GetCachedDataTableAsync(_createIndexesMetadata, objectName, null, token,
+                async () =>
+                {
+                    await using var provider = await ConnectAsync(_connection!, token);
+                    return await provider.GetCreateIndexesMetadataAsync(objectName.Schema, objectName.Name, token);
+                });
         }
 
         public async Task<bool> LoadAllDescriptionsAsync(CancellationToken token = default)
@@ -586,6 +695,46 @@ namespace SQL_Document_Builder
             return item.Columns.Select(CloneColumn).ToList();
         }
 
+        public async Task<List<DBColumn>> GetColumnsAsync(ObjectName objectName, CancellationToken token = default)
+        {
+            if (_connection == null || objectName == null || objectName.IsEmpty() ||
+                (objectName.ObjectType != ObjectTypeEnums.Table && objectName.ObjectType != ObjectTypeEnums.View))
+            {
+                return [];
+            }
+
+            var item = FindDataObject(objectName);
+            if (item == null)
+            {
+                return [];
+            }
+
+            if (item.Columns.Count == 0)
+            {
+                try
+                {
+                    await using var provider = await ConnectAsync(_connection, token);
+                    var rawColumns = await provider.GetColumnsAsync(item.SchemaName, item.ObjectName, token);
+
+                    var ordinal = 1;
+                    foreach (var rawColumn in rawColumns)
+                    {
+                        var column = CreateDbColumn(rawColumn, ordinal++);
+                        if (column != null)
+                        {
+                            item.Columns.Add(column);
+                        }
+                    }
+                }
+                catch
+                {
+                    return [];
+                }
+            }
+
+            return item.Columns.Select(CloneColumn).ToList();
+        }
+
         public async Task<string> GetObjectDescriptionAsync(ObjectName objectName, CancellationToken token = default)
         {
             if (_connection == null || objectName == null || objectName.IsEmpty())
@@ -613,6 +762,22 @@ namespace SQL_Document_Builder
             }
         }
 
+        public async Task<DataTable?> GetObjectParametersAsync(ObjectName objectName, CancellationToken token = default)
+        {
+            if (objectName == null || objectName.IsEmpty() ||
+                (objectName.ObjectType != ObjectTypeEnums.StoredProcedure && objectName.ObjectType != ObjectTypeEnums.Function))
+            {
+                return null;
+            }
+
+            return await GetCachedDataTableAsync(_objectParameters, objectName, null, token,
+                async () =>
+                {
+                    await using var provider = await ConnectAsync(_connection!, token);
+                    return await provider.GetObjectParametersAsync(objectName.Schema, objectName.Name, token);
+                });
+        }
+
         public async Task<string> GetLevel2DescriptionAsync(ObjectName objectName, string level2Name, CancellationToken token = default)
         {
             if (_connection == null || objectName == null || objectName.IsEmpty() || string.IsNullOrWhiteSpace(level2Name))
@@ -628,6 +793,91 @@ namespace SQL_Document_Builder
             }
 
             return objectDescriptions.TryGetValue(level2Name, out var value) ? value : string.Empty;
+        }
+
+        public async Task<string> GetObjectDefinitionAsync(ObjectName objectName, CancellationToken token = default)
+        {
+            if (_connection == null || objectName == null || objectName.IsEmpty())
+            {
+                return string.Empty;
+            }
+
+            var key = GetObjectCacheKey(objectName);
+            if (_objectDefinitions.TryGetValue(key, out var cachedDefinition))
+            {
+                return cachedDefinition;
+            }
+
+            try
+            {
+                await using var provider = await ConnectAsync(_connection, token);
+                var definition = await provider.GetObjectDefinitionAsync(objectName.Schema, objectName.Name, token);
+                definition ??= string.Empty;
+                _objectDefinitions[key] = definition;
+                return definition;
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
+
+        public async Task<string> GetSynonymBaseObjectAsync(ObjectName objectName, CancellationToken token = default)
+        {
+            if (_connection == null || objectName == null || objectName.IsEmpty() || objectName.ObjectType != ObjectTypeEnums.Synonym)
+            {
+                return string.Empty;
+            }
+
+            var key = GetObjectCacheKey(objectName);
+            if (_synonymBaseObjects.TryGetValue(key, out var cachedBaseObject))
+            {
+                return cachedBaseObject;
+            }
+
+            try
+            {
+                await using var provider = await ConnectAsync(_connection, token);
+                var baseObject = await provider.GetSynonymBaseObjectAsync(objectName.Schema, objectName.Name, token);
+                baseObject ??= string.Empty;
+                _synonymBaseObjects[key] = baseObject;
+                return baseObject;
+            }
+            catch
+            {
+                return string.Empty;
+            }
+        }
+
+        public async Task<DataTable?> GetTriggerInfoAsync(ObjectName objectName, CancellationToken token = default)
+        {
+            if (_connection == null || objectName == null || objectName.IsEmpty() || objectName.ObjectType != ObjectTypeEnums.Trigger)
+            {
+                return null;
+            }
+
+            var key = GetObjectCacheKey(objectName);
+            if (_triggerInfos.TryGetValue(key, out var cachedInfo))
+            {
+                return cachedInfo.Copy();
+            }
+
+            try
+            {
+                await using var provider = await ConnectAsync(_connection, token);
+                var triggerInfo = await provider.GetTriggerInfoAsync(objectName.Schema, objectName.Name, token);
+                if (triggerInfo == null)
+                {
+                    return null;
+                }
+
+                _triggerInfos[key] = triggerInfo.Copy();
+                return triggerInfo;
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         public void SetObjectDescription(ObjectName objectName, string description)
@@ -710,7 +960,57 @@ namespace SQL_Document_Builder
             _synonyms.Clear();
             _objectDescriptions.Clear();
             _level2Descriptions.Clear();
+            _objectDefinitions.Clear();
+            _synonymBaseObjects.Clear();
+            _triggerInfos.Clear();
+            _primaryKeyColumns.Clear();
+            _identityColumns.Clear();
+            _checkConstraints.Clear();
+            _defaultConstraints.Clear();
+            _foreignKeyConstraints.Clear();
+            _createIndexesMetadata.Clear();
+            _objectParameters.Clear();
             Schemaless = false;
+        }
+
+        private async Task<DataTable?> GetCachedDataTableAsync(
+            Dictionary<string, DataTable> cache,
+            ObjectName objectName,
+            ObjectTypeEnums? requiredType,
+            CancellationToken token,
+            Func<Task<DataTable?>> loader)
+        {
+            if (_connection == null || objectName == null || objectName.IsEmpty())
+            {
+                return null;
+            }
+
+            if (requiredType.HasValue && objectName.ObjectType != requiredType.Value)
+            {
+                return null;
+            }
+
+            var key = GetObjectCacheKey(objectName);
+            if (cache.TryGetValue(key, out var cachedValue))
+            {
+                return cachedValue.Copy();
+            }
+
+            try
+            {
+                var value = await loader();
+                if (value == null)
+                {
+                    return null;
+                }
+
+                cache[key] = value.Copy();
+                return value;
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         private static async Task<IDatabaseSchemaProvider> ConnectAsync(DatabaseConnectionItem connection, CancellationToken token)
@@ -1072,39 +1372,13 @@ namespace SQL_Document_Builder
             var nullable = ReadBoolProperty(rawColumn, "IsNullable", "Nullable");
             var maxLength = ReadIntProperty(rawColumn, "MaxLength", "Length");
 
-            var parameterlessCtor = typeof(DBColumn).GetConstructor(Type.EmptyTypes);
-            if (parameterlessCtor != null)
+            return new DBColumn
             {
-                var column = (DBColumn)parameterlessCtor.Invoke(null);
-                SetPropertyIfExists(column, "Ord", ordinal.ToString());
-                SetPropertyIfExists(column, "ColumnName", columnName);
-                SetPropertyIfExists(column, "DataType", BuildDataType(dataType, maxLength));
-                SetPropertyIfExists(column, "Nullable", nullable);
-                return column;
-            }
-
-            var dataRowCtor = typeof(DBColumn).GetConstructor(new[] { typeof(DataRow) });
-            if (dataRowCtor != null)
-            {
-                var table = new DataTable();
-                table.Columns.Add("ORDINAL_POSITION", typeof(string));
-                table.Columns.Add("COLUMN_NAME", typeof(string));
-                table.Columns.Add("DATA_TYPE", typeof(string));
-                table.Columns.Add("CHARACTER_MAXIMUM_LENGTH", typeof(int));
-                table.Columns.Add("IS_NULLABLE", typeof(string));
-
-                var row = table.NewRow();
-                row["ORDINAL_POSITION"] = ordinal.ToString();
-                row["COLUMN_NAME"] = columnName;
-                row["DATA_TYPE"] = dataType;
-                row["CHARACTER_MAXIMUM_LENGTH"] = maxLength ?? (object)DBNull.Value;
-                row["IS_NULLABLE"] = nullable ? "YES" : "NO";
-                table.Rows.Add(row);
-
-                return (DBColumn)dataRowCtor.Invoke(new object[] { row });
-            }
-
-            return null;
+                Ord = ordinal.ToString(),
+                ColumnName = columnName,
+                DataType = BuildDataType(dataType, maxLength),
+                Nullable = nullable
+            };
         }
 
         private static string BuildDataType(string dataType, int? maxLength)

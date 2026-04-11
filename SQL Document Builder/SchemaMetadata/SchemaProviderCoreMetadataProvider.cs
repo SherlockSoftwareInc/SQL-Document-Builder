@@ -180,8 +180,7 @@ namespace SQL_Document_Builder.SchemaMetadata
             }
 
             await using var provider = await ConnectAsync(connectionString, cancellationToken);
-            var columns = await provider.GetColumnsAsync(objectName.Schema, objectName.Name, cancellationToken);
-            return columns.Where(c => c.IsPrimaryKey).Select(c => c.ColumnName).ToList();
+            return (await provider.GetPrimaryKeyColumnsAsync(objectName.Schema, objectName.Name, cancellationToken)).ToList();
         }
 
         public async Task<DataTable?> GetObjectIndexesAsync(ObjectName objectName, string connectionString, CancellationToken cancellationToken = default)

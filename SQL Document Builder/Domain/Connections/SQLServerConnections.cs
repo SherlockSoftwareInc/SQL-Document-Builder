@@ -341,18 +341,6 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Checks if the specified dsn still available on the computer
-        /// </summary>
-        /// <param name="dsn"></param>
-        /// <returns></returns>
-        private DatabaseConnectionItem IsDsnAvailable(string dsn)
-        {
-            return AvailableDSNs.Find(i =>
-                string.Equals(i.Name, dsn, StringComparison.OrdinalIgnoreCase) &&
-                string.Equals(i.ConnectionType, "ODBC", StringComparison.OrdinalIgnoreCase));
-        }
-
-        /// <summary>
         /// Parse connections from a xml string
         /// </summary>
         /// <param name="values">xml document body</param>

@@ -1,6 +1,6 @@
-﻿using System;
+﻿using SQL_Document_Builder.DatabaseAccess;
+using System;
 using System.Data.Odbc;
-using SQL_Document_Builder.DatabaseAccess;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -70,9 +70,40 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
+        /// Gets or sets optional API key metadata.
+        /// </summary>
+        public string? APIKey { get; set; }
+
+        /// <summary>
+        /// Gets or sets the authentication type.
+        /// </summary>
+        public AuthenticationMethod AuthenticationType { get; set; }
+
+        /// <summary>
         /// Gets the guid for a connection item.
         /// </summary>
         public Guid ConnectionID { get; set; }
+
+        /// <summary>
+        /// Gets or sets the connection string.
+        /// </summary>
+        [JsonIgnore]
+        public string? ConnectionString { get; set; }
+
+        /// <summary>
+        /// Gets or sets the connection type.
+        /// </summary>
+        public string ConnectionType { get; set; }
+
+        /// <summary>
+        /// Gets or sets the database.
+        /// </summary>
+        public string? Database { get; set; }
+
+        /// <summary>
+        /// Gets or sets the description for the database connection.
+        /// </summary>
+        public string? DatabaseDescription { get; set; }
 
         /// <summary>
         /// DBMS type for future use.
@@ -81,79 +112,9 @@ namespace SQL_Document_Builder
         public DBMSTypeEnums DBMSType { get; set; } = 0;
 
         /// <summary>
-        /// Gets or sets the connection type.
+        /// Gets or sets ODBC driver display name.
         /// </summary>
-        public string ConnectionType { get; set; }
-
-        /// <summary>
-        /// Gets or sets the name.
-        /// </summary>
-        public string? Name { get; set; }
-
-        /// <summary>
-        /// Gets or sets the server name.
-        /// </summary>
-        public string? ServerName { get; set; }
-
-        /// <summary>
-        /// Gets or sets the database.
-        /// </summary>
-        public string? Database { get; set; }
-
-        /// <summary>
-        /// Gets or sets the authentication type.
-        /// </summary>
-        public AuthenticationMethod AuthenticationType { get; set; }
-
-        /// <summary>
-        /// Gets or sets the user name.
-        /// </summary>
-        public string? UserName { get; set; }
-
-        /// <summary>
-        /// Gets or sets the password.
-        /// </summary>
-        [JsonIgnore]
-        public string? Password { get; set; }
-
-        /// <summary>
-        /// Gets or sets the encryped password.
-        /// </summary>
-        public string EncrypedPassword
-        {
-            get => EncryptPwd(Password);
-            set
-            {
-                if (string.IsNullOrEmpty(value))
-                {
-                    Password = string.Empty;
-                }
-                else
-                {
-                    Password = ParsePwd(value);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether remember password.
-        /// </summary>
-        public bool RememberPassword { get; set; }
-
-        /// <summary>
-        /// Gets or sets a value indicating whether to use encrypted connections
-        /// </summary>
-        public bool EncryptConnection { get; set; } = true;
-
-        /// <summary>
-        /// Gets or sets a value indicating whether to trust the server certificate
-        /// </summary>
-        public bool TrustServerCertificate { get; set; } = true;
-
-        /// <summary>
-        /// Gets or sets a value indicating whether is custom.
-        /// </summary>
-        public bool IsCustom { get; set; }
+        public string? Driver { get; set; }
 
         /// <summary>
         /// Gets or sets DSN name for ODBC connections.
@@ -183,9 +144,28 @@ namespace SQL_Document_Builder
         }
 
         /// <summary>
-        /// Gets or sets a value indicating whether manual login is required.
+        /// Gets or sets the encryped password.
         /// </summary>
-        public bool RequireManualLogin { get; set; }
+        public string EncrypedPassword
+        {
+            get => EncryptPwd(Password);
+            set
+            {
+                if (string.IsNullOrEmpty(value))
+                {
+                    Password = string.Empty;
+                }
+                else
+                {
+                    Password = ParsePwd(value);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to use encrypted connections
+        /// </summary>
+        public bool EncryptConnection { get; set; } = true;
 
         /// <summary>
         /// Gets or sets optional endpoint metadata.
@@ -193,14 +173,19 @@ namespace SQL_Document_Builder
         public string? Endpoint { get; set; }
 
         /// <summary>
-        /// Gets or sets optional API key metadata.
-        /// </summary>
-        public string? APIKey { get; set; }
-
-        /// <summary>
         /// Gets or sets optional file picker filter for DBQ-based ODBC sources.
         /// </summary>
         public string? FileFilter { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether is custom.
+        /// </summary>
+        public bool IsCustom { get; set; }
+
+        /// <summary>
+        /// Gets a value indicating whether the database is SQL Server.
+        /// </summary>
+        public bool IsSQLServer { get => DBMSType == DBMSTypeEnums.SQLServer; }
 
         /// <summary>
         /// Gets or sets a value indicating whether login has succeeded for current runtime session.
@@ -209,20 +194,25 @@ namespace SQL_Document_Builder
         public bool LoginSucceed { get; set; }
 
         /// <summary>
-        /// Gets or sets ODBC driver display name.
+        /// Gets or sets the name.
         /// </summary>
-        public string? Driver { get; set; }
+        public string? Name { get; set; }
 
         /// <summary>
-        /// Gets or sets the description for the database connection.
-        /// </summary>
-        public string? DatabaseDescription { get; set; }
-
-        /// <summary>
-        /// Gets or sets the connection string.
+        /// Gets or sets the password.
         /// </summary>
         [JsonIgnore]
-        public string? ConnectionString { get; set; }
+        public string? Password { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether remember password.
+        /// </summary>
+        public bool RememberPassword { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether manual login is required.
+        /// </summary>
+        public bool RequireManualLogin { get; set; }
 
         /// <summary>
         /// Returns server and database name
@@ -240,6 +230,21 @@ namespace SQL_Document_Builder
                 { return string.Empty; }
             }
         }
+
+        /// <summary>
+        /// Gets or sets the server name.
+        /// </summary>
+        public string? ServerName { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether to trust the server certificate
+        /// </summary>
+        public bool TrustServerCertificate { get; set; } = true;
+
+        /// <summary>
+        /// Gets or sets the user name.
+        /// </summary>
+        public string? UserName { get; set; }
 
         /// <summary>
         /// Builds the connection string.

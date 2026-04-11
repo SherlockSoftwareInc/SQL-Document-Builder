@@ -84,6 +84,10 @@ namespace SQL_Document_Builder
         /// </summary>
         private ObjectName? SelectedObject => definitionPanel.ObjectName;
 
+        private DatabaseConnectionItem? ActiveSchemaConnection => _dbSchema.Connection ?? _currentConnection;
+
+        private IDatabaseAccessProvider ActiveProvider => DatabaseAccessProviderFactory.GetProvider(ActiveSchemaConnection);
+
         /// <summary>
         /// Executes the scripts.
         /// </summary>
@@ -94,7 +98,7 @@ namespace SQL_Document_Builder
             // end of the script is removed.
             var scriptWithoutComments = Regex.Replace(script, @"/\*.*?(?:\*/|$)", "", RegexOptions.Singleline);
 
-            bool isSqlServer = IsSqlServerConnection(connection);
+            bool isSqlServer = connection.IsSQLServer;
 
             string[] sqlStatements;
 
@@ -126,22 +130,6 @@ namespace SQL_Document_Builder
                 }
             }
             return string.Empty;
-        }
-
-        private static bool IsSqlServerConnection(DatabaseConnectionItem connection)
-        {
-            if (connection.ConnectionType.Equals("SQL Server", StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
-
-            if (connection.ConnectionType.Equals("ODBC", StringComparison.OrdinalIgnoreCase) &&
-                connection.DBMSType == DBMSTypeEnums.SQLServer)
-            {
-                return false;
-            }
-
-            return connection.DBMSType == DBMSTypeEnums.SQLServer;
         }
 
         /// <summary>
@@ -190,17 +178,19 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="objectName">The object name.</param>
         /// <returns>A Task.</returns>
-        private async Task<string> GetObjectCreateScriptAsync(ObjectName objectName, DatabaseConnectionItem? connection)
+        private async Task<string> GetObjectCreateScriptAsync(ObjectName objectName, DatabaseConnectionItem? connection, DBSchema? schemaCache = null)
         {
             if (connection == null || string.IsNullOrEmpty(objectName.FullName))
             {
                 return string.Empty; // If connection is null or object name is empty, return an empty string
             }
 
+            var effectiveSchemaCache = schemaCache ?? _dbSchema;
+
             string? createScript = string.Empty;
             if (objectName != null)
             {
-                createScript = await DatabaseDocBuilder.GetCreateObjectScriptAsync(objectName, connection);
+                createScript = await DatabaseDocBuilder.GetCreateObjectScriptAsync(objectName, effectiveSchemaCache);
             }
 
             if (string.IsNullOrEmpty(createScript))
@@ -211,7 +201,7 @@ namespace SQL_Document_Builder
             // remove the space and new line at the end of the script
             createScript = createScript.TrimEnd([' ', '\r', '\n', '\t']);
 
-            bool isSqlServer = IsSqlServerConnection(connection);
+            bool isSqlServer = connection.IsSQLServer;
 
             string batchSeparator = isSqlServer ? "GO" : ";";
 
@@ -229,7 +219,7 @@ namespace SQL_Document_Builder
             // ObjectDescription.BuildObjectDescription handles DBMS-specific script generation internally.
             try
             {
-                var description = await ObjectDescription.BuildObjectDescription(objectName, connection, Properties.Settings.Default.UseExtendedProperties);
+                var description = await ObjectDescription.BuildObjectDescription(objectName, effectiveSchemaCache, Properties.Settings.Default.UseExtendedProperties);
                 if (description.Length > 0)
                 {
                     // append the description to the script
@@ -304,6 +294,7 @@ namespace SQL_Document_Builder
                 UserName = dlg.UserName,
                 Password = dlg.Password,
                 RememberPassword = dlg.RememberPassword,
+                DBMSType = dlg.DBMSType,
                 RequireManualLogin = dlg.RequireManualLogin
             };
 
@@ -690,7 +681,7 @@ namespace SQL_Document_Builder
 
         private void UpdateSqlServerSpecificMenuItems(DatabaseConnectionItem? connection)
         {
-            bool isSqlServer = connection != null && IsSqlServerConnection(connection);
+            bool isSqlServer = connection != null && connection.IsSQLServer;
             uspToolStripMenuItem.Visible = isSqlServer;
             toolStripSeparator14.Visible = isSqlServer;
         }
@@ -1089,41 +1080,50 @@ namespace SQL_Document_Builder
             {
                 StartBuild(editBox);
 
+                progressBar.Value = 0;
+                messageLabel.Text = "Preparing scripts...";
+                await Task.Yield();
+
+                var scriptBuilder = new StringBuilder();
+                var provider = ActiveProvider;
+                IProgress<int> progress = new Progress<int>(percent =>
+                {
+                    progressBar.Value = Math.Clamp(percent, 0, 100);
+                    messageLabel.Text = $"Processing {percent}%...";
+                });
+
                 for (int i = 0; i < selectedObjects.Count; i++)
                 {
-                    int percentComplete = (i * 100) / selectedObjects.Count;
-                    if (percentComplete > 0 && percentComplete % 2 == 0)
-                    {
-                        progressBar.Value = percentComplete;
-                    }
-                    messageLabel.Text = $"Processing {percentComplete}%...";
-
                     var obj = selectedObjects[i];
 
                     // get the object create script
-                    var script = await GetObjectCreateScriptAsync(obj, _currentConnection);
-                    if (editBox == null) return;
-
-                    AppendText(editBox, script);
+                    var createScript = await GetObjectCreateScriptAsync(obj, _currentConnection);
+                    if (!string.IsNullOrEmpty(createScript))
+                    {
+                        scriptBuilder.Append(createScript);
+                    }
 
                     // get the insert statement for the object
-                    // get the number of rows in the table
-                    var provider = DatabaseAccessProviderFactory.GetProvider(_currentConnection);
                     var rowCount = await provider.GetRowCountAsync(obj.FullNameNoQuote, connectionString);
 
-                    // confirm if the user wants to continue when the number of rows is too much
                     if (rowCount > Properties.Settings.Default.InertMaxRows)
                     {
-                        AppendText(editBox, "-- Too many rows to insert" + Environment.NewLine + Environment.NewLine);
+                        scriptBuilder.Append("-- Too many rows to insert").AppendLine().AppendLine();
                     }
                     else
                     {
-                        var insertScript = await DatabaseDocBuilder.TableToInsertStatementAsync(obj, _currentConnection);
-                        if (editBox == null) return;
-
-                        AppendText(editBox, insertScript + "GO" + Environment.NewLine);
+                        var insertScript = await DatabaseDocBuilder.TableToInsertStatementAsync(obj, _dbSchema);
+                        if (!string.IsNullOrEmpty(insertScript))
+                        {
+                            scriptBuilder.Append(insertScript).Append("GO").AppendLine();
+                        }
                     }
+
+                    progress.Report(((i + 1) * 100) / selectedObjects.Count);
                 }
+
+                if (editBox == null) return;
+                AppendText(editBox, scriptBuilder.ToString());
             }
 
             EndBuild(editBox);
@@ -1239,24 +1239,63 @@ namespace SQL_Document_Builder
             {
                 StartBuild(editBox);
 
-                for (int i = 0; i < selectedObjects.Count; i++)
+                progressBar.Value = 0;
+                messageLabel.Text = "Preparing scripts...";
+
+                // Let UI repaint before starting heavy async work.
+                await Task.Yield();
+
+                IProgress<int> progress = new Progress<int>(percent =>
                 {
-                    int percentComplete = (i * 100) / selectedObjects.Count;
-                    if (percentComplete > 0 && percentComplete % 2 == 0)
-                    {
-                        progressBar.Value = percentComplete;
-                    }
-                    messageLabel.Text = $"Processing {percentComplete}%...";
+                    progressBar.Value = Math.Clamp(percent, 0, 100);
+                    messageLabel.Text = $"Processing {percent}%...";
+                    //Application.DoEvents();
+                });
 
-                    var script = await GetObjectCreateScriptAsync(selectedObjects[i], _currentConnection);
+                var scripts = await BuildCreateScriptsAsync(selectedObjects, _currentConnection, progress);
 
-                    if (editBox == null) return;
+                if (editBox == null) return;
 
-                    AppendText(editBox, script);
+                var output = string.Concat(scripts);
+                if (!string.IsNullOrEmpty(output))
+                {
+                    AppendText(editBox, output);
                 }
             }
 
             EndBuild(editBox);
+        }
+
+        private async Task<string[]> BuildCreateScriptsAsync(IReadOnlyList<ObjectName> selectedObjects, DatabaseConnectionItem? connection, IProgress<int>? progress)
+        {
+            var scripts = new string[selectedObjects.Count];
+            if (selectedObjects.Count == 0)
+            {
+                progress?.Report(100);
+                return scripts;
+            }
+
+            int completed = 0;
+            int maxParallel = Math.Min(4, Math.Max(1, Environment.ProcessorCount / 2));
+            using var semaphore = new SemaphoreSlim(maxParallel, maxParallel);
+
+            var tasks = selectedObjects.Select(async (obj, index) =>
+            {
+                await semaphore.WaitAsync();
+                try
+                {
+                    scripts[index] = await GetObjectCreateScriptAsync(obj, connection, _dbSchema);
+                }
+                finally
+                {
+                    semaphore.Release();
+                    int done = Interlocked.Increment(ref completed);
+                    progress?.Report((done * 100) / selectedObjects.Count);
+                }
+            });
+
+            await Task.WhenAll(tasks);
+            return scripts;
         }
 
         /// <summary>
@@ -1835,7 +1874,7 @@ namespace SQL_Document_Builder
                     }
 
                     // get the number of rows in the table
-                    var provider = DatabaseAccessProviderFactory.GetProvider(_currentConnection);
+                    var provider = ActiveProvider;
                     var rowCount = await provider.GetRowCountAsync(objectName.FullName, connectionString);
 
                     // confirm if the user wants to continue when the number of rows is too much
@@ -1852,7 +1891,7 @@ namespace SQL_Document_Builder
                     // checks if the table has identify column
                     //var hasIdentityColumn = await DatabaseHelper.HasIdentityColumnAsync(objectName);
 
-                    var script = await DatabaseDocBuilder.TableToInsertStatementAsync(objectName, _currentConnection);
+                    var script = await DatabaseDocBuilder.TableToInsertStatementAsync(objectName, _dbSchema);
 
                     if (script == "Too much rows")
                     {
@@ -1960,28 +1999,33 @@ namespace SQL_Document_Builder
             {
                 StartBuild(editBox);
 
+                progressBar.Value = 0;
+                messageLabel.Text = "Preparing descriptions...";
+                await Task.Yield();
+
+                IProgress<int> progress = new Progress<int>(percent =>
+                {
+                    progressBar.Value = Math.Clamp(percent, 0, 100);
+                    messageLabel.Text = $"Processing {percent}%...";
+                });
+
+                var scriptBuilder = new StringBuilder();
                 for (int i = 0; i < selectedObjects.Count; i++)
                 {
-                    int percentComplete = (i * 100) / selectedObjects.Count;
-                    if (percentComplete > 0 && percentComplete % 2 == 0)
-                    {
-                        progressBar.Value = percentComplete;
-                    }
-                    messageLabel.Text = $"Processing {percentComplete}%...";
-
                     var obj = selectedObjects[i];
-                    var script = await ObjectDescription.BuildObjectDescription(obj, _currentConnection, Properties.Settings.Default.UseExtendedProperties);
+                    var script = await ObjectDescription.BuildObjectDescription(obj, _dbSchema, Properties.Settings.Default.UseExtendedProperties);
 
                     // add "GO" and new line after each object description if it is not empty
                     if (!string.IsNullOrEmpty(script))
                     {
-                        script += "GO" + Environment.NewLine;
-
-                        if (editBox == null) return;
-
-                        AppendText(editBox, script);
+                        scriptBuilder.Append(script).Append("GO").AppendLine();
                     }
+
+                    progress.Report(((i + 1) * 100) / selectedObjects.Count);
                 }
+
+                if (editBox == null) return;
+                AppendText(editBox, scriptBuilder.ToString());
             }
 
             EndBuild(editBox);
@@ -2289,12 +2333,7 @@ namespace SQL_Document_Builder
                 else
                 {
                     Common.MsgBox("Execute completed successfully", MessageBoxIcon.Information);
-
-                    if (_currentConnection != null)
-                    {
-                        await _dbSchema.OpenAsync(_currentConnection, loadColumns: true);
-                        _allObjects = _dbSchema.AllObjects();
-                    }
+                    _allObjects = _dbSchema.AllObjects();
                 }
 
                 Cursor = Cursors.Default;
@@ -2725,14 +2764,14 @@ namespace SQL_Document_Builder
                 if (BeginAddDDLScript())
                 {
                     // Check if the SQL statement is a valid SELECT statement
-                    var provider = DatabaseAccessProviderFactory.GetProvider(_currentConnection);
+                    var provider = ActiveProvider;
                     if (!await provider.IsValidSelectStatementAsync(form.SQL, connectionString))
                     {
                         MessageBox.Show("Cannot generate the INSERT statement because the table or view contains columns with unsupported data types.", "Invalid SQL", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         return;
                     }
 
-                    var insertStatements = await DatabaseDocBuilder.QueryDataToInsertStatementAsync(form.SQL, _currentConnection);
+                    var insertStatements = await DatabaseDocBuilder.QueryDataToInsertStatementAsync(form.SQL, _dbSchema);
 
                     AppendText(editBox, insertStatements);
                     CopyToClipboard(editBox);
@@ -3030,6 +3069,7 @@ namespace SQL_Document_Builder
             progressBar.Value = 0;
             progressBar.Visible = true;
             editBox.Cursor = Cursors.WaitCursor;
+            Application.DoEvents();
         }
 
         /// <summary>
@@ -3303,7 +3343,7 @@ namespace SQL_Document_Builder
             var objectName = SelectedObject;
             if (!string.IsNullOrEmpty(objectName?.Name))
             {
-                var description = await ObjectDescription.BuildObjectDescription(objectName, _currentConnection, Properties.Settings.Default.UseExtendedProperties);
+                var description = await ObjectDescription.BuildObjectDescription(objectName, _dbSchema, Properties.Settings.Default.UseExtendedProperties);
                 if (!string.IsNullOrEmpty(description))
                 {
                     if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
@@ -4027,8 +4067,8 @@ namespace SQL_Document_Builder
                 if (datatableTemplate != null)
                 {
                     // Check if the SQL statement is a valid SELECT statement
-                var provider = DatabaseAccessProviderFactory.GetProvider(_currentConnection);
-                if (!await provider.IsValidSelectStatementAsync(form.SQL, connectionString))
+                    var provider = ActiveProvider;
+                    if (!await provider.IsValidSelectStatementAsync(form.SQL, connectionString))
                     {
                         MessageBox.Show("Cannot generate the INSERT statement because the table or view contains columns with unsupported data types.", "Invalid SQL", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         return;
@@ -4207,7 +4247,7 @@ namespace SQL_Document_Builder
 
                 string sql = $"select * from {objectName.FullName}";
                 // Check if the SQL statement is a valid SELECT statement
-                var provider = DatabaseAccessProviderFactory.GetProvider(_currentConnection);
+                var provider = ActiveProvider;
                 if (!await provider.IsValidSelectStatementAsync(sql, connectionString))
                 {
                     MessageBox.Show("Cannot generate script or document because the table or view contains columns with unsupported data types.", "Invalid SQL", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -4391,7 +4431,7 @@ namespace SQL_Document_Builder
                 if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Json) != DialogResult.Yes) return;
 
                 // check if the SQL statement is a valid SELECT statement to generate JSON data
-                var provider = DatabaseAccessProviderFactory.GetProvider(_currentConnection);
+                var provider = ActiveProvider;
                 if (!await provider.IsValidSelectStatementAsync(form.SQL, connectionString))
                 {
                     MessageBox.Show("Cannot generate the JSON data because the table or view contains columns with unsupported data types.", "Invalid SQL", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -4425,7 +4465,7 @@ namespace SQL_Document_Builder
 
                 // Check if the SQL statement is a valid SELECT statement
                 string sql = $"select * from {objectName.FullName}";
-                var provider = DatabaseAccessProviderFactory.GetProvider(_currentConnection);
+                var provider = ActiveProvider;
                 if (!await provider.IsValidSelectStatementAsync(sql, connectionString))
                 {
                     MessageBox.Show("Cannot generate the JSON data because the table or view contains columns with unsupported data types.", "Invalid SQL", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -5034,10 +5074,10 @@ namespace SQL_Document_Builder
                 return;
             }
 
-            string createScript = await DatabaseDocBuilder.GetCreateObjectScriptAsync(SelectedObject, _currentConnection!);
+            string createScript = await DatabaseDocBuilder.GetCreateObjectScriptAsync(SelectedObject, _dbSchema);
             createScript = createScript?.TrimEnd(' ', '\r', '\n', '\t');
 
-            var description = await ObjectDescription.BuildObjectDescription(SelectedObject, _currentConnection, Properties.Settings.Default.UseExtendedProperties);
+            var description = await ObjectDescription.BuildObjectDescription(SelectedObject, _dbSchema, Properties.Settings.Default.UseExtendedProperties);
             createScript = $"{description}\n\n{createScript}";
 
             using (var inputBox = new InputBox())
@@ -5137,8 +5177,8 @@ namespace SQL_Document_Builder
                 var trimmedBatch = batch.Trim();
                 if (!string.IsNullOrEmpty(trimmedBatch))
                 {
-                    var provider = DatabaseAccessProviderFactory.GetProvider(_currentConnection);
-                    string verifyResult = await Task.Run(() => provider.VerifySqlAsync(trimmedBatch, _currentConnection?.ConnectionString ?? string.Empty));
+                    var provider = ActiveProvider;
+                    string verifyResult = await Task.Run(() => provider.VerifySqlAsync(trimmedBatch, ActiveSchemaConnection?.ConnectionString ?? string.Empty));
                     if (!string.IsNullOrEmpty(verifyResult))
                     {
                         return verifyResult;

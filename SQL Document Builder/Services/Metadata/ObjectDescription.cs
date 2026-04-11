@@ -1,5 +1,6 @@
 ﻿using System;
-using System;
+using System.Collections.Generic;
+using System.Data;
 using System.Text;
 using System.Threading.Tasks;
 using static SQL_Document_Builder.ObjectName;
@@ -17,30 +18,41 @@ namespace SQL_Document_Builder
         /// <param name="schemaName">The schema name.</param>
         /// <param name="tableName">The table name.</param>
         /// <returns>A string.</returns>
-        public static async Task<string> BuildObjectDescription(ObjectName objectName, DatabaseConnectionItem? connection, bool useExtendedProperties)
+        public static async Task<string> BuildObjectDescription(ObjectName objectName, DBSchema? schemaCache, bool useExtendedProperties)
         {
-            var sb = new StringBuilder();
-            var dbmsType = GetEffectiveDbmsType(connection);
-
-            var dbTable = new DBObject();
-            if (await dbTable.OpenAsync(objectName, connection))
+            if (objectName == null || objectName.IsEmpty() || schemaCache == null)
             {
-                AppendObjectDescriptionScript(sb, objectName, dbmsType, dbTable.Description, useExtendedProperties);
+                return string.Empty;
+            }
 
-                if (objectName.ObjectType == ObjectTypeEnums.Table ||
-                   objectName.ObjectType == ObjectTypeEnums.View)
+            var sb = new StringBuilder();
+            var dbmsType = GetEffectiveDbmsType(schemaCache);
+
+            var objectDescription = await schemaCache.GetObjectDescriptionAsync(objectName);
+            AppendObjectDescriptionScript(sb, objectName, dbmsType, objectDescription, useExtendedProperties);
+
+            if (objectName.ObjectType == ObjectTypeEnums.Table ||
+                objectName.ObjectType == ObjectTypeEnums.View)
+            {
+                var columns = schemaCache.GetCachedColumns(objectName);
+                if (columns.Count == 0)
                 {
-                    foreach (var column in dbTable.Columns)
-                    {
-                        AppendColumnDescriptionScript(sb, objectName, dbmsType, column.ColumnName, column.Description, useExtendedProperties);
-                    }
+                    columns = await schemaCache.GetColumnsAsync(objectName);
                 }
-                else
+
+                foreach (var column in columns)
                 {
-                    foreach (var parameter in dbTable.Parameters)
-                    {
-                        AppendParameterDescriptionScript(sb, objectName, dbmsType, parameter.Name, parameter.Description, useExtendedProperties);
-                    }
+                    var columnDescription = await schemaCache.GetLevel2DescriptionAsync(objectName, column.ColumnName);
+                    AppendColumnDescriptionScript(sb, objectName, dbmsType, column, columnDescription, useExtendedProperties);
+                }
+            }
+            else
+            {
+                var parameterNames = GetParameterNames(await schemaCache.GetObjectParametersAsync(objectName));
+                foreach (var parameterName in parameterNames)
+                {
+                    var parameterDescription = await schemaCache.GetLevel2DescriptionAsync(objectName, parameterName);
+                    AppendParameterDescriptionScript(sb, objectName, dbmsType, parameterName, parameterDescription, useExtendedProperties);
                 }
             }
 
@@ -55,25 +67,39 @@ namespace SQL_Document_Builder
             return script;
         }
 
-        private static DBMSTypeEnums GetEffectiveDbmsType(DatabaseConnectionItem? connection)
+        private static DBMSTypeEnums GetEffectiveDbmsType(DBSchema? schemaCache)
         {
-            if (connection == null)
+            if (schemaCache?.Connection == null)
             {
                 return DBMSTypeEnums.Other;
             }
 
-            if (connection.ConnectionType.Equals("SQL Server", StringComparison.OrdinalIgnoreCase))
+            return schemaCache.Connection.DBMSType;
+        }
+
+        private static IEnumerable<string> GetParameterNames(DataTable? parameters)
+        {
+            if (parameters == null || parameters.Rows.Count == 0)
             {
-                return DBMSTypeEnums.SQLServer;
+                return [];
             }
 
-            if (connection.ConnectionType.Equals("ODBC", StringComparison.OrdinalIgnoreCase) &&
-                connection.DBMSType == DBMSTypeEnums.SQLServer)
+            var names = new List<string>();
+            foreach (DataRow row in parameters.Rows)
             {
-                return DBMSTypeEnums.Other;
+                var parameterName = row.Table.Columns.Contains("PARAMETER_NAME")
+                    ? row["PARAMETER_NAME"]?.ToString()
+                    : row.Table.Columns.Contains("ParameterName")
+                        ? row["ParameterName"]?.ToString()
+                        : string.Empty;
+
+                if (!string.IsNullOrWhiteSpace(parameterName))
+                {
+                    names.Add(parameterName);
+                }
             }
 
-            return connection.DBMSType;
+            return names;
         }
 
         private static void AppendObjectDescriptionScript(StringBuilder sb, ObjectName objectName, DBMSTypeEnums dbmsType, string? description, bool useExtendedProperties)
@@ -122,13 +148,14 @@ namespace SQL_Document_Builder
             }
         }
 
-        private static void AppendColumnDescriptionScript(StringBuilder sb, ObjectName objectName, DBMSTypeEnums dbmsType, string? columnName, string? description, bool useExtendedProperties)
+        private static void AppendColumnDescriptionScript(StringBuilder sb, ObjectName objectName, DBMSTypeEnums dbmsType, DBColumn? column, string? description, bool useExtendedProperties)
         {
-            if (string.IsNullOrWhiteSpace(columnName) || string.IsNullOrWhiteSpace(description))
+            if (column == null || string.IsNullOrWhiteSpace(column.ColumnName) || string.IsNullOrWhiteSpace(description))
             {
                 return;
             }
 
+            var columnName = column.ColumnName;
             var escapedDescription = EscapeSqlLiteral(description);
             switch (dbmsType)
             {
@@ -146,6 +173,15 @@ namespace SQL_Document_Builder
                 case DBMSTypeEnums.PostgreSQL:
                 case DBMSTypeEnums.Oracle:
                     sb.AppendLine($"COMMENT ON COLUMN {GetQualifiedName(objectName, dbmsType)}.{QuoteIdentifier(columnName, dbmsType)} IS '{escapedDescription}';");
+                    break;
+
+                case DBMSTypeEnums.MySQL:
+                case DBMSTypeEnums.MariaDB:
+                    if (!string.IsNullOrWhiteSpace(column.DataType))
+                    {
+                        var nullability = column.Nullable ? "NULL" : "NOT NULL";
+                        sb.AppendLine($"ALTER TABLE {GetQualifiedName(objectName, dbmsType)} MODIFY COLUMN {QuoteIdentifier(columnName, dbmsType)} {column.DataType} {nullability} COMMENT '{escapedDescription}';");
+                    }
                     break;
             }
         }

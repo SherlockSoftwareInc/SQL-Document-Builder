@@ -1,5 +1,4 @@
 ﻿using System;
-using System;
 using System.ComponentModel;
 using System.Windows.Forms;
 
@@ -56,6 +55,11 @@ namespace SQL_Document_Builder
         /// </summary>
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string DSN { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets the DBMS type for the connection.
+        /// </summary>
+        public DBMSTypeEnums DBMSType { get; private set; }
 
         /// <summary>
         /// Gets or sets whether SQL connections are encrypted.
@@ -199,6 +203,7 @@ namespace SQL_Document_Builder
                 {
                     SelectedConnection = odbcConnSettingBox.SelectedConnection;
                     DSN = odbcConnSettingBox.DSN;
+                    DBMSType = odbcConnSettingBox.DBMSType;
                     UserName = odbcConnSettingBox.UserName;
                     Password = odbcConnSettingBox.Password;
                     RememberPassword = odbcConnSettingBox.RememberPassword;
@@ -220,6 +225,7 @@ namespace SQL_Document_Builder
                 ServerName = sqlConnSettingBox.ServerName;
                 DatabaseName = sqlConnSettingBox.DatabaseName;
                 ConnectionName = sqlConnSettingBox.ConnectionName;
+                DBMSType = DBMSTypeEnums.SQLServer;
                 UserName = sqlConnSettingBox.UserName;
                 Authentication = (AuthenticationMethod)sqlConnSettingBox.Authentication;
                 Password = sqlConnSettingBox.Password;

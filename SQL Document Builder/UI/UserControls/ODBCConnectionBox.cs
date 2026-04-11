@@ -9,6 +9,7 @@ namespace SQL_Document_Builder
     {
         private bool _completeStatus = false;
         private bool _init = false;
+        private DBMSTypeEnums _dbmsType = DBMSTypeEnums.Other;
 
         public ODBCConnectionBox()
         {
@@ -118,6 +119,11 @@ namespace SQL_Document_Builder
         public DatabaseConnectionItem SelectedConnection { get => (DatabaseConnectionItem)dsnComboBox.SelectedItem; }
 
         /// <summary>
+        /// Gets DBMS type resolved from selected DSN.
+        /// </summary>
+        public DBMSTypeEnums DBMSType => _dbmsType;
+
+        /// <summary>
         /// Gets or set user name
         /// </summary>
         public string UserName
@@ -134,6 +140,7 @@ namespace SQL_Document_Builder
             SetInitializing(() =>
             {
                 dsnComboBox.SelectedIndex = -1;
+                _dbmsType = DBMSTypeEnums.Other;
                 userNameTextBox.Clear();
                 passwordTextBox.Clear();
                 rememberPasswordCheckBox.Checked = false;
@@ -182,6 +189,12 @@ namespace SQL_Document_Builder
                 _completeStatus = CanSave;
                 CompleteStatusChanged?.Invoke(this, EventArgs.Empty);
             }
+        }
+
+        private void DsnComboBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            UpdateSelectedDbmsType();
+            OnSettingsChanged(sender, e);
         }
 
         private void PasswordTextBox_TextChanged(object sender, EventArgs e)
@@ -256,6 +269,49 @@ namespace SQL_Document_Builder
             AlignLabelToControl(dsnLabel, dsnComboBox, labelGap);
             AlignLabelToControl(userNameLabel, userNameTextBox, labelGap);
             AlignLabelToControl(passwordLabel, passwordTextBox, labelGap);
+        }
+
+        private void UpdateSelectedDbmsType()
+        {
+            if (dsnComboBox.SelectedItem is not DatabaseConnectionItem item)
+            {
+                _dbmsType = DBMSTypeEnums.Other;
+                return;
+            }
+
+            var resolvedType = ResolveDbmsTypeFromOdbcDriver(item.Driver);
+            if (resolvedType == DBMSTypeEnums.Other && item.DBMSType != DBMSTypeEnums.SQLServer)
+            {
+                resolvedType = item.DBMSType;
+            }
+
+            _dbmsType = resolvedType;
+            item.DBMSType = resolvedType;
+        }
+
+        private static DBMSTypeEnums ResolveDbmsTypeFromOdbcDriver(string? driver)
+        {
+            if (string.IsNullOrWhiteSpace(driver))
+            {
+                return DBMSTypeEnums.Other;
+            }
+
+            var name = driver.ToLowerInvariant();
+
+            if (name.Contains("mariadb")) return DBMSTypeEnums.MariaDB;
+            if (name.Contains("mysql")) return DBMSTypeEnums.MySQL;
+            if (name.Contains("postgres") || name.Contains("pgsql") || name.Contains("psql")) return DBMSTypeEnums.PostgreSQL;
+            if (name.Contains("oracle")) return DBMSTypeEnums.Oracle;
+            if (name.Contains("sqlite")) return DBMSTypeEnums.SQLite;
+            if (name.Contains("mongo")) return DBMSTypeEnums.MongoDB;
+            if (name.Contains("redis")) return DBMSTypeEnums.Redis;
+            if (name.Contains("cassandra")) return DBMSTypeEnums.Cassandra;
+            if (name.Contains("sql server") || name.Contains("msodbcsql") || name.Contains("sqlncli") || name.Contains("native client"))
+            {
+                return DBMSTypeEnums.SQLServer;
+            }
+
+            return DBMSTypeEnums.Other;
         }
 
         private static void AlignLabelToControl(Label label, Control control, int gap)

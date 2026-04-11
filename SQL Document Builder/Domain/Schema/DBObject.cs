@@ -432,7 +432,15 @@ namespace SQL_Document_Builder
             var objectType = objectName.ObjectType;
 
             // Get the object properties
-            await OpenObjectInfo();
+            try
+            {
+                await OpenObjectInfo();
+            }
+            catch
+            {
+                // Object-level metadata is best effort.
+                // Continue loading core object content (columns/definition) even when optional metadata fails.
+            }
 
             return objectType switch
             {
@@ -442,17 +450,6 @@ namespace SQL_Document_Builder
                 ObjectTypeEnums.Synonym => await OpenSynonymAsync(),
                 _ => false,
             };
-        }
-
-        /// <summary>
-        /// Gets the function parameters async.
-        /// </summary>
-        /// <param name="objectName">The object name.</param>
-        /// <param name="connectionString">The connection string.</param>
-        /// <returns>A Task.</returns>
-        private static async Task<DataTable?> GetParametersAsync(ObjectName objectName, DatabaseConnectionItem connection)
-        {
-            return await SchemaMetadataProviderContext.Current.GetObjectParametersAsync(objectName, connection.ConnectionString);
         }
 
         /// <summary>
@@ -485,7 +482,7 @@ namespace SQL_Document_Builder
             {
                 if (SchemaCache != null)
                 {
-                    var cachedColumns = SchemaCache.GetCachedColumns(ObjectName);
+                    var cachedColumns = await SchemaCache.GetColumnsAsync(ObjectName);
                     if (cachedColumns.Count > 0)
                     {
                         Columns.AddRange(cachedColumns);
@@ -635,7 +632,9 @@ namespace SQL_Document_Builder
 
             // Get the function parameters
             Parameters.Clear();
-            var dtParameters = await GetParametersAsync(ObjectName, Connection);
+            var dtParameters = SchemaCache != null
+                ? await SchemaCache.GetObjectParametersAsync(ObjectName)
+                : await SchemaMetadataProviderContext.Current.GetObjectParametersAsync(ObjectName, Connection.ConnectionString);
             if (dtParameters != null && dtParameters.Rows.Count > 0)
             {
                 foreach (DataRow row in dtParameters.Rows)
@@ -726,26 +725,72 @@ namespace SQL_Document_Builder
 
             if (ConnectionString?.Length > 0 && ObjectName.Name.Length > 0)
             {
-                result = await GetColumnsAsync();
+                try
+                {
+                    result = await GetColumnsAsync();
+                }
+                catch
+                {
+                    return false;
+                }
 
                 if (ObjectName?.ObjectType == ObjectTypeEnums.Table)
                 {
-                    await GetPrimaryKeysAsync(ObjectName);
+                    try
+                    {
+                        await GetPrimaryKeysAsync(ObjectName);
+                    }
+                    catch
+                    {
+                    }
 
-                    await GetConstraintsAsync();
+                    try
+                    {
+                        await GetConstraintsAsync();
+                    }
+                    catch
+                    {
+                    }
                 }
 
-                await GetIndexesAsync(ObjectName);
+                try
+                {
+                    await GetIndexesAsync(ObjectName);
+                }
+                catch
+                {
+                }
 
-                Description = SchemaCache != null
-                    ? await SchemaCache.GetObjectDescriptionAsync(ObjectName)
-                    : await SchemaMetadataProviderContext.Current.GetObjectDescriptionAsync(ObjectName, ConnectionString);
-                await GetColumnDescAsync();
+                try
+                {
+                    Description = SchemaCache != null
+                        ? await SchemaCache.GetObjectDescriptionAsync(ObjectName)
+                        : await SchemaMetadataProviderContext.Current.GetObjectDescriptionAsync(ObjectName, ConnectionString);
+                }
+                catch
+                {
+                    Description = string.Empty;
+                }
+
+                try
+                {
+                    await GetColumnDescAsync();
+                }
+                catch
+                {
+                }
 
                 // get the definition if it is a view
                 if (ObjectName.ObjectType == ObjectTypeEnums.View)
                 {
-                    Definition = await SchemaMetadataProviderContext.Current.GetObjectDefinitionAsync(ObjectName, ConnectionString);
+                    try
+                    {
+                        Definition = await SchemaMetadataProviderContext.Current.GetObjectDefinitionAsync(ObjectName, ConnectionString);
+                    }
+                    catch
+                    {
+                        Definition = string.Empty;
+                    }
                 }
             }
 

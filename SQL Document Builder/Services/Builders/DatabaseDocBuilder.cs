@@ -2,9 +2,8 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using SQL_Document_Builder.DatabaseAccess;
-using SQL_Document_Builder.SchemaMetadata;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using static SQL_Document_Builder.ObjectName;
@@ -21,7 +20,7 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="dbObject">The database object for which the creation script is to be generated.</param>
         /// <returns>A Task<string?> containing the creation script, or null if the object type is unsupported.</returns>
-        public static async Task<string?> GetCreateObjectScriptAsync(ObjectName dbObject, DatabaseConnectionItem connection)
+        public static async Task<string?> GetCreateObjectScriptAsync(ObjectName dbObject, DBSchema schemaCache)
         {
             if (dbObject == null)
             {
@@ -34,15 +33,20 @@ namespace SQL_Document_Builder
                 return string.Empty; // Return empty string if the object is not valid
             }
 
+            if (schemaCache == null)
+            {
+                throw new ArgumentNullException(nameof(schemaCache));
+            }
+
             // Determine the object type and retrieve the corresponding creation script
             return dbObject.ObjectType switch
             {
-                ObjectName.ObjectTypeEnums.Table => await GetCreateTableScriptAsync(dbObject, connection),
-                ObjectName.ObjectTypeEnums.View => await GetCreateViewScriptAsync(dbObject, connection),
-                ObjectName.ObjectTypeEnums.StoredProcedure => await GetCreateStoredProcedureScriptAsync(dbObject, connection),
-                ObjectName.ObjectTypeEnums.Function => await GetCreateFunctionScriptAsync(dbObject, connection),
-                ObjectName.ObjectTypeEnums.Trigger => await GetCreateTriggerScriptAsync(dbObject, connection),
-                ObjectName.ObjectTypeEnums.Synonym => await GetCreateSynonymScriptAsync(dbObject, connection),
+                ObjectName.ObjectTypeEnums.Table => await GetCreateTableScriptAsync(dbObject, schemaCache),
+                ObjectName.ObjectTypeEnums.View => await GetCreateViewScriptAsync(dbObject, schemaCache),
+                ObjectName.ObjectTypeEnums.StoredProcedure => await GetCreateStoredProcedureScriptAsync(dbObject, schemaCache),
+                ObjectName.ObjectTypeEnums.Function => await GetCreateFunctionScriptAsync(dbObject, schemaCache),
+                ObjectName.ObjectTypeEnums.Trigger => await GetCreateTriggerScriptAsync(dbObject, schemaCache),
+                ObjectName.ObjectTypeEnums.Synonym => await GetCreateSynonymScriptAsync(dbObject, schemaCache),
                 _ => throw new NotSupportedException($"The object type '{dbObject.ObjectType}' is not supported.")
             };
         }
@@ -53,7 +57,7 @@ namespace SQL_Document_Builder
         /// <param name="dbObject">The db object.</param>
         /// <param name="connectionString">The connection string.</param>
         /// <returns>A Task.</returns>
-        private static async Task<string?> GetCreateSynonymScriptAsync(ObjectName dbObject, DatabaseConnectionItem connection)
+        private static async Task<string?> GetCreateSynonymScriptAsync(ObjectName dbObject, DBSchema schemaCache)
         {
             StringBuilder createScript = new();
 
@@ -64,19 +68,19 @@ namespace SQL_Document_Builder
             {
                 AppendConditionalDropStatement(
                     createScript,
-                    connection,
+                    schemaCache,
                     $"OBJECT_ID(N'{dbObject.FullName}', 'SN') IS NOT NULL",
                     $"DROP SYNONYM {dbObject.FullName}",
                     $"DROP SYNONYM IF EXISTS {dbObject.FullName}");
             }
 
-            string baseObjectName = await SchemaMetadataProviderContext.Current.GetSynonymBaseObjectAsync(dbObject, connection.ConnectionString);
+            string baseObjectName = await schemaCache.GetSynonymBaseObjectAsync(dbObject);
             if (string.IsNullOrEmpty(baseObjectName))
                 return string.Empty;
 
             // Add the CREATE SYNONYM statement
             createScript.AppendLine($"CREATE SYNONYM {dbObject.FullName} FOR {baseObjectName};");
-            createScript.AppendLine(GetBatchSeparator(connection));
+            createScript.AppendLine(GetBatchSeparator(schemaCache));
 
             return createScript.ToString();
         }
@@ -87,26 +91,44 @@ namespace SQL_Document_Builder
         /// <param name="sql">The SQL query to fetch data.</param>
         /// <param name="tableName">The table name for the insert statements.</param>
         /// <returns>A Task<string> containing the generated insert statements or a warning if rows exceed 500.</returns>
-        public static async Task<string> QueryDataToInsertStatementAsync(string sql, DatabaseConnectionItem connection, string tableName = "YourTableName", bool hasIdentity = false)
+        public static async Task<string> QueryDataToInsertStatementAsync(string sql, DBSchema schemaCache, string tableName = "YourTableName", bool hasIdentity = false)
         {
+            if (schemaCache == null)
+            {
+                throw new ArgumentNullException(nameof(schemaCache));
+            }
+
+            var connection = schemaCache.Connection;
+            if (connection == null || string.IsNullOrWhiteSpace(connection.ConnectionString))
+            {
+                throw new ArgumentException("Invalid schema cache connection.");
+            }
+
             var sb = new StringBuilder();
 
             try
             {
-                // Use SQLDatabaseHelper to get the data as a DataTable
-                var provider = DatabaseAccessProviderFactory.GetProvider(connection);
-                var dt = await provider.GetDataTableAsync(sql, connection.ConnectionString);
+                var dt = await DBData.GetDataTableAsync(connection, sql, CancellationToken.None);
 
                 if (dt != null && dt.Rows.Count > 0)
                 {
+                    if (!hasIdentity)
+                    {
+                        var cachedIdentity = TryGetIdentityFromSchemaCache(tableName, schemaCache);
+                        if (cachedIdentity.HasValue)
+                        {
+                            hasIdentity = cachedIdentity.Value;
+                        }
+                    }
+
                     // Get the column names
-                    var columnNames = string.Join(", ", dt.Columns.Cast<DataColumn>().Select(c => QuoteIdentifier(c.ColumnName, connection)));
-                    var qualifiedTableName = QuoteQualifiedName(tableName, connection);
+                    var columnNames = string.Join(", ", dt.Columns.Cast<DataColumn>().Select(c => QuoteIdentifier(c.ColumnName, schemaCache)));
+                    var qualifiedTableName = QuoteQualifiedName(tableName, schemaCache);
 
-                    var identityOverrideClause = GetIdentityInsertOverrideClause(connection, hasIdentity);
-                    bool isOracle = IsOracleConnection(connection);
+                    var identityOverrideClause = GetIdentityInsertOverrideClause(schemaCache, hasIdentity);
+                    bool isOracle = IsOracleConnection(schemaCache);
 
-                    if (hasIdentity && IsSqlServerConnection(connection))
+                    if (hasIdentity && IsSqlServerConnection(schemaCache))
                     {
                         // add SET IDENTITY_INSERT  ON;
                         sb.AppendLine($"SET IDENTITY_INSERT {qualifiedTableName} ON;");
@@ -116,7 +138,7 @@ namespace SQL_Document_Builder
                     {
                         foreach (DataRow row in dt.Rows)
                         {
-                            var rowValues = BuildInsertRowValues(row, dt.Columns, connection);
+                            var rowValues = BuildInsertRowValues(row, dt.Columns, schemaCache);
                             sb.AppendLine($"INSERT INTO {qualifiedTableName} ({columnNames}){identityOverrideClause} VALUES ({rowValues});");
                         }
                     }
@@ -145,7 +167,7 @@ namespace SQL_Document_Builder
                                 batchCount++;
                             }
 
-                            var rowValues = BuildInsertRowValues(row, dt.Columns, connection);
+                            var rowValues = BuildInsertRowValues(row, dt.Columns, schemaCache);
                             sb.AppendLine($"\t({rowValues}),");
                             rowCount++;
                         }
@@ -158,7 +180,7 @@ namespace SQL_Document_Builder
                         }
                     }
 
-                    if (hasIdentity && IsSqlServerConnection(connection))
+                    if (hasIdentity && IsSqlServerConnection(schemaCache))
                     {
                         sb.AppendLine($"SET IDENTITY_INSERT {qualifiedTableName} OFF;");
                     }
@@ -177,25 +199,74 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="tableName">The table name.</param>
         /// <returns>A Task.</returns>
-        public static async Task<string> TableToInsertStatementAsync(ObjectName tableName, DatabaseConnectionItem? connection)
+        public static async Task<string> TableToInsertStatementAsync(ObjectName tableName, DBSchema schemaCache)
         {
-            if (tableName.IsEmpty() || connection == null || string.IsNullOrWhiteSpace(connection?.ConnectionString))
+            if (tableName.IsEmpty())
             {
-                throw new ArgumentException("Invalid table name or connection.");
+                throw new ArgumentException("Invalid table name.");
             }
 
-            var sourceTableName = QuoteQualifiedName(tableName.FullNameNoQuote, connection);
+            if (schemaCache == null)
+            {
+                throw new ArgumentNullException(nameof(schemaCache));
+            }
+
+            var connection = schemaCache.Connection;
+            if (connection == null || string.IsNullOrWhiteSpace(connection.ConnectionString))
+            {
+                throw new ArgumentException("Invalid schema cache connection.");
+            }
+
+            var sourceTableName = QuoteQualifiedName(tableName.FullNameNoQuote, schemaCache);
             var sql = $"select * from {sourceTableName}";
-            // check if the SQL statement is a valid SELECT statement to generate JSON data
-            var provider = DatabaseAccessProviderFactory.GetProvider(connection);
-            if (!await provider.IsValidSelectStatementAsync(sql, connection.ConnectionString))
+
+            var hasIdentity = TryGetIdentityFromSchemaCache(tableName, schemaCache)
+                ?? (await schemaCache.GetIdentityColumnsAsync(tableName)).Count > 0;
+
+            return await QueryDataToInsertStatementAsync(sql, schemaCache, tableName.FullNameNoQuote, hasIdentity);
+        }
+
+        private static bool? TryGetIdentityFromSchemaCache(ObjectName objectName, DBSchema schemaCache)
+        {
+            if (objectName == null || objectName.IsEmpty())
             {
-                MessageBox.Show("Cannot generate the JSON data because the table or view contains columns with unsupported data types.", "Invalid SQL", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return "";
+                return null;
             }
 
-            var hasIdentity = await SchemaMetadataProviderContext.Current.HasIdentityColumnAsync(tableName, connection.ConnectionString);
-            return await QueryDataToInsertStatementAsync(sql, connection, tableName.FullNameNoQuote, hasIdentity);
+            var cachedColumns = schemaCache.GetCachedColumns(objectName);
+            if (cachedColumns.Count == 0)
+            {
+                return null;
+            }
+
+            // Identity information is not guaranteed in cached columns for all providers.
+            // Use cache only when identity is explicitly encoded in data type metadata.
+            return cachedColumns.Any(c => c.DataType?.Contains("identity", StringComparison.OrdinalIgnoreCase) == true)
+                ? true
+                : null;
+        }
+
+        private static bool? TryGetIdentityFromSchemaCache(string tableName, DBSchema schemaCache)
+        {
+            if (string.IsNullOrWhiteSpace(tableName))
+            {
+                return null;
+            }
+
+            var objectName = new ObjectName
+            {
+                FullName = tableName,
+                ObjectType = ObjectTypeEnums.Table
+            };
+
+            var identityFromTable = TryGetIdentityFromSchemaCache(objectName, schemaCache);
+            if (identityFromTable.HasValue)
+            {
+                return identityFromTable;
+            }
+
+            objectName.ObjectType = ObjectTypeEnums.View;
+            return TryGetIdentityFromSchemaCache(objectName, schemaCache);
         }
 
         /// <summary>
@@ -203,7 +274,7 @@ namespace SQL_Document_Builder
         /// Handles XML indexes with the correct syntax.
         /// </summary>
         /// <returns>A string containing the SQL script to recreate the indexes.</returns>
-        internal static async Task<string?> GetCreateIndexesScript(ObjectName objectName, DatabaseConnectionItem connection)
+        internal static async Task<string?> GetCreateIndexesScript(ObjectName objectName, DBSchema schemaCache)
         {
             if (objectName.IsEmpty() ||
                 (objectName.ObjectType != ObjectTypeEnums.Table && objectName.ObjectType != ObjectTypeEnums.View))
@@ -241,7 +312,7 @@ namespace SQL_Document_Builder
 
             StringBuilder sb = new();
 
-            var dt = await SchemaMetadataProviderContext.Current.GetCreateIndexesMetadataAsync(objectName, connection.ConnectionString);
+            var dt = await schemaCache.GetCreateIndexesMetadataAsync(objectName);
             if (dt == null || dt.Rows.Count == 0)
                 return string.Empty;
 
@@ -404,7 +475,7 @@ GO";
         /// </summary>
         /// <param name="objectName">The object name.</param>
         /// <returns>A Task.</returns>
-        private static async Task<string?> GetCreateFunctionScriptAsync(ObjectName objectName, DatabaseConnectionItem connection)
+        private static async Task<string?> GetCreateFunctionScriptAsync(ObjectName objectName, DBSchema schemaCache)
         {
             StringBuilder createScript = new();
 
@@ -413,19 +484,19 @@ GO";
 
             AppendConditionalDropStatement(
                 createScript,
-                connection,
+                schemaCache,
                 $"EXISTS (SELECT 1 FROM sys.objects WHERE object_id = OBJECT_ID(N'{objectName.FullName}') AND type IN ('FN','IF','TF'))",
                 $"DROP FUNCTION {objectName.FullName}",
                 $"DROP FUNCTION IF EXISTS {objectName.FullName}");
 
-            var script = await GetDefinitionAsync(objectName, connection);
+            var script = await GetDefinitionAsync(objectName, schemaCache);
             if (string.IsNullOrEmpty(script))
             {
                 return string.Empty;
             }
 
             createScript.Append(script);
-            createScript.AppendLine(GetBatchSeparator(connection));
+            createScript.AppendLine(GetBatchSeparator(schemaCache));
             return createScript.ToString();
         }
 
@@ -434,7 +505,7 @@ GO";
         /// </summary>
         /// <param name="objectName">The object name.</param>
         /// <returns>A Task.</returns>
-        private static async Task<string?> GetCreateStoredProcedureScriptAsync(ObjectName objectName, DatabaseConnectionItem connection)
+        private static async Task<string?> GetCreateStoredProcedureScriptAsync(ObjectName objectName, DBSchema schemaCache)
         {
             StringBuilder createScript = new();
 
@@ -445,13 +516,13 @@ GO";
             {
                 AppendConditionalDropStatement(
                     createScript,
-                    connection,
+                    schemaCache,
                     $"OBJECT_ID(N'{objectName.FullName}', 'P') IS NOT NULL",
                     $"DROP PROCEDURE {objectName.FullName}",
                     $"DROP PROCEDURE IF EXISTS {objectName.FullName}");
             }
 
-            var script = await GetDefinitionAsync(objectName, connection);
+            var script = await GetDefinitionAsync(objectName, schemaCache);
 
             if (string.IsNullOrEmpty(script))
             {
@@ -459,7 +530,7 @@ GO";
             }
 
             createScript.Append(script);
-            createScript.AppendLine(GetBatchSeparator(connection));
+            createScript.AppendLine(GetBatchSeparator(schemaCache));
             return createScript.ToString();
         }
 
@@ -468,16 +539,24 @@ GO";
         /// </summary>
         /// <param name="dbObject">The db object.</param>
         /// <returns>A Task.</returns>
-        private static async Task<string?> GetCreateTableScriptAsync(ObjectName objectName, DatabaseConnectionItem connection)
+        private static async Task<string?> GetCreateTableScriptAsync(ObjectName objectName, DBSchema schemaCache)
         {
             StringBuilder createScript = new();
 
             // Add the header
             createScript.AppendLine($"/****** Object: Table {objectName.FullName} ******/");
 
-            // open the table object
-            var table = new DBObject();
-            if (!await table.OpenAsync(objectName, connection))
+            if (!schemaCache.HasObject(objectName))
+            {
+                return string.Empty;
+            }
+
+            var columns = (await schemaCache.GetColumnsAsync(objectName))
+                .OrderBy(c => int.TryParse(c.OrdinalPosition, out var position) ? position : int.MaxValue)
+                .ThenBy(c => c.ColumnName, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (columns.Count == 0)
             {
                 return string.Empty;
             }
@@ -487,25 +566,26 @@ GO";
             {
                 AppendConditionalDropStatement(
                     createScript,
-                    connection,
+                    schemaCache,
                     $"OBJECT_ID(N'{objectName.FullName}', 'U') IS NOT NULL",
                     $"DROP TABLE {objectName.FullName}",
                     $"DROP TABLE IF EXISTS {objectName.FullName}");
             }
 
             // Get the primary key column names that the Ord ends with "🗝"
-            string primaryKeyColumns = table.PrimaryKeyColumns;
+            var primaryKeyColumnNames = await schemaCache.GetPrimaryKeyColumnsAsync(objectName);
+            string primaryKeyColumns = string.Join(", ", primaryKeyColumnNames.Select(c => $"[{c}]"));
 
             // Retrieve identity column details
-            var identityColumns = await table.GetIdentityColumns(connection);
+            var identityColumns = await schemaCache.GetIdentityColumnsAsync(objectName);
 
             // Add the CREATE TABLE statement
             createScript.AppendLine($"CREATE TABLE {objectName.FullName} (");
 
             // Iterate through the rows in the DataGridView
-            for (int i = 0; i < table.Columns.Count; i++)
+            for (int i = 0; i < columns.Count; i++)
             {
-                var column = table.Columns[i];
+                var column = columns[i];
 
                 // Safely retrieve column values
                 string columnName = column.ColumnName;
@@ -523,7 +603,7 @@ GO";
                 }
 
                 // Add a comma if it's not the last valid row
-                if (i < table.Columns.Count - 1)
+                if (i < columns.Count - 1)
                 {
                     createScript.AppendLine(",");
                 }
@@ -543,10 +623,10 @@ GO";
                 createScript.AppendLine($"\tCONSTRAINT PK_{objectName.Schema}_{objectName.Name} PRIMARY KEY ({primaryKeyColumns})");
             }
             createScript.AppendLine(");");
-            createScript.AppendLine(GetBatchSeparator(connection));
+            createScript.AppendLine(GetBatchSeparator(schemaCache));
 
             // add the foreign key constraints
-            var foreignKeyConstraints = await table.GetForeignKeyConstraintsScript();
+            var foreignKeyConstraints = await BuildForeignKeyConstraintsScriptAsync(objectName, schemaCache);
             if (!string.IsNullOrEmpty(foreignKeyConstraints))
             {
                 // remove the new line at the end of the script
@@ -555,7 +635,7 @@ GO";
             }
 
             // add the check constraints
-            var checkConstraints = await table.GetCheckConstraintsScript();
+            var checkConstraints = await BuildCheckConstraintsScriptAsync(objectName, schemaCache);
             if (!string.IsNullOrEmpty(checkConstraints))
             {
                 // remove the new line at the end of the script
@@ -564,7 +644,7 @@ GO";
             }
 
             // add the default constraints
-            var defaultConstraints = await table.GetDefaultConstraintsScript();
+            var defaultConstraints = await BuildDefaultConstraintsScriptAsync(objectName, schemaCache);
             if (!string.IsNullOrEmpty(defaultConstraints))
             {
                 // remove the new line at the end of the script
@@ -572,7 +652,7 @@ GO";
                 createScript.AppendLine(defaultConstraints);
             }
 
-            var indexScript = await GetCreateIndexesScript(objectName, connection);
+            var indexScript = await GetCreateIndexesScript(objectName, schemaCache);
             if (!string.IsNullOrEmpty(indexScript))
             {
                 // remove the new line at the end of the script
@@ -581,11 +661,11 @@ GO";
                 createScript.AppendLine(indexScript);
             }
 
-            var triggerScript = await GetCreateTriggersScriptAsync(objectName, connection);
+            var triggerScript = await GetCreateTriggersScriptAsync(objectName, schemaCache);
             if (!string.IsNullOrEmpty(triggerScript))
             {
                 // if the createScript does not ended with a line of "GO", add it
-                AddBatchSeparatorStatement(createScript, connection);
+                AddBatchSeparatorStatement(createScript, schemaCache);
 
                 // remove the new line at the end of the script
                 triggerScript = triggerScript.TrimEnd('\r', '\n');
@@ -593,62 +673,166 @@ GO";
             }
 
             // add GO statement
-            AddBatchSeparatorStatement(createScript, connection);
-            //if (!createScript.ToString().EndsWith(Environment.NewLine + "GO" + Environment.NewLine, StringComparison.OrdinalIgnoreCase))
-            //{
-            //    createScript.AppendLine($"GO");
-            //}
+            AddBatchSeparatorStatement(createScript, schemaCache);
 
             return createScript.ToString();
+        }
+
+        private static async Task<string?> BuildCheckConstraintsScriptAsync(ObjectName objectName, DBSchema schemaCache)
+        {
+            var dt = await schemaCache.GetCheckConstraintsAsync(objectName);
+            if (dt == null || dt.Rows.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            StringBuilder sb = new();
+            foreach (DataRow row in dt.Rows)
+            {
+                string constraintName = row["ConstraintName"]?.ToString() ?? string.Empty;
+                string schema = row["SchemaName"]?.ToString() ?? string.Empty;
+                string table = row["TableName"]?.ToString() ?? string.Empty;
+                string definition = row["CheckDefinition"]?.ToString() ?? string.Empty;
+
+                sb.AppendLine($"ALTER TABLE [{schema}].[{table}]");
+                sb.AppendLine($"    ADD CONSTRAINT [{constraintName}] CHECK {definition};");
+            }
+
+            return sb.ToString();
+        }
+
+        private static async Task<string?> BuildDefaultConstraintsScriptAsync(ObjectName objectName, DBSchema schemaCache)
+        {
+            var dt = await schemaCache.GetDefaultConstraintsAsync(objectName);
+            if (dt == null || dt.Rows.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            StringBuilder sb = new();
+            foreach (DataRow row in dt.Rows)
+            {
+                string constraintName = row["ConstraintName"]?.ToString() ?? string.Empty;
+                string schema = row["SchemaName"]?.ToString() ?? string.Empty;
+                string table = row["TableName"]?.ToString() ?? string.Empty;
+                string column = row["ColumnName"]?.ToString() ?? string.Empty;
+                string definition = row["DefaultDefinition"]?.ToString() ?? string.Empty;
+
+                sb.AppendLine($"ALTER TABLE [{schema}].[{table}]");
+                sb.AppendLine($"    ADD CONSTRAINT [{constraintName}] DEFAULT {definition} FOR [{column}];");
+            }
+
+            return sb.ToString();
+        }
+
+        private static async Task<string?> BuildForeignKeyConstraintsScriptAsync(ObjectName objectName, DBSchema schemaCache)
+        {
+            var dt = await schemaCache.GetForeignKeyConstraintsAsync(objectName);
+            if (dt == null || dt.Rows.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            StringBuilder sb = new();
+            var fkDict = new Dictionary<string, (string Schema, string Table, string RefSchema, string RefTable, List<string> Columns, List<string> RefColumns, string OnDelete, string OnUpdate)>();
+
+            foreach (DataRow row in dt.Rows)
+            {
+                string fkName = row["ForeignKeyName"]?.ToString() ?? string.Empty;
+                string schema = row["SchemaName"]?.ToString() ?? string.Empty;
+                string table = row["ParentTable"]?.ToString() ?? string.Empty;
+                string parentColumn = row["ParentColumn"]?.ToString() ?? string.Empty;
+                string refTable = row["ReferencedTable"]?.ToString() ?? string.Empty;
+                string refColumn = row["ReferencedColumn"]?.ToString() ?? string.Empty;
+                string refSchema = row["ReferencedSchema"]?.ToString() ?? string.Empty;
+                string onDelete = row["OnDeleteAction"]?.ToString() ?? string.Empty;
+                string onUpdate = row["OnUpdateAction"]?.ToString() ?? string.Empty;
+
+                if (!fkDict.ContainsKey(fkName))
+                {
+                    fkDict[fkName] = (schema, table, refSchema, refTable, new List<string>(), new List<string>(), onDelete, onUpdate);
+                }
+
+                fkDict[fkName].Columns.Add(parentColumn);
+                fkDict[fkName].RefColumns.Add(refColumn);
+            }
+
+            foreach (var kvp in fkDict)
+            {
+                var fkName = kvp.Key;
+                var (schema, table, refSchema, refTable, columns, refColumns, onDelete, onUpdate) = kvp.Value;
+
+                sb.AppendLine($"ALTER TABLE [{schema}].[{table}]");
+                sb.AppendLine($"    ADD CONSTRAINT [{fkName}] FOREIGN KEY ({string.Join(", ", columns.ConvertAll(c => $"[{c}]"))})");
+                sb.AppendLine($"        REFERENCES [{refSchema}].[{refTable}] ({string.Join(", ", refColumns.ConvertAll(c => $"[{c}]"))})" +
+                    $"{(onDelete != "NO_ACTION" && !string.IsNullOrEmpty(onDelete) ? $" ON DELETE {onDelete.Replace("_", " ")}" : "")}" +
+                    $"{(onUpdate != "NO_ACTION" && !string.IsNullOrEmpty(onUpdate) ? $" ON UPDATE {onUpdate.Replace("_", " ")}" : "")};");
+            }
+
+            return sb.ToString();
         }
 
         /// <summary>
         /// Adds the DBMS batch separator to the script if the script does not already end with it.
         /// </summary>
         /// <param name="sb">The sb.</param>
-        private static void AddBatchSeparatorStatement(StringBuilder sb, DatabaseConnectionItem connection)
+        private static void AddBatchSeparatorStatement(StringBuilder sb, DBSchema schemaCache)
         {
-            var batchSeparator = GetBatchSeparator(connection);
+            var batchSeparator = GetBatchSeparator(schemaCache);
             if (!sb.ToString().EndsWith(Environment.NewLine + batchSeparator + Environment.NewLine, StringComparison.OrdinalIgnoreCase))
             {
                 sb.AppendLine(batchSeparator);
             }
         }
 
-        private static string GetBatchSeparator(DatabaseConnectionItem connection)
+        private static string GetBatchSeparator(DBSchema schemaCache)
         {
-            bool isSqlServer = IsSqlServerConnection(connection);
+            bool isSqlServer = IsSqlServerConnection(schemaCache);
 
             return isSqlServer ? "GO" : ";";
         }
 
-        private static bool IsSqlServerConnection(DatabaseConnectionItem connection)
+        private static bool IsSqlServerConnection(DBSchema schemaCache)
         {
-            return connection.ConnectionType.Equals("SQL Server", StringComparison.OrdinalIgnoreCase) ||
-                   (!connection.ConnectionType.Equals("ODBC", StringComparison.OrdinalIgnoreCase) &&
-                    connection.DBMSType == DBMSTypeEnums.SQLServer);
+            var connection = schemaCache.Connection;
+            if (connection == null)
+            {
+                return true;
+            }
+
+            return connection.DBMSType == DBMSTypeEnums.SQLServer;
         }
 
-        private static bool IsPostgreSqlConnection(DatabaseConnectionItem connection)
+        private static bool IsPostgreSqlConnection(DBSchema schemaCache)
         {
-            return connection.DBMSType == DBMSTypeEnums.PostgreSQL ||
-                   connection.ConnectionType.Equals("PostgreSQL", StringComparison.OrdinalIgnoreCase);
+            var connection = schemaCache.Connection;
+            if (connection == null)
+            {
+                return false;
+            }
+
+            return connection.DBMSType == DBMSTypeEnums.PostgreSQL;
         }
 
-        private static bool IsOracleConnection(DatabaseConnectionItem connection)
+        private static bool IsOracleConnection(DBSchema schemaCache)
         {
-            return connection.DBMSType == DBMSTypeEnums.Oracle ||
-                   connection.ConnectionType.Equals("Oracle", StringComparison.OrdinalIgnoreCase);
+            var connection = schemaCache.Connection;
+            if (connection == null)
+            {
+                return false;
+            }
+
+            return connection.DBMSType == DBMSTypeEnums.Oracle;
         }
 
-        private static string GetIdentityInsertOverrideClause(DatabaseConnectionItem connection, bool hasIdentity)
+        private static string GetIdentityInsertOverrideClause(DBSchema schemaCache, bool hasIdentity)
         {
             if (!hasIdentity)
             {
                 return string.Empty;
             }
 
-            if (IsPostgreSqlConnection(connection) || IsOracleConnection(connection))
+            if (IsPostgreSqlConnection(schemaCache) || IsOracleConnection(schemaCache))
             {
                 return " OVERRIDING SYSTEM VALUE";
             }
@@ -656,19 +840,19 @@ GO";
             return string.Empty;
         }
 
-        private static string BuildInsertRowValues(DataRow row, DataColumnCollection columns, DatabaseConnectionItem connection)
+        private static string BuildInsertRowValues(DataRow row, DataColumnCollection columns, DBSchema schemaCache)
         {
             var values = new List<string>(columns.Count);
 
             for (int i = 0; i < columns.Count; i++)
             {
-                values.Add(FormatInsertValue(row[i], columns[i].DataType, connection));
+                values.Add(FormatInsertValue(row[i], columns[i].DataType, schemaCache));
             }
 
             return string.Join(", ", values);
         }
 
-        private static string FormatInsertValue(object value, Type type, DatabaseConnectionItem connection)
+        private static string FormatInsertValue(object value, Type type, DBSchema schemaCache)
         {
             if (value == DBNull.Value)
             {
@@ -677,7 +861,7 @@ GO";
 
             if (type == typeof(string))
             {
-                return BuildStringLiteral(value.ToString(), connection);
+                return BuildStringLiteral(value.ToString(), schemaCache);
             }
 
             if (type == typeof(DateTime))
@@ -694,7 +878,7 @@ GO";
 
             if (type == typeof(bool))
             {
-                if (IsPostgreSqlConnection(connection))
+                if (IsPostgreSqlConnection(schemaCache))
                 {
                     return (bool)value ? "TRUE" : "FALSE";
                 }
@@ -702,27 +886,27 @@ GO";
                 return (bool)value ? "1" : "0";
             }
 
-            return BuildStringLiteral(value.ToString(), connection);
+            return BuildStringLiteral(value.ToString(), schemaCache);
         }
 
-        private static string BuildStringLiteral(string? value, DatabaseConnectionItem connection)
+        private static string BuildStringLiteral(string? value, DBSchema schemaCache)
         {
             var escapedValue = (value ?? string.Empty).Replace("'", "''");
-            var prefix = IsSqlServerConnection(connection) ? "N" : string.Empty;
+            var prefix = IsSqlServerConnection(schemaCache) ? "N" : string.Empty;
             return $"{prefix}'{escapedValue}'";
         }
 
-        private static string QuoteQualifiedName(string name, DatabaseConnectionItem connection)
+        private static string QuoteQualifiedName(string name, DBSchema schemaCache)
         {
             if (string.IsNullOrWhiteSpace(name))
             {
                 return name;
             }
 
-            return string.Join(".", name.Split('.').Select(part => QuoteIdentifier(part, connection)));
+            return string.Join(".", name.Split('.').Select(part => QuoteIdentifier(part, schemaCache)));
         }
 
-        private static string QuoteIdentifier(string identifier, DatabaseConnectionItem connection)
+        private static string QuoteIdentifier(string identifier, DBSchema schemaCache)
         {
             string value = identifier.Trim();
             if (value.Length >= 2)
@@ -736,17 +920,19 @@ GO";
                 }
             }
 
-            if (IsSqlServerConnection(connection))
+            var connection = schemaCache.Connection;
+
+            if (IsSqlServerConnection(schemaCache))
             {
                 return $"[{value.Replace("]", "]]" )}]";
             }
 
-            if (connection.DBMSType == DBMSTypeEnums.MySQL || connection.DBMSType == DBMSTypeEnums.MariaDB)
+            if (connection != null && (connection.DBMSType == DBMSTypeEnums.MySQL || connection.DBMSType == DBMSTypeEnums.MariaDB))
             {
                 return $"`{value.Replace("`", "``")}`";
             }
 
-            if (IsPostgreSqlConnection(connection) || IsOracleConnection(connection))
+            if (IsPostgreSqlConnection(schemaCache) || IsOracleConnection(schemaCache))
             {
                 return $"\"{value.Replace("\"", "\"\"")}\"";
             }
@@ -756,12 +942,12 @@ GO";
 
         private static void AppendConditionalDropStatement(
             StringBuilder script,
-            DatabaseConnectionItem connection,
+            DBSchema schemaCache,
             string sqlServerCondition,
             string sqlServerDropStatement,
             string nonSqlServerDropStatement)
         {
-            if (IsSqlServerConnection(connection))
+            if (IsSqlServerConnection(schemaCache))
             {
                 script.AppendLine($"IF {sqlServerCondition}");
                 script.AppendLine($"\t{sqlServerDropStatement};");
@@ -771,7 +957,7 @@ GO";
                 script.AppendLine($"{nonSqlServerDropStatement};");
             }
 
-            script.AppendLine(GetBatchSeparator(connection));
+            script.AppendLine(GetBatchSeparator(schemaCache));
         }
 
         /// <summary>
@@ -780,7 +966,7 @@ GO";
         /// <param name="objectName">The object name.</param>
         /// <param name="connectionString">The connection string.</param>
         /// <returns>A Task.</returns>
-        private static async Task<string?> GetCreateTriggerScriptAsync(ObjectName objectName, DatabaseConnectionItem connection)
+        private static async Task<string?> GetCreateTriggerScriptAsync(ObjectName objectName, DBSchema schemaCache)
         {
             StringBuilder createScript = new();
 
@@ -791,13 +977,13 @@ GO";
             {
                 AppendConditionalDropStatement(
                     createScript,
-                    connection,
+                    schemaCache,
                     $"OBJECT_ID(N'{objectName.FullName}', 'TR') IS NOT NULL",
                     $"DROP TRIGGER {objectName.FullName}",
                     $"DROP TRIGGER IF EXISTS {objectName.FullName}");
             }
 
-            var script = await SchemaMetadataProviderContext.Current.GetObjectDefinitionAsync(objectName, connection.ConnectionString);
+            var script = await schemaCache.GetObjectDefinitionAsync(objectName);
 
             if (string.IsNullOrEmpty(script))
             {
@@ -805,7 +991,7 @@ GO";
             }
 
             createScript.Append(script);
-            createScript.AppendLine(GetBatchSeparator(connection));
+            createScript.AppendLine(GetBatchSeparator(schemaCache));
             return createScript.ToString();
         }
 
@@ -814,7 +1000,7 @@ GO";
         /// </summary>
         /// <param name="objectName">The object name.</param>
         /// <returns>A Task.</returns>
-        private static async Task<string?> GetCreateTriggersScriptAsync(ObjectName objectName, DatabaseConnectionItem connection)
+        private static async Task<string?> GetCreateTriggersScriptAsync(ObjectName objectName, DBSchema schemaCache)
         {
             // Only tables and views can have DML triggers
             if (objectName.IsEmpty() ||
@@ -824,13 +1010,13 @@ GO";
 
             StringBuilder sb = new();
 
-            var allTriggers = await SchemaMetadataProviderContext.Current.GetDatabaseObjectsAsync(ObjectName.ObjectTypeEnums.Trigger, connection.ConnectionString);
+            var allTriggers = schemaCache.Objects(ObjectName.ObjectTypeEnums.Trigger);
             if (allTriggers.Count == 0)
                 return string.Empty;
 
             foreach (var triggerObject in allTriggers)
             {
-                var triggerInfo = await SchemaMetadataProviderContext.Current.GetTriggerInfoAsync(triggerObject, connection.ConnectionString);
+                var triggerInfo = await schemaCache.GetTriggerInfoAsync(triggerObject);
                 if (triggerInfo == null || triggerInfo.Rows.Count == 0)
                 {
                     continue;
@@ -847,7 +1033,7 @@ GO";
                 }
 
                 string triggerName = triggerObject.Name;
-                string definition = await SchemaMetadataProviderContext.Current.GetObjectDefinitionAsync(triggerObject, connection.ConnectionString);
+                string definition = await schemaCache.GetObjectDefinitionAsync(triggerObject);
                 bool isDisabled = string.Equals(infoRow["IsDisabled"]?.ToString(), "Yes", StringComparison.OrdinalIgnoreCase);
 
                 // Add header
@@ -858,7 +1044,7 @@ GO";
                 {
                     AppendConditionalDropStatement(
                         sb,
-                        connection,
+                        schemaCache,
                         $"OBJECT_ID(N'[{schema}].[{triggerName}]', 'TR') IS NOT NULL",
                         $"DROP TRIGGER [{schema}].[{triggerName}]",
                         $"DROP TRIGGER IF EXISTS [{schema}].[{triggerName}]");
@@ -866,13 +1052,13 @@ GO";
 
                 // Add the trigger definition
                 sb.Append(definition.TrimEnd('\r', '\n', ' ', '\t') + Environment.NewLine);
-                sb.AppendLine(GetBatchSeparator(connection));
+                sb.AppendLine(GetBatchSeparator(schemaCache));
 
                 // Optionally, add DISABLE TRIGGER if the trigger is disabled
                 if (isDisabled)
                 {
                     sb.AppendLine($"ALTER TABLE [{schema}].[{parentName}] DISABLE TRIGGER [{triggerName}];");
-                    sb.AppendLine(GetBatchSeparator(connection));
+                    sb.AppendLine(GetBatchSeparator(schemaCache));
                 }
             }
 
@@ -884,7 +1070,7 @@ GO";
         /// </summary>
         /// <param name="objectName">The object name.</param>
         /// <returns>A Task.</returns>
-        private static async Task<string?> GetCreateViewScriptAsync(ObjectName objectName, DatabaseConnectionItem connection)
+        private static async Task<string?> GetCreateViewScriptAsync(ObjectName objectName, DBSchema schemaCache)
         {
             StringBuilder createScript = new();
 
@@ -896,20 +1082,20 @@ GO";
             {
                 AppendConditionalDropStatement(
                     createScript,
-                    connection,
+                    schemaCache,
                     $"OBJECT_ID(N'{objectName.FullName}', 'V') IS NOT NULL",
                     $"DROP VIEW {objectName.FullName}",
                     $"DROP VIEW IF EXISTS {objectName.FullName}");
             }
 
-            var script = await GetDefinitionAsync(objectName, connection);
+            var script = await GetDefinitionAsync(objectName, schemaCache);
             if (string.IsNullOrEmpty(script))
             {
                 return string.Empty;
             }
             createScript.Append(script);
 
-            var indexScript = await DatabaseDocBuilder.GetCreateIndexesScript(objectName, connection);
+            var indexScript = await DatabaseDocBuilder.GetCreateIndexesScript(objectName, schemaCache);
             if (!string.IsNullOrEmpty(indexScript))
             {
                 // remove the new line at the end of the script
@@ -918,7 +1104,7 @@ GO";
                 createScript.AppendLine(indexScript);
             }
 
-            createScript.AppendLine(GetBatchSeparator(connection));
+            createScript.AppendLine(GetBatchSeparator(schemaCache));
             return createScript.ToString();
         }
 
@@ -927,12 +1113,12 @@ GO";
         /// </summary>
         /// <param name="objectName">The object name.</param>
         /// <returns>A Task.</returns>
-        private static async Task<string?> GetDefinitionAsync(ObjectName objectName, DatabaseConnectionItem connection)
+        private static async Task<string?> GetDefinitionAsync(ObjectName objectName, DBSchema schemaCache)
         {
             // Validate the single full name parameter
             if (!string.IsNullOrWhiteSpace(objectName.FullName))
             {
-            string? definition = await SchemaMetadataProviderContext.Current.GetObjectDefinitionAsync(objectName, connection?.ConnectionString);
+            string? definition = await schemaCache.GetObjectDefinitionAsync(objectName);
 
                 if (string.IsNullOrEmpty(definition))
                 {

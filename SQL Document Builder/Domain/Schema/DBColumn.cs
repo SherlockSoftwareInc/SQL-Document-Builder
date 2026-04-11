@@ -8,6 +8,10 @@ namespace SQL_Document_Builder
     /// </summary>
     public class DBColumn
     {
+        public DBColumn()
+        {
+        }
+
         /// <summary>
         /// Initializes a new instance of the <see cref="DBColumn"/> class.
         /// </summary>

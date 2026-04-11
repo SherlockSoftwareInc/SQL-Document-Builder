@@ -46,7 +46,7 @@
             dsnComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             resources.ApplyResources(dsnComboBox, "dsnComboBox");
             dsnComboBox.Name = "dsnComboBox";
-            dsnComboBox.SelectedIndexChanged += OnSettingsChanged;
+            dsnComboBox.SelectedIndexChanged += DsnComboBox_SelectedIndexChanged;
             // 
             // dsnLabel
             // 

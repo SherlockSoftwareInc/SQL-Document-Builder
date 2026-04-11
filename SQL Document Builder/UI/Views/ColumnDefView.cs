@@ -365,8 +365,7 @@ namespace SQL_Document_Builder
                 string quotedColumn = SelectedColumn.QuotedName();
 
                 bool isSqlServer = Connection != null &&
-                    (Connection.ConnectionType.Equals("SQL Server", StringComparison.OrdinalIgnoreCase) ||
-                     Connection.DBMSType == DBMSTypeEnums.SQLServer);
+                    (Connection.DBMSType == DBMSTypeEnums.SQLServer);
 
                 if (isSqlServer)
                 {
@@ -577,39 +576,18 @@ ON {quotedTable} ({quotedColumn});
             referencedDataGridView.Visible = false;
             referencingDataGridView.Visible = false;
 
-            // Retrieve referenced and referencing objects in parallel using Task.Run
+            // Retrieve referenced and referencing objects in parallel.
             if (objectName != null && connection != null && !string.IsNullOrEmpty(connection.ConnectionString))
             {
-                // Use Task.Run to avoid blocking the UI thread
-                var referencedTask = Task.Run(() => _dbObject.GetReferencedObjectsAsync(connection));
+                var referencedTask = _dbObject.GetReferencedObjectsAsync(connection);
+                var referencingTask = _dbObject.GetReferencingObjectsAsync(connection);
+
                 var referencedObjects = await referencedTask;
-                // Populate the data grids on the UI thread
-                if (referencedDataGridView.InvokeRequired)
-                {
-                    referencedDataGridView.Invoke(new Action(() =>
-                    {
-                        referencedDataGridView.DataSource = referencedObjects;
-                    }));
-                }
-                else
-                {
-                    referencedDataGridView.DataSource = referencedObjects;
-                }
+                referencedDataGridView.DataSource = referencedObjects;
                 referencedDataGridView.Visible = true;
 
-                var referencingTask = Task.Run(() => _dbObject.GetReferencingObjectsAsync(connection));
                 var referencingObjects = await referencingTask;
-                if (referencingDataGridView.InvokeRequired)
-                {
-                    referencingDataGridView.Invoke(new Action(() =>
-                    {
-                        referencingDataGridView.DataSource = referencingObjects;
-                    }));
-                }
-                else
-                {
-                    referencingDataGridView.DataSource = referencingObjects;
-                }
+                referencingDataGridView.DataSource = referencingObjects;
                 referencingDataGridView.Visible = true;
             }
 
@@ -657,8 +635,7 @@ ON {quotedTable} ({quotedColumn});
                 string quotedColumn = columnName.QuotedName();
 
                 bool isSqlServer = Connection != null &&
-                    (Connection.ConnectionType.Equals("SQL Server", StringComparison.OrdinalIgnoreCase) ||
-                     Connection.DBMSType == DBMSTypeEnums.SQLServer);
+                    (Connection.DBMSType == DBMSTypeEnums.SQLServer);
 
                 if (isSqlServer)
                 {

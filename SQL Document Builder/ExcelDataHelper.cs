@@ -196,17 +196,6 @@ namespace SQL_Document_Builder
                 return DBMSTypeEnums.Other;
             }
 
-            if (connection.ConnectionType.Equals("SQL Server", StringComparison.OrdinalIgnoreCase))
-            {
-                return DBMSTypeEnums.SQLServer;
-            }
-
-            if (connection.ConnectionType.Equals("ODBC", StringComparison.OrdinalIgnoreCase) &&
-                connection.DBMSType == DBMSTypeEnums.SQLServer)
-            {
-                return DBMSTypeEnums.Other;
-            }
-
             return connection.DBMSType;
         }
 

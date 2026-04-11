@@ -334,7 +334,7 @@ namespace SQL_Document_Builder
                     _currentConnectionItem.DSN = _odbcConnSettingBox.DSN;
                     _currentConnectionItem.ServerName = _odbcConnSettingBox.DSN;
                     _currentConnectionItem.Database = string.Empty;
-                    _currentConnectionItem.DBMSType = selectedDsn?.DBMSType ?? DBMSTypeEnums.Other;
+                    _currentConnectionItem.DBMSType = _odbcConnSettingBox.DBMSType;
                     _currentConnectionItem.Driver = selectedDsn?.Driver;
                     _currentConnectionItem.UserName = _odbcConnSettingBox.UserName;
                     _currentConnectionItem.Password = _odbcConnSettingBox.Password;
@@ -345,6 +345,7 @@ namespace SQL_Document_Builder
                 else
                 {
                     _currentConnectionItem.ConnectionType = "SQL Server";
+                    _currentConnectionItem.DBMSType = DBMSTypeEnums.SQLServer;
                     _currentConnectionItem.ServerName = _sqlConnSettingBox.ServerName;
                     _currentConnectionItem.Database = _sqlConnSettingBox.DatabaseName;
                     _currentConnectionItem.AuthenticationType = (AuthenticationMethod)_sqlConnSettingBox.Authentication;
@@ -384,7 +385,7 @@ namespace SQL_Document_Builder
                 connection.DSN = _odbcConnSettingBox.DSN;
                 connection.ServerName = _odbcConnSettingBox.DSN;
                 connection.Database = string.Empty;
-                connection.DBMSType = selectedDsn?.DBMSType ?? DBMSTypeEnums.Other;
+                connection.DBMSType = _odbcConnSettingBox.DBMSType;
                 connection.Driver = selectedDsn?.Driver;
                 connection.UserName = _odbcConnSettingBox.UserName;
                 connection.Password = _odbcConnSettingBox.Password;
@@ -395,6 +396,7 @@ namespace SQL_Document_Builder
             else
             {
                 connection.ConnectionType = "SQL Server";
+                connection.DBMSType =  DBMSTypeEnums.SQLServer;
                 connection.ServerName = _sqlConnSettingBox.ServerName;
                 connection.Database = _sqlConnSettingBox.DatabaseName;
                 connection.AuthenticationType = (AuthenticationMethod)_sqlConnSettingBox.Authentication;
@@ -465,7 +467,7 @@ namespace SQL_Document_Builder
                         item.ConnectionType = "ODBC";
                         item.DSN = _odbcConnSettingBox.DSN;
                         item.ServerName = _odbcConnSettingBox.DSN;
-                        item.DBMSType = selectedDsn?.DBMSType ?? DBMSTypeEnums.Other;
+                        item.DBMSType = _odbcConnSettingBox.DBMSType;
                         item.Driver = selectedDsn?.Driver;
                         item.UserName = _odbcConnSettingBox.UserName;
                         item.Password = _odbcConnSettingBox.Password;

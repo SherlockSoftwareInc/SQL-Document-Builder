@@ -54,7 +54,7 @@ namespace SQL_Document_Builder
         /// <returns></returns>
         public static string GetSelectStatement(DatabaseConnectionItem connection, ObjectName dBTable)
         {
-            if (string.Equals(connection.ConnectionType, "SQL Server", StringComparison.OrdinalIgnoreCase))
+            if (connection.IsSQLServer)
                 return $"SELECT *{Environment.NewLine} FROM {dBTable.FullName}";
             else
                 return ODBCDataSource.GetSelectStatement(connection.ConnectionString, dBTable.FullName);
@@ -68,7 +68,7 @@ namespace SQL_Document_Builder
         /// <returns></returns>
         public static async Task<List<string>> GetTablesAsync(DatabaseConnectionItem connection, ObjectName.ObjectTypeEnums objectType)
         {
-            if (string.Equals(connection.ConnectionType, "SQL Server", StringComparison.OrdinalIgnoreCase))
+            if (connection.IsSQLServer)
             {
                 var objects = await SchemaMetadataProviderContext.Current.GetDatabaseObjectsAsync(objectType, connection.ConnectionString);
                 return objects.Select(o => o.FullNameNoQuote).ToList();

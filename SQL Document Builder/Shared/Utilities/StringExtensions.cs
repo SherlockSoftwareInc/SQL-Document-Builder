@@ -20,12 +20,6 @@ namespace SQL_Document_Builder
                 return;
             }
 
-            if (connection.ConnectionType.Equals("SQL Server", StringComparison.OrdinalIgnoreCase))
-            {
-                IdentifierQuoteDbmsType = DBMSTypeEnums.SQLServer;
-                return;
-            }
-
             IdentifierQuoteDbmsType = connection.DBMSType;
         }
 
