@@ -89,6 +89,8 @@ namespace SQL_Document_Builder
 
         private IDatabaseAccessProvider ActiveProvider => DatabaseAccessProviderFactory.GetProvider(ActiveSchemaConnection);
 
+        private string CurrentBatchSeparator => _currentConnection?.IsSQLServer == true ? "GO" : string.Empty;
+
         /// <summary>
         /// Executes the scripts.
         /// </summary>
@@ -204,7 +206,7 @@ namespace SQL_Document_Builder
 
             bool isSqlServer = connection.IsSQLServer;
 
-            string batchSeparator = isSqlServer ? "GO" : ";";
+            string batchSeparator = isSqlServer ? "GO" : "";
 
             // add batch separator at the end of the script if it doesn't exist
             if (!createScript.EndsWith(batchSeparator, StringComparison.CurrentCultureIgnoreCase))
@@ -1116,7 +1118,12 @@ namespace SQL_Document_Builder
                         var insertScript = await DatabaseDocBuilder.TableToInsertStatementAsync(obj, _dbSchema);
                         if (!string.IsNullOrEmpty(insertScript))
                         {
-                            scriptBuilder.Append(insertScript).Append("GO").AppendLine();
+                            scriptBuilder.Append(insertScript);
+
+                            if (!string.IsNullOrEmpty(CurrentBatchSeparator))
+                            {
+                                scriptBuilder.Append(CurrentBatchSeparator).AppendLine();
+                            }
                         }
                     }
 
@@ -1908,7 +1915,10 @@ namespace SQL_Document_Builder
                         // append the insert statement to the script
                         AppendText(editBox, script);
 
-                        AppendText(editBox, "GO" + Environment.NewLine);
+                        if (!string.IsNullOrEmpty(CurrentBatchSeparator))
+                        {
+                            AppendText(editBox, CurrentBatchSeparator + Environment.NewLine);
+                        }
                         CopyToClipboard(editBox);
                     }
                     else
@@ -2019,7 +2029,12 @@ namespace SQL_Document_Builder
                     // add "GO" and new line after each object description if it is not empty
                     if (!string.IsNullOrEmpty(script))
                     {
-                        scriptBuilder.Append(script).Append("GO").AppendLine();
+                        scriptBuilder.Append(script);
+
+                        if (!string.IsNullOrEmpty(CurrentBatchSeparator))
+                        {
+                            scriptBuilder.Append(CurrentBatchSeparator).AppendLine();
+                        }
                     }
 
                     progress.Report(((i + 1) * 100) / selectedObjects.Count);
@@ -3366,8 +3381,11 @@ namespace SQL_Document_Builder
                     Cursor = Cursors.WaitCursor;
                     if (BeginAddDDLScript())
                     {
-                        // add GO statement if the script not empty
-                        description += "GO" + Environment.NewLine;
+                        // add batch separator only for SQL Server
+                        if (!string.IsNullOrEmpty(CurrentBatchSeparator))
+                        {
+                            description += CurrentBatchSeparator + Environment.NewLine;
+                        }
                         AppendText(editBox, description);
                         CopyToClipboard(editBox);
                     }

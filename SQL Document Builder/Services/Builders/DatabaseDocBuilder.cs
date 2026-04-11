@@ -789,7 +789,7 @@ GO";
         {
             bool isSqlServer = IsSqlServerConnection(schemaCache);
 
-            return isSqlServer ? "GO" : ";";
+            return isSqlServer ? "GO" : "";
         }
 
         private static bool IsSqlServerConnection(DBSchema schemaCache)
