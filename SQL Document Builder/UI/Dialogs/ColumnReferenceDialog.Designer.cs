@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ColumnReferenceDialog));
             searchButton = new System.Windows.Forms.Button();
             clearSerachButton = new System.Windows.Forms.Button();
             searchTextBox = new System.Windows.Forms.TextBox();
@@ -41,97 +42,66 @@
             // 
             // searchButton
             // 
-            searchButton.Font = new System.Drawing.Font("Segoe UI", 9F);
-            searchButton.Location = new System.Drawing.Point(359, 68);
+            resources.ApplyResources(searchButton, "searchButton");
             searchButton.Name = "searchButton";
-            searchButton.Size = new System.Drawing.Size(23, 23);
-            searchButton.TabIndex = 3;
-            searchButton.Text = "🔍";
             searchButton.UseVisualStyleBackColor = true;
             // 
             // clearSerachButton
             // 
-            clearSerachButton.Location = new System.Drawing.Point(336, 68);
+            resources.ApplyResources(clearSerachButton, "clearSerachButton");
             clearSerachButton.Name = "clearSerachButton";
-            clearSerachButton.Size = new System.Drawing.Size(23, 23);
-            clearSerachButton.TabIndex = 2;
-            clearSerachButton.Text = "X";
             clearSerachButton.UseVisualStyleBackColor = true;
             clearSerachButton.Click += ClearSerachButton_Click;
             // 
             // searchTextBox
             // 
-            searchTextBox.Location = new System.Drawing.Point(12, 69);
+            resources.ApplyResources(searchTextBox, "searchTextBox");
             searchTextBox.Name = "searchTextBox";
-            searchTextBox.Size = new System.Drawing.Size(320, 23);
-            searchTextBox.TabIndex = 1;
             // 
             // schemaLabel
             // 
-            schemaLabel.AutoSize = true;
-            schemaLabel.Location = new System.Drawing.Point(12, 9);
+            resources.ApplyResources(schemaLabel, "schemaLabel");
             schemaLabel.Name = "schemaLabel";
-            schemaLabel.Size = new System.Drawing.Size(52, 15);
-            schemaLabel.TabIndex = 6;
-            schemaLabel.Text = "Schema:";
             // 
             // searchLabel
             // 
-            searchLabel.AutoSize = true;
-            searchLabel.Location = new System.Drawing.Point(12, 51);
+            resources.ApplyResources(searchLabel, "searchLabel");
             searchLabel.Name = "searchLabel";
-            searchLabel.Size = new System.Drawing.Size(60, 15);
-            searchLabel.TabIndex = 0;
-            searchLabel.Text = "Search for";
             // 
             // schemaComboBox
             // 
+            resources.ApplyResources(schemaComboBox, "schemaComboBox");
             schemaComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             schemaComboBox.FormattingEnabled = true;
-            schemaComboBox.Location = new System.Drawing.Point(12, 26);
-            schemaComboBox.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             schemaComboBox.Name = "schemaComboBox";
-            schemaComboBox.Size = new System.Drawing.Size(370, 23);
-            schemaComboBox.TabIndex = 7;
             // 
             // objectsListBox
             // 
+            resources.ApplyResources(objectsListBox, "objectsListBox");
             objectsListBox.FormattingEnabled = true;
-            objectsListBox.IntegralHeight = false;
-            objectsListBox.ItemHeight = 15;
-            objectsListBox.Location = new System.Drawing.Point(12, 98);
             objectsListBox.Name = "objectsListBox";
-            objectsListBox.Size = new System.Drawing.Size(370, 324);
-            objectsListBox.TabIndex = 8;
             objectsListBox.DoubleClick += OkButton_Click;
             // 
             // okButton
             // 
-            okButton.Location = new System.Drawing.Point(399, 12);
+            resources.ApplyResources(okButton, "okButton");
             okButton.Name = "okButton";
-            okButton.Size = new System.Drawing.Size(75, 23);
-            okButton.TabIndex = 9;
-            okButton.Text = "&OK";
             okButton.UseVisualStyleBackColor = true;
             okButton.Click += OkButton_Click;
             // 
             // cancelButton
             // 
-            cancelButton.Location = new System.Drawing.Point(399, 41);
+            resources.ApplyResources(cancelButton, "cancelButton");
             cancelButton.Name = "cancelButton";
-            cancelButton.Size = new System.Drawing.Size(75, 23);
-            cancelButton.TabIndex = 10;
-            cancelButton.Text = "&Cancel";
             cancelButton.UseVisualStyleBackColor = true;
             cancelButton.Click += CancelButton_Click;
             // 
             // ColumnReferenceDialog
             // 
             AcceptButton = okButton;
-            AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
+            resources.ApplyResources(this, "$this");
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             CancelButton = cancelButton;
-            ClientSize = new System.Drawing.Size(490, 432);
             Controls.Add(cancelButton);
             Controls.Add(okButton);
             Controls.Add(searchButton);
@@ -145,8 +115,6 @@
             MaximizeBox = false;
             MinimizeBox = false;
             Name = "ColumnReferenceDialog";
-            StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            Text = "Column Reference Picker Dialog";
             Load += ColumnReferenceDialog_Load;
             ResumeLayout(false);
             PerformLayout();
