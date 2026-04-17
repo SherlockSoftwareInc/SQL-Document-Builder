@@ -211,6 +211,74 @@ namespace SQL_Document_Builder
             };
         }
 
+        private static string GetDbmsColumnType(Type type, int maxLength, DBMSTypeEnums dbmsType)
+        {
+            int textLength = maxLength > 0 ? maxLength : 255;
+
+            return dbmsType switch
+            {
+                DBMSTypeEnums.SQLServer => type == typeof(int) ? "INT"
+                    : type == typeof(long) ? "BIGINT"
+                    : type == typeof(short) ? "SMALLINT"
+                    : type == typeof(byte) ? "TINYINT"
+                    : type == typeof(bool) ? "BIT"
+                    : type == typeof(decimal) ? "DECIMAL(18,4)"
+                    : type == typeof(double) ? "FLOAT"
+                    : type == typeof(float) ? "REAL"
+                    : type == typeof(DateTime) ? "DATETIME"
+                    : type == typeof(Guid) ? "UNIQUEIDENTIFIER"
+                    : $"NVARCHAR({textLength})",
+
+                DBMSTypeEnums.PostgreSQL => type == typeof(int) ? "INTEGER"
+                    : type == typeof(long) ? "BIGINT"
+                    : type == typeof(short) ? "SMALLINT"
+                    : type == typeof(byte) ? "SMALLINT"
+                    : type == typeof(bool) ? "BOOLEAN"
+                    : type == typeof(decimal) ? "NUMERIC(18,4)"
+                    : type == typeof(double) ? "DOUBLE PRECISION"
+                    : type == typeof(float) ? "REAL"
+                    : type == typeof(DateTime) ? "TIMESTAMP"
+                    : type == typeof(Guid) ? "UUID"
+                    : $"VARCHAR({textLength})",
+
+                DBMSTypeEnums.MySQL or DBMSTypeEnums.MariaDB => type == typeof(int) ? "INT"
+                    : type == typeof(long) ? "BIGINT"
+                    : type == typeof(short) ? "SMALLINT"
+                    : type == typeof(byte) ? "TINYINT"
+                    : type == typeof(bool) ? "BOOLEAN"
+                    : type == typeof(decimal) ? "DECIMAL(18,4)"
+                    : type == typeof(double) ? "DOUBLE"
+                    : type == typeof(float) ? "FLOAT"
+                    : type == typeof(DateTime) ? "DATETIME"
+                    : type == typeof(Guid) ? "CHAR(36)"
+                    : $"VARCHAR({Math.Min(textLength, 65535)})",
+
+                DBMSTypeEnums.Oracle => type == typeof(int) ? "NUMBER(10)"
+                    : type == typeof(long) ? "NUMBER(19)"
+                    : type == typeof(short) ? "NUMBER(5)"
+                    : type == typeof(byte) ? "NUMBER(3)"
+                    : type == typeof(bool) ? "NUMBER(1)"
+                    : type == typeof(decimal) ? "NUMBER(18,4)"
+                    : type == typeof(double) ? "BINARY_DOUBLE"
+                    : type == typeof(float) ? "BINARY_FLOAT"
+                    : type == typeof(DateTime) ? "TIMESTAMP"
+                    : type == typeof(Guid) ? "CHAR(36)"
+                    : $"VARCHAR2({Math.Min(textLength, 4000)} CHAR)",
+
+                _ => type == typeof(int) ? "INT"
+                    : type == typeof(long) ? "BIGINT"
+                    : type == typeof(short) ? "SMALLINT"
+                    : type == typeof(byte) ? "TINYINT"
+                    : type == typeof(bool) ? "BIT"
+                    : type == typeof(decimal) ? "DECIMAL(18,4)"
+                    : type == typeof(double) ? "FLOAT"
+                    : type == typeof(float) ? "REAL"
+                    : type == typeof(DateTime) ? "DATETIME"
+                    : type == typeof(Guid) ? "UNIQUEIDENTIFIER"
+                    : $"VARCHAR({textLength})"
+            };
+        }
+
         /// <summary>
         /// Gets the insert statement from the DataTable.
         /// </summary>
@@ -259,36 +327,24 @@ namespace SQL_Document_Builder
                 sb.AppendLine("GO");
             }
 
-            // CREATE TABLE statement using inferred types (SQL Server only)
+            // CREATE TABLE statement using inferred types for the active DBMS type
+            sb.AppendLine($"CREATE TABLE {quotedTableName} (");
+            for (var i = 0; i < Data.Columns.Count; i++)
+            {
+                var column = Data.Columns[i];
+                var type = inferredTypes[i];
+                var sqlType = GetDbmsColumnType(type, column.MaxLength, dbmsType);
+
+                sb.Append($"    {QuoteName(column.ColumnName, dbmsType)} {sqlType}");
+
+                if (i < Data.Columns.Count - 1)
+                    sb.AppendLine(",");
+                else
+                    sb.AppendLine();
+            }
+            sb.AppendLine(");");
             if (isSqlServer)
             {
-                sb.AppendLine($"CREATE TABLE {objectName.FullName} (");
-                for (var i = 0; i < Data.Columns.Count; i++)
-                {
-                    var column = Data.Columns[i];
-                    var type = inferredTypes[i];
-                    sb.Append($"    [{column.ColumnName}] ");
-
-                    string sqlType = type == typeof(int) ? "INT"
-                        : type == typeof(long) ? "BIGINT"
-                        : type == typeof(short) ? "SMALLINT"
-                        : type == typeof(byte) ? "TINYINT"
-                        : type == typeof(bool) ? "BIT"
-                        : type == typeof(decimal) ? "DECIMAL(18,4)"
-                        : type == typeof(double) ? "FLOAT"
-                        : type == typeof(float) ? "REAL"
-                        : type == typeof(DateTime) ? "DATETIME"
-                        : type == typeof(Guid) ? "UNIQUEIDENTIFIER"
-                        : $"NVARCHAR({(column.MaxLength > 0 ? column.MaxLength.ToString() : "255")})";
-
-                    sb.Append(sqlType);
-
-                    if (i < Data.Columns.Count - 1)
-                        sb.AppendLine(",");
-                    else
-                        sb.AppendLine();
-                }
-                sb.AppendLine(");");
                 sb.AppendLine("GO");
             }
 
