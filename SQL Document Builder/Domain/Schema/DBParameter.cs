@@ -19,47 +19,9 @@ namespace SQL_Document_Builder
                 throw new ArgumentNullException(nameof(dr), "DataRow cannot be null");
             }
             Ord = dr["ORDINAL_POSITION"] == DBNull.Value ? string.Empty : Convert.ToString(dr["ORDINAL_POSITION"]);
-            Name = (string)dr["PARAMETER_NAME"];
-            string dtType = dr["DATA_TYPE"] == DBNull.Value ? string.Empty : (string)dr["DATA_TYPE"];
-            string? strMaxLength = dr["CHARACTER_MAXIMUM_LENGTH"].ToString();
-            if (strMaxLength?.Length > 0)
-            {
-                if (string.Compare(dtType, "text", true) == 0 ||
-                    string.Compare(dtType, "ntext", true) == 0 ||
-                    string.Compare(dtType, "image", true) == 0 ||
-                    string.Compare(dtType, "xml", true) == 0)
-                {
-                    DataType = dtType;
-                }
-                else
-                {
-                    if (strMaxLength.IsNumeric())
-                    {
-                        int maxLength = Int32.Parse(strMaxLength);
-                        if (maxLength > 0)
-                        {
-                            DataType = string.Format("{0}({1})", dtType, strMaxLength);
-                        }
-                        else if (maxLength == -1)
-                        {
-                            DataType = string.Format("{0}(MAX)", dtType);
-                        }
-                        else
-                        {
-                            DataType = dtType;
-                        }
-                    }
-                    else
-                    {
-                        DataType = dtType;
-                    }
-                }
-            }
-            else
-            {
-                DataType = dtType;
-            }
-            Mode = dr["PARAMETER_MODE"] == DBNull.Value ? string.Empty : (string)dr["PARAMETER_MODE"];
+            Name = Convert.ToString(dr["PARAMETER_NAME"]) ?? string.Empty;
+            DataType = Convert.ToString(dr["DATA_TYPE"]) ?? string.Empty;
+            Mode = Convert.ToString(dr["PARAMETER_MODE"]) ?? string.Empty;
         }
 
         /// <summary>

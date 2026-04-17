@@ -1329,20 +1329,12 @@ namespace SQL_Document_Builder
             table.Columns.Add("ORDINAL_POSITION", typeof(string));
             table.Columns.Add("COLUMN_NAME", typeof(string));
             table.Columns.Add("DATA_TYPE", typeof(string));
-            table.Columns.Add("CHARACTER_MAXIMUM_LENGTH", typeof(int));
-            table.Columns.Add("NUMERIC_PRECISION", typeof(int));
-            table.Columns.Add("NUMERIC_SCALE", typeof(int));
-            table.Columns.Add("DATETIME_PRECISION", typeof(int));
             table.Columns.Add("IS_NULLABLE", typeof(string));
 
             var row = table.NewRow();
             row["ORDINAL_POSITION"] = source.Ord;
             row["COLUMN_NAME"] = source.ColumnName;
             row["DATA_TYPE"] = source.DataType;
-            row["CHARACTER_MAXIMUM_LENGTH"] = DBNull.Value;
-            row["NUMERIC_PRECISION"] = DBNull.Value;
-            row["NUMERIC_SCALE"] = DBNull.Value;
-            row["DATETIME_PRECISION"] = DBNull.Value;
             row["IS_NULLABLE"] = source.Nullable ? "YES" : "NO";
             table.Rows.Add(row);
 
@@ -1447,35 +1439,14 @@ namespace SQL_Document_Builder
             var columnName = ReadStringProperty(rawColumn, "ColumnName", "Name");
             var dataType = ReadStringProperty(rawColumn, "DataType", "TypeName");
             var nullable = ReadBoolProperty(rawColumn, "IsNullable", "Nullable");
-            var maxLength = ReadIntProperty(rawColumn, "MaxLength", "Length");
 
             return new DBColumn
             {
                 Ord = ordinal.ToString(),
                 ColumnName = columnName,
-                DataType = BuildDataType(dataType, maxLength),
+                DataType = dataType,
                 Nullable = nullable
             };
-        }
-
-        private static string BuildDataType(string dataType, int? maxLength)
-        {
-            if (string.IsNullOrWhiteSpace(dataType))
-            {
-                return string.Empty;
-            }
-
-            if (maxLength is null or 0)
-            {
-                return dataType;
-            }
-
-            if (maxLength == -1)
-            {
-                return $"{dataType}(MAX)";
-            }
-
-            return $"{dataType}({maxLength})";
         }
 
         private static void SetPropertyIfExists(object target, string propertyName, object? value)

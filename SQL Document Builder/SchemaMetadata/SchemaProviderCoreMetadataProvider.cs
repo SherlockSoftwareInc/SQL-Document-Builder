@@ -234,12 +234,7 @@ namespace SQL_Document_Builder.SchemaMetadata
             table.Columns.Add("ORDINAL_POSITION", typeof(int));
             table.Columns.Add("COLUMN_NAME", typeof(string));
             table.Columns.Add("DATA_TYPE", typeof(string));
-            table.Columns.Add("CHARACTER_MAXIMUM_LENGTH", typeof(int));
-            table.Columns.Add("NUMERIC_PRECISION", typeof(int));
-            table.Columns.Add("NUMERIC_SCALE", typeof(int));
-            table.Columns.Add("DATETIME_PRECISION", typeof(int));
             table.Columns.Add("IS_NULLABLE", typeof(string));
-            table.Columns.Add("COLUMN_DEFAULT", typeof(string));
 
             var ordinal = 1;
             foreach (var column in columns)
@@ -248,12 +243,7 @@ namespace SQL_Document_Builder.SchemaMetadata
                 row["ORDINAL_POSITION"] = ordinal++;
                 row["COLUMN_NAME"] = column.ColumnName;
                 row["DATA_TYPE"] = column.DataType;
-                row["CHARACTER_MAXIMUM_LENGTH"] = column.MaxLength.HasValue ? column.MaxLength.Value : DBNull.Value;
-                row["NUMERIC_PRECISION"] = DBNull.Value;
-                row["NUMERIC_SCALE"] = DBNull.Value;
-                row["DATETIME_PRECISION"] = DBNull.Value;
                 row["IS_NULLABLE"] = column.IsNullable ? "YES" : "NO";
-                row["COLUMN_DEFAULT"] = DBNull.Value;
                 table.Rows.Add(row);
             }
 
@@ -271,7 +261,6 @@ namespace SQL_Document_Builder.SchemaMetadata
                 table.Columns.Add("ORDINAL_POSITION", typeof(int));
                 table.Columns.Add("PARAMETER_NAME", typeof(string));
                 table.Columns.Add("DATA_TYPE", typeof(string));
-                table.Columns.Add("CHARACTER_MAXIMUM_LENGTH", typeof(int));
                 table.Columns.Add("PARAMETER_MODE", typeof(string));
 
                 if (functionMetadata == null)
@@ -286,7 +275,6 @@ namespace SQL_Document_Builder.SchemaMetadata
                     row["ORDINAL_POSITION"] = ordinal++;
                     row["PARAMETER_NAME"] = parameter.Name;
                     row["DATA_TYPE"] = parameter.DataType;
-                    row["CHARACTER_MAXIMUM_LENGTH"] = DBNull.Value;
                     row["PARAMETER_MODE"] = parameter.IsOutput ? "INOUT" : "IN";
                     table.Rows.Add(row);
                 }

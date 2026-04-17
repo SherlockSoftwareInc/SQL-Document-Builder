@@ -445,162 +445,168 @@ ON {quotedTable} ({quotedColumn});
             }
 
             Clear();
+            _init = true;
 
-            ObjectName = objectName;
-
-            if (objectName == null || connection == null || string.IsNullOrEmpty(connection.ConnectionString))
+            try
             {
-                namePanel.Open(null);
-                return;
-            }
+                ObjectName = objectName;
 
-            namePanel.Open(objectName);
-
-            Connection = connection;
-            SelectedColumnChanged?.Invoke(this, EventArgs.Empty);
-
-            // clear the column data grid view
-            if (columnDefDataGridView.DataSource != null)
-            {
-                columnDefDataGridView.DataSource = null;
-            }
-            columnDefDataGridView.Visible = false;
-
-            // clear the parameters data grid view
-            if (parameterGridView.DataSource != null)
-            {
-                parameterGridView.DataSource = null;
-            }
-            parameterGridView.Visible = false;
-
-            openButton.Visible = false;
-            aiButton.Visible = false;
-
-            if (objectName == null)
-            {
-                return;
-            }
-            else
-            {
-                _dbObject = new DBObject();
-                _dbObject.SchemaCache = SchemaCache;
-                if (!await _dbObject.OpenAsync(objectName, connection))
+                if (objectName == null || connection == null || string.IsNullOrEmpty(connection.ConnectionString))
                 {
+                    namePanel.Open(null);
                     return;
                 }
 
-                // Populate _tableContext with the schema (columns) after loading the DBObject
-                _tableContext = new TableContext(_dbObject.Columns.ToList());
-            }
+                namePanel.Open(objectName);
 
-            _tableContext.ObjectType = _dbObject.ObjectType.ToString();
-            _tableContext.TableSchema = _dbObject.Schema ?? "";
-            _tableContext.TableName = _dbObject.Name ?? "";
+                Connection = connection;
+                SelectedColumnChanged?.Invoke(this, EventArgs.Empty);
 
-            TableDescription = _dbObject.Description;
-            _tableContext.TableDescription = _dbObject.Description;
-
-            definitionTextBox.ReadOnly = false;
-            definitionTextBox.Text = _dbObject.Definition;
-            definitionTextBox.ReadOnly = true;
-
-            // show column definition is object type is table or view
-            if (_dbObject.ObjectType == ObjectName.ObjectTypeEnums.Table || _dbObject.ObjectType == ObjectName.ObjectTypeEnums.View)
-            {
-                columnDefDataGridView.DataSource = _tableContext.Columns;
-                SetDescriptionColumnEditState(columnDefDataGridView, CanEditDescriptionForCurrentObjectType());
-                columnDefDataGridView.Visible = true;
-
-                columnDefDataGridView.AutoResizeColumns();
-
-                if (columnDefDataGridView.Rows.Count > 0)
+                // clear the column data grid view
+                if (columnDefDataGridView.DataSource != null)
                 {
-                    ChangeColumnRowSelection();
+                    columnDefDataGridView.DataSource = null;
                 }
-                openButton.Visible = true;
-                aiButton.Visible = true;
+                columnDefDataGridView.Visible = false;
 
-                // change the tab page text to "Columns"
-                tabControl1.TabPages[0].Text = "Columns";
-
-                if (_dbObject.ObjectType == ObjectName.ObjectTypeEnums.Table)
-                    objectPropertyGrid.SelectedObject = _dbObject.TableInformation;
-                else
-                    objectPropertyGrid.SelectedObject = _dbObject.ViewInformation;
-            }
-            else if (_dbObject.ObjectType == ObjectName.ObjectTypeEnums.StoredProcedure || _dbObject.ObjectType == ObjectName.ObjectTypeEnums.Function)
-            {
-                parameterGridView.DataSource = _dbObject.Parameters;
-                SetDescriptionColumnEditState(parameterGridView, CanEditDescriptionForCurrentObjectType());
-                parameterGridView.Visible = true;
-
-                parameterGridView.AutoResizeColumns();
-                if (parameterGridView.Rows.Count > 0)
+                // clear the parameters data grid view
+                if (parameterGridView.DataSource != null)
                 {
-                    ChangeParameterRowSelection();
+                    parameterGridView.DataSource = null;
                 }
-                // change the tab page text to "parameters"
-                tabControl1.TabPages[0].Text = "Parameters";
+                parameterGridView.Visible = false;
 
-                if (_dbObject.ObjectType == ObjectName.ObjectTypeEnums.StoredProcedure)
-                    objectPropertyGrid.SelectedObject = _dbObject.ProcedureInformation;
+                openButton.Visible = false;
+                aiButton.Visible = false;
+
+                if (objectName == null)
+                {
+                    return;
+                }
                 else
-                    objectPropertyGrid.SelectedObject = _dbObject.FunctionInformation;
+                {
+                    _dbObject = new DBObject();
+                    _dbObject.SchemaCache = SchemaCache;
+                    if (!await _dbObject.OpenAsync(objectName, connection))
+                    {
+                        return;
+                    }
+
+                    // Populate _tableContext with the schema (columns) after loading the DBObject
+                    _tableContext = new TableContext(_dbObject.Columns.ToList());
+                }
+
+                _tableContext.ObjectType = _dbObject.ObjectType.ToString();
+                _tableContext.TableSchema = _dbObject.Schema ?? "";
+                _tableContext.TableName = _dbObject.Name ?? "";
+
+                TableDescription = _dbObject.Description;
+                _tableContext.TableDescription = _dbObject.Description;
+
+                definitionTextBox.ReadOnly = false;
+                definitionTextBox.Text = _dbObject.Definition;
+                definitionTextBox.ReadOnly = true;
+
+                // show column definition is object type is table or view
+                if (_dbObject.ObjectType == ObjectName.ObjectTypeEnums.Table || _dbObject.ObjectType == ObjectName.ObjectTypeEnums.View)
+                {
+                    columnDefDataGridView.DataSource = _tableContext.Columns;
+                    SetDescriptionColumnEditState(columnDefDataGridView, CanEditDescriptionForCurrentObjectType());
+                    columnDefDataGridView.Visible = true;
+
+                    columnDefDataGridView.AutoResizeColumns();
+
+                    if (columnDefDataGridView.Rows.Count > 0)
+                    {
+                        ChangeColumnRowSelection();
+                    }
+                    openButton.Visible = true;
+                    aiButton.Visible = true;
+
+                    // change the tab page text to "Columns"
+                    tabControl1.TabPages[0].Text = "Columns";
+
+                    if (_dbObject.ObjectType == ObjectName.ObjectTypeEnums.Table)
+                        objectPropertyGrid.SelectedObject = _dbObject.TableInformation;
+                    else
+                        objectPropertyGrid.SelectedObject = _dbObject.ViewInformation;
+                }
+                else if (_dbObject.ObjectType == ObjectName.ObjectTypeEnums.StoredProcedure || _dbObject.ObjectType == ObjectName.ObjectTypeEnums.Function)
+                {
+                    parameterGridView.DataSource = _dbObject.Parameters;
+                    SetDescriptionColumnEditState(parameterGridView, CanEditDescriptionForCurrentObjectType());
+                    parameterGridView.Visible = true;
+
+                    parameterGridView.AutoResizeColumns();
+                    if (parameterGridView.Rows.Count > 0)
+                    {
+                        ChangeParameterRowSelection();
+                    }
+                    // change the tab page text to "parameters"
+                    tabControl1.TabPages[0].Text = "Parameters";
+
+                    if (_dbObject.ObjectType == ObjectName.ObjectTypeEnums.StoredProcedure)
+                        objectPropertyGrid.SelectedObject = _dbObject.ProcedureInformation;
+                    else
+                        objectPropertyGrid.SelectedObject = _dbObject.FunctionInformation;
+                }
+                else if (_dbObject.ObjectType == ObjectName.ObjectTypeEnums.Trigger)
+                {
+                    objectPropertyGrid.SelectedObject = _dbObject.TriggerInfomation;
+                    // change the tab page text to "Trigger"
+                    tabControl1.TabPages[0].Text = "Trigger";
+                }
+                else if (_dbObject.ObjectType == ObjectName.ObjectTypeEnums.Synonym)
+                {
+                    objectPropertyGrid.SelectedObject = _dbObject.SynonymInformation;
+                    // change the tab page text to "Synonym"
+                    tabControl1.TabPages[0].Text = "Synonym";
+                }
+
+                descriptionLabel.Text = _dbObject.ObjectType switch
+                {
+                    ObjectName.ObjectTypeEnums.Table => "Description of the table:",
+                    ObjectName.ObjectTypeEnums.View => "Description of the view:",
+                    ObjectName.ObjectTypeEnums.StoredProcedure => "Description of the procedure:",
+                    ObjectName.ObjectTypeEnums.Function => "Description of the function:",
+                    ObjectName.ObjectTypeEnums.Trigger => "Description of the trigger:",
+                    ObjectName.ObjectTypeEnums.Synonym => "Description of the synonym",
+                    _ => "Description:"
+                };
+
+                // enable/disable the add index and primary key menu items based on the object type
+                addIndexToolStripMenuItem.Enabled = _dbObject.ObjectType == ObjectName.ObjectTypeEnums.Table || _dbObject.ObjectType == ObjectName.ObjectTypeEnums.View;
+                addPrimaryKeyToolStripMenuItem.Enabled = _dbObject.ObjectType == ObjectName.ObjectTypeEnums.Table;
+
+                // enable/disable the column value frequency menu item based on the object type
+                columnValueFrequencyToolStripMenuItem.Enabled = _dbObject.ObjectType == ObjectName.ObjectTypeEnums.Table || _dbObject.ObjectType == ObjectName.ObjectTypeEnums.View;
+
+                tableDescTextBox.Enabled = true;
+
+                referencedDataGridView.Visible = false;
+                referencingDataGridView.Visible = false;
+
+                // Retrieve referenced and referencing objects in parallel.
+                if (objectName != null && connection != null && !string.IsNullOrEmpty(connection.ConnectionString))
+                {
+                    var referencedTask = _dbObject.GetReferencedObjectsAsync(connection);
+                    var referencingTask = _dbObject.GetReferencingObjectsAsync(connection);
+
+                    var referencedObjects = await referencedTask;
+                    referencedDataGridView.DataSource = referencedObjects;
+                    referencedDataGridView.Visible = true;
+
+                    var referencingObjects = await referencingTask;
+                    referencingDataGridView.DataSource = referencingObjects;
+                    referencingDataGridView.Visible = true;
+                }
+
+                CaptureOriginalDescriptions();
             }
-            else if (_dbObject.ObjectType == ObjectName.ObjectTypeEnums.Trigger)
+            finally
             {
-                objectPropertyGrid.SelectedObject = _dbObject.TriggerInfomation;
-                // change the tab page text to "Trigger"
-                tabControl1.TabPages[0].Text = "Trigger";
+                _init = false;
             }
-            else if (_dbObject.ObjectType == ObjectName.ObjectTypeEnums.Synonym)
-            {
-                objectPropertyGrid.SelectedObject = _dbObject.SynonymInformation;
-                // change the tab page text to "Synonym"
-                tabControl1.TabPages[0].Text = "Synonym";
-            }
-
-            descriptionLabel.Text = _dbObject.ObjectType switch
-            {
-                ObjectName.ObjectTypeEnums.Table => "Description of the table:",
-                ObjectName.ObjectTypeEnums.View => "Description of the view:",
-                ObjectName.ObjectTypeEnums.StoredProcedure => "Description of the procedure:",
-                ObjectName.ObjectTypeEnums.Function => "Description of the function:",
-                ObjectName.ObjectTypeEnums.Trigger => "Description of the trigger:",
-                ObjectName.ObjectTypeEnums.Synonym => "Description of the synonym",
-                _ => "Description:"
-            };
-
-            // enable/disable the add index and primary key menu items based on the object type
-            addIndexToolStripMenuItem.Enabled = _dbObject.ObjectType == ObjectName.ObjectTypeEnums.Table || _dbObject.ObjectType == ObjectName.ObjectTypeEnums.View;
-            addPrimaryKeyToolStripMenuItem.Enabled = _dbObject.ObjectType == ObjectName.ObjectTypeEnums.Table;
-
-            // enable/disable the column value frequency menu item based on the object type
-            columnValueFrequencyToolStripMenuItem.Enabled = _dbObject.ObjectType == ObjectName.ObjectTypeEnums.Table || _dbObject.ObjectType == ObjectName.ObjectTypeEnums.View;
-
-            tableDescTextBox.Enabled = true;
-
-            referencedDataGridView.Visible = false;
-            referencingDataGridView.Visible = false;
-
-            // Retrieve referenced and referencing objects in parallel.
-            if (objectName != null && connection != null && !string.IsNullOrEmpty(connection.ConnectionString))
-            {
-                var referencedTask = _dbObject.GetReferencedObjectsAsync(connection);
-                var referencingTask = _dbObject.GetReferencingObjectsAsync(connection);
-
-                var referencedObjects = await referencedTask;
-                referencedDataGridView.DataSource = referencedObjects;
-                referencedDataGridView.Visible = true;
-
-                var referencingObjects = await referencingTask;
-                referencingDataGridView.DataSource = referencingObjects;
-                referencingDataGridView.Visible = true;
-            }
-
-            CaptureOriginalDescriptions();
-
-
         }
 
         /// <summary>
@@ -639,7 +645,12 @@ ON {quotedTable} ({quotedColumn});
             // get the first column name from the data grid view
             if (columnDefDataGridView.Rows.Count > 0 && !string.IsNullOrEmpty(Schema) && !string.IsNullOrEmpty(TableName))
             {
-                string columnName = (string)columnDefDataGridView.Rows[0].Cells["ColumnName"].Value;
+                string columnName = Convert.ToString(columnDefDataGridView.Rows[0].Cells["ColumnName"].Value) ?? string.Empty;
+                if (string.IsNullOrEmpty(columnName))
+                {
+                    return sql;
+                }
+
                 string quotedTable = $"{Schema.QuotedName()}.{TableName.QuotedName()}";
                 string quotedColumn = columnName.QuotedName();
 
@@ -882,10 +893,15 @@ ADD CONSTRAINT {quotedConstraint} PRIMARY KEY ({quotedColumn});
         /// </summary>
         private void ChangeColumnRowSelection()
         {
-            if (columnDefDataGridView.SelectedRows != null)
+            if (columnDefDataGridView.SelectedRows != null && columnDefDataGridView.CurrentCell != null)
             {
                 int rowIndex = columnDefDataGridView.CurrentCell.RowIndex;
-                string columnName = (string)columnDefDataGridView.Rows[rowIndex].Cells["ColumnName"].Value;
+                if (rowIndex < 0 || rowIndex >= columnDefDataGridView.Rows.Count)
+                {
+                    return;
+                }
+
+                string columnName = Convert.ToString(columnDefDataGridView.Rows[rowIndex].Cells["ColumnName"].Value) ?? string.Empty;
                 if (columnName != SelectedColumn)
                 {
                     SelectedColumn = columnName;
@@ -899,10 +915,15 @@ ADD CONSTRAINT {quotedConstraint} PRIMARY KEY ({quotedColumn});
         /// </summary>
         private void ChangeParameterRowSelection()
         {
-            if (parameterGridView.SelectedRows != null)
+            if (parameterGridView.SelectedRows != null && parameterGridView.CurrentCell != null)
             {
                 int rowIndex = parameterGridView.CurrentCell.RowIndex;
-                string paraName = (string)parameterGridView.Rows[rowIndex].Cells["Name"].Value;
+                if (rowIndex < 0 || rowIndex >= parameterGridView.Rows.Count)
+                {
+                    return;
+                }
+
+                string paraName = Convert.ToString(parameterGridView.Rows[rowIndex].Cells["Name"].Value) ?? string.Empty;
                 if (paraName != SelectedParameter)
                 {
                     SelectedParameter = paraName;
@@ -964,12 +985,12 @@ ADD CONSTRAINT {quotedConstraint} PRIMARY KEY ({quotedColumn});
             }
 
             // get the selected column name from the data grid view
-            if (columnDefDataGridView.SelectedCells.Count > 0)
+            if (columnDefDataGridView.SelectedCells.Count > 0 && columnDefDataGridView.CurrentCell != null)
             {
                 int rowIndex = columnDefDataGridView.CurrentCell.RowIndex;
                 if (rowIndex == -1) return;
 
-                string columnName = (string)columnDefDataGridView.Rows[rowIndex].Cells["ColumnName"].Value;
+                string columnName = Convert.ToString(columnDefDataGridView.Rows[rowIndex].Cells["ColumnName"].Value) ?? string.Empty;
                 if (string.IsNullOrEmpty(columnName))
                 {
                     MessageBox.Show("Please select a column to get the frequency.");
@@ -1073,20 +1094,30 @@ ADD CONSTRAINT {quotedConstraint} PRIMARY KEY ({quotedColumn});
             if (tabControl1.SelectedIndex == 3 && referencedDataGridView.Rows.Count > 0)
             {
                 // Get the selected row in the referenced objects grid view
+                if (referencedDataGridView.CurrentCell == null)
+                {
+                    return;
+                }
+
                 rowIndex = referencedDataGridView.CurrentCell.RowIndex;
                 var selectedRow = referencedDataGridView.Rows[rowIndex];
-                schema = (string)selectedRow.Cells["Schema"].Value;
-                objectName = (string)selectedRow.Cells["ObjectName"].Value;
-                objectTypeStr = (string)selectedRow.Cells["ObjectType"].Value;
+                schema = Convert.ToString(selectedRow.Cells["Schema"].Value) ?? string.Empty;
+                objectName = Convert.ToString(selectedRow.Cells["ObjectName"].Value) ?? string.Empty;
+                objectTypeStr = Convert.ToString(selectedRow.Cells["ObjectType"].Value) ?? string.Empty;
             }
             else if (tabControl1.SelectedIndex == 4 && referencingDataGridView.Rows.Count > 0)
             {
                 // Get the selected row in the current objects grid view
+                if (referencingDataGridView.CurrentCell == null)
+                {
+                    return;
+                }
+
                 rowIndex = referencingDataGridView.CurrentCell.RowIndex;
                 var selectedRow = referencingDataGridView.Rows[rowIndex];
-                schema = (string)selectedRow.Cells["Schema"].Value;
-                objectName = (string)selectedRow.Cells["ObjectName"].Value;
-                objectTypeStr = (string)selectedRow.Cells["ObjectType"].Value;
+                schema = Convert.ToString(selectedRow.Cells["Schema"].Value) ?? string.Empty;
+                objectName = Convert.ToString(selectedRow.Cells["ObjectName"].Value) ?? string.Empty;
+                objectTypeStr = Convert.ToString(selectedRow.Cells["ObjectType"].Value) ?? string.Empty;
             }
 
             if (rowIndex == -1 || string.IsNullOrEmpty(schema) || string.IsNullOrEmpty(objectName) || string.IsNullOrEmpty(objectTypeStr))
@@ -1151,8 +1182,13 @@ ADD CONSTRAINT {quotedConstraint} PRIMARY KEY ({quotedColumn});
             int rowIndex = e.RowIndex;
             if (rowIndex >= 0)
             {
-                string name = (string)parameterGridView.Rows[rowIndex].Cells["Name"].Value;
-                string parameterDesc = (string)parameterGridView.Rows[rowIndex].Cells["Description"].Value;
+                string name = Convert.ToString(parameterGridView.Rows[rowIndex].Cells["Name"].Value) ?? string.Empty;
+                string parameterDesc = Convert.ToString(parameterGridView.Rows[rowIndex].Cells["Description"].Value) ?? string.Empty;
+                if (string.IsNullOrEmpty(name))
+                {
+                    return;
+                }
+
                 await UpdateParameterDescAsync(name, parameterDesc);
             }
         }
@@ -1276,7 +1312,7 @@ ADD CONSTRAINT {quotedConstraint} PRIMARY KEY ({quotedColumn});
                 // update the column descriptions in the data grid view
                 foreach (DataGridViewRow row in columnDefDataGridView.Rows)
                 {
-                    string columnName = (string)row.Cells["ColumnName"].Value;
+                    string columnName = Convert.ToString(row.Cells["ColumnName"].Value) ?? string.Empty;
                     var column = _tableContext.Columns.FirstOrDefault(c => c.ColumnName == columnName);
                     if (column != null)
                     {

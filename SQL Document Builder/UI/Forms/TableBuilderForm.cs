@@ -42,6 +42,7 @@ namespace SQL_Document_Builder
         private bool _aiDescriptionBusy = false;
         private ObjectName? _previousSelectedObject = null;
         private bool _ignoreObjectListSelect = false;
+        private ObjectName? _openingObject;
         private CancellationTokenSource? _connectionChangeCts;
 
         /// <summary>
@@ -2096,9 +2097,28 @@ namespace SQL_Document_Builder
             // Track previous selection
             if (objectsListBox.SelectedItem is ObjectName selectedObj)
             {
-                _previousSelectedObject = selectedObj;
+                if ((_openingObject != null && selectedObj.Equals(_openingObject)) ||
+                    (_selectedObject != null && selectedObj.Equals(_selectedObject) &&
+                     definitionPanel.ObjectName != null && selectedObj.Equals(definitionPanel.ObjectName)))
+                {
+                    return;
+                }
+
+                _previousSelectedObject = _selectedObject;
                 _selectedObject = selectedObj;
-                await definitionPanel.OpenAsync(_selectedObject, _currentConnection);
+                _openingObject = selectedObj;
+
+                try
+                {
+                    await definitionPanel.OpenAsync(_selectedObject, _currentConnection);
+                }
+                finally
+                {
+                    if (_openingObject != null && _openingObject.Equals(selectedObj))
+                    {
+                        _openingObject = null;
+                    }
+                }
 
                 // trun off AI description if it is not table or view
                 if (_selectedObject.ObjectType != ObjectName.ObjectTypeEnums.Table && _selectedObject.ObjectType != ObjectName.ObjectTypeEnums.View)
@@ -2112,6 +2132,11 @@ namespace SQL_Document_Builder
             }
             else
             {
+                if (definitionPanel.ObjectName == null)
+                {
+                    return;
+                }
+
                 await definitionPanel.OpenAsync(null, _currentConnection);
                 aIAssistantToolStripMenuItem.Enabled = false;
             }
