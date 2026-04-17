@@ -1485,10 +1485,10 @@ namespace SQL_Document_Builder
         {
             if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Sql) == DialogResult.Yes)
             {
-                // get the Excel file name
+                // get the source file name
                 var openFileDialog = new OpenFileDialog
                 {
-                    Filter = "Excel files (*.xls;*.xlsx)|*.xls;*.xlsx|All files (*.*)|*.*",
+                    Filter = "Data files (*.xls;*.xlsx;*.csv;*.txt)|*.xls;*.xlsx;*.csv;*.txt|Excel files (*.xls;*.xlsx)|*.xls;*.xlsx|CSV files (*.csv)|*.csv|Text files (*.txt)|*.txt|All files (*.*)|*.*",
                     Multiselect = false
                 };
                 if (openFileDialog.ShowDialog() != DialogResult.OK)
@@ -1498,21 +1498,56 @@ namespace SQL_Document_Builder
 
                 var fileName = openFileDialog.FileName;
 
-                using var form = new ExcelSheetsForm()
+                var extension = Path.GetExtension(fileName);
+                DataTable? resultDataTable = null;
+                string tableName = Path.GetFileNameWithoutExtension(fileName);
+                bool nullForBlank = false;
+
+                if (extension.Equals(".xls", StringComparison.OrdinalIgnoreCase) || extension.Equals(".xlsx", StringComparison.OrdinalIgnoreCase))
                 {
-                    FileName = fileName
-                };
-                form.ShowDialog();
-                if (form.ResultDataTable != null)
+                    using var form = new ExcelSheetsForm()
+                    {
+                        FileName = fileName
+                    };
+                    form.ShowDialog();
+
+                    resultDataTable = form.ResultDataTable;
+                    tableName = string.IsNullOrWhiteSpace(form.TableName) ? tableName : form.TableName;
+                    nullForBlank = form.NullForBlank;
+                }
+                else if (extension.Equals(".csv", StringComparison.OrdinalIgnoreCase) || extension.Equals(".txt", StringComparison.OrdinalIgnoreCase))
+                {
+                    resultDataTable = LoadInsertDataFromDelimitedFile(fileName);
+                }
+
+                if (resultDataTable != null)
                 {
                     if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
 
                     AppendText(editBox, $"-- Data source: {fileName}" + Environment.NewLine);
 
-                    var dataHelper = new ExcelDataHelper(form.ResultDataTable);
-                    AppendText(editBox, dataHelper.GetInsertStatement(form.TableName, form.NullForBlank, _currentConnection));
+                    var dataHelper = new ExcelDataHelper(resultDataTable);
+                    AppendText(editBox, dataHelper.GetInsertStatement(tableName, nullForBlank, _currentConnection));
                     CopyToClipboard(editBox);
                 }
+            }
+        }
+
+        private static DataTable? LoadInsertDataFromDelimitedFile(string fileName)
+        {
+            try
+            {
+                var table = LoadDescriptionDataFromCsv(fileName);
+                if (table != null)
+                {
+                    table.TableName = Path.GetFileNameWithoutExtension(fileName);
+                }
+                return table;
+            }
+            catch (Exception ex)
+            {
+                Common.MsgBox($"Error reading file: {ex.Message}", MessageBoxIcon.Error);
+                return null;
             }
         }
 

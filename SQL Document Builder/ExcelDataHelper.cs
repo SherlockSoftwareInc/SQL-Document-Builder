@@ -323,7 +323,7 @@ namespace SQL_Document_Builder
             if (isSqlServer && Properties.Settings.Default.AddDropStatement)
             {
                 sb.AppendLine($"IF OBJECT_ID(N'{objectName.FullName}', 'U') IS NOT NULL");
-                sb.AppendLine($"\tDROP TABLE {objectName.FullName};");
+                sb.AppendLine($"\tDROP TABLE {quotedTableName};");
                 sb.AppendLine("GO");
             }
 

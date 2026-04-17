@@ -33,26 +33,7 @@ namespace SQL_Document_Builder
         {
             components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(TableBuilderForm));
-            toolStrip1 = new ToolStrip();
-            newToolStripButton1 = new ToolStripButton();
-            openToolStripButton = new ToolStripButton();
-            saveToolStripButton = new ToolStripButton();
-            toolStripSeparator = new ToolStripSeparator();
-            cutToolStripButton = new ToolStripButton();
-            copyToolStripButton = new ToolStripButton();
-            pasteToolStripButton = new ToolStripButton();
-            toolStripSeparator3 = new ToolStripSeparator();
-            toolStripLabel1 = new ToolStripLabel();
-            dataSourcesToolStripComboBox = new ToolStripComboBox();
-            toolStripSeparator20 = new ToolStripSeparator();
-            toolStripLabel2 = new ToolStripLabel();
-            docTypeToolStripComboBox = new ToolStripComboBox();
-            objDefToolStripButton = new ToolStripButton();
-            mdValuesToolStripButton = new ToolStripButton();
-            toolStripSeparator2 = new ToolStripSeparator();
-            createTableToolStripButton = new ToolStripButton();
-            insertToolStripButton = new ToolStripButton();
-            descToolStripButton = new ToolStripButton();
+            splitContainer1 = new SplitContainer();
             objectsTabControl = new TabControl();
             tabPage1 = new TabPage();
             objectsListBox = new ListBox();
@@ -82,6 +63,39 @@ namespace SQL_Document_Builder
             noCollationCheckBox = new CheckBox();
             addDataSourceCheckBox = new CheckBox();
             scriptDropsCheckBox = new CheckBox();
+            replacePanel = new Panel();
+            button1 = new Button();
+            replaceAllButton = new Button();
+            replaceButton = new Button();
+            findNextButton = new Button();
+            replaceReplaceTextBox = new TextBox();
+            replaceSearchTextBox = new TextBox();
+            searchPanel = new Panel();
+            closeSearchButton = new Button();
+            nextSearchButton = new Button();
+            prevSearchButton = new Button();
+            searchSQLTextBox = new TextBox();
+            tabControl1 = new ClosableTabControl();
+            toolStrip1 = new ToolStrip();
+            newToolStripButton1 = new ToolStripButton();
+            openToolStripButton = new ToolStripButton();
+            saveToolStripButton = new ToolStripButton();
+            toolStripSeparator = new ToolStripSeparator();
+            cutToolStripButton = new ToolStripButton();
+            copyToolStripButton = new ToolStripButton();
+            pasteToolStripButton = new ToolStripButton();
+            toolStripSeparator3 = new ToolStripSeparator();
+            toolStripLabel1 = new ToolStripLabel();
+            dataSourcesToolStripComboBox = new ToolStripComboBox();
+            toolStripSeparator20 = new ToolStripSeparator();
+            toolStripLabel2 = new ToolStripLabel();
+            docTypeToolStripComboBox = new ToolStripComboBox();
+            objDefToolStripButton = new ToolStripButton();
+            mdValuesToolStripButton = new ToolStripButton();
+            toolStripSeparator2 = new ToolStripSeparator();
+            createTableToolStripButton = new ToolStripButton();
+            insertToolStripButton = new ToolStripButton();
+            descToolStripButton = new ToolStripButton();
             menuStrip1 = new MenuStrip();
             fileToolStripMenuItem = new ToolStripMenuItem();
             connectToToolStripMenuItem = new ToolStripMenuItem();
@@ -197,23 +211,9 @@ namespace SQL_Document_Builder
             messageLabel = new ToolStripStatusLabel();
             serverToolStripStatusLabel = new ToolStripStatusLabel();
             databaseToolStripStatusLabel = new ToolStripStatusLabel();
-            searchPanel = new Panel();
-            closeSearchButton = new Button();
-            nextSearchButton = new Button();
-            prevSearchButton = new Button();
-            searchSQLTextBox = new TextBox();
             definitionPanel = new ColumnDefView();
             defiCollapsibleSplitter = new CollapsibleSplitter();
             timer1 = new Timer(components);
-            splitContainer1 = new SplitContainer();
-            replacePanel = new Panel();
-            button1 = new Button();
-            replaceAllButton = new Button();
-            replaceButton = new Button();
-            findNextButton = new Button();
-            replaceReplaceTextBox = new TextBox();
-            replaceSearchTextBox = new TextBox();
-            tabControl1 = new ClosableTabControl();
             tabContextMenuStrip = new ContextMenuStrip(components);
             tabAliasToolStripMenuItem = new ToolStripMenuItem();
             closeToolStripMenuItem = new ToolStripMenuItem();
@@ -223,169 +223,53 @@ namespace SQL_Document_Builder
             toolTip1 = new ToolTip(components);
             startTimer = new Timer(components);
             waitTimer = new Timer(components);
-            toolStrip1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
+            splitContainer1.Panel1.SuspendLayout();
+            splitContainer1.Panel2.SuspendLayout();
+            splitContainer1.SuspendLayout();
             objectsTabControl.SuspendLayout();
             tabPage1.SuspendLayout();
             panel2.SuspendLayout();
             tabPage2.SuspendLayout();
             groupBox2.SuspendLayout();
             groupBox1.SuspendLayout();
+            replacePanel.SuspendLayout();
+            searchPanel.SuspendLayout();
+            toolStrip1.SuspendLayout();
             menuStrip1.SuspendLayout();
             statusStrip1.SuspendLayout();
-            searchPanel.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
-            splitContainer1.Panel1.SuspendLayout();
-            splitContainer1.Panel2.SuspendLayout();
-            splitContainer1.SuspendLayout();
-            replacePanel.SuspendLayout();
             tabContextMenuStrip.SuspendLayout();
             SuspendLayout();
             // 
-            // toolStrip1
+            // splitContainer1
             // 
-            resources.ApplyResources(toolStrip1, "toolStrip1");
-            toolStrip1.Items.AddRange(new ToolStripItem[] { newToolStripButton1, openToolStripButton, saveToolStripButton, toolStripSeparator, cutToolStripButton, copyToolStripButton, pasteToolStripButton, toolStripSeparator3, toolStripLabel1, dataSourcesToolStripComboBox, toolStripSeparator20, toolStripLabel2, docTypeToolStripComboBox, objDefToolStripButton, mdValuesToolStripButton, toolStripSeparator2, createTableToolStripButton, insertToolStripButton, descToolStripButton });
-            toolStrip1.Name = "toolStrip1";
-            toolTip1.SetToolTip(toolStrip1, resources.GetString("toolStrip1.ToolTip"));
+            resources.ApplyResources(splitContainer1, "splitContainer1");
+            splitContainer1.Name = "splitContainer1";
             // 
-            // newToolStripButton1
+            // splitContainer1.Panel1
             // 
-            resources.ApplyResources(newToolStripButton1, "newToolStripButton1");
-            newToolStripButton1.DisplayStyle = ToolStripItemDisplayStyle.Image;
-            newToolStripButton1.Name = "newToolStripButton1";
-            newToolStripButton1.Click += NewToolStripMenuItem_Click;
+            splitContainer1.Panel1.Controls.Add(objectsTabControl);
             // 
-            // openToolStripButton
+            // splitContainer1.Panel2
             // 
-            resources.ApplyResources(openToolStripButton, "openToolStripButton");
-            openToolStripButton.DisplayStyle = ToolStripItemDisplayStyle.Image;
-            openToolStripButton.Image = Properties.Resources.openfile1;
-            openToolStripButton.Name = "openToolStripButton";
-            openToolStripButton.Click += OpenToolStripMenuItem_Click;
-            // 
-            // saveToolStripButton
-            // 
-            resources.ApplyResources(saveToolStripButton, "saveToolStripButton");
-            saveToolStripButton.DisplayStyle = ToolStripItemDisplayStyle.Image;
-            saveToolStripButton.Name = "saveToolStripButton";
-            saveToolStripButton.Click += SaveToolStripMenuItem_Click;
-            // 
-            // toolStripSeparator
-            // 
-            resources.ApplyResources(toolStripSeparator, "toolStripSeparator");
-            toolStripSeparator.Name = "toolStripSeparator";
-            // 
-            // cutToolStripButton
-            // 
-            resources.ApplyResources(cutToolStripButton, "cutToolStripButton");
-            cutToolStripButton.DisplayStyle = ToolStripItemDisplayStyle.Image;
-            cutToolStripButton.Name = "cutToolStripButton";
-            cutToolStripButton.Click += CutToolStripMenuItem_Click;
-            // 
-            // copyToolStripButton
-            // 
-            resources.ApplyResources(copyToolStripButton, "copyToolStripButton");
-            copyToolStripButton.DisplayStyle = ToolStripItemDisplayStyle.Image;
-            copyToolStripButton.Name = "copyToolStripButton";
-            copyToolStripButton.Click += CopyToolStripMenuItem_Click;
-            // 
-            // pasteToolStripButton
-            // 
-            resources.ApplyResources(pasteToolStripButton, "pasteToolStripButton");
-            pasteToolStripButton.DisplayStyle = ToolStripItemDisplayStyle.Image;
-            pasteToolStripButton.Name = "pasteToolStripButton";
-            pasteToolStripButton.Click += PasteToolStripMenuItem_Click;
-            // 
-            // toolStripSeparator3
-            // 
-            resources.ApplyResources(toolStripSeparator3, "toolStripSeparator3");
-            toolStripSeparator3.Name = "toolStripSeparator3";
-            // 
-            // toolStripLabel1
-            // 
-            resources.ApplyResources(toolStripLabel1, "toolStripLabel1");
-            toolStripLabel1.Name = "toolStripLabel1";
-            // 
-            // dataSourcesToolStripComboBox
-            // 
-            resources.ApplyResources(dataSourcesToolStripComboBox, "dataSourcesToolStripComboBox");
-            dataSourcesToolStripComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
-            dataSourcesToolStripComboBox.Name = "dataSourcesToolStripComboBox";
-            dataSourcesToolStripComboBox.SelectedIndexChanged += DataSourcesToolStripComboBox_SelectedIndexChanged;
-            // 
-            // toolStripSeparator20
-            // 
-            resources.ApplyResources(toolStripSeparator20, "toolStripSeparator20");
-            toolStripSeparator20.Name = "toolStripSeparator20";
-            // 
-            // toolStripLabel2
-            // 
-            resources.ApplyResources(toolStripLabel2, "toolStripLabel2");
-            toolStripLabel2.Name = "toolStripLabel2";
-            // 
-            // docTypeToolStripComboBox
-            // 
-            resources.ApplyResources(docTypeToolStripComboBox, "docTypeToolStripComboBox");
-            docTypeToolStripComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
-            docTypeToolStripComboBox.Name = "docTypeToolStripComboBox";
-            docTypeToolStripComboBox.SelectedIndexChanged += DocTypeToolStripComboBox_SelectedIndexChanged;
-            // 
-            // objDefToolStripButton
-            // 
-            resources.ApplyResources(objDefToolStripButton, "objDefToolStripButton");
-            objDefToolStripButton.Image = Properties.Resources.Build_doc;
-            objDefToolStripButton.Name = "objDefToolStripButton";
-            objDefToolStripButton.Click += TableDefinitionToolStripMenuItem_Click_1;
-            // 
-            // mdValuesToolStripButton
-            // 
-            resources.ApplyResources(mdValuesToolStripButton, "mdValuesToolStripButton");
-            mdValuesToolStripButton.Image = Properties.Resources.Build_doc;
-            mdValuesToolStripButton.Name = "mdValuesToolStripButton";
-            mdValuesToolStripButton.Click += TableValuesMDToolStripMenuItem_Click;
-            // 
-            // toolStripSeparator2
-            // 
-            resources.ApplyResources(toolStripSeparator2, "toolStripSeparator2");
-            toolStripSeparator2.Name = "toolStripSeparator2";
-            // 
-            // createTableToolStripButton
-            // 
-            resources.ApplyResources(createTableToolStripButton, "createTableToolStripButton");
-            createTableToolStripButton.Image = Properties.Resources.sp_16;
-            createTableToolStripButton.Name = "createTableToolStripButton";
-            createTableToolStripButton.Click += CreateTableToolStripButton_Click;
-            // 
-            // insertToolStripButton
-            // 
-            resources.ApplyResources(insertToolStripButton, "insertToolStripButton");
-            insertToolStripButton.Image = Properties.Resources.sp_16;
-            insertToolStripButton.Name = "insertToolStripButton";
-            insertToolStripButton.Click += InsertToolStripButton_Click;
-            // 
-            // descToolStripButton
-            // 
-            resources.ApplyResources(descToolStripButton, "descToolStripButton");
-            descToolStripButton.Image = Properties.Resources.sp_16;
-            descToolStripButton.Name = "descToolStripButton";
-            descToolStripButton.Click += TableDescriptionToolStripMenuItem_Click;
+            splitContainer1.Panel2.Controls.Add(replacePanel);
+            splitContainer1.Panel2.Controls.Add(searchPanel);
+            splitContainer1.Panel2.Controls.Add(tabControl1);
             // 
             // objectsTabControl
             // 
-            resources.ApplyResources(objectsTabControl, "objectsTabControl");
             objectsTabControl.Controls.Add(tabPage1);
             objectsTabControl.Controls.Add(tabPage2);
+            resources.ApplyResources(objectsTabControl, "objectsTabControl");
             objectsTabControl.Name = "objectsTabControl";
             objectsTabControl.SelectedIndex = 0;
-            toolTip1.SetToolTip(objectsTabControl, resources.GetString("objectsTabControl.ToolTip"));
             // 
             // tabPage1
             // 
-            resources.ApplyResources(tabPage1, "tabPage1");
             tabPage1.Controls.Add(objectsListBox);
             tabPage1.Controls.Add(panel2);
+            resources.ApplyResources(tabPage1, "tabPage1");
             tabPage1.Name = "tabPage1";
-            toolTip1.SetToolTip(tabPage1, resources.GetString("tabPage1.ToolTip"));
             tabPage1.UseVisualStyleBackColor = true;
             // 
             // objectsListBox
@@ -393,12 +277,10 @@ namespace SQL_Document_Builder
             resources.ApplyResources(objectsListBox, "objectsListBox");
             objectsListBox.FormattingEnabled = true;
             objectsListBox.Name = "objectsListBox";
-            toolTip1.SetToolTip(objectsListBox, resources.GetString("objectsListBox.ToolTip"));
             objectsListBox.SelectedIndexChanged += ObjectsListBox_SelectedIndexChanged;
             // 
             // panel2
             // 
-            resources.ApplyResources(panel2, "panel2");
             panel2.Controls.Add(searchButton);
             panel2.Controls.Add(clearSerachButton);
             panel2.Controls.Add(searchTextBox);
@@ -407,8 +289,8 @@ namespace SQL_Document_Builder
             panel2.Controls.Add(objectTypeComboBox);
             panel2.Controls.Add(schemaComboBox);
             panel2.Controls.Add(label1);
+            resources.ApplyResources(panel2, "panel2");
             panel2.Name = "panel2";
-            toolTip1.SetToolTip(panel2, resources.GetString("panel2.ToolTip"));
             panel2.Resize += Panel2_Resize;
             // 
             // searchButton
@@ -431,7 +313,6 @@ namespace SQL_Document_Builder
             // 
             resources.ApplyResources(searchTextBox, "searchTextBox");
             searchTextBox.Name = "searchTextBox";
-            toolTip1.SetToolTip(searchTextBox, resources.GetString("searchTextBox.ToolTip"));
             searchTextBox.TextChanged += SearchTextBox_TextChanged;
             searchTextBox.KeyUp += SearchTextBox_KeyUp;
             // 
@@ -439,28 +320,26 @@ namespace SQL_Document_Builder
             // 
             resources.ApplyResources(schemaLabel, "schemaLabel");
             schemaLabel.Name = "schemaLabel";
-            toolTip1.SetToolTip(schemaLabel, resources.GetString("schemaLabel.ToolTip"));
             // 
             // searchLabel
             // 
             resources.ApplyResources(searchLabel, "searchLabel");
             searchLabel.Name = "searchLabel";
-            toolTip1.SetToolTip(searchLabel, resources.GetString("searchLabel.ToolTip"));
             // 
             // objectTypeComboBox
             // 
-            resources.ApplyResources(objectTypeComboBox, "objectTypeComboBox");
             objectTypeComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
             objectTypeComboBox.FormattingEnabled = true;
+            resources.ApplyResources(objectTypeComboBox, "objectTypeComboBox");
             objectTypeComboBox.Name = "objectTypeComboBox";
             toolTip1.SetToolTip(objectTypeComboBox, resources.GetString("objectTypeComboBox.ToolTip"));
             objectTypeComboBox.SelectedIndexChanged += ObjectTypeComboBox_SelectedIndexChanged;
             // 
             // schemaComboBox
             // 
-            resources.ApplyResources(schemaComboBox, "schemaComboBox");
             schemaComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
             schemaComboBox.FormattingEnabled = true;
+            resources.ApplyResources(schemaComboBox, "schemaComboBox");
             schemaComboBox.Name = "schemaComboBox";
             toolTip1.SetToolTip(schemaComboBox, resources.GetString("schemaComboBox.ToolTip"));
             schemaComboBox.SelectedIndexChanged += SchemaComboBox_SelectedIndexChanged;
@@ -469,11 +348,9 @@ namespace SQL_Document_Builder
             // 
             resources.ApplyResources(label1, "label1");
             label1.Name = "label1";
-            toolTip1.SetToolTip(label1, resources.GetString("label1.ToolTip"));
             // 
             // tabPage2
             // 
-            resources.ApplyResources(tabPage2, "tabPage2");
             tabPage2.Controls.Add(autoCopyCheckBox);
             tabPage2.Controls.Add(quotedIDCheckBox);
             tabPage2.Controls.Add(groupBox2);
@@ -484,15 +361,14 @@ namespace SQL_Document_Builder
             tabPage2.Controls.Add(noCollationCheckBox);
             tabPage2.Controls.Add(addDataSourceCheckBox);
             tabPage2.Controls.Add(scriptDropsCheckBox);
+            resources.ApplyResources(tabPage2, "tabPage2");
             tabPage2.Name = "tabPage2";
-            toolTip1.SetToolTip(tabPage2, resources.GetString("tabPage2.ToolTip"));
             tabPage2.UseVisualStyleBackColor = true;
             // 
             // autoCopyCheckBox
             // 
             resources.ApplyResources(autoCopyCheckBox, "autoCopyCheckBox");
             autoCopyCheckBox.Name = "autoCopyCheckBox";
-            toolTip1.SetToolTip(autoCopyCheckBox, resources.GetString("autoCopyCheckBox.ToolTip"));
             autoCopyCheckBox.UseVisualStyleBackColor = true;
             autoCopyCheckBox.CheckedChanged += Options_Changed;
             // 
@@ -502,38 +378,33 @@ namespace SQL_Document_Builder
             quotedIDCheckBox.Checked = true;
             quotedIDCheckBox.CheckState = CheckState.Checked;
             quotedIDCheckBox.Name = "quotedIDCheckBox";
-            toolTip1.SetToolTip(quotedIDCheckBox, resources.GetString("quotedIDCheckBox.ToolTip"));
             quotedIDCheckBox.UseVisualStyleBackColor = true;
             quotedIDCheckBox.CheckedChanged += Options_Changed;
             // 
             // groupBox2
             // 
-            resources.ApplyResources(groupBox2, "groupBox2");
             groupBox2.Controls.Add(label2);
             groupBox2.Controls.Add(label3);
             groupBox2.Controls.Add(insertMaxTextBox);
             groupBox2.Controls.Add(insertBatchTextBox);
+            resources.ApplyResources(groupBox2, "groupBox2");
             groupBox2.Name = "groupBox2";
             groupBox2.TabStop = false;
-            toolTip1.SetToolTip(groupBox2, resources.GetString("groupBox2.ToolTip"));
             // 
             // label2
             // 
             resources.ApplyResources(label2, "label2");
             label2.Name = "label2";
-            toolTip1.SetToolTip(label2, resources.GetString("label2.ToolTip"));
             // 
             // label3
             // 
             resources.ApplyResources(label3, "label3");
             label3.Name = "label3";
-            toolTip1.SetToolTip(label3, resources.GetString("label3.ToolTip"));
             // 
             // insertMaxTextBox
             // 
             resources.ApplyResources(insertMaxTextBox, "insertMaxTextBox");
             insertMaxTextBox.Name = "insertMaxTextBox";
-            toolTip1.SetToolTip(insertMaxTextBox, resources.GetString("insertMaxTextBox.ToolTip"));
             insertMaxTextBox.Validating += InsertMaxTextBox_Validating;
             insertMaxTextBox.Validated += InsertMaxTextBox_Validated;
             // 
@@ -541,25 +412,22 @@ namespace SQL_Document_Builder
             // 
             resources.ApplyResources(insertBatchTextBox, "insertBatchTextBox");
             insertBatchTextBox.Name = "insertBatchTextBox";
-            toolTip1.SetToolTip(insertBatchTextBox, resources.GetString("insertBatchTextBox.ToolTip"));
             insertBatchTextBox.Validating += InsertBatchTextBox_Validating;
             insertBatchTextBox.Validated += InsertBatchTextBox_Validated;
             // 
             // groupBox1
             // 
-            resources.ApplyResources(groupBox1, "groupBox1");
             groupBox1.Controls.Add(useUspDescRadioButton);
             groupBox1.Controls.Add(useExtendedPropertyRadioButton);
+            resources.ApplyResources(groupBox1, "groupBox1");
             groupBox1.Name = "groupBox1";
             groupBox1.TabStop = false;
-            toolTip1.SetToolTip(groupBox1, resources.GetString("groupBox1.ToolTip"));
             // 
             // useUspDescRadioButton
             // 
             resources.ApplyResources(useUspDescRadioButton, "useUspDescRadioButton");
             useUspDescRadioButton.Name = "useUspDescRadioButton";
             useUspDescRadioButton.TabStop = true;
-            toolTip1.SetToolTip(useUspDescRadioButton, resources.GetString("useUspDescRadioButton.ToolTip"));
             useUspDescRadioButton.UseVisualStyleBackColor = true;
             useUspDescRadioButton.CheckedChanged += Options_Changed;
             // 
@@ -568,7 +436,6 @@ namespace SQL_Document_Builder
             resources.ApplyResources(useExtendedPropertyRadioButton, "useExtendedPropertyRadioButton");
             useExtendedPropertyRadioButton.Name = "useExtendedPropertyRadioButton";
             useExtendedPropertyRadioButton.TabStop = true;
-            toolTip1.SetToolTip(useExtendedPropertyRadioButton, resources.GetString("useExtendedPropertyRadioButton.ToolTip"));
             useExtendedPropertyRadioButton.UseVisualStyleBackColor = true;
             useExtendedPropertyRadioButton.CheckedChanged += Options_Changed;
             // 
@@ -576,7 +443,6 @@ namespace SQL_Document_Builder
             // 
             resources.ApplyResources(indexesCheckBox, "indexesCheckBox");
             indexesCheckBox.Name = "indexesCheckBox";
-            toolTip1.SetToolTip(indexesCheckBox, resources.GetString("indexesCheckBox.ToolTip"));
             indexesCheckBox.UseVisualStyleBackColor = true;
             indexesCheckBox.CheckedChanged += Options_Changed;
             // 
@@ -584,7 +450,6 @@ namespace SQL_Document_Builder
             // 
             resources.ApplyResources(includeHeadersCheckBox, "includeHeadersCheckBox");
             includeHeadersCheckBox.Name = "includeHeadersCheckBox";
-            toolTip1.SetToolTip(includeHeadersCheckBox, resources.GetString("includeHeadersCheckBox.ToolTip"));
             includeHeadersCheckBox.UseVisualStyleBackColor = true;
             includeHeadersCheckBox.CheckedChanged += Options_Changed;
             // 
@@ -592,7 +457,6 @@ namespace SQL_Document_Builder
             // 
             resources.ApplyResources(scriptDataCheckBox, "scriptDataCheckBox");
             scriptDataCheckBox.Name = "scriptDataCheckBox";
-            toolTip1.SetToolTip(scriptDataCheckBox, resources.GetString("scriptDataCheckBox.ToolTip"));
             scriptDataCheckBox.UseVisualStyleBackColor = true;
             scriptDataCheckBox.CheckedChanged += Options_Changed;
             // 
@@ -602,7 +466,6 @@ namespace SQL_Document_Builder
             noCollationCheckBox.Checked = true;
             noCollationCheckBox.CheckState = CheckState.Checked;
             noCollationCheckBox.Name = "noCollationCheckBox";
-            toolTip1.SetToolTip(noCollationCheckBox, resources.GetString("noCollationCheckBox.ToolTip"));
             noCollationCheckBox.UseVisualStyleBackColor = true;
             noCollationCheckBox.CheckedChanged += Options_Changed;
             // 
@@ -612,7 +475,6 @@ namespace SQL_Document_Builder
             addDataSourceCheckBox.Checked = true;
             addDataSourceCheckBox.CheckState = CheckState.Checked;
             addDataSourceCheckBox.Name = "addDataSourceCheckBox";
-            toolTip1.SetToolTip(addDataSourceCheckBox, resources.GetString("addDataSourceCheckBox.ToolTip"));
             addDataSourceCheckBox.UseVisualStyleBackColor = true;
             addDataSourceCheckBox.CheckedChanged += Options_Changed;
             // 
@@ -622,62 +484,315 @@ namespace SQL_Document_Builder
             scriptDropsCheckBox.Checked = true;
             scriptDropsCheckBox.CheckState = CheckState.Checked;
             scriptDropsCheckBox.Name = "scriptDropsCheckBox";
-            toolTip1.SetToolTip(scriptDropsCheckBox, resources.GetString("scriptDropsCheckBox.ToolTip"));
             scriptDropsCheckBox.UseVisualStyleBackColor = true;
             scriptDropsCheckBox.CheckedChanged += Options_Changed;
             // 
+            // replacePanel
+            // 
+            replacePanel.Controls.Add(button1);
+            replacePanel.Controls.Add(replaceAllButton);
+            replacePanel.Controls.Add(replaceButton);
+            replacePanel.Controls.Add(findNextButton);
+            replacePanel.Controls.Add(replaceReplaceTextBox);
+            replacePanel.Controls.Add(replaceSearchTextBox);
+            resources.ApplyResources(replacePanel, "replacePanel");
+            replacePanel.Name = "replacePanel";
+            // 
+            // button1
+            // 
+            resources.ApplyResources(button1, "button1");
+            button1.BackColor = System.Drawing.Color.White;
+            button1.ForeColor = System.Drawing.Color.Black;
+            button1.Name = "button1";
+            toolTip1.SetToolTip(button1, resources.GetString("button1.ToolTip"));
+            button1.UseVisualStyleBackColor = false;
+            button1.Click += CloseQuickSearch_Click;
+            // 
+            // replaceAllButton
+            // 
+            replaceAllButton.BackColor = System.Drawing.Color.White;
+            resources.ApplyResources(replaceAllButton, "replaceAllButton");
+            replaceAllButton.ForeColor = System.Drawing.SystemColors.ControlText;
+            replaceAllButton.Image = Properties.Resources.replaceAll;
+            replaceAllButton.Name = "replaceAllButton";
+            replaceAllButton.Tag = "Find previous (Shift+Enter)";
+            toolTip1.SetToolTip(replaceAllButton, resources.GetString("replaceAllButton.ToolTip"));
+            replaceAllButton.UseVisualStyleBackColor = false;
+            replaceAllButton.Click += ReplaceAllButton_Click;
+            // 
+            // replaceButton
+            // 
+            replaceButton.BackColor = System.Drawing.Color.White;
+            resources.ApplyResources(replaceButton, "replaceButton");
+            replaceButton.ForeColor = System.Drawing.SystemColors.ControlText;
+            replaceButton.Image = Properties.Resources.replace;
+            replaceButton.Name = "replaceButton";
+            replaceButton.Tag = "Find previous (Shift+Enter)";
+            toolTip1.SetToolTip(replaceButton, resources.GetString("replaceButton.ToolTip"));
+            replaceButton.UseVisualStyleBackColor = false;
+            replaceButton.Click += ReplaceButton_Click;
+            // 
+            // findNextButton
+            // 
+            findNextButton.BackColor = System.Drawing.Color.White;
+            resources.ApplyResources(findNextButton, "findNextButton");
+            findNextButton.ForeColor = System.Drawing.SystemColors.ControlText;
+            findNextButton.Name = "findNextButton";
+            findNextButton.Tag = "Find previous (Shift+Enter)";
+            toolTip1.SetToolTip(findNextButton, resources.GetString("findNextButton.ToolTip"));
+            findNextButton.UseVisualStyleBackColor = false;
+            findNextButton.Click += FindNextButton_Click;
+            // 
+            // replaceReplaceTextBox
+            // 
+            resources.ApplyResources(replaceReplaceTextBox, "replaceReplaceTextBox");
+            replaceReplaceTextBox.Name = "replaceReplaceTextBox";
+            replaceReplaceTextBox.KeyDown += ReplaceReplaceTextBox_KeyDown;
+            // 
+            // replaceSearchTextBox
+            // 
+            resources.ApplyResources(replaceSearchTextBox, "replaceSearchTextBox");
+            replaceSearchTextBox.Name = "replaceSearchTextBox";
+            replaceSearchTextBox.TextChanged += TxtSearch_TextChanged;
+            replaceSearchTextBox.KeyDown += SearchTextBox_KeyDown;
+            // 
+            // searchPanel
+            // 
+            searchPanel.Controls.Add(closeSearchButton);
+            searchPanel.Controls.Add(nextSearchButton);
+            searchPanel.Controls.Add(prevSearchButton);
+            searchPanel.Controls.Add(searchSQLTextBox);
+            resources.ApplyResources(searchPanel, "searchPanel");
+            searchPanel.Name = "searchPanel";
+            // 
+            // closeSearchButton
+            // 
+            resources.ApplyResources(closeSearchButton, "closeSearchButton");
+            closeSearchButton.BackColor = System.Drawing.Color.White;
+            closeSearchButton.ForeColor = System.Drawing.Color.Black;
+            closeSearchButton.Name = "closeSearchButton";
+            closeSearchButton.UseVisualStyleBackColor = false;
+            closeSearchButton.Click += CloseQuickSearch_Click;
+            // 
+            // nextSearchButton
+            // 
+            nextSearchButton.BackColor = System.Drawing.Color.White;
+            resources.ApplyResources(nextSearchButton, "nextSearchButton");
+            nextSearchButton.ForeColor = System.Drawing.SystemColors.ControlText;
+            nextSearchButton.Name = "nextSearchButton";
+            nextSearchButton.Tag = "Find next (Enter)";
+            nextSearchButton.UseVisualStyleBackColor = false;
+            nextSearchButton.Click += SearchNext_Click;
+            // 
+            // prevSearchButton
+            // 
+            prevSearchButton.BackColor = System.Drawing.Color.White;
+            resources.ApplyResources(prevSearchButton, "prevSearchButton");
+            prevSearchButton.ForeColor = System.Drawing.SystemColors.ControlText;
+            prevSearchButton.Name = "prevSearchButton";
+            prevSearchButton.Tag = "Find previous (Shift+Enter)";
+            prevSearchButton.UseVisualStyleBackColor = false;
+            prevSearchButton.Click += SearchPrevious_Click;
+            // 
+            // searchSQLTextBox
+            // 
+            resources.ApplyResources(searchSQLTextBox, "searchSQLTextBox");
+            searchSQLTextBox.Name = "searchSQLTextBox";
+            searchSQLTextBox.TextChanged += TxtSearch_TextChanged;
+            searchSQLTextBox.KeyDown += SearchTextBox_KeyDown;
+            // 
+            // tabControl1
+            // 
+            tabControl1.DarkMode = false;
+            resources.ApplyResources(tabControl1, "tabControl1");
+            tabControl1.DrawMode = TabDrawMode.OwnerDrawFixed;
+            tabControl1.Name = "tabControl1";
+            tabControl1.SelectedIndex = 0;
+            tabControl1.TabCloseRequested += TabControl1_TabCloseRequested;
+            tabControl1.DrawItem += TabControl1_DrawItem;
+            tabControl1.SelectedIndexChanged += TabControl1_SelectedIndexChanged;
+            tabControl1.MouseUp += TabControl1_MouseUp;
+            tabControl1.Resize += TabControl1_Resize;
+            // 
+            // toolStrip1
+            // 
+            toolStrip1.Items.AddRange(new ToolStripItem[] { newToolStripButton1, openToolStripButton, saveToolStripButton, toolStripSeparator, cutToolStripButton, copyToolStripButton, pasteToolStripButton, toolStripSeparator3, toolStripLabel1, dataSourcesToolStripComboBox, toolStripSeparator20, toolStripLabel2, docTypeToolStripComboBox, objDefToolStripButton, mdValuesToolStripButton, toolStripSeparator2, createTableToolStripButton, insertToolStripButton, descToolStripButton });
+            resources.ApplyResources(toolStrip1, "toolStrip1");
+            toolStrip1.Name = "toolStrip1";
+            // 
+            // newToolStripButton1
+            // 
+            newToolStripButton1.DisplayStyle = ToolStripItemDisplayStyle.Image;
+            resources.ApplyResources(newToolStripButton1, "newToolStripButton1");
+            newToolStripButton1.Name = "newToolStripButton1";
+            newToolStripButton1.Click += NewToolStripMenuItem_Click;
+            // 
+            // openToolStripButton
+            // 
+            openToolStripButton.DisplayStyle = ToolStripItemDisplayStyle.Image;
+            openToolStripButton.Image = Properties.Resources.openfile1;
+            resources.ApplyResources(openToolStripButton, "openToolStripButton");
+            openToolStripButton.Name = "openToolStripButton";
+            openToolStripButton.Click += OpenToolStripMenuItem_Click;
+            // 
+            // saveToolStripButton
+            // 
+            saveToolStripButton.DisplayStyle = ToolStripItemDisplayStyle.Image;
+            resources.ApplyResources(saveToolStripButton, "saveToolStripButton");
+            saveToolStripButton.Name = "saveToolStripButton";
+            saveToolStripButton.Click += SaveToolStripMenuItem_Click;
+            // 
+            // toolStripSeparator
+            // 
+            toolStripSeparator.Name = "toolStripSeparator";
+            resources.ApplyResources(toolStripSeparator, "toolStripSeparator");
+            // 
+            // cutToolStripButton
+            // 
+            cutToolStripButton.DisplayStyle = ToolStripItemDisplayStyle.Image;
+            resources.ApplyResources(cutToolStripButton, "cutToolStripButton");
+            cutToolStripButton.Name = "cutToolStripButton";
+            cutToolStripButton.Click += CutToolStripMenuItem_Click;
+            // 
+            // copyToolStripButton
+            // 
+            copyToolStripButton.DisplayStyle = ToolStripItemDisplayStyle.Image;
+            resources.ApplyResources(copyToolStripButton, "copyToolStripButton");
+            copyToolStripButton.Name = "copyToolStripButton";
+            copyToolStripButton.Click += CopyToolStripMenuItem_Click;
+            // 
+            // pasteToolStripButton
+            // 
+            pasteToolStripButton.DisplayStyle = ToolStripItemDisplayStyle.Image;
+            resources.ApplyResources(pasteToolStripButton, "pasteToolStripButton");
+            pasteToolStripButton.Name = "pasteToolStripButton";
+            pasteToolStripButton.Click += PasteToolStripMenuItem_Click;
+            // 
+            // toolStripSeparator3
+            // 
+            toolStripSeparator3.Name = "toolStripSeparator3";
+            resources.ApplyResources(toolStripSeparator3, "toolStripSeparator3");
+            // 
+            // toolStripLabel1
+            // 
+            toolStripLabel1.Name = "toolStripLabel1";
+            resources.ApplyResources(toolStripLabel1, "toolStripLabel1");
+            // 
+            // dataSourcesToolStripComboBox
+            // 
+            dataSourcesToolStripComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
+            dataSourcesToolStripComboBox.Name = "dataSourcesToolStripComboBox";
+            resources.ApplyResources(dataSourcesToolStripComboBox, "dataSourcesToolStripComboBox");
+            dataSourcesToolStripComboBox.SelectedIndexChanged += DataSourcesToolStripComboBox_SelectedIndexChanged;
+            // 
+            // toolStripSeparator20
+            // 
+            toolStripSeparator20.Name = "toolStripSeparator20";
+            resources.ApplyResources(toolStripSeparator20, "toolStripSeparator20");
+            // 
+            // toolStripLabel2
+            // 
+            toolStripLabel2.Name = "toolStripLabel2";
+            resources.ApplyResources(toolStripLabel2, "toolStripLabel2");
+            // 
+            // docTypeToolStripComboBox
+            // 
+            docTypeToolStripComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
+            docTypeToolStripComboBox.Name = "docTypeToolStripComboBox";
+            resources.ApplyResources(docTypeToolStripComboBox, "docTypeToolStripComboBox");
+            docTypeToolStripComboBox.SelectedIndexChanged += DocTypeToolStripComboBox_SelectedIndexChanged;
+            // 
+            // objDefToolStripButton
+            // 
+            objDefToolStripButton.Image = Properties.Resources.Build_doc;
+            resources.ApplyResources(objDefToolStripButton, "objDefToolStripButton");
+            objDefToolStripButton.Name = "objDefToolStripButton";
+            objDefToolStripButton.Click += TableDefinitionToolStripMenuItem_Click_1;
+            // 
+            // mdValuesToolStripButton
+            // 
+            mdValuesToolStripButton.Image = Properties.Resources.Build_doc;
+            resources.ApplyResources(mdValuesToolStripButton, "mdValuesToolStripButton");
+            mdValuesToolStripButton.Name = "mdValuesToolStripButton";
+            mdValuesToolStripButton.Click += TableValuesMDToolStripMenuItem_Click;
+            // 
+            // toolStripSeparator2
+            // 
+            toolStripSeparator2.Name = "toolStripSeparator2";
+            resources.ApplyResources(toolStripSeparator2, "toolStripSeparator2");
+            // 
+            // createTableToolStripButton
+            // 
+            createTableToolStripButton.Image = Properties.Resources.sp_16;
+            resources.ApplyResources(createTableToolStripButton, "createTableToolStripButton");
+            createTableToolStripButton.Name = "createTableToolStripButton";
+            createTableToolStripButton.Click += CreateTableToolStripButton_Click;
+            // 
+            // insertToolStripButton
+            // 
+            insertToolStripButton.Image = Properties.Resources.sp_16;
+            resources.ApplyResources(insertToolStripButton, "insertToolStripButton");
+            insertToolStripButton.Name = "insertToolStripButton";
+            insertToolStripButton.Click += InsertToolStripButton_Click;
+            // 
+            // descToolStripButton
+            // 
+            descToolStripButton.Image = Properties.Resources.sp_16;
+            resources.ApplyResources(descToolStripButton, "descToolStripButton");
+            descToolStripButton.Name = "descToolStripButton";
+            descToolStripButton.Click += TableDescriptionToolStripMenuItem_Click;
+            // 
             // menuStrip1
             // 
-            resources.ApplyResources(menuStrip1, "menuStrip1");
             menuStrip1.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem, editToolStripMenuItem, builderToolStripMenuItem, jSONToolStripMenuItem, toolsToolStripMenuItem, databaseDDLToolStripMenuItem, viewToolStripMenuItem, aIAssistantToolStripMenuItem, executeToolStripMenuItem, windowsToolStripMenuItem, helpToolStripMenuItem });
+            resources.ApplyResources(menuStrip1, "menuStrip1");
             menuStrip1.Name = "menuStrip1";
-            toolTip1.SetToolTip(menuStrip1, resources.GetString("menuStrip1.ToolTip"));
             // 
             // fileToolStripMenuItem
             // 
-            resources.ApplyResources(fileToolStripMenuItem, "fileToolStripMenuItem");
             fileToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { connectToToolStripMenuItem, newConnectionToolStripMenuItem, manageConnectionsToolStripMenuItem, manageTemplateToolStripMenuItem, toolStripSeparator4, newToolStripMenuItem1, openToolStripMenuItem, openFolderToolStripMenuItem, saveToolStripMenuItem, saveAsToolStripMenuItem, saveObjectDescriptionsToolStripMenuItem, closeToolStripMenuItem1, closeAllToolStripMenuItem, toolStripSeparator21, recentToolStripMenuItem, manageRecentFilesToolStripMenuItem, toolStripSeparator5, exitToolStripMenuItem });
             fileToolStripMenuItem.Name = "fileToolStripMenuItem";
+            resources.ApplyResources(fileToolStripMenuItem, "fileToolStripMenuItem");
             // 
             // connectToToolStripMenuItem
             // 
-            resources.ApplyResources(connectToToolStripMenuItem, "connectToToolStripMenuItem");
             connectToToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { localToolStripMenuItem, azureToolStripMenuItem });
             connectToToolStripMenuItem.Name = "connectToToolStripMenuItem";
+            resources.ApplyResources(connectToToolStripMenuItem, "connectToToolStripMenuItem");
             // 
             // localToolStripMenuItem
             // 
-            resources.ApplyResources(localToolStripMenuItem, "localToolStripMenuItem");
             localToolStripMenuItem.Name = "localToolStripMenuItem";
+            resources.ApplyResources(localToolStripMenuItem, "localToolStripMenuItem");
             // 
             // azureToolStripMenuItem
             // 
-            resources.ApplyResources(azureToolStripMenuItem, "azureToolStripMenuItem");
             azureToolStripMenuItem.Name = "azureToolStripMenuItem";
+            resources.ApplyResources(azureToolStripMenuItem, "azureToolStripMenuItem");
             // 
             // newConnectionToolStripMenuItem
             // 
-            resources.ApplyResources(newConnectionToolStripMenuItem, "newConnectionToolStripMenuItem");
             newConnectionToolStripMenuItem.Image = Properties.Resources.add;
             newConnectionToolStripMenuItem.Name = "newConnectionToolStripMenuItem";
+            resources.ApplyResources(newConnectionToolStripMenuItem, "newConnectionToolStripMenuItem");
             newConnectionToolStripMenuItem.Click += NewConnectionToolStripMenuItem_Click;
             // 
             // manageConnectionsToolStripMenuItem
             // 
-            resources.ApplyResources(manageConnectionsToolStripMenuItem, "manageConnectionsToolStripMenuItem");
             manageConnectionsToolStripMenuItem.Name = "manageConnectionsToolStripMenuItem";
+            resources.ApplyResources(manageConnectionsToolStripMenuItem, "manageConnectionsToolStripMenuItem");
             manageConnectionsToolStripMenuItem.Click += ManageConnectionsToolStripMenuItem_Click;
             // 
             // manageTemplateToolStripMenuItem
             // 
-            resources.ApplyResources(manageTemplateToolStripMenuItem, "manageTemplateToolStripMenuItem");
             manageTemplateToolStripMenuItem.Name = "manageTemplateToolStripMenuItem";
+            resources.ApplyResources(manageTemplateToolStripMenuItem, "manageTemplateToolStripMenuItem");
             manageTemplateToolStripMenuItem.Click += ManageTemplateToolStripMenuItem_Click;
             // 
             // toolStripSeparator4
             // 
-            resources.ApplyResources(toolStripSeparator4, "toolStripSeparator4");
             toolStripSeparator4.Name = "toolStripSeparator4";
+            resources.ApplyResources(toolStripSeparator4, "toolStripSeparator4");
             // 
             // newToolStripMenuItem1
             // 
@@ -693,8 +808,8 @@ namespace SQL_Document_Builder
             // 
             // openFolderToolStripMenuItem
             // 
-            resources.ApplyResources(openFolderToolStripMenuItem, "openFolderToolStripMenuItem");
             openFolderToolStripMenuItem.Name = "openFolderToolStripMenuItem";
+            resources.ApplyResources(openFolderToolStripMenuItem, "openFolderToolStripMenuItem");
             openFolderToolStripMenuItem.Click += OpenFolderInFileExplorerToolStripMenuItem_Click;
             // 
             // saveToolStripMenuItem
@@ -705,60 +820,60 @@ namespace SQL_Document_Builder
             // 
             // saveAsToolStripMenuItem
             // 
-            resources.ApplyResources(saveAsToolStripMenuItem, "saveAsToolStripMenuItem");
             saveAsToolStripMenuItem.Name = "saveAsToolStripMenuItem";
+            resources.ApplyResources(saveAsToolStripMenuItem, "saveAsToolStripMenuItem");
             saveAsToolStripMenuItem.Click += SaveAsToolStripMenuItem_Click;
             // 
             // saveObjectDescriptionsToolStripMenuItem
             // 
-            resources.ApplyResources(saveObjectDescriptionsToolStripMenuItem, "saveObjectDescriptionsToolStripMenuItem");
             saveObjectDescriptionsToolStripMenuItem.Name = "saveObjectDescriptionsToolStripMenuItem";
+            resources.ApplyResources(saveObjectDescriptionsToolStripMenuItem, "saveObjectDescriptionsToolStripMenuItem");
             saveObjectDescriptionsToolStripMenuItem.Click += SaveObjectDescriptionsToolStripMenuItem_Click;
             // 
             // closeToolStripMenuItem1
             // 
-            resources.ApplyResources(closeToolStripMenuItem1, "closeToolStripMenuItem1");
             closeToolStripMenuItem1.Name = "closeToolStripMenuItem1";
+            resources.ApplyResources(closeToolStripMenuItem1, "closeToolStripMenuItem1");
             closeToolStripMenuItem1.Click += CloseToolStripMenuItem1_Click;
             // 
             // closeAllToolStripMenuItem
             // 
-            resources.ApplyResources(closeAllToolStripMenuItem, "closeAllToolStripMenuItem");
             closeAllToolStripMenuItem.Name = "closeAllToolStripMenuItem";
+            resources.ApplyResources(closeAllToolStripMenuItem, "closeAllToolStripMenuItem");
             closeAllToolStripMenuItem.Click += CloseAllToolStripMenuItem_Click;
             // 
             // toolStripSeparator21
             // 
-            resources.ApplyResources(toolStripSeparator21, "toolStripSeparator21");
             toolStripSeparator21.Name = "toolStripSeparator21";
+            resources.ApplyResources(toolStripSeparator21, "toolStripSeparator21");
             // 
             // recentToolStripMenuItem
             // 
-            resources.ApplyResources(recentToolStripMenuItem, "recentToolStripMenuItem");
             recentToolStripMenuItem.Name = "recentToolStripMenuItem";
+            resources.ApplyResources(recentToolStripMenuItem, "recentToolStripMenuItem");
             // 
             // manageRecentFilesToolStripMenuItem
             // 
-            resources.ApplyResources(manageRecentFilesToolStripMenuItem, "manageRecentFilesToolStripMenuItem");
             manageRecentFilesToolStripMenuItem.Name = "manageRecentFilesToolStripMenuItem";
+            resources.ApplyResources(manageRecentFilesToolStripMenuItem, "manageRecentFilesToolStripMenuItem");
             manageRecentFilesToolStripMenuItem.Click += ManageRecentFilesToolStripMenuItem_Click;
             // 
             // toolStripSeparator5
             // 
-            resources.ApplyResources(toolStripSeparator5, "toolStripSeparator5");
             toolStripSeparator5.Name = "toolStripSeparator5";
+            resources.ApplyResources(toolStripSeparator5, "toolStripSeparator5");
             // 
             // exitToolStripMenuItem
             // 
-            resources.ApplyResources(exitToolStripMenuItem, "exitToolStripMenuItem");
             exitToolStripMenuItem.Name = "exitToolStripMenuItem";
+            resources.ApplyResources(exitToolStripMenuItem, "exitToolStripMenuItem");
             exitToolStripMenuItem.Click += CloseToolStripButton_Click;
             // 
             // editToolStripMenuItem
             // 
-            resources.ApplyResources(editToolStripMenuItem, "editToolStripMenuItem");
             editToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { cutToolStripMenuItem, copyToolStripMenuItem, pasteToolStripMenuItem, toolStripSeparator27, undoToolStripMenuItem, redoToolStripMenuItem, toolStripSeparator6, selectAllToolStripMenuItem, toolStripSeparator8, quickFindToolStripMenuItem, findToolStripMenuItem, findAndReplaceToolStripMenuItem, toolStripSeparator16, goToLineToolStripMenuItem, uppercaseToolStripMenuItem, lowercaseToolStripMenuItem, toolStripSeparator23, addColumnReferenceToolStripMenuItem });
             editToolStripMenuItem.Name = "editToolStripMenuItem";
+            resources.ApplyResources(editToolStripMenuItem, "editToolStripMenuItem");
             // 
             // cutToolStripMenuItem
             // 
@@ -780,568 +895,517 @@ namespace SQL_Document_Builder
             // 
             // toolStripSeparator27
             // 
-            resources.ApplyResources(toolStripSeparator27, "toolStripSeparator27");
             toolStripSeparator27.Name = "toolStripSeparator27";
+            resources.ApplyResources(toolStripSeparator27, "toolStripSeparator27");
             // 
             // undoToolStripMenuItem
             // 
-            resources.ApplyResources(undoToolStripMenuItem, "undoToolStripMenuItem");
             undoToolStripMenuItem.Name = "undoToolStripMenuItem";
+            resources.ApplyResources(undoToolStripMenuItem, "undoToolStripMenuItem");
             undoToolStripMenuItem.Click += UndoToolStripMenuItem_Click;
             // 
             // redoToolStripMenuItem
             // 
-            resources.ApplyResources(redoToolStripMenuItem, "redoToolStripMenuItem");
             redoToolStripMenuItem.Name = "redoToolStripMenuItem";
+            resources.ApplyResources(redoToolStripMenuItem, "redoToolStripMenuItem");
             redoToolStripMenuItem.Click += RedoToolStripMenuItem_Click;
             // 
             // toolStripSeparator6
             // 
-            resources.ApplyResources(toolStripSeparator6, "toolStripSeparator6");
             toolStripSeparator6.Name = "toolStripSeparator6";
+            resources.ApplyResources(toolStripSeparator6, "toolStripSeparator6");
             // 
             // selectAllToolStripMenuItem
             // 
-            resources.ApplyResources(selectAllToolStripMenuItem, "selectAllToolStripMenuItem");
             selectAllToolStripMenuItem.Name = "selectAllToolStripMenuItem";
+            resources.ApplyResources(selectAllToolStripMenuItem, "selectAllToolStripMenuItem");
             selectAllToolStripMenuItem.Click += SelectAllToolStripMenuItem_Click;
             // 
             // toolStripSeparator8
             // 
-            resources.ApplyResources(toolStripSeparator8, "toolStripSeparator8");
             toolStripSeparator8.Name = "toolStripSeparator8";
+            resources.ApplyResources(toolStripSeparator8, "toolStripSeparator8");
             // 
             // quickFindToolStripMenuItem
             // 
-            resources.ApplyResources(quickFindToolStripMenuItem, "quickFindToolStripMenuItem");
             quickFindToolStripMenuItem.Name = "quickFindToolStripMenuItem";
+            resources.ApplyResources(quickFindToolStripMenuItem, "quickFindToolStripMenuItem");
             quickFindToolStripMenuItem.Click += QuickFindToolStripMenuItem_Click;
             // 
             // findToolStripMenuItem
             // 
-            resources.ApplyResources(findToolStripMenuItem, "findToolStripMenuItem");
             findToolStripMenuItem.Image = Properties.Resources.search;
             findToolStripMenuItem.Name = "findToolStripMenuItem";
+            resources.ApplyResources(findToolStripMenuItem, "findToolStripMenuItem");
             findToolStripMenuItem.Click += FindDialogToolStripMenuItem_Click;
             // 
             // findAndReplaceToolStripMenuItem
             // 
-            resources.ApplyResources(findAndReplaceToolStripMenuItem, "findAndReplaceToolStripMenuItem");
             findAndReplaceToolStripMenuItem.Name = "findAndReplaceToolStripMenuItem";
+            resources.ApplyResources(findAndReplaceToolStripMenuItem, "findAndReplaceToolStripMenuItem");
             findAndReplaceToolStripMenuItem.Click += FindAndReplaceToolStripMenuItem_Click;
             // 
             // toolStripSeparator16
             // 
-            resources.ApplyResources(toolStripSeparator16, "toolStripSeparator16");
             toolStripSeparator16.Name = "toolStripSeparator16";
+            resources.ApplyResources(toolStripSeparator16, "toolStripSeparator16");
             // 
             // goToLineToolStripMenuItem
             // 
-            resources.ApplyResources(goToLineToolStripMenuItem, "goToLineToolStripMenuItem");
             goToLineToolStripMenuItem.Name = "goToLineToolStripMenuItem";
+            resources.ApplyResources(goToLineToolStripMenuItem, "goToLineToolStripMenuItem");
             goToLineToolStripMenuItem.Click += GoToLineToolStripMenuItem_Click;
             // 
             // uppercaseToolStripMenuItem
             // 
-            resources.ApplyResources(uppercaseToolStripMenuItem, "uppercaseToolStripMenuItem");
             uppercaseToolStripMenuItem.Name = "uppercaseToolStripMenuItem";
+            resources.ApplyResources(uppercaseToolStripMenuItem, "uppercaseToolStripMenuItem");
             uppercaseToolStripMenuItem.Click += UppercaseSelectionToolStripMenuItem_Click;
             // 
             // lowercaseToolStripMenuItem
             // 
-            resources.ApplyResources(lowercaseToolStripMenuItem, "lowercaseToolStripMenuItem");
             lowercaseToolStripMenuItem.Name = "lowercaseToolStripMenuItem";
+            resources.ApplyResources(lowercaseToolStripMenuItem, "lowercaseToolStripMenuItem");
             lowercaseToolStripMenuItem.Click += LowercaseSelectionToolStripMenuItem_Click;
             // 
             // toolStripSeparator23
             // 
-            resources.ApplyResources(toolStripSeparator23, "toolStripSeparator23");
             toolStripSeparator23.Name = "toolStripSeparator23";
+            resources.ApplyResources(toolStripSeparator23, "toolStripSeparator23");
             // 
             // addColumnReferenceToolStripMenuItem
             // 
-            resources.ApplyResources(addColumnReferenceToolStripMenuItem, "addColumnReferenceToolStripMenuItem");
             addColumnReferenceToolStripMenuItem.Name = "addColumnReferenceToolStripMenuItem";
+            resources.ApplyResources(addColumnReferenceToolStripMenuItem, "addColumnReferenceToolStripMenuItem");
             addColumnReferenceToolStripMenuItem.Click += AddColumnReferenceToolStripMenuItem_Click;
             // 
             // builderToolStripMenuItem
             // 
-            resources.ApplyResources(builderToolStripMenuItem, "builderToolStripMenuItem");
             builderToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { mdObjectListToolStripMenuItem, toolStripSeparator7, mdDefinitionToolStripMenuItem, mdValuesToolStripMenuItem, toolStripSeparator17, mdClipboardToTableToolStripMenuItem, mdQueryDataToTableToolStripMenuItem });
             builderToolStripMenuItem.Name = "builderToolStripMenuItem";
+            resources.ApplyResources(builderToolStripMenuItem, "builderToolStripMenuItem");
             // 
             // mdObjectListToolStripMenuItem
             // 
-            resources.ApplyResources(mdObjectListToolStripMenuItem, "mdObjectListToolStripMenuItem");
             mdObjectListToolStripMenuItem.Name = "mdObjectListToolStripMenuItem";
+            resources.ApplyResources(mdObjectListToolStripMenuItem, "mdObjectListToolStripMenuItem");
             mdObjectListToolStripMenuItem.Click += TableListToolStripMenuItem_Click;
             // 
             // toolStripSeparator7
             // 
-            resources.ApplyResources(toolStripSeparator7, "toolStripSeparator7");
             toolStripSeparator7.Name = "toolStripSeparator7";
+            resources.ApplyResources(toolStripSeparator7, "toolStripSeparator7");
             // 
             // mdDefinitionToolStripMenuItem
             // 
-            resources.ApplyResources(mdDefinitionToolStripMenuItem, "mdDefinitionToolStripMenuItem");
             mdDefinitionToolStripMenuItem.Name = "mdDefinitionToolStripMenuItem";
+            resources.ApplyResources(mdDefinitionToolStripMenuItem, "mdDefinitionToolStripMenuItem");
             mdDefinitionToolStripMenuItem.Click += TableDefinitionToolStripMenuItem_Click_1;
             // 
             // mdValuesToolStripMenuItem
             // 
-            resources.ApplyResources(mdValuesToolStripMenuItem, "mdValuesToolStripMenuItem");
             mdValuesToolStripMenuItem.Name = "mdValuesToolStripMenuItem";
+            resources.ApplyResources(mdValuesToolStripMenuItem, "mdValuesToolStripMenuItem");
             mdValuesToolStripMenuItem.Click += TableValuesMDToolStripMenuItem_Click;
             // 
             // toolStripSeparator17
             // 
-            resources.ApplyResources(toolStripSeparator17, "toolStripSeparator17");
             toolStripSeparator17.Name = "toolStripSeparator17";
+            resources.ApplyResources(toolStripSeparator17, "toolStripSeparator17");
             // 
             // mdClipboardToTableToolStripMenuItem
             // 
-            resources.ApplyResources(mdClipboardToTableToolStripMenuItem, "mdClipboardToTableToolStripMenuItem");
             mdClipboardToTableToolStripMenuItem.Name = "mdClipboardToTableToolStripMenuItem";
+            resources.ApplyResources(mdClipboardToTableToolStripMenuItem, "mdClipboardToTableToolStripMenuItem");
             mdClipboardToTableToolStripMenuItem.Click += ClipboardToTableToolStripMenuItem1_Click;
             // 
             // mdQueryDataToTableToolStripMenuItem
             // 
-            resources.ApplyResources(mdQueryDataToTableToolStripMenuItem, "mdQueryDataToTableToolStripMenuItem");
             mdQueryDataToTableToolStripMenuItem.Name = "mdQueryDataToTableToolStripMenuItem";
+            resources.ApplyResources(mdQueryDataToTableToolStripMenuItem, "mdQueryDataToTableToolStripMenuItem");
             mdQueryDataToTableToolStripMenuItem.Click += QueryDataToTableToolStripMenuItem1_Click;
             // 
             // jSONToolStripMenuItem
             // 
-            resources.ApplyResources(jSONToolStripMenuItem, "jSONToolStripMenuItem");
             jSONToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { objectListToolStripMenuItem, toolStripSeparator25, jsonObjectDefinitionToolStripMenuItem, jsonTableViewValuesToolStripMenuItem, toolStripSeparator26, jsonClipboardToTableToolStripMenuItem, jsonQueryDataToTableToolStripMenuItem });
             jSONToolStripMenuItem.Name = "jSONToolStripMenuItem";
+            resources.ApplyResources(jSONToolStripMenuItem, "jSONToolStripMenuItem");
             // 
             // objectListToolStripMenuItem
             // 
-            resources.ApplyResources(objectListToolStripMenuItem, "objectListToolStripMenuItem");
             objectListToolStripMenuItem.Name = "objectListToolStripMenuItem";
+            resources.ApplyResources(objectListToolStripMenuItem, "objectListToolStripMenuItem");
             objectListToolStripMenuItem.Click += JsonObjectListToolStripMenuItem_Click;
             // 
             // toolStripSeparator25
             // 
-            resources.ApplyResources(toolStripSeparator25, "toolStripSeparator25");
             toolStripSeparator25.Name = "toolStripSeparator25";
+            resources.ApplyResources(toolStripSeparator25, "toolStripSeparator25");
             // 
             // jsonObjectDefinitionToolStripMenuItem
             // 
-            resources.ApplyResources(jsonObjectDefinitionToolStripMenuItem, "jsonObjectDefinitionToolStripMenuItem");
             jsonObjectDefinitionToolStripMenuItem.Name = "jsonObjectDefinitionToolStripMenuItem";
+            resources.ApplyResources(jsonObjectDefinitionToolStripMenuItem, "jsonObjectDefinitionToolStripMenuItem");
             jsonObjectDefinitionToolStripMenuItem.Click += JsonObjectDefinitionToolStripMenuItem_Click;
             // 
             // jsonTableViewValuesToolStripMenuItem
             // 
-            resources.ApplyResources(jsonTableViewValuesToolStripMenuItem, "jsonTableViewValuesToolStripMenuItem");
             jsonTableViewValuesToolStripMenuItem.Name = "jsonTableViewValuesToolStripMenuItem";
+            resources.ApplyResources(jsonTableViewValuesToolStripMenuItem, "jsonTableViewValuesToolStripMenuItem");
             jsonTableViewValuesToolStripMenuItem.Click += JsonTableViewValuesToolStripMenuItem_Click;
             // 
             // toolStripSeparator26
             // 
-            resources.ApplyResources(toolStripSeparator26, "toolStripSeparator26");
             toolStripSeparator26.Name = "toolStripSeparator26";
+            resources.ApplyResources(toolStripSeparator26, "toolStripSeparator26");
             // 
             // jsonClipboardToTableToolStripMenuItem
             // 
-            resources.ApplyResources(jsonClipboardToTableToolStripMenuItem, "jsonClipboardToTableToolStripMenuItem");
             jsonClipboardToTableToolStripMenuItem.Name = "jsonClipboardToTableToolStripMenuItem";
+            resources.ApplyResources(jsonClipboardToTableToolStripMenuItem, "jsonClipboardToTableToolStripMenuItem");
             jsonClipboardToTableToolStripMenuItem.Click += JsonClipboardToTableToolStripMenuItem_Click;
             // 
             // jsonQueryDataToTableToolStripMenuItem
             // 
-            resources.ApplyResources(jsonQueryDataToTableToolStripMenuItem, "jsonQueryDataToTableToolStripMenuItem");
             jsonQueryDataToTableToolStripMenuItem.Name = "jsonQueryDataToTableToolStripMenuItem";
+            resources.ApplyResources(jsonQueryDataToTableToolStripMenuItem, "jsonQueryDataToTableToolStripMenuItem");
             jsonQueryDataToTableToolStripMenuItem.Click += JsonQueryDataToTableToolStripMenuItem_Click;
             // 
             // toolsToolStripMenuItem
             // 
-            resources.ApplyResources(toolsToolStripMenuItem, "toolsToolStripMenuItem");
             toolsToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { customizeToolStripMenuItem, optionsToolStripMenuItem, toolStripSeparator1, batchColumnDescToolStripMenuItem, toolStripSeparator10, exportDescriptionsToolStripMenuItem, importDescriptionsToolStripMenuItem });
             toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
+            resources.ApplyResources(toolsToolStripMenuItem, "toolsToolStripMenuItem");
             // 
             // customizeToolStripMenuItem
             // 
-            resources.ApplyResources(customizeToolStripMenuItem, "customizeToolStripMenuItem");
             customizeToolStripMenuItem.Name = "customizeToolStripMenuItem";
+            resources.ApplyResources(customizeToolStripMenuItem, "customizeToolStripMenuItem");
             // 
             // optionsToolStripMenuItem
             // 
-            resources.ApplyResources(optionsToolStripMenuItem, "optionsToolStripMenuItem");
             optionsToolStripMenuItem.Name = "optionsToolStripMenuItem";
+            resources.ApplyResources(optionsToolStripMenuItem, "optionsToolStripMenuItem");
             // 
             // toolStripSeparator1
             // 
-            resources.ApplyResources(toolStripSeparator1, "toolStripSeparator1");
             toolStripSeparator1.Name = "toolStripSeparator1";
+            resources.ApplyResources(toolStripSeparator1, "toolStripSeparator1");
             // 
             // batchColumnDescToolStripMenuItem
             // 
-            resources.ApplyResources(batchColumnDescToolStripMenuItem, "batchColumnDescToolStripMenuItem");
             batchColumnDescToolStripMenuItem.Name = "batchColumnDescToolStripMenuItem";
+            resources.ApplyResources(batchColumnDescToolStripMenuItem, "batchColumnDescToolStripMenuItem");
             batchColumnDescToolStripMenuItem.Click += BatchToolStripButton_Click;
             // 
             // toolStripSeparator10
             // 
-            resources.ApplyResources(toolStripSeparator10, "toolStripSeparator10");
             toolStripSeparator10.Name = "toolStripSeparator10";
+            resources.ApplyResources(toolStripSeparator10, "toolStripSeparator10");
             // 
             // exportDescriptionsToolStripMenuItem
             // 
-            resources.ApplyResources(exportDescriptionsToolStripMenuItem, "exportDescriptionsToolStripMenuItem");
             exportDescriptionsToolStripMenuItem.Name = "exportDescriptionsToolStripMenuItem";
+            resources.ApplyResources(exportDescriptionsToolStripMenuItem, "exportDescriptionsToolStripMenuItem");
             exportDescriptionsToolStripMenuItem.Click += ExportDescriptionsToolStripMenuItem_Click;
             // 
             // importDescriptionsToolStripMenuItem
             // 
-            resources.ApplyResources(importDescriptionsToolStripMenuItem, "importDescriptionsToolStripMenuItem");
             importDescriptionsToolStripMenuItem.Name = "importDescriptionsToolStripMenuItem";
+            resources.ApplyResources(importDescriptionsToolStripMenuItem, "importDescriptionsToolStripMenuItem");
             importDescriptionsToolStripMenuItem.Click += ImportDescriptionsToolStripMenuItem_Click;
             // 
             // databaseDDLToolStripMenuItem
             // 
-            resources.ApplyResources(databaseDDLToolStripMenuItem, "databaseDDLToolStripMenuItem");
             databaseDDLToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { cREATEToolStripMenuItem1, insertToolStripMenuItem, tableDescriptionToolStripMenuItem, toolStripSeparator13, createIndexToolStripMenuItem, createPrimaryKeyToolStripMenuItem, toolStripSeparator14, uspToolStripMenuItem, toolStripSeparator12, queryInsertToolStripMenuItem, excelToINSERTToolStripMenuItem, toolStripSeparator15, batchToolStripMenuItem });
             databaseDDLToolStripMenuItem.Name = "databaseDDLToolStripMenuItem";
+            resources.ApplyResources(databaseDDLToolStripMenuItem, "databaseDDLToolStripMenuItem");
             // 
             // cREATEToolStripMenuItem1
             // 
-            resources.ApplyResources(cREATEToolStripMenuItem1, "cREATEToolStripMenuItem1");
             cREATEToolStripMenuItem1.Name = "cREATEToolStripMenuItem1";
+            resources.ApplyResources(cREATEToolStripMenuItem1, "cREATEToolStripMenuItem1");
             cREATEToolStripMenuItem1.Click += CreateTableToolStripButton_Click;
             // 
             // insertToolStripMenuItem
             // 
-            resources.ApplyResources(insertToolStripMenuItem, "insertToolStripMenuItem");
             insertToolStripMenuItem.Name = "insertToolStripMenuItem";
+            resources.ApplyResources(insertToolStripMenuItem, "insertToolStripMenuItem");
             insertToolStripMenuItem.Click += InsertToolStripButton_Click;
             // 
             // tableDescriptionToolStripMenuItem
             // 
-            resources.ApplyResources(tableDescriptionToolStripMenuItem, "tableDescriptionToolStripMenuItem");
             tableDescriptionToolStripMenuItem.Name = "tableDescriptionToolStripMenuItem";
+            resources.ApplyResources(tableDescriptionToolStripMenuItem, "tableDescriptionToolStripMenuItem");
             tableDescriptionToolStripMenuItem.Click += TableDescriptionToolStripMenuItem_Click;
             // 
             // toolStripSeparator13
             // 
-            resources.ApplyResources(toolStripSeparator13, "toolStripSeparator13");
             toolStripSeparator13.Name = "toolStripSeparator13";
+            resources.ApplyResources(toolStripSeparator13, "toolStripSeparator13");
             // 
             // createIndexToolStripMenuItem
             // 
-            resources.ApplyResources(createIndexToolStripMenuItem, "createIndexToolStripMenuItem");
             createIndexToolStripMenuItem.Name = "createIndexToolStripMenuItem";
+            resources.ApplyResources(createIndexToolStripMenuItem, "createIndexToolStripMenuItem");
             createIndexToolStripMenuItem.Click += CreateIndexToolStripMenuItem_Click;
             // 
             // createPrimaryKeyToolStripMenuItem
             // 
-            resources.ApplyResources(createPrimaryKeyToolStripMenuItem, "createPrimaryKeyToolStripMenuItem");
             createPrimaryKeyToolStripMenuItem.Name = "createPrimaryKeyToolStripMenuItem";
+            resources.ApplyResources(createPrimaryKeyToolStripMenuItem, "createPrimaryKeyToolStripMenuItem");
             createPrimaryKeyToolStripMenuItem.Click += CreatePrimaryKeyToolStripMenuItem_Click;
             // 
             // toolStripSeparator14
             // 
-            resources.ApplyResources(toolStripSeparator14, "toolStripSeparator14");
             toolStripSeparator14.Name = "toolStripSeparator14";
+            resources.ApplyResources(toolStripSeparator14, "toolStripSeparator14");
             // 
             // uspToolStripMenuItem
             // 
-            resources.ApplyResources(uspToolStripMenuItem, "uspToolStripMenuItem");
             uspToolStripMenuItem.Name = "uspToolStripMenuItem";
+            resources.ApplyResources(uspToolStripMenuItem, "uspToolStripMenuItem");
             uspToolStripMenuItem.Click += UspToolStripMenuItem_Click;
             // 
             // toolStripSeparator12
             // 
-            resources.ApplyResources(toolStripSeparator12, "toolStripSeparator12");
             toolStripSeparator12.Name = "toolStripSeparator12";
+            resources.ApplyResources(toolStripSeparator12, "toolStripSeparator12");
             // 
             // queryInsertToolStripMenuItem
             // 
-            resources.ApplyResources(queryInsertToolStripMenuItem, "queryInsertToolStripMenuItem");
             queryInsertToolStripMenuItem.Name = "queryInsertToolStripMenuItem";
+            resources.ApplyResources(queryInsertToolStripMenuItem, "queryInsertToolStripMenuItem");
             queryInsertToolStripMenuItem.Click += QueryInsertToolStripMenuItem_Click;
             // 
             // excelToINSERTToolStripMenuItem
             // 
-            resources.ApplyResources(excelToINSERTToolStripMenuItem, "excelToINSERTToolStripMenuItem");
             excelToINSERTToolStripMenuItem.Name = "excelToINSERTToolStripMenuItem";
+            resources.ApplyResources(excelToINSERTToolStripMenuItem, "excelToINSERTToolStripMenuItem");
             excelToINSERTToolStripMenuItem.Click += ExcelToINSERTToolStripMenuItem_Click;
             // 
             // toolStripSeparator15
             // 
-            resources.ApplyResources(toolStripSeparator15, "toolStripSeparator15");
             toolStripSeparator15.Name = "toolStripSeparator15";
+            resources.ApplyResources(toolStripSeparator15, "toolStripSeparator15");
             // 
             // batchToolStripMenuItem
             // 
-            resources.ApplyResources(batchToolStripMenuItem, "batchToolStripMenuItem");
             batchToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { cREATEToolStripMenuItem, cREATEINSERTToolStripMenuItem, objectsDescriptionToolStripMenuItem });
             batchToolStripMenuItem.Name = "batchToolStripMenuItem";
+            resources.ApplyResources(batchToolStripMenuItem, "batchToolStripMenuItem");
             // 
             // cREATEToolStripMenuItem
             // 
-            resources.ApplyResources(cREATEToolStripMenuItem, "cREATEToolStripMenuItem");
             cREATEToolStripMenuItem.Name = "cREATEToolStripMenuItem";
+            resources.ApplyResources(cREATEToolStripMenuItem, "cREATEToolStripMenuItem");
             cREATEToolStripMenuItem.Click += CreateToolStripMenuItem_Click;
             // 
             // cREATEINSERTToolStripMenuItem
             // 
-            resources.ApplyResources(cREATEINSERTToolStripMenuItem, "cREATEINSERTToolStripMenuItem");
             cREATEINSERTToolStripMenuItem.Name = "cREATEINSERTToolStripMenuItem";
+            resources.ApplyResources(cREATEINSERTToolStripMenuItem, "cREATEINSERTToolStripMenuItem");
             cREATEINSERTToolStripMenuItem.Click += CreateInsertToolStripMenuItem_Click;
             // 
             // objectsDescriptionToolStripMenuItem
             // 
-            resources.ApplyResources(objectsDescriptionToolStripMenuItem, "objectsDescriptionToolStripMenuItem");
             objectsDescriptionToolStripMenuItem.Name = "objectsDescriptionToolStripMenuItem";
+            resources.ApplyResources(objectsDescriptionToolStripMenuItem, "objectsDescriptionToolStripMenuItem");
             objectsDescriptionToolStripMenuItem.Click += ObjectsDescriptionToolStripMenuItem_Click;
             // 
             // viewToolStripMenuItem
             // 
-            resources.ApplyResources(viewToolStripMenuItem, "viewToolStripMenuItem");
             viewToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { zoomInToolStripMenuItem, zoomOutToolStripMenuItem, zoom100ToolStripMenuItem, toolStripSeparator18, collapseAllToolStripMenuItem, expandAllToolStripMenuItem, toolStripSeparator19, showIndentGuidesToolStripMenuItem, showWhitespaceToolStripMenuItem, toolStripSeparator11, darkModeToolStripMenuItem });
             viewToolStripMenuItem.Name = "viewToolStripMenuItem";
+            resources.ApplyResources(viewToolStripMenuItem, "viewToolStripMenuItem");
             // 
             // zoomInToolStripMenuItem
             // 
-            resources.ApplyResources(zoomInToolStripMenuItem, "zoomInToolStripMenuItem");
             zoomInToolStripMenuItem.Name = "zoomInToolStripMenuItem";
+            resources.ApplyResources(zoomInToolStripMenuItem, "zoomInToolStripMenuItem");
             zoomInToolStripMenuItem.Click += ZoomInToolStripMenuItem_Click;
             // 
             // zoomOutToolStripMenuItem
             // 
-            resources.ApplyResources(zoomOutToolStripMenuItem, "zoomOutToolStripMenuItem");
             zoomOutToolStripMenuItem.Name = "zoomOutToolStripMenuItem";
+            resources.ApplyResources(zoomOutToolStripMenuItem, "zoomOutToolStripMenuItem");
             zoomOutToolStripMenuItem.Click += ZoomOutToolStripMenuItem_Click;
             // 
             // zoom100ToolStripMenuItem
             // 
-            resources.ApplyResources(zoom100ToolStripMenuItem, "zoom100ToolStripMenuItem");
             zoom100ToolStripMenuItem.Name = "zoom100ToolStripMenuItem";
+            resources.ApplyResources(zoom100ToolStripMenuItem, "zoom100ToolStripMenuItem");
             zoom100ToolStripMenuItem.Click += Zoom100ToolStripMenuItem_Click;
             // 
             // toolStripSeparator18
             // 
-            resources.ApplyResources(toolStripSeparator18, "toolStripSeparator18");
             toolStripSeparator18.Name = "toolStripSeparator18";
+            resources.ApplyResources(toolStripSeparator18, "toolStripSeparator18");
             // 
             // collapseAllToolStripMenuItem
             // 
-            resources.ApplyResources(collapseAllToolStripMenuItem, "collapseAllToolStripMenuItem");
             collapseAllToolStripMenuItem.Name = "collapseAllToolStripMenuItem";
+            resources.ApplyResources(collapseAllToolStripMenuItem, "collapseAllToolStripMenuItem");
             collapseAllToolStripMenuItem.Click += CollapseAllToolStripMenuItem_Click;
             // 
             // expandAllToolStripMenuItem
             // 
-            resources.ApplyResources(expandAllToolStripMenuItem, "expandAllToolStripMenuItem");
             expandAllToolStripMenuItem.Name = "expandAllToolStripMenuItem";
+            resources.ApplyResources(expandAllToolStripMenuItem, "expandAllToolStripMenuItem");
             expandAllToolStripMenuItem.Click += ExpandAllToolStripMenuItem_Click;
             // 
             // toolStripSeparator19
             // 
-            resources.ApplyResources(toolStripSeparator19, "toolStripSeparator19");
             toolStripSeparator19.Name = "toolStripSeparator19";
+            resources.ApplyResources(toolStripSeparator19, "toolStripSeparator19");
             // 
             // showIndentGuidesToolStripMenuItem
             // 
-            resources.ApplyResources(showIndentGuidesToolStripMenuItem, "showIndentGuidesToolStripMenuItem");
             showIndentGuidesToolStripMenuItem.Checked = true;
             showIndentGuidesToolStripMenuItem.CheckState = CheckState.Checked;
             showIndentGuidesToolStripMenuItem.Name = "showIndentGuidesToolStripMenuItem";
+            resources.ApplyResources(showIndentGuidesToolStripMenuItem, "showIndentGuidesToolStripMenuItem");
             showIndentGuidesToolStripMenuItem.Click += IndentGuidesToolStripMenuItem_Click;
             // 
             // showWhitespaceToolStripMenuItem
             // 
-            resources.ApplyResources(showWhitespaceToolStripMenuItem, "showWhitespaceToolStripMenuItem");
             showWhitespaceToolStripMenuItem.Name = "showWhitespaceToolStripMenuItem";
+            resources.ApplyResources(showWhitespaceToolStripMenuItem, "showWhitespaceToolStripMenuItem");
             showWhitespaceToolStripMenuItem.Click += HiddenCharactersToolStripMenuItem_Click;
             // 
             // toolStripSeparator11
             // 
-            resources.ApplyResources(toolStripSeparator11, "toolStripSeparator11");
             toolStripSeparator11.Name = "toolStripSeparator11";
+            resources.ApplyResources(toolStripSeparator11, "toolStripSeparator11");
             // 
             // darkModeToolStripMenuItem
             // 
-            resources.ApplyResources(darkModeToolStripMenuItem, "darkModeToolStripMenuItem");
             darkModeToolStripMenuItem.Name = "darkModeToolStripMenuItem";
+            resources.ApplyResources(darkModeToolStripMenuItem, "darkModeToolStripMenuItem");
             darkModeToolStripMenuItem.Click += DarkModeToolStripMenuItem_Click;
             // 
             // aIAssistantToolStripMenuItem
             // 
-            resources.ApplyResources(aIAssistantToolStripMenuItem, "aIAssistantToolStripMenuItem");
             aIAssistantToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { aIDescriptionAssistantToolStripMenuItem, descriptionAssistantPlusToolStripMenuItem, describeMissingToolStripMenuItem, matchDescribeToolStripMenuItem, toolStripSeparator22, optimizeCodeToolStripMenuItem, modifyCodeToolStripMenuItem, toolStripSeparator24, settingsToolStripMenuItem });
             aIAssistantToolStripMenuItem.Name = "aIAssistantToolStripMenuItem";
+            resources.ApplyResources(aIAssistantToolStripMenuItem, "aIAssistantToolStripMenuItem");
             // 
             // aIDescriptionAssistantToolStripMenuItem
             // 
-            resources.ApplyResources(aIDescriptionAssistantToolStripMenuItem, "aIDescriptionAssistantToolStripMenuItem");
             aIDescriptionAssistantToolStripMenuItem.Image = Properties.Resources.ai_24;
             aIDescriptionAssistantToolStripMenuItem.Name = "aIDescriptionAssistantToolStripMenuItem";
+            resources.ApplyResources(aIDescriptionAssistantToolStripMenuItem, "aIDescriptionAssistantToolStripMenuItem");
             aIDescriptionAssistantToolStripMenuItem.Click += AIDescriptionAssistantToolStripMenuItem_Click;
             // 
             // descriptionAssistantPlusToolStripMenuItem
             // 
-            resources.ApplyResources(descriptionAssistantPlusToolStripMenuItem, "descriptionAssistantPlusToolStripMenuItem");
             descriptionAssistantPlusToolStripMenuItem.Name = "descriptionAssistantPlusToolStripMenuItem";
+            resources.ApplyResources(descriptionAssistantPlusToolStripMenuItem, "descriptionAssistantPlusToolStripMenuItem");
             descriptionAssistantPlusToolStripMenuItem.Click += DescriptionAssistantPlusToolStripMenuItem_Click;
             // 
             // describeMissingToolStripMenuItem
             // 
-            resources.ApplyResources(describeMissingToolStripMenuItem, "describeMissingToolStripMenuItem");
             describeMissingToolStripMenuItem.Name = "describeMissingToolStripMenuItem";
+            resources.ApplyResources(describeMissingToolStripMenuItem, "describeMissingToolStripMenuItem");
             describeMissingToolStripMenuItem.Click += DescribeMissingToolStripMenuItem_Click;
             // 
             // matchDescribeToolStripMenuItem
             // 
-            resources.ApplyResources(matchDescribeToolStripMenuItem, "matchDescribeToolStripMenuItem");
             matchDescribeToolStripMenuItem.Name = "matchDescribeToolStripMenuItem";
+            resources.ApplyResources(matchDescribeToolStripMenuItem, "matchDescribeToolStripMenuItem");
             matchDescribeToolStripMenuItem.Click += BatchDescribeToolStripMenuItem_Click;
             // 
             // toolStripSeparator22
             // 
-            resources.ApplyResources(toolStripSeparator22, "toolStripSeparator22");
             toolStripSeparator22.Name = "toolStripSeparator22";
+            resources.ApplyResources(toolStripSeparator22, "toolStripSeparator22");
             // 
             // optimizeCodeToolStripMenuItem
             // 
-            resources.ApplyResources(optimizeCodeToolStripMenuItem, "optimizeCodeToolStripMenuItem");
             optimizeCodeToolStripMenuItem.Name = "optimizeCodeToolStripMenuItem";
+            resources.ApplyResources(optimizeCodeToolStripMenuItem, "optimizeCodeToolStripMenuItem");
             optimizeCodeToolStripMenuItem.Click += OptimizeCodeToolStripMenuItem_Click;
             // 
             // modifyCodeToolStripMenuItem
             // 
-            resources.ApplyResources(modifyCodeToolStripMenuItem, "modifyCodeToolStripMenuItem");
             modifyCodeToolStripMenuItem.Name = "modifyCodeToolStripMenuItem";
+            resources.ApplyResources(modifyCodeToolStripMenuItem, "modifyCodeToolStripMenuItem");
             modifyCodeToolStripMenuItem.Click += ModifyCodeToolStripMenuItem_Click;
             // 
             // toolStripSeparator24
             // 
-            resources.ApplyResources(toolStripSeparator24, "toolStripSeparator24");
             toolStripSeparator24.Name = "toolStripSeparator24";
+            resources.ApplyResources(toolStripSeparator24, "toolStripSeparator24");
             // 
             // settingsToolStripMenuItem
             // 
-            resources.ApplyResources(settingsToolStripMenuItem, "settingsToolStripMenuItem");
             settingsToolStripMenuItem.Name = "settingsToolStripMenuItem";
+            resources.ApplyResources(settingsToolStripMenuItem, "settingsToolStripMenuItem");
             settingsToolStripMenuItem.Click += SettingsToolStripMenuItem_Click;
             // 
             // executeToolStripMenuItem
             // 
-            resources.ApplyResources(executeToolStripMenuItem, "executeToolStripMenuItem");
             executeToolStripMenuItem.Name = "executeToolStripMenuItem";
+            resources.ApplyResources(executeToolStripMenuItem, "executeToolStripMenuItem");
             executeToolStripMenuItem.Click += OnExecuteToolStripMenuItem_Click;
             // 
             // windowsToolStripMenuItem
             // 
-            resources.ApplyResources(windowsToolStripMenuItem, "windowsToolStripMenuItem");
             windowsToolStripMenuItem.Name = "windowsToolStripMenuItem";
+            resources.ApplyResources(windowsToolStripMenuItem, "windowsToolStripMenuItem");
             // 
             // helpToolStripMenuItem
             // 
-            resources.ApplyResources(helpToolStripMenuItem, "helpToolStripMenuItem");
             helpToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { aboutToolStripMenuItem, toolStripSeparator9, sherlockSoftwareToolStripMenuItem });
             helpToolStripMenuItem.Name = "helpToolStripMenuItem";
+            resources.ApplyResources(helpToolStripMenuItem, "helpToolStripMenuItem");
             // 
             // aboutToolStripMenuItem
             // 
-            resources.ApplyResources(aboutToolStripMenuItem, "aboutToolStripMenuItem");
             aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
+            resources.ApplyResources(aboutToolStripMenuItem, "aboutToolStripMenuItem");
             aboutToolStripMenuItem.Click += AboutToolStripMenuItem_Click;
             // 
             // toolStripSeparator9
             // 
-            resources.ApplyResources(toolStripSeparator9, "toolStripSeparator9");
             toolStripSeparator9.Name = "toolStripSeparator9";
+            resources.ApplyResources(toolStripSeparator9, "toolStripSeparator9");
             // 
             // sherlockSoftwareToolStripMenuItem
             // 
-            resources.ApplyResources(sherlockSoftwareToolStripMenuItem, "sherlockSoftwareToolStripMenuItem");
             sherlockSoftwareToolStripMenuItem.Name = "sherlockSoftwareToolStripMenuItem";
+            resources.ApplyResources(sherlockSoftwareToolStripMenuItem, "sherlockSoftwareToolStripMenuItem");
             sherlockSoftwareToolStripMenuItem.Click += SherlockSoftwareToolStripMenuItem_Click;
             // 
             // statusStrip1
             // 
-            resources.ApplyResources(statusStrip1, "statusStrip1");
             statusStrip1.Items.AddRange(new ToolStripItem[] { progressBar, messageLabel, serverToolStripStatusLabel, databaseToolStripStatusLabel });
+            resources.ApplyResources(statusStrip1, "statusStrip1");
             statusStrip1.Name = "statusStrip1";
-            toolTip1.SetToolTip(statusStrip1, resources.GetString("statusStrip1.ToolTip"));
             // 
             // progressBar
             // 
-            resources.ApplyResources(progressBar, "progressBar");
             progressBar.Name = "progressBar";
+            resources.ApplyResources(progressBar, "progressBar");
             progressBar.Style = ProgressBarStyle.Continuous;
             // 
             // messageLabel
             // 
-            resources.ApplyResources(messageLabel, "messageLabel");
             messageLabel.Name = "messageLabel";
+            resources.ApplyResources(messageLabel, "messageLabel");
             messageLabel.Spring = true;
             // 
             // serverToolStripStatusLabel
             // 
-            resources.ApplyResources(serverToolStripStatusLabel, "serverToolStripStatusLabel");
             serverToolStripStatusLabel.Image = Properties.Resources.server;
             serverToolStripStatusLabel.Name = "serverToolStripStatusLabel";
+            resources.ApplyResources(serverToolStripStatusLabel, "serverToolStripStatusLabel");
             // 
             // databaseToolStripStatusLabel
             // 
-            resources.ApplyResources(databaseToolStripStatusLabel, "databaseToolStripStatusLabel");
             databaseToolStripStatusLabel.Image = Properties.Resources.database;
             databaseToolStripStatusLabel.Name = "databaseToolStripStatusLabel";
-            // 
-            // searchPanel
-            // 
-            resources.ApplyResources(searchPanel, "searchPanel");
-            searchPanel.Controls.Add(closeSearchButton);
-            searchPanel.Controls.Add(nextSearchButton);
-            searchPanel.Controls.Add(prevSearchButton);
-            searchPanel.Controls.Add(searchSQLTextBox);
-            searchPanel.Name = "searchPanel";
-            toolTip1.SetToolTip(searchPanel, resources.GetString("searchPanel.ToolTip"));
-            // 
-            // closeSearchButton
-            // 
-            resources.ApplyResources(closeSearchButton, "closeSearchButton");
-            closeSearchButton.BackColor = System.Drawing.Color.White;
-            closeSearchButton.ForeColor = System.Drawing.Color.Black;
-            closeSearchButton.Name = "closeSearchButton";
-            toolTip1.SetToolTip(closeSearchButton, resources.GetString("closeSearchButton.ToolTip"));
-            closeSearchButton.UseVisualStyleBackColor = false;
-            closeSearchButton.Click += CloseQuickSearch_Click;
-            // 
-            // nextSearchButton
-            // 
-            resources.ApplyResources(nextSearchButton, "nextSearchButton");
-            nextSearchButton.BackColor = System.Drawing.Color.White;
-            nextSearchButton.ForeColor = System.Drawing.SystemColors.ControlText;
-            nextSearchButton.Name = "nextSearchButton";
-            nextSearchButton.Tag = "Find next (Enter)";
-            toolTip1.SetToolTip(nextSearchButton, resources.GetString("nextSearchButton.ToolTip"));
-            nextSearchButton.UseVisualStyleBackColor = false;
-            nextSearchButton.Click += SearchNext_Click;
-            // 
-            // prevSearchButton
-            // 
-            resources.ApplyResources(prevSearchButton, "prevSearchButton");
-            prevSearchButton.BackColor = System.Drawing.Color.White;
-            prevSearchButton.ForeColor = System.Drawing.SystemColors.ControlText;
-            prevSearchButton.Name = "prevSearchButton";
-            prevSearchButton.Tag = "Find previous (Shift+Enter)";
-            toolTip1.SetToolTip(prevSearchButton, resources.GetString("prevSearchButton.ToolTip"));
-            prevSearchButton.UseVisualStyleBackColor = false;
-            prevSearchButton.Click += SearchPrevious_Click;
-            // 
-            // searchSQLTextBox
-            // 
-            resources.ApplyResources(searchSQLTextBox, "searchSQLTextBox");
-            searchSQLTextBox.Name = "searchSQLTextBox";
-            toolTip1.SetToolTip(searchSQLTextBox, resources.GetString("searchSQLTextBox.ToolTip"));
-            searchSQLTextBox.TextChanged += TxtSearch_TextChanged;
-            searchSQLTextBox.KeyDown += SearchTextBox_KeyDown;
+            resources.ApplyResources(databaseToolStripStatusLabel, "databaseToolStripStatusLabel");
             // 
             // definitionPanel
             // 
@@ -1355,16 +1419,15 @@ namespace SQL_Document_Builder
             // 
             // defiCollapsibleSplitter
             // 
-            resources.ApplyResources(defiCollapsibleSplitter, "defiCollapsibleSplitter");
             defiCollapsibleSplitter.AnimationDelay = 2;
             defiCollapsibleSplitter.AnimationStep = 100;
             defiCollapsibleSplitter.BorderStyle3D = Border3DStyle.Flat;
             defiCollapsibleSplitter.ControlToHide = definitionPanel;
             defiCollapsibleSplitter.Cursor = Cursors.VSplit;
+            resources.ApplyResources(defiCollapsibleSplitter, "defiCollapsibleSplitter");
             defiCollapsibleSplitter.ExpandParentForm = false;
             defiCollapsibleSplitter.Name = "defiCollapsibleSplitter";
             defiCollapsibleSplitter.TabStop = false;
-            toolTip1.SetToolTip(defiCollapsibleSplitter, resources.GetString("defiCollapsibleSplitter.ToolTip"));
             defiCollapsibleSplitter.UseAnimations = true;
             defiCollapsibleSplitter.VisualStyle = VisualStyles.Mozilla;
             // 
@@ -1373,147 +1436,40 @@ namespace SQL_Document_Builder
             timer1.Interval = 500;
             timer1.Tick += Timer1_Tick;
             // 
-            // splitContainer1
-            // 
-            resources.ApplyResources(splitContainer1, "splitContainer1");
-            splitContainer1.Name = "splitContainer1";
-            // 
-            // splitContainer1.Panel1
-            // 
-            resources.ApplyResources(splitContainer1.Panel1, "splitContainer1.Panel1");
-            splitContainer1.Panel1.Controls.Add(objectsTabControl);
-            toolTip1.SetToolTip(splitContainer1.Panel1, resources.GetString("splitContainer1.Panel1.ToolTip"));
-            // 
-            // splitContainer1.Panel2
-            // 
-            resources.ApplyResources(splitContainer1.Panel2, "splitContainer1.Panel2");
-            splitContainer1.Panel2.Controls.Add(replacePanel);
-            splitContainer1.Panel2.Controls.Add(searchPanel);
-            splitContainer1.Panel2.Controls.Add(tabControl1);
-            toolTip1.SetToolTip(splitContainer1.Panel2, resources.GetString("splitContainer1.Panel2.ToolTip"));
-            toolTip1.SetToolTip(splitContainer1, resources.GetString("splitContainer1.ToolTip"));
-            // 
-            // replacePanel
-            // 
-            resources.ApplyResources(replacePanel, "replacePanel");
-            replacePanel.Controls.Add(button1);
-            replacePanel.Controls.Add(replaceAllButton);
-            replacePanel.Controls.Add(replaceButton);
-            replacePanel.Controls.Add(findNextButton);
-            replacePanel.Controls.Add(replaceReplaceTextBox);
-            replacePanel.Controls.Add(replaceSearchTextBox);
-            replacePanel.Name = "replacePanel";
-            toolTip1.SetToolTip(replacePanel, resources.GetString("replacePanel.ToolTip"));
-            // 
-            // button1
-            // 
-            resources.ApplyResources(button1, "button1");
-            button1.BackColor = System.Drawing.Color.White;
-            button1.ForeColor = System.Drawing.Color.Black;
-            button1.Name = "button1";
-            toolTip1.SetToolTip(button1, resources.GetString("button1.ToolTip"));
-            button1.UseVisualStyleBackColor = false;
-            button1.Click += CloseQuickSearch_Click;
-            // 
-            // replaceAllButton
-            // 
-            resources.ApplyResources(replaceAllButton, "replaceAllButton");
-            replaceAllButton.BackColor = System.Drawing.Color.White;
-            replaceAllButton.ForeColor = System.Drawing.SystemColors.ControlText;
-            replaceAllButton.Image = Properties.Resources.replaceAll;
-            replaceAllButton.Name = "replaceAllButton";
-            replaceAllButton.Tag = "Find previous (Shift+Enter)";
-            toolTip1.SetToolTip(replaceAllButton, resources.GetString("replaceAllButton.ToolTip"));
-            replaceAllButton.UseVisualStyleBackColor = false;
-            replaceAllButton.Click += ReplaceAllButton_Click;
-            // 
-            // replaceButton
-            // 
-            resources.ApplyResources(replaceButton, "replaceButton");
-            replaceButton.BackColor = System.Drawing.Color.White;
-            replaceButton.ForeColor = System.Drawing.SystemColors.ControlText;
-            replaceButton.Image = Properties.Resources.replace;
-            replaceButton.Name = "replaceButton";
-            replaceButton.Tag = "Find previous (Shift+Enter)";
-            toolTip1.SetToolTip(replaceButton, resources.GetString("replaceButton.ToolTip"));
-            replaceButton.UseVisualStyleBackColor = false;
-            replaceButton.Click += ReplaceButton_Click;
-            // 
-            // findNextButton
-            // 
-            resources.ApplyResources(findNextButton, "findNextButton");
-            findNextButton.BackColor = System.Drawing.Color.White;
-            findNextButton.ForeColor = System.Drawing.SystemColors.ControlText;
-            findNextButton.Name = "findNextButton";
-            findNextButton.Tag = "Find previous (Shift+Enter)";
-            toolTip1.SetToolTip(findNextButton, resources.GetString("findNextButton.ToolTip"));
-            findNextButton.UseVisualStyleBackColor = false;
-            findNextButton.Click += FindNextButton_Click;
-            // 
-            // replaceReplaceTextBox
-            // 
-            resources.ApplyResources(replaceReplaceTextBox, "replaceReplaceTextBox");
-            replaceReplaceTextBox.Name = "replaceReplaceTextBox";
-            toolTip1.SetToolTip(replaceReplaceTextBox, resources.GetString("replaceReplaceTextBox.ToolTip"));
-            replaceReplaceTextBox.KeyDown += ReplaceReplaceTextBox_KeyDown;
-            // 
-            // replaceSearchTextBox
-            // 
-            resources.ApplyResources(replaceSearchTextBox, "replaceSearchTextBox");
-            replaceSearchTextBox.Name = "replaceSearchTextBox";
-            toolTip1.SetToolTip(replaceSearchTextBox, resources.GetString("replaceSearchTextBox.ToolTip"));
-            replaceSearchTextBox.TextChanged += TxtSearch_TextChanged;
-            replaceSearchTextBox.KeyDown += SearchTextBox_KeyDown;
-            // 
-            // tabControl1
-            // 
-            resources.ApplyResources(tabControl1, "tabControl1");
-            tabControl1.DarkMode = false;
-            tabControl1.DrawMode = TabDrawMode.OwnerDrawFixed;
-            tabControl1.Name = "tabControl1";
-            tabControl1.SelectedIndex = 0;
-            toolTip1.SetToolTip(tabControl1, resources.GetString("tabControl1.ToolTip"));
-            tabControl1.TabCloseRequested += TabControl1_TabCloseRequested;
-            tabControl1.DrawItem += TabControl1_DrawItem;
-            tabControl1.SelectedIndexChanged += TabControl1_SelectedIndexChanged;
-            tabControl1.MouseUp += TabControl1_MouseUp;
-            tabControl1.Resize += TabControl1_Resize;
-            // 
             // tabContextMenuStrip
             // 
-            resources.ApplyResources(tabContextMenuStrip, "tabContextMenuStrip");
             tabContextMenuStrip.Items.AddRange(new ToolStripItem[] { tabAliasToolStripMenuItem, closeToolStripMenuItem, saveToolStripMenuItem1, saveAsToolStripMenuItem1, openFolderInFileExplorerToolStripMenuItem });
             tabContextMenuStrip.Name = "tabContextMenuStrip";
-            toolTip1.SetToolTip(tabContextMenuStrip, resources.GetString("tabContextMenuStrip.ToolTip"));
+            resources.ApplyResources(tabContextMenuStrip, "tabContextMenuStrip");
             // 
             // tabAliasToolStripMenuItem
             // 
-            resources.ApplyResources(tabAliasToolStripMenuItem, "tabAliasToolStripMenuItem");
             tabAliasToolStripMenuItem.Name = "tabAliasToolStripMenuItem";
+            resources.ApplyResources(tabAliasToolStripMenuItem, "tabAliasToolStripMenuItem");
             tabAliasToolStripMenuItem.Click += TabAliasToolStripMenuItem_Click;
             // 
             // closeToolStripMenuItem
             // 
-            resources.ApplyResources(closeToolStripMenuItem, "closeToolStripMenuItem");
             closeToolStripMenuItem.Name = "closeToolStripMenuItem";
+            resources.ApplyResources(closeToolStripMenuItem, "closeToolStripMenuItem");
             closeToolStripMenuItem.Click += CloseToolStripMenuItem_Click;
             // 
             // saveToolStripMenuItem1
             // 
-            resources.ApplyResources(saveToolStripMenuItem1, "saveToolStripMenuItem1");
             saveToolStripMenuItem1.Name = "saveToolStripMenuItem1";
+            resources.ApplyResources(saveToolStripMenuItem1, "saveToolStripMenuItem1");
             saveToolStripMenuItem1.Click += SaveToolStripMenuItem1_Click;
             // 
             // saveAsToolStripMenuItem1
             // 
-            resources.ApplyResources(saveAsToolStripMenuItem1, "saveAsToolStripMenuItem1");
             saveAsToolStripMenuItem1.Name = "saveAsToolStripMenuItem1";
+            resources.ApplyResources(saveAsToolStripMenuItem1, "saveAsToolStripMenuItem1");
             saveAsToolStripMenuItem1.Click += SaveAsToolStripMenuItem_Click;
             // 
             // openFolderInFileExplorerToolStripMenuItem
             // 
-            resources.ApplyResources(openFolderInFileExplorerToolStripMenuItem, "openFolderInFileExplorerToolStripMenuItem");
             openFolderInFileExplorerToolStripMenuItem.Name = "openFolderInFileExplorerToolStripMenuItem";
+            resources.ApplyResources(openFolderInFileExplorerToolStripMenuItem, "openFolderInFileExplorerToolStripMenuItem");
             openFolderInFileExplorerToolStripMenuItem.Click += OpenFolderInFileExplorerToolStripMenuItem_Click;
             // 
             // startTimer
@@ -1537,11 +1493,12 @@ namespace SQL_Document_Builder
             Controls.Add(menuStrip1);
             MainMenuStrip = menuStrip1;
             Name = "TableBuilderForm";
-            toolTip1.SetToolTip(this, resources.GetString("$this.ToolTip"));
             FormClosing += TableBuilderForm_FormClosing;
             Load += TableBuilderForm_Load;
-            toolStrip1.ResumeLayout(false);
-            toolStrip1.PerformLayout();
+            splitContainer1.Panel1.ResumeLayout(false);
+            splitContainer1.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)splitContainer1).EndInit();
+            splitContainer1.ResumeLayout(false);
             objectsTabControl.ResumeLayout(false);
             tabPage1.ResumeLayout(false);
             panel2.ResumeLayout(false);
@@ -1552,18 +1509,16 @@ namespace SQL_Document_Builder
             groupBox2.PerformLayout();
             groupBox1.ResumeLayout(false);
             groupBox1.PerformLayout();
+            replacePanel.ResumeLayout(false);
+            replacePanel.PerformLayout();
+            searchPanel.ResumeLayout(false);
+            searchPanel.PerformLayout();
+            toolStrip1.ResumeLayout(false);
+            toolStrip1.PerformLayout();
             menuStrip1.ResumeLayout(false);
             menuStrip1.PerformLayout();
             statusStrip1.ResumeLayout(false);
             statusStrip1.PerformLayout();
-            searchPanel.ResumeLayout(false);
-            searchPanel.PerformLayout();
-            splitContainer1.Panel1.ResumeLayout(false);
-            splitContainer1.Panel2.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)splitContainer1).EndInit();
-            splitContainer1.ResumeLayout(false);
-            replacePanel.ResumeLayout(false);
-            replacePanel.PerformLayout();
             tabContextMenuStrip.ResumeLayout(false);
             ResumeLayout(false);
             PerformLayout();
