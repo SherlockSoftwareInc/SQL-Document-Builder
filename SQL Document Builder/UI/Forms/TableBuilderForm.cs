@@ -1481,7 +1481,7 @@ namespace SQL_Document_Builder
         /// </summary>
         /// <param name="sender">The sender.</param>
         /// <param name="e">The event arguments.</param>
-        private void ExcelToINSERTToolStripMenuItem_Click(object sender, EventArgs e)
+        private async void ExcelToINSERTToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (CheckCurrentDocumentType(SqlEditBox.DocumentTypeEnums.Sql) == DialogResult.Yes)
             {
@@ -1524,11 +1524,22 @@ namespace SQL_Document_Builder
                 {
                     if (!GetCurrentEditBox(out SqlEditBox editBox)) return; // If we can't get the edit box, exit early
 
+                    Cursor = Cursors.WaitCursor;
+                    StartBuild(editBox);
+
+                    progressBar.Value = 0;
+                    messageLabel.Text = "Generating INSERT statements...";
+                    await Task.Yield();
+
                     AppendText(editBox, $"-- Data source: {fileName}" + Environment.NewLine);
 
                     var dataHelper = new ExcelDataHelper(resultDataTable);
-                    AppendText(editBox, dataHelper.GetInsertStatement(tableName, nullForBlank, _currentConnection));
-                    CopyToClipboard(editBox);
+                    var connection = _currentConnection;
+                    var insertScript = await Task.Run(() => dataHelper.GetInsertStatement(tableName, nullForBlank, connection));
+
+                    AppendText(editBox, insertScript);
+
+                    EndBuild(editBox);
                 }
             }
         }
@@ -4018,17 +4029,12 @@ namespace SQL_Document_Builder
             ReplaceManager.ReplaceBox = replaceReplaceTextBox;
             ReplaceManager.TextArea = CurrentEditBox;
 
-            // If the search box is blank, fill it with the word at the caret
-            if (string.IsNullOrWhiteSpace(replaceSearchTextBox.Text))
+            int caretPos = CurrentEditBox.CurrentPosition;
+            string word = CurrentEditBox.SelectedText;
+            if (string.IsNullOrWhiteSpace(word)) word = CurrentEditBox.GetWordFromPosition(caretPos);
+            if (!string.IsNullOrWhiteSpace(word))
             {
-                int caretPos = CurrentEditBox.CurrentPosition;
-                string word = CurrentEditBox.SelectedText;
-                if (string.IsNullOrWhiteSpace(word)) word = CurrentEditBox.GetWordFromPosition(caretPos);
-                if (!string.IsNullOrWhiteSpace(word))
-                {
-                    ReplaceManager.LastSearch = word;
-                    //replaceSearchTextBox.Text = word;
-                }
+                ReplaceManager.LastSearch = word;
             }
 
             if (!ReplaceIsOpen)

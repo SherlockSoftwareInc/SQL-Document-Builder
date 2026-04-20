@@ -441,14 +441,15 @@ namespace SQL_Document_Builder
                     if (rowIndex < batchEnd - 1)
                         sb.AppendLine(",");
                     else
+                    {
                         sb.AppendLine(";");
+                        if (isSqlServer)
+                        {
+                            sb.AppendLine("GO");
+                        }
+                    }
                 }
             }
-            if (isSqlServer)
-            {
-                sb.AppendLine("GO");
-            }
-            //sb.AppendLine($"SELECT * FROM {objectName.FullName}");
 
             return sb.ToString();
         }
