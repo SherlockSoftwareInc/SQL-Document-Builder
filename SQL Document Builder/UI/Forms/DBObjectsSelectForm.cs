@@ -55,6 +55,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Gets a value indicating whether table view only.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool TableViewOnly { get; internal set; }
 
         /// <summary>

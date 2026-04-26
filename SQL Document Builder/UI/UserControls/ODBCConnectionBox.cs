@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 
 using System.Drawing;
 using System.Windows.Forms;
@@ -38,11 +39,13 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Gets or set connection settings
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public SQLServerConnections Connections { get; set; }
 
         /// <summary>
         /// Gets or sets DSN
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string DSN
         {
             get
@@ -83,6 +86,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Gets or sets the password
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string Password
         {
             get => passwordTextBox.Text;
@@ -92,6 +96,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Enables/disables change DSN
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool ReadOnly
         {
             get => !dsnComboBox.Enabled;
@@ -101,6 +106,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Remember password flag
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool RememberPassword
         {
             get => rememberPasswordCheckBox.Enabled && rememberPasswordCheckBox.Checked;
@@ -110,6 +116,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Require manually login flag
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool RequireManualLogin
         {
             get => manualLoginCheckBox.Checked;
@@ -126,6 +133,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Gets or set user name
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string UserName
         {
             get => userNameTextBox.Text;

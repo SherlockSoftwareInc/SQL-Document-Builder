@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Windows.Forms;
 
 namespace SQL_Document_Builder
@@ -24,6 +25,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Gets or sets the end date.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public DateTime EndDate
         {
             get { return endDate.Date.AddDays(1).AddTicks(-1); }
@@ -33,6 +35,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Gets or sets the start date.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public DateTime StartDate
         {
             get { return startDate.Date; }

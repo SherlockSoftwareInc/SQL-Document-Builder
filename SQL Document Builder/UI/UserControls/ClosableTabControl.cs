@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
 
@@ -51,6 +52,7 @@ namespace SQL_Document_Builder.UI.UserControls
         /// <summary>
         /// Gets or sets a value indicating whether dark mode.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool DarkMode
         {
             get { return _darkmode; }

@@ -88,6 +88,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Gets or sets the description of the database.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string DatabaseDescription { get; set; }
 
         /// <summary>

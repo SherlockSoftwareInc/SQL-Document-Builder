@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Data;
 using System.Linq;
 using SQL_Document_Builder.SchemaMetadata;
@@ -46,8 +47,10 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Gets or sets the database connection item for fetching objects.
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public DatabaseConnectionItem? Connection { get; set; }
 
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public DBSchema? SchemaCache { get; set; }
 
         /// <summary>

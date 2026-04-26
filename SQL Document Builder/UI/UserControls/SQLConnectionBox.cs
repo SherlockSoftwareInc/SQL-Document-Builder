@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Drawing;
+using System.ComponentModel;
 using System.Threading;
 using System.Windows.Forms;
 
@@ -32,6 +33,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Gets or set authentication type
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public short Authentication
         {
             get => (short)authenticationComboBox.SelectedIndex;
@@ -133,6 +135,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Gets or sets database name
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string DatabaseName
         {
             get => databaseTextBox.Text;
@@ -142,6 +145,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Gets or sets a value indicating whether to use encrypted connections
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool EncryptConnection
         {
             get => encryptCheckBox.Checked;
@@ -151,6 +155,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Gets or sets a value indicating whether to trust the server certificate
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool TrustServerCertificate
         {
             get => trustCheckBox.Checked;
@@ -160,6 +165,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Gets or sets the password
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string Password
         {
             get => passwordTextBox.Text;
@@ -169,6 +175,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Remember password flag
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool RememberPassword
         {
             get => rememberPasswordCheckBox.Checked;
@@ -178,11 +185,13 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Require manually login flag
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public bool RequireManualLogin { get; set; }
 
         /// <summary>
         /// Gets or set server name
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string ServerName
         {
             get => serverNameTextBox.Text;
@@ -200,6 +209,7 @@ namespace SQL_Document_Builder
         /// <summary>
         /// Gets or set user name
         /// </summary>
+        [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public string UserName
         {
             get => userNameTextBox.Text;
