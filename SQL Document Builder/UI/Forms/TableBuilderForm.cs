@@ -614,6 +614,10 @@ namespace SQL_Document_Builder
 
         private async Task<bool> OpenConnectionAsync(DatabaseConnectionItem? connection, CancellationToken cancellationToken)
         {
+            if (connection == null) return false;
+
+            connection.BuildConnectionString();
+
             UpdateSqlServerSpecificMenuItems(connection);
 
             serverToolStripStatusLabel.Text = string.Empty;

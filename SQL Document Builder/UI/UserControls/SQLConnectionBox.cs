@@ -37,7 +37,7 @@ namespace SQL_Document_Builder
         public short Authentication
         {
             get => (short)authenticationComboBox.SelectedIndex;
-            set => SetInitializing(() => authenticationComboBox.SelectedIndex = value);
+            set => SetInitializing(() => authenticationComboBox.SelectedIndex = NormalizeAuthenticationIndex(value));
         }
 
         /// <summary>
@@ -114,8 +114,7 @@ namespace SQL_Document_Builder
                             break;
 
                         default:    //Windows Authentication
-                            builder.IntegratedSecurity = true;
-                            builder.TrustServerCertificate = true;
+                            builder.Authentication = Microsoft.Data.SqlClient.SqlAuthenticationMethod.ActiveDirectoryIntegrated;
                             break;
                     }
 
@@ -244,6 +243,12 @@ namespace SQL_Document_Builder
         /// <param name="e"></param>
         private void AuthenticationComboBox_SelectedIndexChanged(object sender, EventArgs e)
         {
+            if (authenticationComboBox.SelectedIndex == 0)
+            {
+                authenticationComboBox.SelectedIndex = 3;
+                return;
+            }
+
             switch (authenticationComboBox.SelectedIndex)
             {
                 case 1:
@@ -408,6 +413,11 @@ namespace SQL_Document_Builder
             {
                 _init = false;
             }
+        }
+
+        private static short NormalizeAuthenticationIndex(short selectedIndex)
+        {
+            return selectedIndex == 0 ? (short)3 : selectedIndex;
         }
 
         private void UpdateControlLayout()
