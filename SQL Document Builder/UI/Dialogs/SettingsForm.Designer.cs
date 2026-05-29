@@ -84,6 +84,7 @@
             // 
             textBoxEndpoint.Location = new System.Drawing.Point(84, 17);
             textBoxEndpoint.Name = "textBoxEndpoint";
+            textBoxEndpoint.PlaceholderText = "https://api.openai.com/v1/chat/completions";
             textBoxEndpoint.Size = new System.Drawing.Size(300, 23);
             textBoxEndpoint.TabIndex = 1;
             // 
@@ -100,6 +101,7 @@
             // 
             textBoxModel.Location = new System.Drawing.Point(84, 46);
             textBoxModel.Name = "textBoxModel";
+            textBoxModel.PlaceholderText = "gpt-5.4";
             textBoxModel.Size = new System.Drawing.Size(300, 23);
             textBoxModel.TabIndex = 3;
             // 

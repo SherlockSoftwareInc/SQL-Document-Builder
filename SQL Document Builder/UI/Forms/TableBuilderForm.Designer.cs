@@ -194,7 +194,7 @@ namespace SQL_Document_Builder
             aIDescriptionAssistantToolStripMenuItem = new ToolStripMenuItem();
             descriptionAssistantPlusToolStripMenuItem = new ToolStripMenuItem();
             describeMissingToolStripMenuItem = new ToolStripMenuItem();
-            matchDescribeToolStripMenuItem = new ToolStripMenuItem();
+            batchDescribeToolStripMenuItem = new ToolStripMenuItem();
             toolStripSeparator22 = new ToolStripSeparator();
             optimizeCodeToolStripMenuItem = new ToolStripMenuItem();
             modifyCodeToolStripMenuItem = new ToolStripMenuItem();
@@ -603,7 +603,6 @@ namespace SQL_Document_Builder
             // 
             // tabControl1
             // 
-            tabControl1.DarkMode = false;
             resources.ApplyResources(tabControl1, "tabControl1");
             tabControl1.DrawMode = TabDrawMode.OwnerDrawFixed;
             tabControl1.Name = "tabControl1";
@@ -1286,7 +1285,7 @@ namespace SQL_Document_Builder
             // 
             // aIAssistantToolStripMenuItem
             // 
-            aIAssistantToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { aIDescriptionAssistantToolStripMenuItem, descriptionAssistantPlusToolStripMenuItem, describeMissingToolStripMenuItem, matchDescribeToolStripMenuItem, toolStripSeparator22, optimizeCodeToolStripMenuItem, modifyCodeToolStripMenuItem, toolStripSeparator24, settingsToolStripMenuItem });
+            aIAssistantToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { aIDescriptionAssistantToolStripMenuItem, descriptionAssistantPlusToolStripMenuItem, describeMissingToolStripMenuItem, batchDescribeToolStripMenuItem, toolStripSeparator22, optimizeCodeToolStripMenuItem, modifyCodeToolStripMenuItem, toolStripSeparator24, settingsToolStripMenuItem });
             aIAssistantToolStripMenuItem.Name = "aIAssistantToolStripMenuItem";
             resources.ApplyResources(aIAssistantToolStripMenuItem, "aIAssistantToolStripMenuItem");
             // 
@@ -1309,11 +1308,11 @@ namespace SQL_Document_Builder
             resources.ApplyResources(describeMissingToolStripMenuItem, "describeMissingToolStripMenuItem");
             describeMissingToolStripMenuItem.Click += DescribeMissingToolStripMenuItem_Click;
             // 
-            // matchDescribeToolStripMenuItem
+            // batchDescribeToolStripMenuItem
             // 
-            matchDescribeToolStripMenuItem.Name = "matchDescribeToolStripMenuItem";
-            resources.ApplyResources(matchDescribeToolStripMenuItem, "matchDescribeToolStripMenuItem");
-            matchDescribeToolStripMenuItem.Click += BatchDescribeToolStripMenuItem_Click;
+            batchDescribeToolStripMenuItem.Name = "batchDescribeToolStripMenuItem";
+            resources.ApplyResources(batchDescribeToolStripMenuItem, "batchDescribeToolStripMenuItem");
+            batchDescribeToolStripMenuItem.Click += BatchDescribeToolStripMenuItem_Click;
             // 
             // toolStripSeparator22
             // 
@@ -1715,7 +1714,7 @@ namespace SQL_Document_Builder
         private ToolStripSeparator toolStripSeparator24;
         private ToolStripMenuItem descriptionAssistantPlusToolStripMenuItem;
         private ToolStripMenuItem saveObjectDescriptionsToolStripMenuItem;
-        private ToolStripMenuItem matchDescribeToolStripMenuItem;
+        private ToolStripMenuItem batchDescribeToolStripMenuItem;
         private ToolStripSeparator toolStripSeparator22;
         private ToolStripMenuItem describeMissingToolStripMenuItem;
     }

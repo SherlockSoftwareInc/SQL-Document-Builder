@@ -5,6 +5,7 @@ using System.Data;
 using System.Drawing;
 using System.Linq;
 using SQL_Document_Builder.DatabaseAccess;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -16,6 +17,8 @@ namespace SQL_Document_Builder
     /// </summary>
     public partial class DataViewForm : Form
     {
+        private const int maxBinaryDisplayString = 8000;
+
         private CancellationTokenSource? cancellationTokenSource;
         private readonly DataTable? data;
         private int databaseIndex = 0;
@@ -294,12 +297,22 @@ namespace SQL_Document_Builder
 
             if (DataSource != null)
             {
-                dataGridView.DataSource = DataSource;
-                dataGridView.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.DisplayedCells);
-                messageLabel.Text = $"{dataGridView.RowCount:N0} rows of data loaded";
-                //hide the progress bar
-                progressBar.Visible = false;
-                topToolStripComboBox.Enabled = false;
+                try
+                {
+                    FixBinaryColumnsForDisplay(DataSource, out _);
+                    dataGridView.DataSource = DataSource;
+                    dataGridView.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.DisplayedCells);
+                    messageLabel.Text = $"{dataGridView.RowCount:N0} rows of data loaded";
+                    //hide the progress bar
+                    progressBar.Visible = false;
+                    topToolStripComboBox.Enabled = false;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "Failed to load data",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    Close();
+                }
                 return;
             }
 
@@ -392,6 +405,11 @@ namespace SQL_Document_Builder
                     this.Invoke((MethodInvoker)delegate
                     {
                         if (dt == null) Close();
+
+                        if (dt != null)
+                        {
+                            FixBinaryColumnsForDisplay(dt, out _);
+                        }
 
                         if (MultipleValue && databaseIndex == 0)
                         {
@@ -557,6 +575,132 @@ namespace SQL_Document_Builder
                     dlg.ShowDialog();
                 }
             }
+        }
+
+        /// <summary>
+        /// Converts binary data column to a string equivalent, including handling of null columns
+        /// </summary>
+        /// <param name="hexBuilder">String builder pre-allocated for maximum space needed</param>
+        /// <param name="columnValue">Column value, expected to be of type byte []</param>
+        /// <returns>String representation of column value</returns>
+        private static string BinaryDataColumnToString(StringBuilder hexBuilder, object columnValue)
+        {
+            const string hexChars = "0123456789ABCDEF";
+            if (columnValue == DBNull.Value)
+            {
+                // Return special "(null)" value here for null column values
+                return "(null)";
+            }
+            else
+            {
+                // Otherwise return hex representation
+                byte[] byteArray = (byte[])columnValue;
+                int displayLength = (byteArray.Length > maxBinaryDisplayString) ? maxBinaryDisplayString : byteArray.Length;
+                hexBuilder.Length = 0;
+                hexBuilder.Append("0x");
+                for (int i = 0; i < displayLength; i++)
+                {
+                    hexBuilder.Append(hexChars[(int)byteArray[i] >> 4]);
+                    hexBuilder.Append(hexChars[(int)byteArray[i] % 0x10]);
+                }
+                return hexBuilder.ToString();
+            }
+        }
+
+        /// <summary>
+        /// Try to convert a binary column to a string column
+        /// </summary>
+        /// <param name="t">The data table.</param>
+        /// <param name="columnName">The binary column name.</param>
+        /// <returns>True if the conversion succeeded.</returns>
+        private static bool FixABinaryColumn(DataTable t, string columnName)
+        {
+            bool result = false;
+            try
+            {
+                // Create temporary column to copy over data
+                string tempColumnName = "C" + Guid.NewGuid().ToString();
+                t.Columns.Add(new DataColumn(tempColumnName, typeof(string)));
+                t.Columns[tempColumnName].SetOrdinal(t.Columns[columnName].Ordinal);
+
+                // Replace values in every row
+                StringBuilder hexBuilder = new((maxBinaryDisplayString * 2) + 2);
+                foreach (DataRow r in t.Rows)
+                {
+                    r[tempColumnName] = BinaryDataColumnToString(hexBuilder, r[columnName]);
+                }
+
+                t.Columns.Remove(columnName);
+                t.Columns[tempColumnName].ColumnName = columnName;
+                result = true;
+            }
+            catch (Exception)
+            {
+                // only returns false to indicates the conversion is failed
+            }
+            return result;
+        }
+
+        /// <summary>
+        /// Accepts a datatable and converts all binary columns into a textual representation of a binary column.
+        /// For use when displaying binary columns in a DataGridView.
+        /// </summary>
+        /// <param name="t">Input data table</param>
+        /// <param name="success">Indicates whether all binary columns were converted successfully.</param>
+        /// <returns>Updated data table, with binary columns replaced</returns>
+        private static DataTable FixBinaryColumnsForDisplay(DataTable t, out bool success)
+        {
+            success = true;
+
+            for (int i = 0; i < t.Columns.Count; i++)
+            {
+                bool needFix = false;
+                var column = t.Columns[i];
+                if (column.DataType == typeof(byte[]))
+                {
+                    needFix = true;
+                }
+                else if (column.DataType == typeof(object) && column.DataType != typeof(System.Guid))
+                {
+                    needFix = true;
+                }
+
+                if (needFix)
+                {
+                    // Remove constraints involving the binary column
+                    foreach (Constraint constraint in t.Constraints)
+                    {
+                        // remove the constraint if the constraint column is the specified column
+                        if (constraint is UniqueConstraint uniqueConstraint)
+                        {
+                            if (uniqueConstraint.Columns.Length == 1 && uniqueConstraint.Columns[0].ColumnName == column.ColumnName)
+                            {
+                                t.Constraints.Remove(constraint);
+                                break;
+                            }
+                        }
+                        else if (constraint is ForeignKeyConstraint foreignKeyConstraint)
+                        {
+                            if (foreignKeyConstraint.Columns.Length == 1 && foreignKeyConstraint.Columns[0].ColumnName == column.ColumnName)
+                            {
+                                t.Constraints.Remove(constraint);
+                                break;
+                            }
+                        }
+
+                        // remove all constraints
+                        t.Constraints.Remove(constraint);
+                    }
+
+                    if (!FixABinaryColumn(t, column.ColumnName))
+                    {
+                        success = false;
+                        break;
+                    }
+                }
+            }
+
+            return t;
         }
     }
 }

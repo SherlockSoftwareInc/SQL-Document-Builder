@@ -2173,11 +2173,11 @@ namespace SQL_Document_Builder
                 // trun off AI description if it is not table or view
                 if (_selectedObject.ObjectType != ObjectName.ObjectTypeEnums.Table && _selectedObject.ObjectType != ObjectName.ObjectTypeEnums.View)
                 {
-                    aIAssistantToolStripMenuItem.Enabled = false;
+                    EnableDisableAIDescribe(false);
                 }
                 else
                 {
-                    aIAssistantToolStripMenuItem.Enabled = true;
+                    EnableDisableAIDescribe(true);
                 }
             }
             else
@@ -2188,8 +2188,20 @@ namespace SQL_Document_Builder
                 }
 
                 await definitionPanel.OpenAsync(null, _currentConnection);
-                aIAssistantToolStripMenuItem.Enabled = false;
+                EnableDisableAIDescribe(false);
             }
+        }
+
+        /// <summary>
+        /// Enables or disables the AI describe functionality.
+        /// </summary>
+        /// <param name="enabled">If true, enabled.</param>
+        private void EnableDisableAIDescribe(bool enabled)
+        {
+            aIDescriptionAssistantToolStripMenuItem.Enabled = enabled;
+            descriptionAssistantPlusToolStripMenuItem.Enabled = enabled;
+            describeMissingToolStripMenuItem.Enabled = enabled;
+            batchDescribeToolStripMenuItem.Enabled = enabled;
         }
 
         /// <summary>
