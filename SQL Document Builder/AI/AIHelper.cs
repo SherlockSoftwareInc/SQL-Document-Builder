@@ -414,7 +414,7 @@ Complete the 'Description' fields in the JSON provided below.
 
 ### Style Guidelines
 * **Ultra-Concise:** Use short, functional phrases (e.g., 'Primary key' or 'Event timestamp'). Avoid 'This column represents...' or 'A unique identifier for...'.
-* **Format:** If a column references another table, append 'Reference: [schema].[table].[column]'. Omit if no reference exists or if the object is a View.
+* **Format:** If a column references another table, append 'Reference: [schema].[table].[column]'. Omit if no reference exists or if the object is a View. Do not append references for a primary key column.
 * **Integrity:** Do not change table names, column names, or data types. Return only valid JSON.
 
 ### Input JSON

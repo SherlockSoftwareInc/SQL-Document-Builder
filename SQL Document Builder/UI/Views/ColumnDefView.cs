@@ -1448,7 +1448,8 @@ ADD CONSTRAINT {quotedConstraint} PRIMARY KEY ({quotedColumn});
             using var dlg = new ColumnReferenceDialog()
             {
                 Connection = Connection,
-                SchemaCache = SchemaCache
+                SchemaCache = SchemaCache,
+                ActiveObject = ObjectName
             };
 
             if (dlg.ShowDialog() == DialogResult.OK)

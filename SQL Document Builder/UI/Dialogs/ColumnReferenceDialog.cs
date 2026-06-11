@@ -58,6 +58,8 @@ namespace SQL_Document_Builder
         /// </summary>
         public ObjectName? SelectedObject => _selectedObject;
 
+        public ObjectName? ActiveObject { get; set; }
+
         /// <summary>
         /// Handles the Cancel button click event. Closes the dialog with Cancel result.
         /// </summary>
@@ -84,6 +86,21 @@ namespace SQL_Document_Builder
             _init = true;
             // Only load tables, no object type selection
             _ = LoadTablesAsync();
+
+            // set the schema combo box to the same schema as the current object if available
+            if (SchemaCache != null && SchemaCache.HasObjects)
+            {
+                if (ActiveObject != null)
+                {
+                    string currentSchema = ActiveObject.Schema;
+                    int schemaIndex = schemaComboBox.Items.IndexOf(currentSchema);
+                    if (schemaIndex >= 0)
+                    {
+                        schemaComboBox.SelectedIndex = schemaIndex;
+                    }
+                }
+            }
+
             // set focus to search box
             searchTextBox.Focus();
         }
@@ -311,6 +328,33 @@ namespace SQL_Document_Builder
         private void SearchTextBox_TextChanged(object sender, EventArgs e)
         {
             _ = PopulateAsync();
+        }
+
+        /// <summary>
+        /// Handles the Open button click event. (Not implemented in this context, but could be used to open the selected object in a new dialog or editor)
+        /// </summary>
+        /// <param name="sender">The sender.</param>
+        /// <param name="e">The e.</param>
+        private void OpenButton_Click(object sender, EventArgs e)
+        {
+            string? tableName = objectsListBox.SelectedItem is ObjectName obj ? obj.FullName : null;
+
+            if(tableName == null) return;
+
+            string sql = $@"SELECT * FROM {tableName}";
+            using var dlg = new DataViewForm()
+            {
+                SQL = sql,
+                MultipleValue = false,
+                Text = $"{tableName}",
+                TableName = tableName,
+                EnableValueFrequency = true,
+                DatabaseIndex = 0,
+                Connection = Connection,
+                ConnectionString = Connection?.ConnectionString!
+            };
+            dlg.ShowDialog();
+
         }
     }
 }

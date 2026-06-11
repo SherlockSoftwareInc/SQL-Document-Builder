@@ -38,6 +38,7 @@
             objectsListBox = new System.Windows.Forms.ListBox();
             okButton = new System.Windows.Forms.Button();
             cancelButton = new System.Windows.Forms.Button();
+            openButton = new System.Windows.Forms.Button();
             SuspendLayout();
             // 
             // searchButton
@@ -70,15 +71,15 @@
             // 
             // schemaComboBox
             // 
-            resources.ApplyResources(schemaComboBox, "schemaComboBox");
             schemaComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             schemaComboBox.FormattingEnabled = true;
+            resources.ApplyResources(schemaComboBox, "schemaComboBox");
             schemaComboBox.Name = "schemaComboBox";
             // 
             // objectsListBox
             // 
-            resources.ApplyResources(objectsListBox, "objectsListBox");
             objectsListBox.FormattingEnabled = true;
+            resources.ApplyResources(objectsListBox, "objectsListBox");
             objectsListBox.Name = "objectsListBox";
             objectsListBox.DoubleClick += OkButton_Click;
             // 
@@ -96,12 +97,20 @@
             cancelButton.UseVisualStyleBackColor = true;
             cancelButton.Click += CancelButton_Click;
             // 
+            // openButton
+            // 
+            resources.ApplyResources(openButton, "openButton");
+            openButton.Name = "openButton";
+            openButton.UseVisualStyleBackColor = true;
+            openButton.Click += OpenButton_Click;
+            // 
             // ColumnReferenceDialog
             // 
             AcceptButton = okButton;
             resources.ApplyResources(this, "$this");
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             CancelButton = cancelButton;
+            Controls.Add(openButton);
             Controls.Add(cancelButton);
             Controls.Add(okButton);
             Controls.Add(searchButton);
@@ -131,5 +140,6 @@
         private System.Windows.Forms.ListBox objectsListBox;
         private System.Windows.Forms.Button okButton;
         private System.Windows.Forms.Button cancelButton;
+        private System.Windows.Forms.Button openButton;
     }
 }
