@@ -1568,7 +1568,9 @@ ADD CONSTRAINT {quotedConstraint} PRIMARY KEY ({quotedColumn});
                 })
                 .ToList();
 
-            if (missingColumns.Count == 0)
+            bool tableDescMissing = string.IsNullOrWhiteSpace(_tableContext.TableDescription);
+
+            if (missingColumns.Count == 0 && !tableDescMissing)
             {
                 return;
             }
@@ -1584,8 +1586,25 @@ ADD CONSTRAINT {quotedConstraint} PRIMARY KEY ({quotedColumn});
                 Columns = missingColumns
             };
 
+            var tableDescriptionContext = new TableContext
+            {
+                ObjectType = _tableContext.ObjectType,
+                TableSchema = _tableContext.TableSchema,
+                TableName = _tableContext.TableName,
+                TableDescription = _tableContext.TableDescription,
+                Columns = _tableContext.Columns
+            };
+
             var helper = new AIHelper();
-            await helper.GenerateTableAndColumnDescriptionsAsync(missingContext, referenceContext, Connection?.DatabaseDescription, additionalInfo);
+            if (tableDescMissing)
+            {
+                await helper.GenerateTableDescriptionAsync(tableDescriptionContext, referenceContext, Connection?.DatabaseDescription, additionalInfo);
+            }
+
+            if (missingColumns.Count > 0)
+            {
+                await helper.GenerateColumnDescriptionsAsync(missingContext, referenceContext, Connection?.DatabaseDescription, additionalInfo);
+            }
 
             // checks if the table object is still the same
             if (_dbObject.ObjectName == null ||
@@ -1593,6 +1612,12 @@ ADD CONSTRAINT {quotedConstraint} PRIMARY KEY ({quotedColumn});
                 _dbObject.ObjectName.Schema != _tableContext.TableSchema)
             {
                 return;
+            }
+
+            if (tableDescMissing && !string.IsNullOrWhiteSpace(tableDescriptionContext.TableDescription))
+            {
+                _tableContext.TableDescription = tableDescriptionContext.TableDescription;
+                tableDescTextBox.Text = tableDescriptionContext.TableDescription;
             }
 
             foreach (var generatedColumn in missingContext.Columns)

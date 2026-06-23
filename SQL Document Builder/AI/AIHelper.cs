@@ -44,113 +44,98 @@ namespace SQL_Document_Builder.AI
 
 
         /// <summary>
-        /// Generates professional and concise descriptions for a SQL table and its columns using a Large Language Model (LLM).
-        /// The method sends the provided table context, reference context, and optional database description to the LLM,
-        /// receives the completed descriptions, and updates the original context with the results.
+        /// Generates table and column descriptions by calling the dedicated table-level and column-level generators.
         /// </summary>
-        /// <param name="context">The <see cref="TableContext"/> containing schema, table, and column information to be documented.</param>
-        /// <param name="referenceContext">A JSON string providing additional reference information for related tables or columns.</param>
-        /// <param name="databaseDescription">An optional description of the database to provide context for the LLM.</param>
-        /// <returns>
-        /// <c>true</c> if the descriptions were successfully generated and applied to the context; <c>false</c> if deserialization fails or the LLM response is invalid.
-        /// </returns>
-        /// <exception cref="InvalidOperationException">
-        /// Thrown if the LLM response does not contain a valid JSON object or required settings are missing.
-        /// </exception>
         public async Task<bool> GenerateTableAndColumnDescriptionsAsync(TableContext context, string referenceContext, string? databaseDescription, string additionalInfo)
+        {
+            string originalTableDescription = context.TableDescription;
+
+            bool columnsGenerated = await GenerateColumnDescriptionsAsync(context, referenceContext, databaseDescription, additionalInfo);
+            bool tableGenerated = await GenerateTableDescriptionAsync(context, referenceContext, databaseDescription, additionalInfo);
+
+            if (string.IsNullOrWhiteSpace(context.TableDescription))
+            {
+                context.TableDescription = originalTableDescription;
+            }
+
+            return columnsGenerated || tableGenerated;
+        }
+
+        /// <summary>
+        /// Generates column-level descriptions only.
+        /// </summary>
+        public async Task<bool> GenerateColumnDescriptionsAsync(TableContext context, string referenceContext, string? databaseDescription, string additionalInfo)
         {
             const int batchSize = 10;
             int totalColumns = context.Columns.Count;
-            bool isFirstColumnSet = true;
             bool anySuccess = false;
 
-            // Store original table description
-            string originalTableDescription = context.TableDescription;
+            if (totalColumns == 0)
+            {
+                return false;
+            }
 
             for (int batchStart = 0; batchStart < totalColumns; batchStart += batchSize)
             {
                 var batchColumns = context.Columns.GetRange(batchStart, Math.Min(batchSize, totalColumns - batchStart));
                 var batchContext = new TableContext
                 {
+                    ObjectType = context.ObjectType,
                     TableSchema = context.TableSchema,
                     TableName = context.TableName,
                     TableDescription = context.TableDescription,
                     Columns = batchColumns
                 };
 
-                // Compose the prompt for the LLM
-                string tableDescriptionPrompt = BuildPrompt(batchContext, referenceContext, databaseDescription, additionalInfo, isFirstColumnSet);
-
-                // Call the LLM
-                string llmResponse = await CallLLMAsync(tableDescriptionPrompt);
-
-                // Extract JSON part (find first '{' and last '}')
-                int start = llmResponse.IndexOf('{');
-                int end = llmResponse.LastIndexOf('}');
-                if (start == -1 || end == -1 || end < start)
-                {
-                    if (isFirstColumnSet) throw new InvalidOperationException("No valid JSON object found in LLM response.");
-                    continue;
-                }
-
-                string json = llmResponse.Substring(start, end - start + 1);
-                System.Diagnostics.Debug.Print(json);
-
-                // Parse JSON into TableContext with error handling
-                TableContext? updatedContext = null;
-                try
-                {
-                    updatedContext = JsonSerializer.Deserialize<TableContext>(json, new JsonSerializerOptions
-                    {
-                        PropertyNameCaseInsensitive = true
-                    });
-                }
-                catch (JsonException)
-                {
-                    if (isFirstColumnSet) return false;
-                    continue;
-                }
-                catch (Exception)
-                {
-                    if (isFirstColumnSet) return false;
-                    continue;
-                }
-
+                string prompt = BuildColumnPrompt(batchContext, referenceContext, databaseDescription, additionalInfo);
+                var updatedContext = await GenerateContextFromPromptAsync(prompt);
                 if (updatedContext == null)
                 {
-                    if (isFirstColumnSet) return false;
                     continue;
                 }
 
-                // Only update table description from first batch
-                if (isFirstColumnSet && !string.IsNullOrWhiteSpace(updatedContext.TableDescription))
-                {
-                    context.TableDescription = updatedContext.TableDescription;
-                }
-
-                // Update column descriptions for this batch
                 foreach (var col in batchColumns)
                 {
                     var updatedColumn = updatedContext.Columns.Find(c => c.ColumnName == col.ColumnName);
                     if (updatedColumn != null)
                     {
-                        var origCol = context.Columns.Find(c => c.ColumnName == col.ColumnName);
-                        if (origCol != null)
+                        var originalColumn = context.Columns.Find(c => c.ColumnName == col.ColumnName);
+                        if (originalColumn != null && !string.IsNullOrWhiteSpace(updatedColumn.Description))
                         {
-                            origCol.Description = updatedColumn.Description;
+                            originalColumn.Description = updatedColumn.Description;
                         }
                     }
                 }
 
                 anySuccess = true;
-                isFirstColumnSet = false;
             }
 
-            // Restore original table description if none was updated
-            if (string.IsNullOrWhiteSpace(context.TableDescription))
-                context.TableDescription = originalTableDescription;
-
             return anySuccess;
+        }
+
+        /// <summary>
+        /// Generates table-level description only.
+        /// </summary>
+        public async Task<bool> GenerateTableDescriptionAsync(TableContext context, string referenceContext, string? databaseDescription, string additionalInfo)
+        {
+            var tableContext = new TableContext
+            {
+                ObjectType = context.ObjectType,
+                TableSchema = context.TableSchema,
+                TableName = context.TableName,
+                TableDescription = context.TableDescription,
+                Columns = context.Columns
+            };
+
+            string prompt = BuildTablePrompt(tableContext, referenceContext, databaseDescription, additionalInfo);
+            var updatedContext = await GenerateContextFromPromptAsync(prompt);
+            if (updatedContext == null || string.IsNullOrWhiteSpace(updatedContext.TableDescription))
+            {
+                return false;
+            }
+
+            context.TableDescription = updatedContext.TableDescription.Trim();
+            return true;
         }
 
         public async Task<ViewSourceColumnsResult> ExtractViewSourceColumnsAsync(string viewDefinition)
@@ -378,14 +363,42 @@ Input Code for Optimization::
             return languageInstruction;
         }
 
-        /// <summary>
-        /// Builds the prompt for the LLM using the provided table context.
-        /// </summary>
-        /// <param name="context">The table context to serialize and include in the prompt.</param>
-        /// <returns>A string containing the prompt for the LLM.</returns>
-        private static string BuildPrompt(TableContext context, string referenceContext, string? databaseDescription, string additionalInfo, bool isFirstColumnSet = true)
+        private async Task<TableContext?> GenerateContextFromPromptAsync(string prompt)
         {
-            // Convert context to JSON
+            string llmResponse = await CallLLMAsync(prompt);
+
+            int start = llmResponse.IndexOf('{');
+            int end = llmResponse.LastIndexOf('}');
+            if (start == -1 || end == -1 || end < start)
+            {
+                return null;
+            }
+
+            string json = llmResponse.Substring(start, end - start + 1);
+            System.Diagnostics.Debug.Print(json);
+
+            try
+            {
+                return JsonSerializer.Deserialize<TableContext>(json, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+            }
+            catch (JsonException)
+            {
+                return null;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Builds a prompt for column-level descriptions only.
+        /// </summary>
+        private static string BuildColumnPrompt(TableContext context, string referenceContext, string? databaseDescription, string additionalInfo)
+        {
             string contextJson = JsonSerializer.Serialize(context, new JsonSerializerOptions
             {
                 WriteIndented = true
@@ -403,18 +416,15 @@ Input Code for Optimization::
                 ? $"Extra context: {additionalInfo}\n"
                 : string.Empty;
 
-            string tableInstruction = isFirstColumnSet
-                ? "Table Description: Provide a 1-sentence summary of stored data."
-                : "Table Description: DO NOT MODIFY.";
-
             string prompt = $@"You are a technical database documentation assistant.
 {dbDescription}
 ### Task
-Complete the 'Description' fields in the JSON provided below.
+Generate concise descriptions for columns only.
 
 ### Style Guidelines
 * **Ultra-Concise:** Use short, functional phrases (e.g., 'Primary key' or 'Event timestamp'). Avoid 'This column represents...' or 'A unique identifier for...'.
-* **Format:** If a column references another table, append 'Reference: [schema].[table].[column]'. Omit if no reference exists or if the object is a View. Do not append references for a primary key column.
+* **No Data Types:** Do not mention SQL or storage data types (e.g., XML, INT, GUID). Describe only business meaning (e.g., use 'Test names and details' instead of 'XML data containing test names and details').
+* **Format:** If a column references another table, append 'Reference: [schema].[table]'. Don't assume a reference table yourself. Omit if no reference exists or if the object is a View. Do not append references for a primary key column.
 * **Integrity:** Do not change table names, column names, or data types. Return only valid JSON.
 
 ### Input JSON
@@ -423,10 +433,56 @@ Complete the 'Description' fields in the JSON provided below.
 ```
 {referenceInfo}{additionalInfoBlock}Additional guidelines:
 
-{tableInstruction}
+Table Description: DO NOT MODIFY.
 Each column description should explain what the field contains and its purpose.
+Column descriptions must not include any data type wording.
 Do not change schema names, object names, or property names.
 If additional information is provided above, use it as extra context for your descriptions.
+Output only valid JSON.{LanguageInstruction()}";
+
+            return prompt;
+        }
+
+        /// <summary>
+        /// Builds a prompt for table-level description only.
+        /// </summary>
+        private static string BuildTablePrompt(TableContext context, string referenceContext, string? databaseDescription, string additionalInfo)
+        {
+            string contextJson = JsonSerializer.Serialize(context, new JsonSerializerOptions
+            {
+                WriteIndented = true
+            });
+
+            string dbDescription = !string.IsNullOrWhiteSpace(databaseDescription)
+                ? $"Database context: {databaseDescription}\n\n"
+                : string.Empty;
+
+            string referenceInfo = !string.IsNullOrWhiteSpace(referenceContext)
+                ? $"Reference data:\n```json\n{referenceContext}\n```\n"
+                : string.Empty;
+
+            string additionalInfoBlock = !string.IsNullOrWhiteSpace(additionalInfo)
+                ? $"Extra context: {additionalInfo}\n"
+                : string.Empty;
+
+            string prompt = $@"You are a technical database documentation assistant.
+{dbDescription}
+### Task
+Generate a concise table description only.
+
+### Style Guidelines
+* **Ultra-Concise:** One clear sentence that summarizes what data the table stores.
+* **Clarity:** Keep wording short and functional.
+* **Integrity:** Do not change schema names, object names, or column metadata. Return only valid JSON.
+
+### Input JSON
+```json
+{contextJson}
+```
+{referenceInfo}{additionalInfoBlock}Additional guidelines:
+
+Update only TableDescription.
+Do not modify any column Description values.
 Output only valid JSON.{LanguageInstruction()}";
 
             return prompt;
