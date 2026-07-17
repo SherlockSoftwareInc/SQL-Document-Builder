@@ -416,6 +416,10 @@ Input Code for Optimization::
                 ? $"Extra context: {additionalInfo}\n"
                 : string.Empty;
 
+            string tableDescriptionReference = !string.IsNullOrWhiteSpace(context.TableDescription)
+                ? $"Existing table description (reference only): {context.TableDescription}\n"
+                : string.Empty;
+
             string prompt = $@"You are a technical database documentation assistant.
 {dbDescription}
 ### Task
@@ -431,9 +435,10 @@ Generate concise descriptions for columns only.
 ```json
 {contextJson}
 ```
-{referenceInfo}{additionalInfoBlock}Additional guidelines:
+{tableDescriptionReference}{referenceInfo}{additionalInfoBlock}Additional guidelines:
 
 Table Description: DO NOT MODIFY.
+If there is already a description of the data table, you should use it as a reference for generating the column descriptions.
 Each column description should explain what the field contains and its purpose.
 Column descriptions must not include any data type wording.
 Do not change schema names, object names, or property names.
@@ -483,6 +488,7 @@ Generate a concise table description only.
 
 Update only TableDescription.
 Do not modify any column Description values.
+If there are already some descriptions of the data tables, you should use them as a reference.
 Output only valid JSON.{LanguageInstruction()}";
 
             return prompt;
