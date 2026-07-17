@@ -101,7 +101,7 @@
             // 
             textBoxModel.Location = new System.Drawing.Point(84, 46);
             textBoxModel.Name = "textBoxModel";
-            textBoxModel.PlaceholderText = "gpt-5.4";
+            textBoxModel.PlaceholderText = "gpt_5.5";
             textBoxModel.Size = new System.Drawing.Size(300, 23);
             textBoxModel.TabIndex = 3;
             // 

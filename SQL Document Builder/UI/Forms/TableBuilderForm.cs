@@ -5402,7 +5402,7 @@ namespace SQL_Document_Builder
                 inputBox.Prompt = "Please enter any additional information or specific requirements for the description (optional):";
                 inputBox.Default = "";
                 inputBox.Multiline = true;
-                inputBox.MaxLength = 8000;
+                inputBox.MaxLength = 32768;
                 if (inputBox.ShowDialog() == DialogResult.OK)
                 {
                     var additionalInfo = inputBox.InputText;

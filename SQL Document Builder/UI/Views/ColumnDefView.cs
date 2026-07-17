@@ -1274,65 +1274,81 @@ ADD CONSTRAINT {quotedConstraint} PRIMARY KEY ({quotedColumn});
         /// <returns>A Task.</returns>
         internal async Task AIAssistant(string additionalInfo = "")
         {
-            if (AISettingsReady())
+            try
             {
-                // raise an event to indicate AI processing has started
-                AIProcessingStarted?.Invoke(this, EventArgs.Empty);
-
-                if (_dbObject.ObjectType == ObjectName.ObjectTypeEnums.View && GetMissingColumnDescriptionCount() >= 20)
+                if (AISettingsReady())
                 {
-                    await PrepareViewDescriptionsAsync(additionalInfo);
+                    // raise an event to indicate AI processing has started
+                    AIProcessingStarted?.Invoke(this, EventArgs.Empty);
 
-                    if (_tableContext.Columns.Any(c => string.IsNullOrWhiteSpace(c.Description)))
+                    if (_dbObject.ObjectType == ObjectName.ObjectTypeEnums.View && GetMissingColumnDescriptionCount() >= 20)
                     {
-                        await DescribeMissingCoreAsync(additionalInfo, true);
+                        await PrepareViewDescriptionsAsync(additionalInfo);
+
+                        if (_tableContext.Columns.Any(c => string.IsNullOrWhiteSpace(c.Description)))
+                        {
+                            await DescribeMissingCoreAsync(additionalInfo, true);
+                        }
+
+                        return;
                     }
 
-                    return;
-                }
+                    var referenceContext = await GetReferenceContext();
 
-                var referenceContext = await GetReferenceContext();
+                    // call AIHelper to generate table and column descriptions
+                    var helper = new AIHelper();
+                    await helper.GenerateTableAndColumnDescriptionsAsync(_tableContext, referenceContext, Connection?.DatabaseDescription, additionalInfo);
 
-                // call AIHelper to generate table and column descriptions
-                var helper = new AIHelper();
-                await helper.GenerateTableAndColumnDescriptionsAsync(_tableContext, referenceContext, Connection?.DatabaseDescription, additionalInfo);
-
-                // checks if the table object is still the same
-                if (_dbObject.ObjectName == null ||
-                    _dbObject.ObjectName.Name != _tableContext.TableName ||
-                    _dbObject.ObjectName.Schema != _tableContext.TableSchema)
-                {
-                    // the object has changed, do not update the UI
-                    return;
-                }
-
-                // update the table description text box
-                tableDescTextBox.Text = _tableContext.TableDescription;
-
-                // update the column descriptions in the data grid view
-                foreach (DataGridViewRow row in columnDefDataGridView.Rows)
-                {
-                    string columnName = Convert.ToString(row.Cells["ColumnName"].Value) ?? string.Empty;
-                    var column = _tableContext.Columns.FirstOrDefault(c => c.ColumnName == columnName);
-                    if (column != null)
+                    // checks if the table object is still the same
+                    if (_dbObject.ObjectName == null ||
+                        _dbObject.ObjectName.Name != _tableContext.TableName ||
+                        _dbObject.ObjectName.Schema != _tableContext.TableSchema)
                     {
-                        row.Cells["Description"].Value = column.Description;
+                        // the object has changed, do not update the UI
+                        return;
                     }
+
+                    // update the table description text box
+                    tableDescTextBox.Text = _tableContext.TableDescription;
+
+                    // update the column descriptions in the data grid view
+                    foreach (DataGridViewRow row in columnDefDataGridView.Rows)
+                    {
+                        string columnName = Convert.ToString(row.Cells["ColumnName"].Value) ?? string.Empty;
+                        var column = _tableContext.Columns.FirstOrDefault(c => c.ColumnName == columnName);
+                        if (column != null)
+                        {
+                            row.Cells["Description"].Value = column.Description;
+                        }
+                    }
+
+                    // refresh the data grid view
+                    columnDefDataGridView.Refresh();
+
+                    // resize the columns
+                    columnDefDataGridView.AutoResizeColumns();
+
+                    _isChanged = HasDescriptionChanges();
                 }
-
-                // refresh the data grid view
-                columnDefDataGridView.Refresh();
-
-                // resize the columns
-                columnDefDataGridView.AutoResizeColumns();
-
-                _isChanged = HasDescriptionChanges();
             }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    this,
+                    $"AI description generation failed:\n{ex.Message}",
+                    "AI Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
 
-            // raise an event to indicate AI processing has ended
-            AIProcessingCompleted?.Invoke(this, EventArgs.Empty);
+                System.Diagnostics.Debug.Print(ex.ToString());
+            }
+            finally
+            {
+                // raise an event to indicate AI processing has ended
+                AIProcessingCompleted?.Invoke(this, EventArgs.Empty);
 
-            Cursor = Cursors.Default;
+                Cursor = Cursors.Default;
+            }
         }
 
         private void UpdateColumnDescriptionsInGrid()

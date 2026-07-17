@@ -8,6 +8,9 @@ namespace SQL_Document_Builder.AI
     /// </summary>
     public class AISettings
     {
+    public string AIProvider { get; set; } = "Auto";
+    public string AIAuthScheme { get; set; } = "Bearer";
+    public string AIAuthHeaderName { get; set; } = "Authorization";
         public string AIEndpoint { get; set; } = string.Empty;
         public string AIModel { get; set; } = string.Empty;
         public string AIApiKey { get; set; } = string.Empty;
