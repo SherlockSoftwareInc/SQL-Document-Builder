@@ -2618,12 +2618,33 @@ namespace SQL_Document_Builder
 
                 var converter = new Converter(config);
 
-                // 4. Convert and return
-                return converter.Convert(html);
+                // 4. Convert, strip any remaining HTML tags, and return
+                string markdown = converter.Convert(html);
+                return StripHtmlTags(markdown);
             }
 
             // Fallback to plain text if no formatting exists
             return Clipboard.GetText();
+        }
+
+        /// <summary>
+        /// Removes any remaining HTML tags (such as &lt;u&gt;&lt;/u&gt; or &lt;button ...&gt;&lt;/button&gt;)
+        /// from the supplied text.
+        /// </summary>
+        /// <param name="text">The text that may contain HTML tags.</param>
+        /// <returns>The text with all HTML tags removed.</returns>
+        private static string StripHtmlTags(string text)
+        {
+            if (string.IsNullOrEmpty(text))
+            {
+                return text;
+            }
+
+            // Convert line-break-style void tags (<br>, <br/>, <br />) into newlines first.
+            text = Regex.Replace(text, @"<br\s*/?>", Environment.NewLine, RegexOptions.IgnoreCase);
+
+            // Remove any remaining tags, including other void tags such as <hr>, <img ...>, etc.
+            return Regex.Replace(text, "<[^>]+>", string.Empty);
         }
 
         /// <summary>
@@ -5418,7 +5439,14 @@ namespace SQL_Document_Builder
         /// <param name="e">The e.</param>
         private async void SaveObjectDescriptionsToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            var focusedControl = GetFocusedControl(this);
+
             await definitionPanel.Save();
+
+            if (focusedControl != null && !focusedControl.IsDisposed && focusedControl.CanFocus)
+            {
+                BeginInvoke(new Action(() => focusedControl.Focus()));
+            }
         }
 
         /// <summary>
